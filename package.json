@@ -14,8 +14,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/seedcord/seedcord.git",
-    "directory": "packages/envapt"
+    "url": "https://github.com/materwelonDhruv/envapt.git"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
