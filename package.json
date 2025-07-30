@@ -28,6 +28,7 @@
     "typecheck": "tsc --noEmit",
     "test": "mocha",
     "test:watch": "mocha --watch",
+    "prepare": "husky",
     "prepublishOnly": "pnpm run clean && pnpm run build"
   },
   "keywords": [
@@ -49,24 +50,27 @@
     }
   ],
   "devDependencies": {
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
+    "@eslint/eslintrc": "^3.3.1",
+    "@eslint/js": "^9.32.0",
     "@types/chai": "^5.2.2",
     "@types/mocha": "^10.0.10",
     "@types/node": "^22.10.7",
-    "chai": "^5.1.2",
-    "mocha": "^11.0.1",
-    "prettier": "^3.4.2",
-    "tsx": "^4.19.2",
-    "typescript": "^5.7.2",
-    "@eslint/eslintrc": "^3.3.1",
-    "@eslint/js": "^9.32.0",
     "@typescript-eslint/eslint-plugin": "^8.38.0",
     "@typescript-eslint/parser": "^8.38.0",
+    "chai": "^5.1.2",
     "eslint": "^9.32.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-import-resolver-typescript": "^4.4.4",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-prettier": "^5.5.3",
     "eslint-plugin-security": "^3.0.1",
+    "husky": "^9.1.7",
+    "mocha": "^11.0.1",
+    "prettier": "^3.4.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
     "typescript-eslint": "^8.38.0"
   },
   "dependencies": {
