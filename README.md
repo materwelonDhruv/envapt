@@ -32,19 +32,17 @@ A powerful TypeScript-first environment configuration library that provides type
 
 ## Requirements
 
-- **Node.js**: v18 or later (recommended for ESM and nodenext support)
+- **Node.js**: v22 or later (recommended for ESM and nodenext support)
 - **TypeScript**: v5.8 or later
 - **Dependencies**:
   - `dotenv` (runtime dependency | bundled)
-  - `reflect-metadata` (peer dependency, required for decorators)
 - **TypeScript Compiler Options**:
   - `experimentalDecorators: true`
-  - `emitDecoratorMetadata: true`
-  - `module: nodenext`
-  - `moduleResolution: nodenext`
-  - `target: esnext`
+  - `module: nodenext OR esnext`
+  - `moduleResolution: nodenext OR bundler`
+  - `target: ESnext`
   - `lib: ESNext`
-- **ESM Support**: Project uses ESM (`nodenext`), so your environment and tooling should support ES modules.
+- **ESM Support**: Project uses ESM, so your environment and tooling should support ES modules.
 
 ## Quick Start
 
