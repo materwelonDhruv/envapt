@@ -50,13 +50,13 @@ A powerful TypeScript-first environment configuration library that provides type
 
 ```bash
 # npm
-npm install envapt reflect-metadata
+npm install envapt
 
 # pnpm
-pnpm add envapt reflect-metadata
+pnpm add envapt
 
 # yarn
-yarn add envapt reflect-metadata
+yarn add envapt
 ```
 
 ### Basic Usage
