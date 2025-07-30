@@ -1,4 +1,6 @@
+/* eslint-disable @typescript-eslint/unbound-method */
 import { EnvaptError, EnvaptErrorCodes } from './Error';
+import { Validator } from './Validators';
 
 import type { ArrayConverter, BuiltInConverter, BuiltInConverterReturnType } from './Types';
 
@@ -195,26 +197,26 @@ export class BuiltInConverters {
   ): (
     raw: string | undefined,
     fallback?: BuiltInConverterReturnType[FallbackType]
-  ) => BuiltInConverterReturnType[FallbackType] | undefined {
+  ) => BuiltInConverterReturnType[FallbackType] {
     const converters = {
-      string: void BuiltInConverters.string,
-      number: void BuiltInConverters.number,
-      boolean: void BuiltInConverters.boolean,
-      integer: void BuiltInConverters.integer,
-      bigint: void BuiltInConverters.bigint,
-      symbol: void BuiltInConverters.symbol,
-      float: void BuiltInConverters.float,
-      json: void BuiltInConverters.json,
-      array: void BuiltInConverters.array,
-      url: void BuiltInConverters.url,
-      regexp: void BuiltInConverters.regexp,
-      date: void BuiltInConverters.date,
-      time: void BuiltInConverters.time
+      string: BuiltInConverters.string,
+      number: BuiltInConverters.number,
+      boolean: BuiltInConverters.boolean,
+      integer: BuiltInConverters.integer,
+      bigint: BuiltInConverters.bigint,
+      symbol: BuiltInConverters.symbol,
+      float: BuiltInConverters.float,
+      json: BuiltInConverters.json,
+      array: BuiltInConverters.array,
+      url: BuiltInConverters.url,
+      regexp: BuiltInConverters.regexp,
+      date: BuiltInConverters.date,
+      time: BuiltInConverters.time
     } as const;
 
     const converter = converters[type];
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    if (!converter) {
+
+    if (!Validator.isValidConverterFunction(converter)) {
       throw new EnvaptError(EnvaptErrorCodes.InvalidBuiltInConverter, `Unknown built-in converter: ${type as string}`);
     }
 

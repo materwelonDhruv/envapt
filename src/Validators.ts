@@ -6,7 +6,8 @@ import type {
   ConverterFunction,
   ArrayConverter,
   BuiltInConverter,
-  ValidArrayConverterBuiltInType
+  ValidArrayConverterBuiltInType,
+  BuiltInConverterReturnType
 } from './Types';
 
 export class Validator {
@@ -44,6 +45,18 @@ export class Validator {
     );
 
     return validTypes.includes(value as ValidArrayConverterBuiltInType);
+  }
+
+  /**
+   * Check if a value is a valid custom converter function
+   */
+  static isValidConverterFunction<FallbackType extends BuiltInConverter>(
+    converter: unknown
+  ): converter is (
+    raw: string | undefined,
+    fallback?: BuiltInConverterReturnType[FallbackType]
+  ) => BuiltInConverterReturnType[FallbackType] {
+    return typeof converter === 'function';
   }
 
   static customConvertor<FallbackType>(
