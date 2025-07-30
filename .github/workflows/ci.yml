@@ -1,4 +1,4 @@
-name: CI
+name: Lint / Test / Build / Security Audit
 
 on: [push, pull_request]
 
