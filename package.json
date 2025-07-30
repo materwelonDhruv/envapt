@@ -22,7 +22,8 @@
     "dist",
     "NOTICE",
     "LICENSE",
-    "README.md"
+    "README.md",
+    "envuments.license"
   ],
   "repository": {
     "type": "git",
