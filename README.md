@@ -52,13 +52,13 @@ A powerful TypeScript-first environment configuration library that provides type
 
 ```bash
 # npm
-npm install @seedcord/envapt reflect-metadata
+npm install envapt reflect-metadata
 
 # pnpm
-pnpm add @seedcord/envapt reflect-metadata
+pnpm add envapt reflect-metadata
 
 # yarn
-yarn add @seedcord/envapt reflect-metadata
+yarn add envapt reflect-metadata
 ```
 
 ### Basic Usage
@@ -77,7 +77,7 @@ ALLOWED_ORIGINS=https://app.com,https://admin.com
 Use with decorators (recommended):
 
 ```ts
-import { Envapt, Envapter } from '@seedcord/envapt';
+import { Envapt, Envapter } from 'envapt';
 
 // Global app configuration (static properties)
 class AppConfig extends Envapter {
@@ -123,7 +123,7 @@ Or use functionally:\
 <sub>Limited to primitives, String, Number, Boolean, Symbol, and BigInt. Does not support converters.</sub>
 
 ```ts
-import { Envapter } from '@seedcord/envapt';
+import { Envapter } from 'envapt';
 
 const port = Envapter.getNumber('APP_PORT', 3000);
 const url = Envapter.get('APP_URL', 'http://localhost:3000');
@@ -323,7 +323,7 @@ class Config extends Envapter {
 ### Functional API
 
 ```ts
-import { Envapter } from '@seedcord/envapt';
+import { Envapter } from 'envapt';
 
 // Type-specific getters
 const str = Envapter.get('STRING_VAR', 'default');
@@ -348,7 +348,7 @@ Supported values: `development`, `staging`, `production` (case-sensitive)
 ### Environment Management
 
 ```ts
-import { Envapter, EnvaptEnvironment } from '@seedcord/envapt';
+import { Envapter, EnvaptEnvironment } from 'envapt';
 
 // Check current environment
 console.log(Envapter.environment); // Environment.Development
@@ -365,7 +365,7 @@ Envapter.environment = 'staging'; // string also works
 
 ```ts
 import { resolve } from 'node:path';
-import { Envapter } from '@seedcord/envapt';
+import { Envapter } from 'envapt';
 
 // Load from multiple files
 Envapter.envPaths = [resolve(__dirname, '.env.local'), resolve(__dirname, '.env.production')];
@@ -404,7 +404,7 @@ Circular references are detected and preserved as-is rather than causing infinit
 ### Complex Configuration
 
 ```ts
-import { Envapt, Envapter } from '@seedcord/envapt';
+import { Envapt, Envapter } from 'envapt';
 
 class AppConfig extends Envapter {
   // Global settings (static)

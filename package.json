@@ -1,5 +1,5 @@
 {
-  "name": "@seedcord/envapt",
+  "name": "envapt",
   "type": "module",
   "version": "1.0.0",
   "description": "The apt way to handle env",
@@ -7,17 +7,29 @@
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      }
+    }
   },
   "files": [
-    "dist"
+    "dist",
+    "NOTICE",
+    "LICENSE",
+    "README.md"
   ],
   "repository": {
     "type": "git",
     "url": "https://github.com/materwelonDhruv/envapt.git"
   },
   "scripts": {
-    "build": "tsup",
+    "build": "tsup && mv dist/index.d.cts dist/index.d.mts",
     "clean": "rm -rf dist",
     "dev": "tsc --watch",
     "lint": "eslint 'src/**/*.{ts,tsx}' --cache",
