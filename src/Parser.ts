@@ -51,6 +51,48 @@ export class Parser {
     return out;
   }
 
+  private processBuiltInConverter<FallbackType>(
+    key: string,
+    fallback: FallbackType | undefined,
+    resolvedConverter: EnvaptConverter<FallbackType>,
+    hasFallback: boolean
+  ): FallbackType | null | undefined {
+    // Validate the built-in converter at runtime
+    Validator.builtInConverter(resolvedConverter);
+    const parsed = this.envService.get(key, undefined);
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    if (parsed === undefined) return hasFallback ? fallback : null;
+
+    const converterFn = BuiltInConverters.getConverter(resolvedConverter);
+    const result = converterFn(parsed, fallback);
+
+    // If converter failed (returned undefined) and no fallback was provided, return null
+    if (result === undefined && !hasFallback) return null;
+
+    return result as FallbackType;
+  }
+
+  private processArrayConverter<FallbackType>(
+    key: string,
+    fallback: FallbackType | undefined,
+    resolvedConverter: EnvaptConverter<FallbackType>,
+    hasFallback: boolean
+  ): FallbackType | null | undefined {
+    // Validate the ArrayConverter configuration at runtime
+    Validator.arrayConverter(resolvedConverter);
+
+    const parsed = this.envService.get(key, undefined);
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    if (parsed === undefined) return hasFallback ? fallback : null;
+
+    const result = BuiltInConverters.processArrayConverter(parsed, fallback, resolvedConverter);
+
+    // If converter failed (returned undefined) and no fallback was provided, return null
+    if (result === undefined && !hasFallback) return null;
+
+    return result as FallbackType;
+  }
+
   convertValue<FallbackType>(
     key: string,
     fallback: FallbackType | undefined,
@@ -68,27 +110,12 @@ export class Parser {
 
     // Check if it's an ArrayConverter object
     if (Validator.isArrayConverter(resolvedConverter)) {
-      // Validate the ArrayConverter configuration at runtime
-      Validator.arrayConverter(resolvedConverter);
-
-      const parsed = this.envService.get(key, undefined);
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-      if (parsed === undefined) return hasFallback ? fallback : null;
-
-      return BuiltInConverters.processArrayConverter(parsed, fallback, resolvedConverter) as FallbackType;
+      return this.processArrayConverter(key, fallback, resolvedConverter, hasFallback);
     }
 
     // Check if it's a built-in converter
     if (Validator.isBuiltInConverter(resolvedConverter as EnvaptConverter<unknown>)) {
-      // Validate the built-in converter at runtime
-      Validator.builtInConverter(resolvedConverter);
-      const parsed = this.envService.get(key, undefined);
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-      if (parsed === undefined) return hasFallback ? fallback : null;
-
-      const converterFn = BuiltInConverters.getConverter(resolvedConverter);
-      const result = converterFn(parsed, fallback);
-      return result as FallbackType;
+      return this.processBuiltInConverter(key, fallback, resolvedConverter, hasFallback);
     }
 
     Validator.customConvertor(resolvedConverter);
