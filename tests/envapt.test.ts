@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-expressions */
 import { resolve } from 'node:path';
 
 import { expect } from 'chai';
@@ -266,6 +267,40 @@ describe('Envapter', () => {
 
     it('should parse integer values', () => {
       expect(BuiltInConverterShowcase.apiTimeout).to.equal(5000);
+    });
+  });
+
+  describe('multi-line variables', () => {
+    class MultiLineEnv {
+      @Envapt('MULTI_LINE_VAR')
+      public static readonly multiLineVar: string;
+
+      @Envapt('MULTI_LINE_VAR_ESCAPED')
+      public static readonly multiLineVarEscaped: string;
+
+      @Envapt('MULTI_LINE_WITH_BACKSLASHN')
+      public static readonly multiLineWithBackslashN: string;
+
+      @Envapt('MULTI_LINE_NUMBER', { converter: 'number' })
+      public static readonly multiLineNumber: number;
+    }
+
+    it('should handle multi-line variables correctly', () => {
+      expect(MultiLineEnv.multiLineVar).to.equal('This is a\nvariable that spans\nmultiple lines.');
+    });
+
+    it('should handle escaped multi-line variables correctly', () => {
+      expect(MultiLineEnv.multiLineVarEscaped).to.equal(
+        'This is a \\\nvariable that spans \\\nmultiple lines with \\\nescaping.'
+      );
+    });
+
+    it('should handle multi-line variables with backslash-n correctly', () => {
+      expect(MultiLineEnv.multiLineWithBackslashN).to.equal('This is a\nvariable with a backslash and n.');
+    });
+
+    it('should only allow strings in multiline', () => {
+      expect(MultiLineEnv.multiLineNumber).to.be.null;
     });
   });
 });
