@@ -9,6 +9,9 @@ permissions:
   contents: read
   id-token: write
 
+env:
+  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -26,6 +29,8 @@ jobs:
         with:
           node-version: '22'
           cache: pnpm
+          registry-url: 'https://registry.npmjs.org'
+          always-auth: true
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -44,5 +49,3 @@ jobs:
 
       - name: Publish to NPM
         run: pnpm publish --no-git-checks
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
