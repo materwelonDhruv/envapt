@@ -13,6 +13,14 @@ const ReversedEnvaptErrorCodes = Object.fromEntries(
   Object.entries(EnvaptErrorCodes).map(([key, value]) => [value, key])
 ) as Record<EnvaptErrorCode, string>;
 
+/**
+ * Custom error for better DX and debugging when using Envapt.
+ *
+ * @example
+ * ```ts
+ * throw new EnvaptError(EnvaptErrorCode.InvalidFallback, "Invalid fallback value provided for environment variable.");
+ * ```
+ */
 export class EnvaptError extends Error {
   public readonly code: EnvaptErrorCode;
 
