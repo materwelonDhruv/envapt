@@ -227,13 +227,12 @@ class Config extends Envapter {
 - `'boolean'` - Boolean values (true/false, yes/no, on/off, 1/0)
 - `'bigint'` - BigInt values for large integers
 - `'symbol'` - Symbol values (creates symbols from string descriptions)
-- `'time'` - Time values (converts "5s", "30m", "2h" to milliseconds)
 - `'json'` - JSON objects/arrays (safe parsing with fallback)
 - `'array'` - Comma-separated string arrays
 - `'url'` - URL objects
 - `'regexp'` - Regular expressions (supports `/pattern/flags` syntax)
 - `'date'` - Date objects (supports ISO strings and timestamps)
-- `'time'` - Values denoting time. Such as 100, 30ms, 5s, 10m, 1.5h. (parsed to ms)
+- `'time'` - Time values (converts "5s", "30m", "2h" to milliseconds)
 
 #### Custom Array Converters
 
