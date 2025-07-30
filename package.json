@@ -1,0 +1,75 @@
+{
+  "name": "@seedcord/envapt",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "The apt way to handle env",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "files": [
+    "dist"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/seedcord/seedcord.git",
+    "directory": "packages/envapt"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "clean": "rm -rf dist",
+    "dev": "tsc --watch",
+    "lint": "eslint 'src/**/*.{ts,tsx}' --cache",
+    "lint:fix": "eslint 'src/**/*.{ts,tsx}' --fix --cache",
+    "format": "prettier --write 'src/**/*.{ts,tsx,json,md}' --cache",
+    "format:check": "prettier --check 'src/**/*.{ts,tsx,json,md}' --cache",
+    "typecheck": "tsc --noEmit",
+    "test": "mocha",
+    "test:watch": "mocha --watch",
+    "prepublishOnly": "pnpm run clean && pnpm run build"
+  },
+  "keywords": [
+    "env",
+    ".env",
+    "dotenv",
+    "environment",
+    "variables",
+    "config",
+    "configuration",
+    "settings"
+  ],
+  "author": "Dhruv <materwelondhruv@gmail.com>",
+  "license": "Apache-2.0",
+  "contributors": [
+    {
+      "name": "Mason Rogers",
+      "email": "viction.dev@gmail.com"
+    }
+  ],
+  "devDependencies": {
+    "@types/chai": "^5.2.2",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^22.10.7",
+    "chai": "^5.1.2",
+    "mocha": "^11.0.1",
+    "prettier": "^3.4.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "@eslint/eslintrc": "^3.3.1",
+    "@eslint/js": "^9.32.0",
+    "@typescript-eslint/eslint-plugin": "^8.38.0",
+    "@typescript-eslint/parser": "^8.38.0",
+    "eslint": "^9.32.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-import-resolver-typescript": "^4.4.4",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-prettier": "^5.5.3",
+    "eslint-plugin-security": "^3.0.1",
+    "typescript-eslint": "^8.38.0"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.0"
+  }
+}

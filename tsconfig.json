@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig.json",
+  "compilerOptions": {
+    // Type Checking
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
+    "exactOptionalPropertyTypes": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noPropertyAccessFromIndexSignature": false,
+    "noUncheckedIndexedAccess": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "strict": true,
+
+    // Modules
+    "moduleDetection": "force",
+    "allowArbitraryExtensions": false,
+    "allowImportingTsExtensions": false,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "resolvePackageJsonExports": true,
+    "resolvePackageJsonImports": true,
+
+    // Emit
+    "declaration": true,
+    "declarationMap": true,
+    "composite": true,
+    "importHelpers": false,
+    "newLine": "lf",
+    "noEmitHelpers": true,
+    "outDir": "dist",
+    "removeComments": false,
+    "sourceMap": true,
+    "skipLibCheck": true,
+
+    // Interop Constraints
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": false,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+
+    // Language and Environment
+    "experimentalDecorators": true,
+    "lib": ["ESNext", "esnext.disposable", "Decorators", "Decorators.Legacy"],
+    "target": "ESNext",
+    "useDefineForClassFields": true,
+    "emitDecoratorMetadata": true,
+
+    "rootDir": "."
+  },
+  "include": ["src/**/*", "tests/**/*"],
+  "exclude": ["node_modules", "dist"]
+}

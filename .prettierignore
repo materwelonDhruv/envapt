@@ -1,0 +1,8 @@
+# Dependency directories
+node_modules/
+
+# eslint
+.eslintcache
+.eslintrc.js
+
+.env

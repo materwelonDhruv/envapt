@@ -1,0 +1,73 @@
+# dependencies
+node_modules/
+
+# debug
+npm-debug.*
+
+# local env files
+.env
+
+# typescript
+*.tsbuildinfo
+
+# misc
+debugging/
+**/.DS_Store
+
+# Certs
+certs/
+
+# Ignore build output directories
+dist/
+build/
+
+# Ignore IDE specific files
+**/.idea
+**/.vs
+
+# But keep .vscode settings for team consistency
+# **/.vscode (removed - we want to share VS Code settings)
+
+# Turborepo
+.turbo/
+
+# Package manager caches
+.pnpm-store/
+.yarn/
+.npm/
+
+# Ignore log files
+*.log
+logs/
+Logs/
+
+# ESLint cache
+.eslintcache
+
+# Ignore coverage reports
+coverage/
+
+# Ignore temporary files
+*.tmp
+*.swp
+
+# Ignore OS generated files
+Thumbs.db
+.DS_Store
+
+# Ignore Docker files
+# **/Dockerfile*
+# **/docker-compose*
+
+# Ignore secrets
+**/secrets.dev.yaml
+**/values.dev.yaml
+
+# Ignore miscellaneous project files
+**/.project
+**/.classpath
+**/.settings
+**/.toolstarget
+**/*.*proj.user
+**/*.dbmdl
+**/*.jfm
