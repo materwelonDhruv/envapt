@@ -47,7 +47,6 @@
     "lib": ["ESNext", "esnext.disposable", "Decorators", "Decorators.Legacy"],
     "target": "ESNext",
     "useDefineForClassFields": true,
-    "emitDecoratorMetadata": true,
 
     "rootDir": "."
   },
