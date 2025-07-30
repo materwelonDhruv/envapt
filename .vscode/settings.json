@@ -75,5 +75,6 @@
   "[markdown]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "files.trimTrailingWhitespace": false
-  }
+  },
+  "github-actions.use-enterprise": false
 }
