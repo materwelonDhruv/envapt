@@ -28,6 +28,7 @@
     "type": "git",
     "url": "https://github.com/materwelonDhruv/envapt.git"
   },
+  "homepage": "https://github.com/materwelonDhruv/envapt/blob/main/README.md",
   "scripts": {
     "build": "tsup && mv dist/index.d.cts dist/index.d.mts",
     "clean": "rm -rf dist",
