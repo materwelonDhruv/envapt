@@ -1,5 +1,5 @@
-import { ListOfBuiltInConverters } from './BuiltInConverters';
 import { EnvaptError, EnvaptErrorCodes } from './Error';
+import { ListOfBuiltInConverters } from './ListOfBuiltInConverters';
 
 import type {
   EnvaptConverter,

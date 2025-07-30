@@ -4,22 +4,6 @@ import { Validator } from './Validators';
 
 import type { ArrayConverter, BuiltInConverter, BuiltInConverterReturnType } from './Types';
 
-export const ListOfBuiltInConverters = [
-  'string',
-  'number',
-  'boolean',
-  'bigint',
-  'symbol',
-  'integer',
-  'float',
-  'json',
-  'array',
-  'url',
-  'regexp',
-  'date',
-  'time'
-] as const;
-
 /**
  * Built-in converter implementations
  * @internal

@@ -1,4 +1,4 @@
-import type { ListOfBuiltInConverters } from './BuiltInConverters';
+import type { ListOfBuiltInConverters } from './ListOfBuiltInConverters';
 
 /**
  * Built-in converter types for common environment variable patterns

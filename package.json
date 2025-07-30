@@ -17,7 +17,7 @@
     "url": "https://github.com/materwelonDhruv/envapt.git"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsup",
     "clean": "rm -rf dist",
     "dev": "tsc --watch",
     "lint": "eslint 'src/**/*.{ts,tsx}' --cache",
@@ -68,11 +68,20 @@
     "husky": "^9.1.7",
     "mocha": "^11.7.1",
     "prettier": "^3.6.2",
+    "tsup": "^8.5.0",
     "tsx": "^4.20.3",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.38.0"
   },
   "dependencies": {
     "dotenv": "^17.2.1"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "packageManager": "pnpm@10.12.0",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   }
 }

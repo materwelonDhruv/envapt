@@ -27,7 +27,6 @@
     // Emit
     "declaration": true,
     "declarationMap": true,
-    "composite": true,
     "importHelpers": false,
     "newLine": "lf",
     "noEmitHelpers": true,
@@ -50,6 +49,6 @@
 
     "rootDir": "."
   },
-  "include": ["src/**/*", "tests/**/*"],
+  "include": ["src/**/*", "tests/**/*", "tsup.config.ts"],
   "exclude": ["node_modules", "dist"]
 }
