@@ -376,6 +376,9 @@ describe('Built-in Converters', () => {
       @Envapt('TEST_TIME_INVALID', { converter: 'time', fallback: 999 })
       static readonly timeInvalid: number;
 
+      @Envapt('TEST_TIME_INVALID_UNIT', { converter: 'time', fallback: 777 })
+      static readonly timeInvalidUnit: number;
+
       @Envapt('NONEXISTENT_TIME', { converter: 'time', fallback: 5000 })
       static readonly nonexistentTime: number;
     }
@@ -406,6 +409,10 @@ describe('Built-in Converters', () => {
 
     it('should use fallback for invalid time format', () => {
       expect(TimeTest.timeInvalid).to.equal(999);
+    });
+
+    it('should use fallback for invalid time unit', () => {
+      expect(TimeTest.timeInvalidUnit).to.equal(777);
     });
 
     it('should use fallback for nonexistent time', () => {

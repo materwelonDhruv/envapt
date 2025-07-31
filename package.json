@@ -41,8 +41,7 @@
     "typecheck": "tsc --noEmit",
     "test": "mocha",
     "test:watch": "mocha --watch",
-    "coverage:dev": "nyc pnpm run test",
-    "coverage:prod": "nyc --reporter=lcov --reporter=text-summary pnpm run test",
+    "coverage": "nyc --reporter=lcov --reporter=text pnpm run test",
     "prepare": "husky",
     "prepublishOnly": "pnpm run clean && pnpm run build"
   },

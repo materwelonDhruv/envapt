@@ -1,5 +1,6 @@
 import { expect } from 'chai';
 
+import { Envapt } from '../src/Envapt';
 import { EnvaptError, EnvaptErrorCodes } from '../src/Error';
 import { Validator } from '../src/Validators';
 
@@ -92,6 +93,33 @@ describe('Runtime Validation', () => {
       for (const type of invalidTypes) {
         expect(Validator.isValidArrayConverterType(type)).to.be.false;
       }
+    });
+  });
+
+  describe('ArrayConverter fallback validation', () => {
+    it('should throw error when ArrayConverter is used with non-array fallback for missing env var', () => {
+      class InvalidArrayFallbackTest {
+        @Envapt('NONEXISTENT_ARRAY_VAR', {
+          converter: { delimiter: ',' },
+          fallback: 'not-an-array'
+        })
+        static readonly invalidArrayFallback: string[];
+      }
+
+      expect(() => InvalidArrayFallbackTest.invalidArrayFallback).to.throw(
+        'ArrayConverter requires that the fallback be an array, got string'
+      );
+    });
+
+    it('should return null when ArrayConverter is used without fallback for missing env var', () => {
+      class NoFallbackArrayTest {
+        @Envapt('NONEXISTENT_ARRAY_VAR', {
+          converter: { delimiter: ',' }
+        })
+        static readonly noFallbackArray: string[] | null;
+      }
+
+      expect(NoFallbackArrayTest.noFallbackArray).to.be.null;
     });
   });
 });

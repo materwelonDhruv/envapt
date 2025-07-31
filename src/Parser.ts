@@ -1,4 +1,5 @@
 import { BuiltInConverters } from './BuiltInConverters';
+import { EnvaptError, EnvaptErrorCodes } from './Error';
 import { Validator } from './Validators';
 
 import type { EnvaptConverter } from './Types';
@@ -80,6 +81,14 @@ export class Parser {
   ): FallbackType | null | undefined {
     // Validate the ArrayConverter configuration at runtime
     Validator.arrayConverter(resolvedConverter);
+
+    // Validate fallback type if a fallback is provided
+    if (hasFallback && fallback !== undefined && !Array.isArray(fallback)) {
+      throw new EnvaptError(
+        EnvaptErrorCodes.InvalidFallback,
+        `ArrayConverter requires that the fallback be an array, got ${typeof fallback}`
+      );
+    }
 
     const parsed = this.envService.get(key, undefined);
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
