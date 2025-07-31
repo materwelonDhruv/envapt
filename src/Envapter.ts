@@ -56,7 +56,7 @@ export class Envapter implements EnvapterService {
   private static _envPaths: string[] = ['.env']; // default path
 
   // Environment handling
-  private static internalEnvironment = this.determineEnvironment(
+  private static _environment = this.determineEnvironment(
     this.get('ENVIRONMENT', this.get('ENV', this.get('NODE_ENV', 'development')))
   );
 
@@ -83,7 +83,7 @@ export class Envapter implements EnvapterService {
     void this.config;
 
     // reset internal environment to force re-evaluation
-    this.internalEnvironment = this.determineEnvironment(
+    this._environment = this.determineEnvironment(
       this.get('ENVIRONMENT', this.get('ENV', this.get('NODE_ENV', 'development')))
     );
   }
@@ -112,6 +112,14 @@ export class Envapter implements EnvapterService {
   }
 
   /**
+   * Get the current application environment
+   * @returns Current environment enum value
+   */
+  static get environment(): Environment {
+    return this._environment;
+  }
+
+  /**
    * Set the application environment. Accepts either Environment enum or string value.
    *
    * @param env - Environment value ('development', 'staging', 'production') or Environment enum
@@ -123,15 +131,21 @@ export class Envapter implements EnvapterService {
    * ```
    */
   static set environment(env: string | Environment) {
-    this.internalEnvironment = this.determineEnvironment(env);
+    this._environment = this.determineEnvironment(env);
   }
 
   /**
-   * Get the current application environment
-   * @returns Current environment enum value
+   * @see {@link Envapter.environment}
    */
-  static get environment(): Environment {
-    return this.internalEnvironment;
+  get environment(): Environment {
+    return Envapter._environment;
+  }
+
+  /**
+   * @see {@link Envapter.environment}
+   */
+  set environment(env: string | Environment) {
+    Envapter._environment = Envapter.determineEnvironment(env);
   }
 
   /**
@@ -139,7 +153,14 @@ export class Envapter implements EnvapterService {
    * @returns true if environment is production
    */
   static get isProduction(): boolean {
-    return this.internalEnvironment === Environment.Production;
+    return this._environment === Environment.Production;
+  }
+
+  /**
+   * @see {@link Envapter.isProduction}
+   */
+  get isProduction(): boolean {
+    return Envapter._environment === Environment.Production;
   }
 
   /**
@@ -147,7 +168,14 @@ export class Envapter implements EnvapterService {
    * @returns true if environment is staging
    */
   static get isStaging(): boolean {
-    return this.internalEnvironment === Environment.Staging;
+    return this._environment === Environment.Staging;
+  }
+
+  /**
+   * @see {@link Envapter.isStaging}
+   */
+  get isStaging(): boolean {
+    return Envapter._environment === Environment.Staging;
   }
 
   /**
@@ -155,7 +183,14 @@ export class Envapter implements EnvapterService {
    * @returns true if environment is development
    */
   static get isDevelopment(): boolean {
-    return this.internalEnvironment === Environment.Development;
+    return this._environment === Environment.Development;
+  }
+
+  /**
+   * @see {@link Envapter.isDevelopment}
+   */
+  get isDevelopment(): boolean {
+    return Envapter._environment === Environment.Development;
   }
 
   private static get config(): Map<string, unknown> {
@@ -227,6 +262,13 @@ export class Envapter implements EnvapterService {
   }
 
   /**
+   * @see {@link Envapter.get}
+   */
+  get(key: string, def?: string): string {
+    return Envapter._get(key, Primitive.String, def) as string;
+  }
+
+  /**
    * Get a number environment variable with optional fallback.
    * Automatically converts string values to numbers.
    *
@@ -241,6 +283,13 @@ export class Envapter implements EnvapterService {
    */
   static getNumber(key: string, def?: number): number {
     return this._get(key, Primitive.Number, def) as number;
+  }
+
+  /**
+   * @see {@link Envapter.getNumber
+   */
+  getNumber(key: string, def?: number): number {
+    return Envapter._get(key, Primitive.Number, def) as number;
   }
 
   /**
@@ -261,6 +310,13 @@ export class Envapter implements EnvapterService {
   }
 
   /**
+   * @see {@link Envapter.getBoolean}
+   */
+  getBoolean(key: string, def?: boolean): boolean {
+    return Envapter._get(key, Primitive.Boolean, def) as boolean;
+  }
+
+  /**
    * Get a bigint environment variable with optional fallback.
    * Automatically converts string values to bigint.
    *
@@ -275,6 +331,13 @@ export class Envapter implements EnvapterService {
    */
   static getBigInt(key: string, def?: bigint): bigint {
     return this._get(key, Primitive.BigInt, def) as bigint;
+  }
+
+  /**
+   * @see {@link Envapter.getBigInt}
+   */
+  getBigInt(key: string, def?: bigint): bigint {
+    return Envapter._get(key, Primitive.BigInt, def) as bigint;
   }
 
   /**
@@ -294,22 +357,9 @@ export class Envapter implements EnvapterService {
     return this._get(key, Primitive.Symbol, def) as symbol;
   }
 
-  get(key: string, def?: string): string {
-    return Envapter._get(key, Primitive.String, def) as string;
-  }
-
-  getNumber(key: string, def?: number): number {
-    return Envapter._get(key, Primitive.Number, def) as number;
-  }
-
-  getBoolean(key: string, def?: boolean): boolean {
-    return Envapter._get(key, Primitive.Boolean, def) as boolean;
-  }
-
-  getBigInt(key: string, def?: bigint): bigint {
-    return Envapter._get(key, Primitive.BigInt, def) as bigint;
-  }
-
+  /**
+   * @see {@link Envapter.getSymbol}
+   */
   getSymbol(key: string, def?: symbol): symbol {
     return Envapter._get(key, Primitive.Symbol, def) as symbol;
   }

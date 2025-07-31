@@ -9,7 +9,7 @@ describe('Instance Properties with @Envapt', () => {
   before(() => (Envapter.envPaths = resolve(__dirname, '.env.instance-props-test')));
 
   describe('basic instance properties', () => {
-    class BasicInstanceProperties {
+    class BasicInstanceProperties extends Envapter {
       @Envapt('INSTANCE_PROP_1') declare instanceProp1: string;
 
       @Envapt('INSTANCE_PROP_2') declare instanceProp2: string;
@@ -27,6 +27,12 @@ describe('Instance Properties with @Envapt', () => {
 
     it('should resolve templated instance property', () => {
       expect(instance.instanceProp3).to.equal('value1-value2');
+    });
+
+    it('should be in production environment', () => {
+      expect(instance.isProduction).to.be.true;
+      expect(instance.isDevelopment).to.be.false;
+      expect(instance.isStaging).to.be.false;
     });
   });
 
