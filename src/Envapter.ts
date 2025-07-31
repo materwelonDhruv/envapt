@@ -56,9 +56,11 @@ export class Envapter implements EnvapterService {
   private static _envPaths: string[] = ['.env']; // default path
 
   // Environment handling
-  private static _environment = this.determineEnvironment(
-    this.get('ENVIRONMENT', this.get('ENV', this.get('NODE_ENV', 'development')))
-  );
+  private static _environment: Environment;
+
+  static {
+    this.determineEnvironment();
+  }
 
   /**
    * Set custom .env file paths. Accepts either a single path or array of paths.
@@ -83,9 +85,7 @@ export class Envapter implements EnvapterService {
     void this.config;
 
     // reset internal environment to force re-evaluation
-    this._environment = this.determineEnvironment(
-      this.get('ENVIRONMENT', this.get('ENV', this.get('NODE_ENV', 'development')))
-    );
+    this.determineEnvironment();
   }
 
   /**
@@ -96,19 +96,19 @@ export class Envapter implements EnvapterService {
     return this._envPaths;
   }
 
-  private static determineEnvironment(env: string | Environment): Environment {
-    if (typeof env === 'string') {
-      switch (env.toLowerCase()) {
-        case 'production':
-          return Environment.Production;
-        case 'staging':
-          return Environment.Staging;
-        default:
-          return Environment.Development;
-      }
-    }
+  private static determineEnvironment(env?: string | Environment): void {
+    const environment = env ?? this.get('ENVIRONMENT', this.get('ENV', this.get('NODE_ENV', 'development')));
 
-    return env;
+    if (typeof environment === 'string') {
+      this._environment =
+        environment.toLowerCase() === 'production'
+          ? Environment.Production
+          : environment === 'staging'
+            ? Environment.Staging
+            : Environment.Development;
+    } else {
+      this._environment = environment;
+    }
   }
 
   /**
@@ -131,7 +131,7 @@ export class Envapter implements EnvapterService {
    * ```
    */
   static set environment(env: string | Environment) {
-    this._environment = this.determineEnvironment(env);
+    this.determineEnvironment(env);
   }
 
   /**
@@ -145,7 +145,7 @@ export class Envapter implements EnvapterService {
    * @see {@link Envapter.environment}
    */
   set environment(env: string | Environment) {
-    Envapter._environment = Envapter.determineEnvironment(env);
+    Envapter.determineEnvironment(env);
   }
 
   /**

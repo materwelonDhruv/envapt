@@ -148,12 +148,19 @@ describe('Envapter', () => {
       expect(TestEnv.nonexistentVarWithFallbackBoolean).to.be.true;
     });
 
-    // isStaging is present because we extended the Envapter class
     it('should be true for isStaging environment set in .env.extra', () => {
       expect(TestEnv.isStaging).to.be.true;
       expect(TestEnv.isProduction).to.be.false;
       expect(TestEnv.isDevelopment).to.be.false;
       expect(TestEnv.environment).to.equal(Environment.Staging);
+    });
+
+    it('should update environment to Production', () => {
+      TestEnv.environment = Environment.Production;
+      expect(TestEnv.isStaging).to.be.false;
+      expect(TestEnv.isProduction).to.be.true;
+      expect(TestEnv.isDevelopment).to.be.false;
+      expect(TestEnv.environment).to.equal(Environment.Production);
     });
   });
 

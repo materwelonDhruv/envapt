@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 import { expect } from 'chai';
 
 import { Envapt } from '../src/Envapt';
-import { Envapter } from '../src/Envapter';
+import { Envapter, Environment } from '../src/Envapter';
 
 describe('Instance Properties with @Envapt', () => {
   before(() => (Envapter.envPaths = resolve(__dirname, '.env.instance-props-test')));
@@ -33,6 +33,14 @@ describe('Instance Properties with @Envapt', () => {
       expect(instance.isProduction).to.be.true;
       expect(instance.isDevelopment).to.be.false;
       expect(instance.isStaging).to.be.false;
+    });
+
+    it('should update environment to Staging', () => {
+      instance.environment = Environment.Staging;
+      expect(instance.isStaging).to.be.true;
+      expect(instance.isProduction).to.be.false;
+      expect(instance.isDevelopment).to.be.false;
+      expect(instance.environment).to.equal(Environment.Staging);
     });
   });
 
