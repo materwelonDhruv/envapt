@@ -2,6 +2,12 @@
 
 A TypeScript environment configuration library that eliminates the boilerplate of parsing .env files. Get properly runtime-typed environment variables with fallbacks, template support, and automatic, built-in, & custom type conversion - no more `process.env.PORT || '3000'` everywhere.
 
+[![Build](https://github.com/materwelondhruv/envapt/actions/workflows/publish.yml/badge.svg)](https://github.com/materwelondhruv/envapt/actions)
+[![Coverage](https://codecov.io/gh/materwelondhruv/envapt/branch/main/graph/badge.svg)](https://app.codecov.io/gh/materwelondhruv/envapt)
+[![npm version](https://img.shields.io/npm/v/envapt.svg)](https://www.npmjs.com/package/envapt)
+[![Downloads](https://img.shields.io/npm/dm/envapt.svg)](https://www.npmjs.com/package/envapt)
+[![License](https://img.shields.io/npm/l/envapt.svg)](LICENSE)
+
 ## Features
 
 - 🔧 **Automatic Type Detection** - Runtime types inferred from fallback values
