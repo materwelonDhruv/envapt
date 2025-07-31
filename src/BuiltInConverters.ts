@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/unbound-method */
-import { Validator } from './Validators';
 
-import type { ArrayConverter, BuiltInConverter, BuiltInConverterReturnType } from './Types';
+import type { ArrayConverter, BuiltInConverter, BuiltInConverterFunction } from './Types';
 
 type TimeUnit = 'ms' | 's' | 'm' | 'h';
 
@@ -158,10 +157,7 @@ export class BuiltInConverters {
    */
   static getConverter<FallbackType extends BuiltInConverter>(
     type: FallbackType
-  ): (
-    raw: string | undefined,
-    fallback?: BuiltInConverterReturnType[FallbackType]
-  ) => BuiltInConverterReturnType[FallbackType] {
+  ): BuiltInConverterFunction<FallbackType> {
     const converters = {
       string: BuiltInConverters.string,
       number: BuiltInConverters.number,
@@ -179,7 +175,6 @@ export class BuiltInConverters {
     } as const;
 
     const converter = converters[type];
-    Validator.validConverterFunction(converter);
-    return converter;
+    return converter as BuiltInConverterFunction<FallbackType>;
   }
 }

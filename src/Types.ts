@@ -92,8 +92,14 @@ interface ConverterMap {
 
 /**
  * Type mapping for built-in converters to their return types
+ * @internal
  */
 type BuiltInConverterReturnType<ConverterKey extends BuiltInConverter = BuiltInConverter> = ConverterMap[ConverterKey];
+
+type BuiltInConverterFunction<FallbackType extends BuiltInConverter> = (
+  raw: string | undefined,
+  fallback?: BuiltInConverterReturnType[FallbackType]
+) => BuiltInConverterReturnType[FallbackType];
 
 export type {
   BuiltInConverter,
@@ -104,5 +110,6 @@ export type {
   ConverterFunction,
   EnvaptConverter,
   EnvaptOptions,
-  BuiltInConverterReturnType
+  BuiltInConverterReturnType,
+  BuiltInConverterFunction
 };

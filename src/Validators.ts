@@ -2,12 +2,11 @@ import { EnvaptError, EnvaptErrorCodes } from './Error';
 import { ListOfBuiltInConverters } from './ListOfBuiltInConverters';
 
 import type {
-  EnvaptConverter,
-  ConverterFunction,
   ArrayConverter,
   BuiltInConverter,
-  ValidArrayConverterBuiltInType,
-  BuiltInConverterReturnType
+  ConverterFunction,
+  EnvaptConverter,
+  ValidArrayConverterBuiltInType
 } from './Types';
 
 export class Validator {
@@ -45,23 +44,6 @@ export class Validator {
     );
 
     return validTypes.includes(value as ValidArrayConverterBuiltInType);
-  }
-
-  /**
-   * Check if a value is a valid custom converter function
-   */
-  static validConverterFunction<FallbackType extends BuiltInConverter>(
-    converter: unknown
-  ): asserts converter is (
-    raw: string | undefined,
-    fallback?: BuiltInConverterReturnType[FallbackType]
-  ) => BuiltInConverterReturnType[FallbackType] {
-    if (typeof converter !== 'function') {
-      throw new EnvaptError(
-        EnvaptErrorCodes.FailedToResolveConverter,
-        `Custom converter must be a function, got ${typeof converter}.`
-      );
-    }
   }
 
   static customConvertor<FallbackType>(

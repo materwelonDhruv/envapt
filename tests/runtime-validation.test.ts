@@ -97,29 +97,39 @@ describe('Runtime Validation', () => {
   });
 
   describe('ArrayConverter fallback validation', () => {
-    it('should throw error when ArrayConverter is used with non-array fallback for missing env var', () => {
-      class InvalidArrayFallbackTest {
-        @Envapt('NONEXISTENT_ARRAY_VAR', {
-          converter: { delimiter: ',' },
-          fallback: 'not-an-array'
-        })
-        static readonly invalidArrayFallback: string[];
-      }
+    class ArrayFallbackTests {
+      @Envapt('NONEXISTENT_ARRAY_VAR', {
+        converter: { delimiter: ',' },
+        fallback: 'not-an-array'
+      })
+      static readonly invalidArrayFallback: string[];
 
-      expect(() => InvalidArrayFallbackTest.invalidArrayFallback)
+      @Envapt('INVALID_ARRAY_CONVERTER_TYPE', {
+        converter: { delimiter: ',', type: 'invalid' },
+        fallback: []
+      })
+      static readonly invalidArrayConverterType: string[];
+
+      @Envapt('NONEXISTENT_ARRAY_VAR', {
+        converter: { delimiter: ',' }
+      })
+      static readonly noFallbackArray: string[] | null;
+    }
+
+    it('should throw error when ArrayConverter is used with non-array fallback for missing env var', () => {
+      expect(() => ArrayFallbackTests.invalidArrayFallback)
         .to.throw(EnvaptError)
         .with.property('code', EnvaptErrorCodes.InvalidFallback);
     });
 
-    it('should return null when ArrayConverter is used without fallback for missing env var', () => {
-      class NoFallbackArrayTest {
-        @Envapt('NONEXISTENT_ARRAY_VAR', {
-          converter: { delimiter: ',' }
-        })
-        static readonly noFallbackArray: string[] | null;
-      }
+    it('should throw error when ArrayConverter is used with invalid type in converter', () => {
+      expect(() => ArrayFallbackTests.invalidArrayConverterType)
+        .to.throw(EnvaptError)
+        .with.property('code', EnvaptErrorCodes.InvalidArrayConverterType);
+    });
 
-      expect(NoFallbackArrayTest.noFallbackArray).to.be.null;
+    it('should return null when ArrayConverter is used without fallback for missing env var', () => {
+      expect(ArrayFallbackTests.noFallbackArray).to.be.null;
     });
   });
 });
