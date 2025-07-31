@@ -69,6 +69,7 @@ interface EnvaptOptions<FallbackType = string> {
   fallback?: FallbackType;
   /**
    * Built-in converter, custom converter function, or boxed-primitives (String, Number, Boolean)
+   * @see {@link EnvaptConverter} for details
    */
   converter?: EnvaptConverter<FallbackType>;
 }
