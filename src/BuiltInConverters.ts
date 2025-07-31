@@ -1,6 +1,12 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 
-import type { ArrayConverter, BuiltInConverter, BuiltInConverterFunction } from './Types';
+import type {
+  ArrayConverter,
+  BuiltInConverter,
+  BuiltInConverterFunction,
+  JsonValue,
+  MapOfConverterFunctions
+} from './Types';
 
 type TimeUnit = 'ms' | 's' | 'm' | 'h';
 
@@ -51,9 +57,9 @@ export class BuiltInConverters {
     return Number.isNaN(parsed) ? fallback : parsed;
   }
 
-  static json<ParsedJson = unknown>(raw: string, fallback?: ParsedJson): ParsedJson | undefined {
+  static json(raw: string, fallback?: JsonValue): JsonValue | undefined {
     try {
-      return JSON.parse(raw) as ParsedJson;
+      return JSON.parse(raw) as JsonValue;
     } catch {
       return fallback;
     }
@@ -155,10 +161,8 @@ export class BuiltInConverters {
   /**
    * Get the converter function for a built-in converter type
    */
-  static getConverter<FallbackType extends BuiltInConverter>(
-    type: FallbackType
-  ): BuiltInConverterFunction<FallbackType> {
-    const converters = {
+  static getConverter<FallbackType extends BuiltInConverter>(type: FallbackType): BuiltInConverterFunction {
+    const converters: MapOfConverterFunctions = {
       string: BuiltInConverters.string,
       number: BuiltInConverters.number,
       boolean: BuiltInConverters.boolean,
@@ -174,7 +178,6 @@ export class BuiltInConverters {
       time: BuiltInConverters.time
     } as const;
 
-    const converter = converters[type];
-    return converter as BuiltInConverterFunction<FallbackType>;
+    return converters[type];
   }
 }

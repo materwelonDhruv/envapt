@@ -74,6 +74,17 @@ interface EnvaptOptions<FallbackType = string> {
   converter?: EnvaptConverter<FallbackType>;
 }
 
+type JsonPrimitive = string | number | boolean | null;
+type JsonArray = JsonValue[];
+interface JsonObject {
+  [key: string]: JsonValue;
+}
+/**
+ * JSON value types for custom converters
+ * @internal
+ */
+type JsonValue = JsonPrimitive | JsonArray | JsonObject;
+
 interface ConverterMap {
   string: string;
   number: number;
@@ -82,7 +93,7 @@ interface ConverterMap {
   symbol: symbol;
   integer: number;
   float: number;
-  json: unknown;
+  json: JsonValue;
   array: string[];
   url: URL;
   regexp: RegExp;
@@ -96,10 +107,25 @@ interface ConverterMap {
  */
 type BuiltInConverterReturnType<ConverterKey extends BuiltInConverter = BuiltInConverter> = ConverterMap[ConverterKey];
 
-type BuiltInConverterFunction<FallbackType extends BuiltInConverter> = (
-  raw: string | undefined,
-  fallback?: BuiltInConverterReturnType[FallbackType]
-) => BuiltInConverterReturnType[FallbackType];
+/**
+ * Return type for built-in converter functions
+ * @internal
+ */
+type ReturnValuesOfConverterFunctions = ConverterMap[BuiltInConverter];
+
+/**
+ * Function type for built-in converter functions
+ * @internal
+ */
+type BuiltInConverterFunction = (
+  ...args: Parameters<(...args: any[]) => ReturnValuesOfConverterFunctions>
+) => ReturnValuesOfConverterFunctions | undefined;
+
+/**
+ * Map of built-in converter functions
+ * @internal
+ */
+type MapOfConverterFunctions = Record<BuiltInConverter, BuiltInConverterFunction>;
 
 export type {
   BuiltInConverter,
@@ -110,6 +136,8 @@ export type {
   ConverterFunction,
   EnvaptConverter,
   EnvaptOptions,
+  JsonValue,
   BuiltInConverterReturnType,
-  BuiltInConverterFunction
+  BuiltInConverterFunction,
+  MapOfConverterFunctions
 };

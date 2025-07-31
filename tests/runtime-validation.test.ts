@@ -132,4 +132,18 @@ describe('Runtime Validation', () => {
       expect(ArrayFallbackTests.noFallbackArray).to.be.null;
     });
   });
+
+  describe('Custom converter validation', () => {
+    class CustomConverterTests {
+      // TODO: This should throw a type error, doesn't at the moment for some reason.
+      @Envapt('CUSTOM_CONVERTER_VAR', { converter: 'lol' })
+      static readonly customConverter: string;
+    }
+
+    it('should throw on invalid passed converter', () => {
+      expect(() => CustomConverterTests.customConverter)
+        .to.throw(EnvaptError)
+        .with.property('code', EnvaptErrorCodes.InvalidCustomConverter);
+    });
+  });
 });
