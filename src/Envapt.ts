@@ -8,7 +8,7 @@ function createPropertyDecorator<TFallback>(
   key: string,
   fallback: TFallback | undefined,
   converter: EnvaptConverter<TFallback> | undefined,
-  hasFallback = true
+  hasFallback: boolean
 ): PropertyDecorator {
   return function (target: object, prop: string | symbol): void {
     const propKey = String(prop);

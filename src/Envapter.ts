@@ -140,7 +140,7 @@ export class Envapter implements EnvapterService {
 
   private static _get<EnvVarReturnType, DefaultType extends EnvVarReturnType | undefined = undefined>(
     key: string,
-    type: Primitive = Primitive.String,
+    type: Primitive,
     def?: DefaultType
   ): ConditionalReturn<EnvVarReturnType, DefaultType> {
     const rawVal = this.config.get(key) as string | number | boolean;

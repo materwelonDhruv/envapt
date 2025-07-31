@@ -96,8 +96,6 @@ export class Validator {
    * Validate that fallback type matches the converter's return type for built-in converters
    */
   static validateBuiltInConverterFallback(converter: BuiltInConverter, fallback: unknown): void {
-    if (fallback === undefined) return; // No fallback to validate
-
     const typeChecker = BuiltInConverterTypeCheckers[converter];
     if (!typeChecker(fallback)) {
       throw new EnvaptError(

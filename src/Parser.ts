@@ -28,13 +28,10 @@ export class Parser {
    * @internal
    */
   resolveTemplate(key: string, value: string, stack = new Set<string>()): string {
-    if (stack.has(key)) return value; // direct cycle, keep as is
-
     stack.add(key);
 
     const out = value.replace(this.TEMPLATE_REGEX, (template) => {
       const variable = template.slice(2, -1);
-      if (!variable) return template; // empty name, preserve
 
       if (stack.has(variable)) return template; // cycle, preserve
 
@@ -60,7 +57,7 @@ export class Parser {
     key: string,
     fallback: TFallback | undefined,
     converter: EnvaptConverter<TFallback> | undefined,
-    hasFallback = true
+    hasFallback: boolean
   ): TFallback | null | undefined {
     const resolvedConverter = this.resolveConverter(converter, fallback);
     const processedFallback = this.processFallbackForConverter(resolvedConverter, fallback);
