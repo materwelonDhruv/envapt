@@ -127,6 +127,12 @@ type BuiltInConverterFunction = (
  */
 type MapOfConverterFunctions = Record<BuiltInConverter, BuiltInConverterFunction>;
 
+/**
+ * Time unit types for duration conversions
+ * @internal
+ */
+type TimeUnit = 'ms' | 's' | 'm' | 'h';
+
 export type {
   BuiltInConverter,
   PrimitiveConstructor,
@@ -139,5 +145,6 @@ export type {
   JsonValue,
   BuiltInConverterReturnType,
   BuiltInConverterFunction,
-  MapOfConverterFunctions
+  MapOfConverterFunctions,
+  TimeUnit
 };

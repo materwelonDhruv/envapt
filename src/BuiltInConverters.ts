@@ -5,10 +5,9 @@ import type {
   BuiltInConverter,
   BuiltInConverterFunction,
   JsonValue,
-  MapOfConverterFunctions
+  MapOfConverterFunctions,
+  TimeUnit
 } from './Types';
-
-type TimeUnit = 'ms' | 's' | 'm' | 'h';
 
 /**
  * Built-in converter implementations

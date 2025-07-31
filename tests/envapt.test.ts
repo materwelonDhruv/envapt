@@ -3,28 +3,10 @@ import { resolve } from 'node:path';
 import { expect } from 'chai';
 
 import { Envapt } from '../src/Envapt';
-import { Envapter, Environment } from '../src/Envapter';
+import { Envapter } from '../src/Envapter';
 
-describe('Envapter', () => {
-  before(() => (Envapter.envPaths = resolve(__dirname, '.env.test')));
-
-  describe('env path configuration', () => {
-    it('should be .env.test set at the top of the file rather than .env', () => {
-      // we expect it to be our test path since we set it at module level
-      expect(Envapter.envPaths).to.deep.equal([resolve(__dirname, '.env.test')]);
-    });
-
-    it('should allow setting custom .env path', () => {
-      Envapter.envPaths = 'custom/.env';
-      expect(Envapter.envPaths).to.deep.equal(['custom/.env']);
-    });
-
-    // reset to test path
-    it('should set to list of .env files', () => {
-      Envapter.envPaths = [resolve(__dirname, '.env.test'), resolve(__dirname, '.env.extra')];
-      expect(Envapter.envPaths).to.deep.equal([resolve(__dirname, '.env.test'), resolve(__dirname, '.env.extra')]);
-    });
-  });
+describe('Envapt', () => {
+  before(() => (Envapter.envPaths = resolve(__dirname, '.env.envapt-test')));
 
   describe('automatic type detection', () => {
     class TestTypeDetection {
@@ -103,9 +85,6 @@ describe('Envapter', () => {
       @Envapt('TEST_VAR', { fallback: undefined })
       public static readonly testVar: string;
 
-      @Envapt('VAR_IN_EXTRA_FILE', { converter: Boolean })
-      public static readonly varInExtraFile: boolean | undefined;
-
       @Envapt('NONEXISTENT_VAR_WITH_FALLBACK_STRING', { fallback: 'default-value' })
       public static readonly nonexistentVarWithFallbackString: string;
 
@@ -131,11 +110,6 @@ describe('Envapter', () => {
       expect(TestEnv.testVar).to.equal('var1var2var3');
     });
 
-    // should work now since we set the extra .env path above
-    it('should load variable from .env.extra file', () => {
-      expect(TestEnv.varInExtraFile).to.be.true;
-    });
-
     it('should return fallback for non-existent variable with non-undefined fallback', () => {
       expect(TestEnv.nonexistentVarWithFallbackString).to.equal('default-value');
     });
@@ -146,21 +120,6 @@ describe('Envapter', () => {
 
     it('should return fallback for non-existent variable with non-undefined boolean fallback', () => {
       expect(TestEnv.nonexistentVarWithFallbackBoolean).to.be.true;
-    });
-
-    it('should be true for isStaging environment set in .env.extra', () => {
-      expect(TestEnv.isStaging).to.be.true;
-      expect(TestEnv.isProduction).to.be.false;
-      expect(TestEnv.isDevelopment).to.be.false;
-      expect(TestEnv.environment).to.equal(Environment.Staging);
-    });
-
-    it('should update environment to Production', () => {
-      TestEnv.environment = Environment.Production;
-      expect(TestEnv.isStaging).to.be.false;
-      expect(TestEnv.isProduction).to.be.true;
-      expect(TestEnv.isDevelopment).to.be.false;
-      expect(TestEnv.environment).to.equal(Environment.Production);
     });
   });
 

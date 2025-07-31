@@ -217,31 +217,11 @@ export class Envapter implements EnvapterService {
 
     const parsed = this.parser.resolveTemplate(key, String(rawVal));
 
-    switch (type) {
-      case Primitive.String: {
-        return BuiltInConverters.string(parsed, def as string);
-      }
-
-      case Primitive.Number: {
-        return BuiltInConverters.number(parsed, def as number);
-      }
-
-      case Primitive.Boolean: {
-        return BuiltInConverters.boolean(parsed, def as boolean);
-      }
-
-      case Primitive.BigInt: {
-        return BuiltInConverters.bigint(parsed, def as bigint);
-      }
-
-      case Primitive.Symbol: {
-        return BuiltInConverters.symbol(parsed, def as symbol);
-      }
-
-      default: {
-        return BuiltInConverters.string(parsed, def as string);
-      }
-    }
+    if (type === Primitive.Number) return BuiltInConverters.number(parsed, def as number);
+    if (type === Primitive.Boolean) return BuiltInConverters.boolean(parsed, def as boolean);
+    if (type === Primitive.BigInt) return BuiltInConverters.bigint(parsed, def as bigint);
+    if (type === Primitive.Symbol) return BuiltInConverters.symbol(parsed, def as symbol);
+    return BuiltInConverters.string(parsed, def as string);
   }
 
   /**
