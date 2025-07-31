@@ -2,8 +2,7 @@ import { resolve } from 'node:path';
 
 import { expect } from 'chai';
 
-import { Envapt } from '../src/Envapt';
-import { Envapter } from '../src/Envapter';
+import { Envapt, Envapter } from '../src';
 
 describe('Envapt', () => {
   before(() => (Envapter.envPaths = resolve(__dirname, '.env.envapt-test')));

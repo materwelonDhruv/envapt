@@ -2,8 +2,9 @@ import { resolve } from 'node:path';
 
 import { expect } from 'chai';
 
-import { Envapt } from '../src/Envapt';
-import { Envapter } from '../src/Envapter';
+import { Envapt, Envapter } from '../src';
+
+import type { JsonValue } from '../src';
 
 describe('Edge Cases', () => {
   before(() => (Envapter.envPaths = resolve(__dirname, '.env.edge-cases')));
@@ -125,7 +126,7 @@ describe('Edge Cases', () => {
         fallback: { key: 'default' },
         converter: (raw, fallback) => {
           if (typeof raw !== 'string' || !fallback) return fallback;
-          return JSON.parse(raw);
+          return JSON.parse(raw) as JsonValue;
         }
       })
       static readonly objectFallback: object;

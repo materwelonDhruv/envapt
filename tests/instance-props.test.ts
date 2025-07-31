@@ -2,8 +2,7 @@ import { resolve } from 'node:path';
 
 import { expect } from 'chai';
 
-import { Envapt } from '../src/Envapt';
-import { Envapter, Environment } from '../src/Envapter';
+import { Envapt, Envapter, Environment } from '../src';
 
 describe('Instance Properties with @Envapt', () => {
   before(() => (Envapter.envPaths = resolve(__dirname, '.env.instance-props-test')));

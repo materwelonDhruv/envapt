@@ -5,7 +5,8 @@ export enum EnvaptErrorCodes {
   InvalidArrayConverterType = 193159,
   InvalidBuiltInConverter = 337271,
   InvalidConverterType = 453217,
-  InvalidCustomConverter = 789432
+  InvalidCustomConverter = 789432,
+  InvalidFallbackType = 245783
 }
 
 /**

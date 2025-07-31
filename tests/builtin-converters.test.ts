@@ -2,8 +2,7 @@ import { resolve } from 'node:path';
 
 import { expect } from 'chai';
 
-import { Envapt } from '../src/Envapt';
-import { Envapter } from '../src/Envapter';
+import { Envapt, Envapter } from '../src';
 
 describe('Built-in Converters', () => {
   before(() => (Envapter.envPaths = resolve(__dirname, '.env.builtin-test')));

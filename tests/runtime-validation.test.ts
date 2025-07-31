@@ -1,10 +1,14 @@
+import { resolve } from 'node:path';
+
 import { expect } from 'chai';
 
-import { Envapt } from '../src/Envapt';
-import { EnvaptError, EnvaptErrorCodes } from '../src/Error';
+import { Envapt, Envapter, EnvaptErrorCodes } from '../src';
+import { EnvaptError } from '../src/Error';
 import { Validator } from '../src/Validators';
 
 describe('Runtime Validation', () => {
+  before(() => (Envapter.envPaths = resolve(__dirname, '.env.extra')));
+
   describe('Built-in converter validation', () => {
     it('should validate correct built-in converter types', () => {
       const validTypes = ['string', 'number', 'boolean', 'bigint', 'symbol', 'array', 'json', 'url', 'regexp', 'date'];
@@ -114,6 +118,12 @@ describe('Runtime Validation', () => {
         converter: { delimiter: ',' }
       })
       static readonly noFallbackArray: string[] | null;
+
+      // @Envapt('INVALID_CONVERTER_FOR_FALLBACK', {
+      //   converter: { delimiter: ',', type: 'string' },
+      //   fallback: [1, 2, 3, 4]
+      // })
+      // static readonly invalidArrayFallbackWithNumbers: string[] | null;
     }
 
     it('should throw error when ArrayConverter is used with non-array fallback for missing env var', () => {
@@ -131,6 +141,12 @@ describe('Runtime Validation', () => {
     it('should return null when ArrayConverter is used without fallback for missing env var', () => {
       expect(ArrayFallbackTests.noFallbackArray).to.be.null;
     });
+
+    // it('should throw error when converter type does not match fallback type', () => {
+    //   expect(() => ArrayFallbackTests.invalidArrayFallbackWithNumbers)
+    //     .to.throw(EnvaptError)
+    //     .with.property('code', EnvaptErrorCodes.InvalidFallbackType);
+    // });
   });
 
   describe('Custom converter validation', () => {
