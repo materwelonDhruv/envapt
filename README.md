@@ -1,10 +1,10 @@
 # Envapt - The apt way to handle env
 
-A powerful TypeScript-first environment configuration library that provides type detection, template variable resolution, and decorator-based class property configuration by extending dotenv.
+A powerful TypeScript-first environment configuration library that provides type conversion, template variable resolution, and decorator-based class property configuration by extending dotenv.
 
 ## Features
 
-- 🔧 **Automatic Type Detection** - Types inferred from fallback values
+- 🔧 **Automatic Type Detection** - Runtime types inferred from fallback values
 - 🔗 **Template Variables** - `${VAR}` syntax with circular reference protection
 - 🎯 **Class Properties** - Decorator-based configuration for class members
 - 🏷️ **Built-in & Custom Converters** - Ready-to-use converters for common patterns + custom transformations
