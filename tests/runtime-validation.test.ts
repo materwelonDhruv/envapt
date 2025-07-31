@@ -336,4 +336,86 @@ describe('Runtime Validation', () => {
       expect(() => ArrayConverterValidationTests.validDefaultArray).to.not.throw();
     });
   });
+
+  describe('Primitive constructor validation', () => {
+    it('should correctly identify primitive constructors', () => {
+      expect(Validator.isPrimitiveConstructor(String)).to.be.true;
+      expect(Validator.isPrimitiveConstructor(Number)).to.be.true;
+      expect(Validator.isPrimitiveConstructor(Boolean)).to.be.true;
+      expect(Validator.isPrimitiveConstructor(BigInt)).to.be.true;
+      expect(Validator.isPrimitiveConstructor(Symbol)).to.be.true;
+    });
+
+    it('should correctly reject non-primitive constructors', () => {
+      expect(Validator.isPrimitiveConstructor('string')).to.be.false;
+      expect(Validator.isPrimitiveConstructor(42)).to.be.false;
+      expect(Validator.isPrimitiveConstructor(Date)).to.be.false;
+      expect(Validator.isPrimitiveConstructor(Array)).to.be.false;
+      expect(Validator.isPrimitiveConstructor({})).to.be.false;
+    });
+
+    it('should return fallback as-is when types already match', () => {
+      expect(Validator.coercePrimitiveFallback(String, 'already-string')).to.equal('already-string');
+      expect(Validator.coercePrimitiveFallback(Number, 42)).to.equal(42);
+      expect(Validator.coercePrimitiveFallback(Boolean, true)).to.equal(true);
+      expect(Validator.coercePrimitiveFallback(BigInt, 123n)).to.equal(123n);
+
+      const sym = Symbol('test');
+      expect(Validator.coercePrimitiveFallback(Symbol, sym)).to.equal(sym);
+    });
+
+    it('should coerce values to correct primitive types', () => {
+      expect(Validator.coercePrimitiveFallback(String, 42)).to.equal('42');
+      expect(Validator.coercePrimitiveFallback(Number, '42')).to.equal(42);
+      expect(Validator.coercePrimitiveFallback(Boolean, 'true')).to.equal(true);
+      expect(Validator.coercePrimitiveFallback(Boolean, 0)).to.equal(false);
+      expect(Validator.coercePrimitiveFallback(BigInt, '123')).to.equal(123n);
+      expect(Validator.coercePrimitiveFallback(BigInt, 456)).to.equal(456n);
+
+      const coercedSymbol = Validator.coercePrimitiveFallback<symbol>(Symbol, 'test-symbol');
+      expect(typeof coercedSymbol).to.equal('symbol');
+      expect(coercedSymbol.toString()).to.equal('Symbol(test-symbol)');
+    });
+
+    it('should throw PrimitiveCoercionFailed when BigInt coercion fails', () => {
+      expect(() => Validator.coercePrimitiveFallback(BigInt, {}))
+        .to.throw(EnvaptError)
+        .with.property('code', EnvaptErrorCodes.PrimitiveCoercionFailed);
+    });
+
+    it('should throw PrimitiveCoercionFailed when Symbol coercion fails', () => {
+      // Use an object with a toString that throws to cause Symbol constructor to fail
+      const problematicObject = {
+        toString() {
+          throw new Error('Cannot convert to string');
+        }
+      };
+      expect(() => Validator.coercePrimitiveFallback(Symbol, problematicObject))
+        .to.throw(EnvaptError)
+        .with.property('code', EnvaptErrorCodes.PrimitiveCoercionFailed);
+    });
+  });
+
+  describe('Array converter element type validation', () => {
+    it('should not throw for empty arrays', () => {
+      expect(() => Validator.validateArrayConverterElementTypeMatch('string', [])).to.not.throw();
+      expect(() => Validator.validateArrayConverterElementTypeMatch('number', [])).to.not.throw();
+    });
+
+    it('should not throw when array elements match converter type', () => {
+      expect(() => Validator.validateArrayConverterElementTypeMatch('string', ['a', 'b', 'c'])).to.not.throw();
+      expect(() => Validator.validateArrayConverterElementTypeMatch('number', [1, 2, 3])).to.not.throw();
+      expect(() => Validator.validateArrayConverterElementTypeMatch('boolean', [true, false, true])).to.not.throw();
+    });
+
+    it('should throw when array elements do not match converter type', () => {
+      expect(() => Validator.validateArrayConverterElementTypeMatch('number', ['not-a-number']))
+        .to.throw(EnvaptError)
+        .with.property('code', EnvaptErrorCodes.ArrayFallbackElementTypeMismatch);
+
+      expect(() => Validator.validateArrayConverterElementTypeMatch('string', [123]))
+        .to.throw(EnvaptError)
+        .with.property('code', EnvaptErrorCodes.ArrayFallbackElementTypeMismatch);
+    });
+  });
 });
