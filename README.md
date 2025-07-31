@@ -29,6 +29,10 @@ A powerful TypeScript-first environment configuration library that provides type
   - [Functional API](#functional-api)
 - [Environment Detection](#environment-detection)
 - [Template Variables](#template-variables)
+- [Configuration](#configuration)
+  - [Multiple .env Files](#multiple-env-files)
+  - [Dotenv Configuration](#dotenv-configuration)
+- [Error Handling](#error-handling)
 - [Advanced Examples](#advanced-examples)
 
 ## Requirements
@@ -434,6 +438,8 @@ Envapter.environment = EnvaptEnvironment.Production;
 Envapter.environment = 'staging'; // string also works
 ```
 
+## Configuration
+
 ### Multiple .env Files
 
 ```ts
@@ -448,6 +454,29 @@ Envapter.envPaths = resolve(__dirname, '.env.production');
 
 // Or just don't set a path for it to default to .env at the root of your project
 ```
+
+### Dotenv Configuration
+
+Envapt allows you to customize dotenv behavior by setting configuration options:
+
+```ts
+import { Envapter } from 'envapt';
+
+// Set dotenv configuration options
+Envapter.dotenvConfig = {
+  encoding: 'latin1', // File encoding (default: 'utf8')
+  debug: true, // Enable debug logging
+  override: true, // Override existing environment variables
+  quiet: false, // Suppress non-error output (default: true)
+  DOTENV_KEY: 'key...' // Decryption key for .env.vault files
+};
+
+// Get current configuration
+console.log(Envapter.dotenvConfig);
+```
+
+> [!NOTE]
+> The `path` and `processEnv` options are managed internally by Envapter and cannot be set via `dotenvConfig`.
 
 ## Template Variables
 
@@ -471,6 +500,52 @@ CIRCULAR_B=${CIRCULAR_A}
 ```
 
 Circular references are detected and preserved as-is rather than causing infinite loops.
+
+## Error Handling
+
+Envapt provides detailed error codes for better debugging and error handling:
+
+```ts
+import { EnvaptError, EnvaptErrorCodes } from 'envapt';
+
+try {
+  // This will throw an error for invalid configuration
+  Envapter.dotenvConfig = { path: '.env.custom' };
+} catch (error) {
+  if (error instanceof EnvaptError) {
+    console.log('Error code:', error.code);
+    console.log('Error message:', error.message);
+
+    // Handle specific error types
+    switch (error.code) {
+      case EnvaptErrorCodes.InvalidUserDefinedConfig:
+        console.log('Invalid configuration provided');
+        break;
+      case EnvaptErrorCodes.EnvFileNotFound:
+        console.log('Environment file not found');
+        break;
+      // ... handle other error codes
+    }
+  }
+}
+```
+
+### Error Code Reference
+
+| **Error Code**                           | **Description**                                           |
+| ---------------------------------------- | --------------------------------------------------------- |
+| `InvalidFallback` (101)                  | Invalid fallback value provided                           |
+| `InvalidFallbackType` (102)              | Fallback value type doesn't match expected converter type |
+| `ArrayFallbackElementTypeMismatch` (103) | Array fallback contains elements of wrong type            |
+| `FallbackConverterTypeMismatch` (104)    | Fallback type doesn't match the specified converter       |
+| `InvalidArrayConverterType` (201)        | Invalid array converter configuration provided            |
+| `InvalidBuiltInConverter` (202)          | Invalid built-in converter specified                      |
+| `InvalidCustomConverter` (203)           | Custom converter function is invalid                      |
+| `InvalidConverterType` (204)             | Converter type is not recognized                          |
+| `PrimitiveCoercionFailed` (205)          | Primitive type coercion failed                            |
+| `MissingDelimiter` (301)                 | Delimiter is missing in array converter configuration     |
+| `InvalidUserDefinedConfig` (302)         | Invalid user-defined configuration provided               |
+| `EnvFileNotFound` (303)                  | Specified environment file doesn't exist                  |
 
 ## Advanced Examples
 

@@ -23,6 +23,10 @@ export class Parser {
 
   constructor(private readonly envService: EnvapterService) {}
 
+  /**
+   * Resolve template variables in a string while handling circular references and missing variables
+   * @internal
+   */
   resolveTemplate(key: string, value: string, stack = new Set<string>()): string {
     if (stack.has(key)) return value; // direct cycle, keep as is
 
@@ -139,7 +143,7 @@ export class Parser {
     resolvedConverter: ArrayConverter,
     hasFallback: boolean
   ): FallbackType | null | undefined {
-    // Validate the ArrayConverter configuration at runtime
+    // Validate the resolvedConverter at runtime and assert that it is indeed an ArrayConverter
     Validator.arrayConverter(resolvedConverter);
 
     // Validate fallback type if a fallback is provided

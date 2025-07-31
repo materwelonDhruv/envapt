@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+
 import { EnvaptError, EnvaptErrorCodes } from './Error';
 import { ListOfBuiltInConverters, BuiltInConverterTypeCheckers } from './ListOfBuiltInConverters';
 
@@ -6,6 +8,7 @@ import type {
   BuiltInConverter,
   ConverterFunction,
   EnvaptConverter,
+  PermittedDotenvConfig,
   ValidArrayConverterBuiltInType
 } from './Types';
 
@@ -202,5 +205,50 @@ export class Validator {
 
     // This should never happen but TypeScript needs it
     throw new EnvaptError(EnvaptErrorCodes.PrimitiveCoercionFailed, `Unknown primitive converter: ${converter.name}`);
+  }
+
+  /**
+   * Make sure the user hasn't provided prohibited options in their dotenv config
+   */
+  static validateDotenvConfig(config: Record<string, unknown>): config is PermittedDotenvConfig {
+    if ('path' in config || 'processEnv' in config) {
+      throw new EnvaptError(
+        EnvaptErrorCodes.InvalidUserDefinedConfig,
+        'Custom dotenvConfig should not include "path" or "processEnv" options. Those are managed by Envapter.'
+      );
+    }
+
+    const validKeys = new Set(['encoding', 'quiet', 'debug', 'override', 'DOTENV_KEY']);
+    const invalidKeys = Object.keys(config).filter((key) => !validKeys.has(key));
+
+    if (invalidKeys.length > 0) {
+      throw new EnvaptError(
+        EnvaptErrorCodes.InvalidUserDefinedConfig,
+        `Invalid dotenvConfig options: ${invalidKeys.join(', ')}. Allowed options: ${Array.from(validKeys).join(', ')}`
+      );
+    }
+
+    return true;
+  }
+
+  /**
+   * Check if each provided path resolves to an env file by trying to access it
+   */
+  static validateEnvFilesExist(paths: string[]): void {
+    const missing = paths.filter((p) => {
+      try {
+        fs.accessSync(p, fs.constants.F_OK);
+        return false;
+      } catch {
+        return true;
+      }
+    });
+
+    if (missing.length > 0) {
+      throw new EnvaptError(
+        EnvaptErrorCodes.EnvFilesNotFound,
+        `Environment file not found at path: ${missing.join(', ')}`
+      );
+    }
   }
 }

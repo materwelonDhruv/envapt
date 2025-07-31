@@ -1,8 +1,8 @@
 import { config } from 'dotenv';
 
 import { BuiltInConverters } from './BuiltInConverters';
-import { EnvaptError, EnvaptErrorCodes } from './Error';
 import { Parser, type EnvapterService } from './Parser';
+import { Validator } from './Validators';
 
 import type { PermittedDotenvConfig } from './Types';
 
@@ -82,7 +82,10 @@ export class Envapter implements EnvapterService {
    * ```
    */
   static set envPaths(paths: string[] | string) {
-    this._envPaths = Array.isArray(paths) ? paths : [paths];
+    const newPaths = Array.isArray(paths) ? paths : [paths];
+    Validator.validateEnvFilesExist(newPaths);
+
+    this._envPaths = newPaths;
     this.refreshCache();
   }
 
@@ -98,13 +101,7 @@ export class Envapter implements EnvapterService {
    * Set custom dotenv configuration options.
    */
   static set dotenvConfig(config: PermittedDotenvConfig) {
-    if ('path' in config || 'processEnv' in config) {
-      throw new EnvaptError(
-        EnvaptErrorCodes.InvalidUserDefinedConfig,
-        'Custom dotenvConfig should not include "path" or "processEnv" options. Those are managed by Envapter.'
-      );
-    }
-
+    Validator.validateDotenvConfig(config);
     this._userDefinedDotenvConfig = config;
     this.refreshCache();
   }

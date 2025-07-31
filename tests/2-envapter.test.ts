@@ -20,8 +20,10 @@ describe('Envapter', () => {
     });
 
     it('should allow setting custom .env path', () => {
-      Envapter.envPaths = 'custom/.env';
-      expect(Envapter.envPaths).to.deep.equal(['custom/.env']);
+      // Use existing test file instead of non-existent custom/.env
+      const testPath = resolve(__dirname, '.env.envapter-test');
+      Envapter.envPaths = testPath;
+      expect(Envapter.envPaths).to.deep.equal([testPath]);
     });
 
     // reset to test path

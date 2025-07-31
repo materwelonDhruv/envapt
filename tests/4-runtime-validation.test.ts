@@ -418,4 +418,82 @@ describe('Runtime Validation', () => {
         .with.property('code', EnvaptErrorCodes.ArrayFallbackElementTypeMismatch);
     });
   });
+
+  describe('dotenv config validation', () => {
+    it('should accept valid dotenv config options', () => {
+      const validConfigs = [
+        { quiet: true },
+        { debug: false },
+        { override: true },
+        { encoding: 'utf8' },
+        { DOTENV_KEY: 'test-key' },
+        { quiet: true, debug: false, override: true }
+      ];
+
+      for (const config of validConfigs) {
+        expect(() => Validator.validateDotenvConfig(config)).to.not.throw();
+      }
+    });
+
+    it('should throw error for path option', () => {
+      expect(() => Validator.validateDotenvConfig({ path: '.env.test' }))
+        .to.throw(EnvaptError)
+        .with.property('code', EnvaptErrorCodes.InvalidUserDefinedConfig);
+    });
+
+    it('should throw error for processEnv option', () => {
+      expect(() => Validator.validateDotenvConfig({ processEnv: {} }))
+        .to.throw(EnvaptError)
+        .with.property('code', EnvaptErrorCodes.InvalidUserDefinedConfig);
+    });
+
+    it('should throw error for invalid options', () => {
+      expect(() => Validator.validateDotenvConfig({ invalidOption: 'test' }))
+        .to.throw(EnvaptError)
+        .with.property('code', EnvaptErrorCodes.InvalidUserDefinedConfig);
+    });
+
+    it('should throw error for multiple invalid options', () => {
+      const error = (() => {
+        try {
+          Validator.validateDotenvConfig({ invalidOption1: 'test', invalidOption2: 'test' });
+          return null;
+        } catch (err) {
+          return err as EnvaptError;
+        }
+      })();
+
+      expect(error).to.be.instanceOf(EnvaptError);
+      expect(error?.code).to.equal(EnvaptErrorCodes.InvalidUserDefinedConfig);
+      expect(error?.message).to.include('invalidOption1, invalidOption2');
+    });
+  });
+
+  describe('env file validation', () => {
+    it('should throw error for non-existent single file', () => {
+      expect(() => Validator.validateEnvFilesExist(['/non/existent/file.env']))
+        .to.throw(EnvaptError)
+        .with.property('code', EnvaptErrorCodes.EnvFilesNotFound);
+    });
+
+    it('should throw error for non-existent multiple files', () => {
+      const error = (() => {
+        try {
+          Validator.validateEnvFilesExist(['/non/existent/file1.env', '/non/existent/file2.env']);
+          return null;
+        } catch (err) {
+          return err as EnvaptError;
+        }
+      })();
+
+      expect(error).to.be.instanceOf(EnvaptError);
+      expect(error?.code).to.equal(EnvaptErrorCodes.EnvFilesNotFound);
+      expect(error?.message).to.include('/non/existent/file1.env, /non/existent/file2.env');
+    });
+
+    it('should not throw error for existing file', () => {
+      const testEnvPath = resolve(__dirname, '.env.envapt-test');
+      expect(() => Validator.validateEnvFilesExist([testEnvPath])).to.not.throw();
+    });
+  });
 });
