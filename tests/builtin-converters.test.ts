@@ -626,10 +626,11 @@ describe('Built-in Converters', () => {
     });
 
     it('should resolve templates in complex email RegExp converter', () => {
+      const expectedRegExp = String.raw`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.example\.com$`;
       expect(TemplateTest.regexpEmailTemplate).to.be.instanceOf(RegExp);
 
       // Should resolve template variables correctly
-      expect(TemplateTest.regexpEmailTemplate.source).to.equal('^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.example\\.com$');
+      expect(TemplateTest.regexpEmailTemplate.source).to.equal(expectedRegExp);
       expect(TemplateTest.regexpEmailTemplate.flags).to.equal('i');
 
       // Test basic email validation with template-resolved domain (example.com)
@@ -645,12 +646,12 @@ describe('Built-in Converters', () => {
     });
 
     it('should resolve templates in complex phone RegExp converter', () => {
+      const expectedRegExp = String.raw`^\+?1?[-.\s]?\(?([0-9]{3})\)?[-.\s]?([0-9]{3})[-.\s]?([0-9]{4})$`;
+
       expect(TemplateTest.regexpPhoneTemplate).to.be.instanceOf(RegExp);
 
       // Should resolve template variables correctly
-      expect(TemplateTest.regexpPhoneTemplate.source).to.equal(
-        '^\\+?1?[-.\\s]?\\(?([0-9]{3})\\)?[-.\\s]?([0-9]{3})[-.\\s]?([0-9]{4})$'
-      );
+      expect(TemplateTest.regexpPhoneTemplate.source).to.equal(expectedRegExp);
       expect(TemplateTest.regexpPhoneTemplate.flags).to.equal('');
 
       // Test basic phone number validation with template-resolved format

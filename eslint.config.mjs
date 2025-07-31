@@ -332,7 +332,10 @@ export default tseslint.config(
     rules: {
       'max-lines-per-function': 'off',
       'no-magic-numbers': 'off',
-      'no-unused-expressions': 'off'
+      'no-unused-expressions': 'off',
+      'max-lines': 'off',
+      'no-unused-expressions': 'off',
+      '@typescript-eslint/no-unused-expressions': 'off'
     }
   },
   // Prettier config to disable conflicting rules
