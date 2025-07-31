@@ -1,12 +1,20 @@
 /* eslint-disable no-magic-numbers */
 export enum EnvaptErrorCodes {
-  InvalidFallback = 617404,
-  MissingDelimiter = 967308,
-  InvalidArrayConverterType = 193159,
-  InvalidBuiltInConverter = 337271,
-  InvalidConverterType = 453217,
-  InvalidCustomConverter = 789432,
-  InvalidFallbackType = 245783
+  // Fallback related errors
+  InvalidFallback = 101,
+  InvalidFallbackType = 102,
+  ArrayFallbackElementTypeMismatch = 103,
+  FallbackConverterTypeMismatch = 104,
+
+  // Converter related errors
+  InvalidArrayConverterType = 201,
+  InvalidBuiltInConverter = 202,
+  InvalidCustomConverter = 203,
+  InvalidConverterType = 204,
+
+  // Other errors
+  // This doesn't happen because 789432 is thrown when object without delimiter is passed
+  MissingDelimiter = 301
 }
 
 /**

@@ -70,7 +70,7 @@ export class BuiltInConverters {
       .split(delimiter)
       .map((item) => item.trim())
       .filter(Boolean);
-    return arr.length > 0 ? arr : fallback;
+    return arr.length ? arr : fallback;
   }
 
   static url(raw: string, fallback?: URL): URL | undefined {

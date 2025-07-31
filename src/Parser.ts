@@ -56,10 +56,23 @@ export class Parser {
     key: string,
     fallback: FallbackType | undefined,
     resolvedConverter: EnvaptConverter<FallbackType>,
-    hasFallback: boolean
+    hasFallback: boolean,
+    wasOriginallyConstructor = false
   ): FallbackType | null | undefined {
     // Validate the built-in converter at runtime
     Validator.builtInConverter(resolvedConverter);
+
+    // Validate fallback type matches converter for built-in converters
+    // Only apply strict validation if this wasn't originally a constructor
+    if (hasFallback && fallback !== undefined && !wasOriginallyConstructor) {
+      Validator.validateBuiltInConverterFallback(resolvedConverter, fallback);
+
+      // Special handling for 'array' converter. also check array element consistency
+      if (resolvedConverter === 'array' && Array.isArray(fallback)) {
+        Validator.validateArrayFallbackElementTypes(fallback);
+      }
+    }
+
     const parsed = this.envService.get(key, undefined);
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (parsed === undefined) return hasFallback ? fallback : null;
@@ -90,6 +103,17 @@ export class Parser {
       );
     }
 
+    // Additional validations for array converter fallbacks
+    if (Array.isArray(fallback)) {
+      // Validate that all elements in fallback array have consistent types
+      Validator.validateArrayFallbackElementTypes(fallback);
+
+      // Validate that array converter type matches fallback element type
+      if (resolvedConverter.type) {
+        Validator.validateArrayConverterFallbackMatch(resolvedConverter.type, fallback);
+      }
+    }
+
     const parsed = this.envService.get(key, undefined);
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (parsed === undefined) return hasFallback ? fallback : null;
@@ -111,6 +135,14 @@ export class Parser {
     // Determine which converter to use
     let resolvedConverter = this.resolveConverter(converter, fallback);
 
+    // Track if this was originally a constructor to avoid strict validation
+    const wasOriginallyConstructor =
+      resolvedConverter === Number ||
+      resolvedConverter === Boolean ||
+      resolvedConverter === String ||
+      resolvedConverter === BigInt ||
+      resolvedConverter === Symbol;
+
     if (resolvedConverter === Number) resolvedConverter = 'number';
     else if (resolvedConverter === Boolean) resolvedConverter = 'boolean';
     else if (resolvedConverter === String) resolvedConverter = 'string';
@@ -124,7 +156,7 @@ export class Parser {
 
     // Check if it's a built-in converter
     if (Validator.isBuiltInConverter(resolvedConverter as EnvaptConverter<unknown>)) {
-      return this.processBuiltInConverter(key, fallback, resolvedConverter, hasFallback);
+      return this.processBuiltInConverter(key, fallback, resolvedConverter, hasFallback, wasOriginallyConstructor);
     }
 
     Validator.customConvertor(resolvedConverter);

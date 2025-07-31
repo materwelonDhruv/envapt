@@ -6,6 +6,8 @@ import { Envapt, Envapter, EnvaptErrorCodes } from '../src';
 import { EnvaptError } from '../src/Error';
 import { Validator } from '../src/Validators';
 
+import type { JsonValue } from '../src';
+
 describe('Runtime Validation', () => {
   before(() => (Envapter.envPaths = resolve(__dirname, '.env.extra')));
 
@@ -100,8 +102,8 @@ describe('Runtime Validation', () => {
     });
   });
 
-  describe('ArrayConverter fallback validation', () => {
-    class ArrayFallbackTests {
+  describe('Converter fallback validation', () => {
+    class FallbackTests {
       @Envapt('NONEXISTENT_ARRAY_VAR', {
         converter: { delimiter: ',' },
         fallback: 'not-an-array'
@@ -118,48 +120,220 @@ describe('Runtime Validation', () => {
         converter: { delimiter: ',' }
       })
       static readonly noFallbackArray: string[] | null;
-
-      // @Envapt('INVALID_CONVERTER_FOR_FALLBACK', {
-      //   converter: { delimiter: ',', type: 'string' },
-      //   fallback: [1, 2, 3, 4]
-      // })
-      // static readonly invalidArrayFallbackWithNumbers: string[] | null;
     }
 
     it('should throw error when ArrayConverter is used with non-array fallback for missing env var', () => {
-      expect(() => ArrayFallbackTests.invalidArrayFallback)
+      expect(() => FallbackTests.invalidArrayFallback)
         .to.throw(EnvaptError)
         .with.property('code', EnvaptErrorCodes.InvalidFallback);
     });
 
     it('should throw error when ArrayConverter is used with invalid type in converter', () => {
-      expect(() => ArrayFallbackTests.invalidArrayConverterType)
+      expect(() => FallbackTests.invalidArrayConverterType)
         .to.throw(EnvaptError)
         .with.property('code', EnvaptErrorCodes.InvalidArrayConverterType);
     });
 
     it('should return null when ArrayConverter is used without fallback for missing env var', () => {
-      expect(ArrayFallbackTests.noFallbackArray).to.be.null;
+      expect(FallbackTests.noFallbackArray).to.be.null;
     });
-
-    // it('should throw error when converter type does not match fallback type', () => {
-    //   expect(() => ArrayFallbackTests.invalidArrayFallbackWithNumbers)
-    //     .to.throw(EnvaptError)
-    //     .with.property('code', EnvaptErrorCodes.InvalidFallbackType);
-    // });
   });
 
   describe('Custom converter validation', () => {
     class CustomConverterTests {
-      // TODO: This should throw a type error, doesn't at the moment for some reason.
+      // TODO: This should show a type error, doesn't at the moment for some reason.
       @Envapt('CUSTOM_CONVERTER_VAR', { converter: 'lol' })
       static readonly customConverter: string;
+
+      @Envapt('CUSTOM_CONVERTER_INCONSISTENT_FALLBACK_TYPE', {
+        fallback: 42,
+        converter: (_raw, fallback) => String(fallback)
+      })
+      static readonly customConverterInconsistentFallbackType: string;
     }
 
     it('should throw on invalid passed converter', () => {
       expect(() => CustomConverterTests.customConverter)
         .to.throw(EnvaptError)
         .with.property('code', EnvaptErrorCodes.InvalidCustomConverter);
+    });
+
+    it('should not throw on custom converter with consistent fallback type', () => {
+      expect(() => CustomConverterTests.customConverterInconsistentFallbackType).to.not.throw();
+    });
+  });
+
+  describe('Fallback type validation for built-in converters', () => {
+    class FallbackTypeValidationTests {
+      @Envapt('NONEXISTENT_STRING_VAR', { converter: 'string', fallback: 42 })
+      static readonly stringWithNumberFallback: string;
+
+      @Envapt('NONEXISTENT_NUMBER_VAR', { converter: 'number', fallback: 'not-a-number' })
+      static readonly numberWithStringFallback: number;
+
+      @Envapt('NONEXISTENT_BOOLEAN_VAR', { converter: 'boolean', fallback: 'not-a-boolean' })
+      static readonly booleanWithStringFallback: boolean;
+
+      @Envapt('NONEXISTENT_BIGINT_VAR', { converter: 'bigint', fallback: 42 })
+      static readonly bigintWithNumberFallback: bigint;
+
+      @Envapt('NONEXISTENT_SYMBOL_VAR', { converter: 'symbol', fallback: 'not-a-symbol' })
+      static readonly symbolWithStringFallback: symbol;
+
+      @Envapt('NONEXISTENT_URL_VAR', { converter: 'url', fallback: 'not-a-url-object' })
+      static readonly urlWithStringFallback: URL;
+
+      @Envapt('NONEXISTENT_REGEXP_VAR', { converter: 'regexp', fallback: 'not-a-regexp-object' })
+      static readonly regexpWithStringFallback: RegExp;
+
+      @Envapt('NONEXISTENT_DATE_VAR', { converter: 'date', fallback: 'not-a-date-object' })
+      static readonly dateWithStringFallback: Date;
+
+      @Envapt('NONEXISTENT_TIME_VAR', { converter: 'time', fallback: 'not-a-number' })
+      static readonly timeWithStringFallback: number;
+
+      @Envapt('NONEXISTENT_JSON_VAR', { converter: 'json', fallback: Symbol('not-a-json') })
+      static readonly jsonWithStringFallback: JsonValue;
+
+      // Valid fallbacks for comparison
+      @Envapt('NONEXISTENT_STRING_VAR', { converter: 'string', fallback: 'valid-string' })
+      static readonly stringWithValidFallback: string;
+
+      @Envapt('NONEXISTENT_URL_VAR', { converter: 'url', fallback: new URL('http://example.com') })
+      static readonly urlWithValidFallback: URL;
+    }
+
+    it('should throw when string converter has non-string fallback', () => {
+      expect(() => FallbackTypeValidationTests.stringWithNumberFallback)
+        .to.throw(EnvaptError)
+        .with.property('code', EnvaptErrorCodes.FallbackConverterTypeMismatch);
+    });
+
+    it('should throw when number converter has non-number fallback', () => {
+      expect(() => FallbackTypeValidationTests.numberWithStringFallback)
+        .to.throw(EnvaptError)
+        .with.property('code', EnvaptErrorCodes.FallbackConverterTypeMismatch);
+    });
+
+    it('should throw when boolean converter has non-boolean fallback', () => {
+      expect(() => FallbackTypeValidationTests.booleanWithStringFallback)
+        .to.throw(EnvaptError)
+        .with.property('code', EnvaptErrorCodes.FallbackConverterTypeMismatch);
+    });
+
+    it('should throw when bigint converter has non-bigint fallback', () => {
+      expect(() => FallbackTypeValidationTests.bigintWithNumberFallback)
+        .to.throw(EnvaptError)
+        .with.property('code', EnvaptErrorCodes.FallbackConverterTypeMismatch);
+    });
+
+    it('should throw when symbol converter has non-symbol fallback', () => {
+      expect(() => FallbackTypeValidationTests.symbolWithStringFallback)
+        .to.throw(EnvaptError)
+        .with.property('code', EnvaptErrorCodes.FallbackConverterTypeMismatch);
+    });
+
+    it('should throw when URL converter has non-URL fallback', () => {
+      expect(() => FallbackTypeValidationTests.urlWithStringFallback)
+        .to.throw(EnvaptError)
+        .with.property('code', EnvaptErrorCodes.FallbackConverterTypeMismatch);
+    });
+
+    it('should throw when RegExp converter has non-RegExp fallback', () => {
+      expect(() => FallbackTypeValidationTests.regexpWithStringFallback)
+        .to.throw(EnvaptError)
+        .with.property('code', EnvaptErrorCodes.FallbackConverterTypeMismatch);
+    });
+
+    it('should throw when Date converter has non-Date fallback', () => {
+      expect(() => FallbackTypeValidationTests.dateWithStringFallback)
+        .to.throw(EnvaptError)
+        .with.property('code', EnvaptErrorCodes.FallbackConverterTypeMismatch);
+    });
+
+    it('should throw when time converter has non-number fallback', () => {
+      expect(() => FallbackTypeValidationTests.timeWithStringFallback)
+        .to.throw(EnvaptError)
+        .with.property('code', EnvaptErrorCodes.FallbackConverterTypeMismatch);
+    });
+
+    it('should throw when JSON converter has non-JSON fallback', () => {
+      expect(() => FallbackTypeValidationTests.jsonWithStringFallback)
+        .to.throw(EnvaptError)
+        .with.property('code', EnvaptErrorCodes.FallbackConverterTypeMismatch);
+    });
+
+    it('should not throw when converters have matching fallback types', () => {
+      expect(() => FallbackTypeValidationTests.stringWithValidFallback).to.not.throw();
+      expect(() => FallbackTypeValidationTests.urlWithValidFallback).to.not.throw();
+    });
+  });
+
+  describe('Array converter fallback element type validation', () => {
+    class ArrayConverterValidationTests {
+      // Array converter with mixed-type fallback elements
+      @Envapt('NONEXISTENT_ARRAY_VAR', {
+        converter: { delimiter: ',', type: 'string' },
+        fallback: ['string', 42, 'another-string']
+      })
+      static readonly arrayWithMixedTypeElements: string[];
+
+      // Array converter where type doesn't match fallback element type
+      @Envapt('NONEXISTENT_ARRAY_VAR', {
+        converter: { delimiter: ',', type: 'number' },
+        fallback: ['not-a-number', 'also-not-a-number']
+      })
+      static readonly arrayWithWrongElementType: number[];
+
+      // Default 'array' converter with mixed-type fallback elements
+      @Envapt('NONEXISTENT_ARRAY_VAR', {
+        converter: 'array',
+        fallback: ['string', 42, true]
+      })
+      static readonly defaultArrayWithMixedTypes: string[];
+
+      // Valid array converters for comparison
+      @Envapt('NONEXISTENT_ARRAY_VAR', {
+        converter: { delimiter: ',', type: 'string' },
+        fallback: ['all', 'strings', 'here']
+      })
+      static readonly validStringArray: string[];
+
+      @Envapt('NONEXISTENT_ARRAY_VAR', {
+        converter: { delimiter: ',', type: 'number' },
+        fallback: [1, 2, 3]
+      })
+      static readonly validNumberArray: number[];
+
+      @Envapt('NONEXISTENT_ARRAY_VAR', {
+        converter: 'array',
+        fallback: ['all', 'strings']
+      })
+      static readonly validDefaultArray: string[];
+    }
+
+    it('should throw when array converter fallback has mixed element types', () => {
+      expect(() => ArrayConverterValidationTests.arrayWithMixedTypeElements)
+        .to.throw(EnvaptError)
+        .with.property('code', EnvaptErrorCodes.ArrayFallbackElementTypeMismatch);
+    });
+
+    it('should throw when array converter type does not match fallback element type', () => {
+      expect(() => ArrayConverterValidationTests.arrayWithWrongElementType)
+        .to.throw(EnvaptError)
+        .with.property('code', EnvaptErrorCodes.ArrayFallbackElementTypeMismatch);
+    });
+
+    it('should throw when default array converter fallback has mixed element types', () => {
+      expect(() => ArrayConverterValidationTests.defaultArrayWithMixedTypes)
+        .to.throw(EnvaptError)
+        .with.property('code', EnvaptErrorCodes.ArrayFallbackElementTypeMismatch);
+    });
+
+    it('should not throw when array converter fallback elements have consistent and matching types', () => {
+      expect(() => ArrayConverterValidationTests.validStringArray).to.not.throw();
+      expect(() => ArrayConverterValidationTests.validNumberArray).to.not.throw();
+      expect(() => ArrayConverterValidationTests.validDefaultArray).to.not.throw();
     });
   });
 });

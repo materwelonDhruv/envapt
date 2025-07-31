@@ -1,5 +1,5 @@
 import { EnvaptError, EnvaptErrorCodes } from './Error';
-import { ListOfBuiltInConverters } from './ListOfBuiltInConverters';
+import { ListOfBuiltInConverters, BuiltInConverterTypeCheckers } from './ListOfBuiltInConverters';
 
 import type {
   ArrayConverter,
@@ -85,6 +85,60 @@ export class Validator {
       throw new EnvaptError(
         EnvaptErrorCodes.InvalidBuiltInConverter,
         `"${value}" is not a valid converter type. Valid types are: ${ListOfBuiltInConverters.join(',')}`
+      );
+    }
+  }
+
+  /**
+   * Validate that fallback type matches the converter's return type for built-in converters
+   */
+  static validateBuiltInConverterFallback(converter: BuiltInConverter, fallback: unknown): void {
+    if (fallback === undefined) return; // No fallback to validate
+
+    const typeChecker = BuiltInConverterTypeCheckers[converter];
+    if (!typeChecker(fallback)) {
+      throw new EnvaptError(
+        EnvaptErrorCodes.FallbackConverterTypeMismatch,
+        `Fallback type does not match converter "${converter}". Expected ${converter} compatible type.`
+      );
+    }
+  }
+
+  /**
+   * Validate that all elements in an array fallback have consistent types
+   */
+  static validateArrayFallbackElementTypes(fallback: unknown[]): void {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    if (fallback && fallback.length === 0) return; // Empty array is valid
+
+    const firstElementType = typeof fallback[0];
+    const hasInconsistentTypes = fallback.some((element, index) => {
+      if (index === 0) return false; // Skip first element
+      return typeof element !== firstElementType;
+    });
+
+    if (hasInconsistentTypes) {
+      throw new EnvaptError(
+        EnvaptErrorCodes.ArrayFallbackElementTypeMismatch,
+        `All elements in array fallback must have the same type. Found mixed types.`
+      );
+    }
+  }
+
+  /**
+   * Validate that array converter type matches the fallback element type
+   */
+  static validateArrayConverterFallbackMatch(converterType: ValidArrayConverterBuiltInType, fallback: unknown[]): void {
+    if (fallback.length === 0) return; // Empty array is valid
+
+    this.validateArrayFallbackElementTypes(fallback);
+
+    const firstElement = fallback[0];
+    const typeChecker = BuiltInConverterTypeCheckers[converterType];
+    if (!typeChecker(firstElement)) {
+      throw new EnvaptError(
+        EnvaptErrorCodes.ArrayFallbackElementTypeMismatch,
+        `Array converter type "${converterType}" does not match fallback element type.`
       );
     }
   }
