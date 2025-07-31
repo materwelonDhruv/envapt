@@ -1,7 +1,10 @@
 import { config } from 'dotenv';
 
 import { BuiltInConverters } from './BuiltInConverters';
+import { EnvaptError, EnvaptErrorCodes } from './Error';
 import { Parser, type EnvapterService } from './Parser';
+
+import type { PermittedDotenvConfig } from './Types';
 
 /**
  * Internal cache for environment variables and computed values
@@ -54,6 +57,7 @@ export enum Environment {
 export class Envapter implements EnvapterService {
   private static readonly parser = new Parser(new Envapter());
   private static _envPaths: string[] = ['.env']; // default path
+  private static _userDefinedDotenvConfig: PermittedDotenvConfig = { quiet: true };
 
   // Environment handling
   private static _environment: Environment;
@@ -79,13 +83,7 @@ export class Envapter implements EnvapterService {
    */
   static set envPaths(paths: string[] | string) {
     this._envPaths = Array.isArray(paths) ? paths : [paths];
-
-    // clear cache to force reload with new path
-    EnvaptCache.clear();
-    void this.config;
-
-    // reset internal environment to force re-evaluation
-    this.determineEnvironment();
+    this.refreshCache();
   }
 
   /**
@@ -94,6 +92,66 @@ export class Envapter implements EnvapterService {
    */
   static get envPaths(): string[] {
     return this._envPaths;
+  }
+
+  /**
+   * Set custom dotenv configuration options.
+   */
+  static set dotenvConfig(config: PermittedDotenvConfig) {
+    if ('path' in config || 'processEnv' in config) {
+      throw new EnvaptError(
+        EnvaptErrorCodes.InvalidUserDefinedConfig,
+        'Custom dotenvConfig should not include "path" or "processEnv" options. Those are managed by Envapter.'
+      );
+    }
+
+    this._userDefinedDotenvConfig = config;
+    this.refreshCache();
+  }
+
+  /**
+   * Get current dotenv configuration options
+   * @returns Current dotenv config object
+   */
+  static get dotenvConfig(): PermittedDotenvConfig {
+    return this._userDefinedDotenvConfig;
+  }
+
+  private static refreshCache(): void {
+    EnvaptCache.clear();
+    void this.config; // reload config to repopulate cache
+    this.determineEnvironment(); // re-evaluate environment
+  }
+
+  private static get config(): Map<string, unknown> {
+    if (EnvaptCache.size === 0) {
+      // create isolated environment object to avoid mutating process.env
+      const isolatedEnv: Record<string, string> = { ...(process.env as Record<string, string>) };
+
+      try {
+        // load _envPath file from custom path into isolated environment object
+        config({ path: this._envPaths, processEnv: isolatedEnv, ...this._userDefinedDotenvConfig });
+      } catch {
+        // do nothing
+      }
+      // populate the Map with global environment variables
+      for (const [key, value] of Object.entries(isolatedEnv)) EnvaptCache.set(key, value);
+    }
+
+    return EnvaptCache;
+  }
+
+  private static _get(key: string, type: Primitive = Primitive.String, def?: unknown): unknown {
+    const rawVal = this.config.get(key) as string | number | boolean;
+    if (!rawVal) return def;
+
+    const parsed = this.parser.resolveTemplate(key, String(rawVal));
+
+    if (type === Primitive.Number) return BuiltInConverters.number(parsed, def as number);
+    if (type === Primitive.Boolean) return BuiltInConverters.boolean(parsed, def as boolean);
+    if (type === Primitive.BigInt) return BuiltInConverters.bigint(parsed, def as bigint);
+    if (type === Primitive.Symbol) return BuiltInConverters.symbol(parsed, def as symbol);
+    return BuiltInConverters.string(parsed, def as string);
   }
 
   private static determineEnvironment(env?: string | Environment): void {
@@ -191,37 +249,6 @@ export class Envapter implements EnvapterService {
    */
   get isDevelopment(): boolean {
     return Envapter._environment === Environment.Development;
-  }
-
-  private static get config(): Map<string, unknown> {
-    if (EnvaptCache.size === 0) {
-      // create isolated environment object to avoid mutating process.env
-      const isolatedEnv: Record<string, string> = { ...(process.env as Record<string, string>) };
-
-      try {
-        // load _envPath file from custom path into isolated environment object
-        config({ path: this._envPaths, quiet: true, processEnv: isolatedEnv });
-      } catch {
-        // do nothing
-      }
-      // populate the Map with global environment variables
-      for (const [key, value] of Object.entries(isolatedEnv)) EnvaptCache.set(key, value);
-    }
-
-    return EnvaptCache;
-  }
-
-  private static _get(key: string, type: Primitive = Primitive.String, def?: unknown): unknown {
-    const rawVal = this.config.get(key) as string | number | boolean;
-    if (!rawVal) return def;
-
-    const parsed = this.parser.resolveTemplate(key, String(rawVal));
-
-    if (type === Primitive.Number) return BuiltInConverters.number(parsed, def as number);
-    if (type === Primitive.Boolean) return BuiltInConverters.boolean(parsed, def as boolean);
-    if (type === Primitive.BigInt) return BuiltInConverters.bigint(parsed, def as bigint);
-    if (type === Primitive.Symbol) return BuiltInConverters.symbol(parsed, def as symbol);
-    return BuiltInConverters.string(parsed, def as string);
   }
 
   /**

@@ -1,4 +1,13 @@
 import type { ListOfBuiltInConverters } from './ListOfBuiltInConverters';
+import type { DotenvConfigOptions } from 'dotenv';
+
+/**
+ * User defined options for dotenv configuration
+ *
+ * "processEnv" and "path" are managed by Envapter and should not be included in user-defined config.
+ * @public
+ */
+type PermittedDotenvConfig = Omit<DotenvConfigOptions, 'processEnv' | 'path'>;
 
 /**
  * Built-in converter types for common environment variable patterns
@@ -105,7 +114,7 @@ interface ConverterMap {
  * Type mapping for built-in converters to their return types
  * @internal
  */
-type BuiltInConverterReturnType<ConverterKey extends BuiltInConverter = BuiltInConverter> = ConverterMap[ConverterKey];
+type BuiltInConverterReturnType<ConverterKey extends BuiltInConverter> = ConverterMap[ConverterKey];
 
 /**
  * Return type for built-in converter functions
@@ -134,6 +143,7 @@ type MapOfConverterFunctions = Record<BuiltInConverter, BuiltInConverterFunction
 type TimeUnit = 'ms' | 's' | 'm' | 'h';
 
 export type {
+  PermittedDotenvConfig,
   BuiltInConverter,
   PrimitiveConstructor,
   ValidArrayConverterBuiltInType,

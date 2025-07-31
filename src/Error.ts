@@ -15,7 +15,8 @@ export enum EnvaptErrorCodes {
 
   // Other errors
   // This doesn't happen because 789432 is thrown when object without delimiter is passed
-  MissingDelimiter = 301
+  MissingDelimiter = 301,
+  InvalidUserDefinedConfig = 302
 }
 
 /**

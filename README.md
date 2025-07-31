@@ -10,7 +10,7 @@ A powerful TypeScript-first environment configuration library that provides type
 - 🏷️ **Built-in & Custom Converters** - Ready-to-use converters for common patterns + custom transformations
 - 🌍 **Environment Detection** - Built-in development/staging/production handling
 - 📂 **Multiple .env Files** - Load from multiple sources
-- 💪 **Edge Case Handling** - Robust parsing for all scenarios
+- 💪 **Edge Case Handling** - Robust validation and parsing for all scenarios
 - 🛡️ **Type Safety** - Full TypeScript support with proper type inference
 
 ## Table of Contents
@@ -21,6 +21,7 @@ A powerful TypeScript-first environment configuration library that provides type
   - [Basic Usage](#basic-usage)
 - [API Reference](#api-reference)
   - [Decorator API](#decorator-api)
+  - [Primitive Converters](#primitive-converters)
   - [Built-in Converters](#built-in-converters)
   - [Custom Array Converters](#custom-array-converters)
   - [Custom Converters](#custom-converters)
@@ -151,7 +152,7 @@ The `@Envapt` decorator can be used on both **static** and **instance** class pr
 @Envapt('ENV_VAR', fallback?, converter?)
 ```
 
-#### Automatic Type Detection
+#### Automatic Runtime Type Detection
 
 Types are automatically inferred from fallback values. Use static properties for app-wide config and instance properties for service-specific config:
 
@@ -183,9 +184,49 @@ class Config extends Envapter {
 }
 ```
 
+#### Primitive Converters
+
+Envapt allows using the 5 "primitive" type-like converters. These **will** coerce values.
+
+> [!NOTE]
+> The runtime validator will ignore this usage, allowing type coercion for flexibility.
+
+**Valid Primitive Types:** `String`, `Number`, `Boolean`, `Symbol`, and `BigInt`.
+
+```ts
+class Config extends Envapter {
+  @Envapt('PORT_STRING', { fallback: 'hello-world', converter: String })
+  static readonly portAsString: string;
+
+  @Envapt('DEBUG_FLAG', { fallback: true, converter: Boolean })
+  static readonly debugMode: boolean;
+
+  @Envapt('USER_ID', { fallback: 12345, converter: Number })
+  static readonly userId: number;
+
+  @Envapt('MAX_SAFE_INT', { fallback: 9007199254740991n, converter: BigInt })
+  static readonly maxSafeInt: bigint;
+
+  @Envapt('APP_INSTANCE', { fallback: Symbol(main), converter: Symbol })
+  static readonly appInstance: symbol;
+
+  // Instance properties work the same way
+  @Envapt('CONNECTION_TIMEOUT', { fallback: 5000, converter: Number })
+  declare readonly timeout: number;
+}
+```
+
+**When to use primitive converters:**
+
+- When you need explicit type coercion between incompatible types
+- When working with external systems that provide values in unexpected formats
+
 #### Built-in Converters
 
 Envapt provides many built-in converters for common patterns:
+
+> [!IMPORTANT]
+> Built-in converters enforce **strict type validation** between the converter and fallback types. The fallback must match the converter's expected return type.
 
 ```ts
 class Config extends Envapter {
@@ -218,13 +259,27 @@ class Config extends Envapter {
 }
 ```
 
+> [!WARNING]
+> These will throw runtime errors due to type mismatches:
+>
+> ```ts
+> // ❌ String converter with number fallback
+> @Envapt('VAR', { converter: 'string', fallback: 42 })
+>
+> // ❌ URL converter with string fallback
+> @Envapt('VAR', { converter: 'url', fallback: 'http://example.com' })
+>
+> // ✅ Use primitive constructors for type coercion instead
+> @Envapt('VAR', { converter: String, fallback: 42 })
+> ```
+
 **Available Built-in Converters:**
 
 - `'string'` - String values
 - `'number'` - Numeric values (integers and floats)
 - `'integer'` - Integer values only
 - `'float'` - Float values only
-- `'boolean'` - Boolean values (true/false, yes/no, on/off, 1/0)
+- `'boolean'` - Boolean values (`true`/`false`, `yes`/`no`, `on`/`off`, `1`/`0`)
 - `'bigint'` - BigInt values for large integers
 - `'symbol'` - Symbol values (creates symbols from string descriptions)
 - `'json'` - JSON objects/arrays (safe parsing with fallback)
@@ -232,11 +287,18 @@ class Config extends Envapter {
 - `'url'` - URL objects
 - `'regexp'` - Regular expressions (supports `/pattern/flags` syntax)
 - `'date'` - Date objects (supports ISO strings and timestamps)
-- `'time'` - Time values (converts "5s", "30m", "2h" to milliseconds)
+- `'time'` - Time values (converts `"5s"`, `"30m"`, `"2h"` to milliseconds)
 
 #### Custom Array Converters
 
 For more control over array parsing:
+
+> [!IMPORTANT]
+> Array converters validate that:
+>
+> 1. **Fallback must be an array** (if provided)
+> 2. **All fallback elements have consistent types** (no mixed types like `['string', 42, true]`)
+> 3. **Array converter `type` matches fallback element types** (if `type` is specified)
 
 ```ts
 class Config extends Envapter {
@@ -256,6 +318,20 @@ class Config extends Envapter {
   declare readonly featureFlags: boolean[];
 }
 ```
+
+> [!WARNING]
+> These will throw runtime validation errors:
+>
+> ```ts
+> // ❌ Mixed types in fallback array
+> @Envapt('MIXED', { converter: 'array', fallback: ['string', 42, true] })
+>
+> // ❌ Array converter type doesn't match fallback elements
+> @Envapt('NUMS', { converter: { delimiter: ',', type: 'number' }, fallback: ['not', 'numbers'] })
+>
+> // ❌ Non-array fallback with array converter
+> @Envapt('INVALID', { converter: 'array', fallback: 'not-an-array' })
+> ```
 
 **ArrayConverter Interface:**
 
@@ -440,3 +516,15 @@ class AppConfig extends Envapter {
   }
 }
 ```
+
+### Converter Type Quick Reference
+
+| **Use Case**           | **Converter Type**         | **Example**                         |
+| ---------------------- | -------------------------- | ----------------------------------- |
+| **Type coercion**      | Primitive constructors     | `converter: String`                 |
+| **Strict validation**  | Built-in string converters | `converter: 'string'`               |
+| **Array parsing**      | Array converter object     | `converter: { delimiter: ',' }`     |
+| **Complex transforms** | Custom function            | `converter: (raw, fallback) => ...` |
+
+> [!TIP]
+> Start with built-in converters for type safety, use primitive constructors when you need coercion, and custom converters for complex transforms.
