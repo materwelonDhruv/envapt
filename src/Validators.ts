@@ -50,13 +50,18 @@ export class Validator {
   /**
    * Check if a value is a valid custom converter function
    */
-  static isValidConverterFunction<FallbackType extends BuiltInConverter>(
+  static validConverterFunction<FallbackType extends BuiltInConverter>(
     converter: unknown
-  ): converter is (
+  ): asserts converter is (
     raw: string | undefined,
     fallback?: BuiltInConverterReturnType[FallbackType]
   ) => BuiltInConverterReturnType[FallbackType] {
-    return typeof converter === 'function';
+    if (typeof converter !== 'function') {
+      throw new EnvaptError(
+        EnvaptErrorCodes.FailedToResolveConverter,
+        `Custom converter must be a function, got ${typeof converter}.`
+      );
+    }
   }
 
   static customConvertor<FallbackType>(

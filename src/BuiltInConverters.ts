@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/unbound-method */
-import { EnvaptError, EnvaptErrorCodes } from './Error';
 import { Validator } from './Validators';
 
 import type { ArrayConverter, BuiltInConverter, BuiltInConverterReturnType } from './Types';
@@ -143,10 +142,11 @@ export class BuiltInConverters {
     if (!items.length) return fallback ? (fallback as unknown[]) : undefined;
 
     // If no type specified, return as string array
-    if (!config.type) return items;
+    const type = config.type;
+    if (!type) return items;
 
     // Convert each item using the specified type
-    const converter = BuiltInConverters.getConverter(config.type);
+    const converter = BuiltInConverters.getConverter(type);
     return items.map((item) => {
       const converted = converter(item, undefined);
       return converted ?? item;
@@ -179,11 +179,7 @@ export class BuiltInConverters {
     } as const;
 
     const converter = converters[type];
-
-    if (!Validator.isValidConverterFunction(converter)) {
-      throw new EnvaptError(EnvaptErrorCodes.InvalidBuiltInConverter, `Unknown built-in converter: ${type as string}`);
-    }
-
+    Validator.validConverterFunction(converter);
     return converter;
   }
 }
