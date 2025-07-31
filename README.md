@@ -87,19 +87,19 @@ ALLOWED_ORIGINS=https://app.com,https://admin.com
 Use with decorators (recommended):
 
 ```ts
-import { Envapt, Envapter } from 'envapt';
+import { Envapt, Envapter, Converters } from 'envapt';
 
 // Global app configuration (static properties)
 class AppConfig extends Envapter {
   @Envapt('APP_PORT', 3000)
   static readonly port: number;
 
-  @Envapt('APP_URL', 'http://localhost:3000', 'url')
+  @Envapt('APP_URL', 'http://localhost:3000', Converters.Url)
   static readonly url: URL;
 
   @Envapt('ALLOWED_ORIGINS', {
     fallback: ['http://localhost:3000'],
-    converter: 'array'
+    converter: Converters.Array
   })
   static readonly allowedOrigins: string[];
 }
@@ -109,10 +109,10 @@ class DatabaseService {
   @Envapt('DATABASE_URL', 'sqlite://memory')
   declare readonly databaseUrl: string;
 
-  @Envapt('MAX_CONNECTIONS', { converter: 'number', fallback: 10 })
+  @Envapt('MAX_CONNECTIONS', { converter: Converters.Number, fallback: 10 })
   declare readonly maxConnections: number;
 
-  @Envapt('REQUEST_TIMEOUT', { converter: 'time', fallback: 5000 })
+  @Envapt('REQUEST_TIMEOUT', { converter: Converters.Time, fallback: 5000 })
   declare readonly timeout: number; // Converts "5s" to 5000ms
 
   async connect() {
@@ -241,35 +241,47 @@ class Config extends Envapter {
 Envapt provides many built-in converters for common patterns:
 
 > [!IMPORTANT]
+> **Use the `Converters` enum** instead of string literals for better type safety and IntelliSense support:
+>
+> ```ts
+> import { Converters } from 'envapt';
+> // ✅ Recommended: Use enum
+> @Envapt('PORT', { converter: Converters.Number, fallback: 3000 })
+>
+> // ❌ Discouraged: String literals (still supported for compatibility)
+> @Envapt('PORT', { converter: 'number', fallback: 3000 })
+> ```
+
+> [!IMPORTANT]
 > Built-in converters enforce **strict type validation** between the converter and fallback types. The converter's expected return type must match the fallback's type.
 
 ```ts
 class Config extends Envapter {
   // Basic types
-  @Envapt('APP_NAME', { converter: 'string', fallback: 'MyApp' })
+  @Envapt('APP_NAME', { converter: Converters.String, fallback: 'MyApp' })
   static readonly appName: string;
 
-  @Envapt('PORT', { converter: 'number', fallback: 3000 })
+  @Envapt('PORT', { converter: Converters.Number, fallback: 3000 })
   static readonly port: number;
 
-  @Envapt('PRODUCTION_MODE', { converter: 'boolean', fallback: false })
+  @Envapt('PRODUCTION_MODE', { converter: Converters.Boolean, fallback: false })
   static readonly productionMode: boolean;
 
   // Advanced types
-  @Envapt('CORS_ORIGINS', { converter: 'array', fallback: [] })
+  @Envapt('CORS_ORIGINS', { converter: Converters.Array, fallback: [] })
   static readonly corsOrigins: string[];
 
-  @Envapt('CONFIG_JSON', { converter: 'json', fallback: {} })
+  @Envapt('CONFIG_JSON', { converter: Converters.Json, fallback: {} })
   static readonly config: object;
 
-  @Envapt('API_URL', { converter: 'url', fallback: new URL('http://localhost') })
+  @Envapt('API_URL', { converter: Converters.Url, fallback: new URL('http://localhost') })
   static readonly apiUrl: URL;
 
-  @Envapt('TIMEOUT', { converter: 'time', fallback: 5000 })
+  @Envapt('TIMEOUT', { converter: Converters.Time, fallback: 5000 })
   static readonly timeout: number; // Converts "30s" to 30000ms
 
   // Instance properties work the same way
-  @Envapt('CACHE_TTL', { converter: 'time', fallback: 3600000 })
+  @Envapt('CACHE_TTL', { converter: Converters.Time, fallback: 3600000 })
   declare readonly cacheTtl: number; // "1h" becomes 3600000ms
 }
 ```
@@ -279,10 +291,10 @@ class Config extends Envapter {
 >
 > ```ts
 > // ❌ String converter with number fallback
-> @Envapt('VAR', { converter: 'string', fallback: 42 })
+> @Envapt('VAR', { converter: Converters.String, fallback: 42 })
 >
 > // ❌ URL converter with string fallback
-> @Envapt('VAR', { converter: 'url', fallback: 'http://example.com' })
+> @Envapt('VAR', { converter: Converters.Url, fallback: 'http://example.com' })
 >
 > // ✅ Use primitive constructors for type coercion instead
 > @Envapt('VAR', { converter: String, fallback: 42 })
@@ -290,19 +302,19 @@ class Config extends Envapter {
 
 **Available Built-in Converters:**
 
-- `'string'` - String values
-- `'number'` - Numeric values (integers and floats)
-- `'integer'` - Integer values only
-- `'float'` - Float values only
-- `'boolean'` - Boolean values (`true`/`false`, `yes`/`no`, `on`/`off`, `1`/`0`)
-- `'bigint'` - BigInt values for large integers
-- `'symbol'` - Symbol values (creates symbols from string descriptions)
-- `'json'` - JSON objects/arrays (safe parsing with fallback)
-- `'array'` - Comma-separated string arrays
-- `'url'` - URL objects
-- `'regexp'` - Regular expressions (supports `/pattern/flags` syntax)
-- `'date'` - Date objects (supports ISO strings and timestamps)
-- `'time'` - Time values (converts `"5s"`, `"30m"`, `"2h"` to milliseconds)
+- `Converters.String` (`'string'`) - String values
+- `Converters.Number` (`'number'`) - Numeric values (integers and floats)
+- `Converters.Integer` (`'integer'`) - Integer values only
+- `Converters.Float` (`'float'`) - Float values only
+- `Converters.Boolean` (`'boolean'`) - Boolean values (`true`/`false`, `yes`/`no`, `on`/`off`, `1`/`0`)
+- `Converters.Bigint` (`'bigint'`) - BigInt values for large integers
+- `Converters.Symbol` (`'symbol'`) - Symbol values (creates symbols from string descriptions)
+- `Converters.Json` (`'json'`) - JSON objects/arrays (safe parsing with fallback)
+- `Converters.Array` (`'array'`) - Comma-separated string arrays
+- `Converters.Url` (`'url'`) - URL objects
+- `Converters.Regexp` (`'regexp'`) - Regular expressions (supports `/pattern/flags` syntax)
+- `Converters.Date` (`'date'`) - Date objects (supports ISO strings and timestamps)
+- `Converters.Time` (`'time'`) - Time values (converts `"5s"`, `"30m"`, `"2h"` to milliseconds)
 
 #### Custom Array Converters
 
@@ -318,7 +330,7 @@ For more control over array parsing:
 ```ts
 class Config extends Envapter {
   // Basic array (comma-separated strings)
-  @Envapt('TAGS', { converter: 'array', fallback: [] })
+  @Envapt('TAGS', { converter: Converters.Array, fallback: [] })
   static readonly tags: string[];
 
   // Custom delimiter
@@ -326,7 +338,7 @@ class Config extends Envapter {
   declare readonly allowedMethods: string[];
 
   // Custom delimiter with type conversion
-  @Envapt('RATE_LIMITS', { converter: { delimiter: ',', type: 'number' }, fallback: [100] })
+  @Envapt('RATE_LIMITS', { converter: { delimiter: ',', type: Converters.Number }, fallback: [100] })
   declare readonly rateLimits: number[];
 
   @Envapt('FEATURE_FLAGS', { converter: { delimiter: ';', type: 'boolean' }, fallback: [false] })
@@ -339,19 +351,19 @@ class Config extends Envapter {
 >
 > ```ts
 > // ❌ Mixed types in fallback array
-> @Envapt('MIXED', { converter: 'array', fallback: ['string', 42, true] })
+> @Envapt('MIXED', { converter: Converters.Array, fallback: ['string', 42, true] })
 >
 > // ❌ Array converter type doesn't match fallback elements
-> @Envapt('NUMS', { converter: { delimiter: ',', type: 'number' }, fallback: ['not', 'numbers'] })
+> @Envapt('NUMS', { converter: { delimiter: ',', type: Converters.Number }, fallback: ['not', 'numbers'] })
 >
 > // ❌ Non-array fallback with array converter
-> @Envapt('INVALID', { converter: 'array', fallback: 'not-an-array' })
+> @Envapt('INVALID', { converter: Converters.Array, fallback: 'not-an-array' })
 > ```
 
 **ArrayConverter Interface:**
 
 - `delimiter: string` - The string used to split array elements
-- `type?: BuiltInConverter` - Optional type to convert each element to (excludes 'array', 'json', and 'regexp')
+- `type?: BuiltInConverter` - Optional type to convert each element to (excludes `Converters.Array`, `Converters.Json`, and `Converters.Regexp`)
 
 #### Custom Converters
 
@@ -395,7 +407,7 @@ class Config extends Envapter {
   static readonly optionalFeature: string | undefined;
 
   // Returns null if not found (no fallback provided)
-  @Envapt('MISSING_CONFIG', { converter: 'string' })
+  @Envapt('MISSING_CONFIG', { converter: Converters.String })
   static readonly missingConfig: string | null;
 
   // Uses fallback if not found
@@ -425,15 +437,15 @@ const value = envapter.get('VAR', 'default');
 
 ### Converter Type Quick Reference
 
-| **Use Case**           | **Converter Type**        | **Example**                                      |
-| ---------------------- | ------------------------- | ------------------------------------------------ |
-| **Type coercion**      | Primitive constructors    | `converter: String`                              |
-| **Strict validation**  | Built-in converters       | `converter: 'string'`                            |
-| **Array parsing**      | Built-in Array converters | `converter: { delimiter: ',', type?: 'string' }` |
-| **Complex transforms** | Custom function           | `converter: (raw, fallback) => ...`              |
+| **Use Case**           | **Converter Type**        | **Example**                                               |
+| ---------------------- | ------------------------- | --------------------------------------------------------- |
+| **Type coercion**      | Primitive constructors    | `converter: String`                                       |
+| **Strict validation**  | Built-in converters       | `converter: Converters.String`                            |
+| **Array parsing**      | Built-in Array converters | `converter: { delimiter: ',', type?: Converters.String }` |
+| **Complex transforms** | Custom function           | `converter: (raw, fallback) => ...`                       |
 
 > [!TIP]
-> Start with built-in converters, use primitive constructors when you need coercion, and custom converters for complex transforms.
+> **Always use the `Converters` enum** for better type safety and IntelliSense. Start with built-in converters, use primitive constructors when you need coercion, and custom converters for complex transforms.
 
 ## Environment Detection
 
@@ -575,14 +587,14 @@ try {
 ### Complex Configuration
 
 ```ts
-import { Envapt, Envapter } from 'envapt';
+import { Envapt, Envapter, Converters } from 'envapt';
 
 class AppConfig extends Envapter {
   // Global settings (static)
   @Envapt('PORT', 3000)
   static readonly port: number;
 
-  @Envapt('REQUEST_TIMEOUT', { converter: 'time', fallback: 10000 })
+  @Envapt('REQUEST_TIMEOUT', { converter: Converters.Time, fallback: 10000 })
   static readonly requestTimeout: number; // "5s" -> 5000ms (if env is set to "5s")
 
   @Envapt('FEATURE_FLAGS', {
@@ -598,7 +610,7 @@ class AppConfig extends Envapter {
   @Envapt('DB_URL', 'sqlite://memory')
   declare readonly databaseUrl: string;
 
-  @Envapt('CACHE_TTL', { converter: 'time', fallback: 3600000 })
+  @Envapt('CACHE_TTL', { converter: Converters.Time, fallback: 3600000 })
   declare readonly cacheTtl: number; // "1h" -> 3600000ms
 
   @Envapt('REDIS_URLS', {

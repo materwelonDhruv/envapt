@@ -16,7 +16,7 @@ export class Validator {
   /**
    * Check if a value is a built-in converter type
    */
-  static isBuiltInConverter<FallbackType>(value: EnvaptConverter<FallbackType>): value is BuiltInConverter {
+  static isBuiltInConverter<TFallback>(value: EnvaptConverter<TFallback>): value is BuiltInConverter {
     if (typeof value === 'string') return ListOfBuiltInConverters.includes(value);
     return false;
   }
@@ -49,9 +49,9 @@ export class Validator {
     return validTypes.includes(value as ValidArrayConverterBuiltInType);
   }
 
-  static customConvertor<FallbackType>(
-    converter: EnvaptConverter<FallbackType>
-  ): asserts converter is ConverterFunction<FallbackType> {
+  static customConvertor<TFallback>(
+    converter: EnvaptConverter<TFallback>
+  ): asserts converter is ConverterFunction<TFallback> {
     if (typeof converter !== 'function') {
       throw new EnvaptError(
         EnvaptErrorCodes.InvalidCustomConverter,

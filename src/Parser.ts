@@ -56,12 +56,12 @@ export class Parser {
     return out;
   }
 
-  convertValue<FallbackType>(
+  convertValue<TFallback>(
     key: string,
-    fallback: FallbackType | undefined,
-    converter: EnvaptConverter<FallbackType> | undefined,
+    fallback: TFallback | undefined,
+    converter: EnvaptConverter<TFallback> | undefined,
     hasFallback = true
-  ): FallbackType | null | undefined {
+  ): TFallback | null | undefined {
     const resolvedConverter = this.resolveConverter(converter, fallback);
     const processedFallback = this.processFallbackForConverter(resolvedConverter, fallback);
 
@@ -82,13 +82,13 @@ export class Parser {
     return this.processCustomConverter(key, processedFallback, resolvedConverter, hasFallback);
   }
 
-  private processFallbackForConverter<FallbackType>(
-    converter: EnvaptConverter<FallbackType>,
-    fallback: FallbackType | undefined
-  ): FallbackType | undefined {
+  private processFallbackForConverter<TFallback>(
+    converter: EnvaptConverter<TFallback>,
+    fallback: TFallback | undefined
+  ): TFallback | undefined {
     // For primitive constructors, coerce the fallback to match the converter
     if (Validator.isPrimitiveConstructor(converter) && fallback !== undefined) {
-      return Validator.coercePrimitiveFallback<FallbackType>(converter, fallback);
+      return Validator.coercePrimitiveFallback<TFallback>(converter, fallback);
     }
     return fallback;
   }
@@ -103,13 +103,13 @@ export class Parser {
     throw new EnvaptError(EnvaptErrorCodes.InvalidConverterType, `Unknown primitive constructor`);
   }
 
-  private processBuiltInConverter<FallbackType>(
+  private processBuiltInConverter<TFallback>(
     key: string,
-    fallback: FallbackType | undefined,
+    fallback: TFallback | undefined,
     resolvedConverter: BuiltInConverter,
     hasFallback: boolean,
     wasOriginallyConstructor: boolean
-  ): FallbackType | null | undefined {
+  ): TFallback | null | undefined {
     // Validate the built-in converter at runtime
     Validator.builtInConverter(resolvedConverter);
 
@@ -134,15 +134,15 @@ export class Parser {
     // If converter failed (returned undefined) and no fallback was provided, return null
     if (result === undefined && !hasFallback) return null;
 
-    return result as FallbackType;
+    return result as TFallback;
   }
 
-  private processArrayConverter<FallbackType>(
+  private processArrayConverter<TFallback>(
     key: string,
-    fallback: FallbackType | undefined,
+    fallback: TFallback | undefined,
     resolvedConverter: ArrayConverter,
     hasFallback: boolean
-  ): FallbackType | null | undefined {
+  ): TFallback | null | undefined {
     // Validate the resolvedConverter at runtime and assert that it is indeed an ArrayConverter
     Validator.arrayConverter(resolvedConverter);
 
@@ -174,15 +174,15 @@ export class Parser {
     // If converter failed (returned undefined) and no fallback was provided, return null
     if (result === undefined && !hasFallback) return null;
 
-    return result as FallbackType;
+    return result as TFallback;
   }
 
-  private processCustomConverter<FallbackType>(
+  private processCustomConverter<TFallback>(
     key: string,
-    fallback: FallbackType | undefined,
-    resolvedConverter: EnvaptConverter<FallbackType>,
+    fallback: TFallback | undefined,
+    resolvedConverter: EnvaptConverter<TFallback>,
     hasFallback: boolean
-  ): FallbackType | null | undefined {
+  ): TFallback | null | undefined {
     Validator.customConvertor(resolvedConverter);
 
     // Custom converter function
@@ -196,10 +196,10 @@ export class Parser {
     return resolvedConverter(raw, fallback);
   }
 
-  private resolveConverter<FallbackType>(
-    converter: EnvaptConverter<FallbackType> | undefined,
-    fallback: FallbackType | undefined
-  ): EnvaptConverter<FallbackType> {
+  private resolveConverter<TFallback>(
+    converter: EnvaptConverter<TFallback> | undefined,
+    fallback: TFallback | undefined
+  ): EnvaptConverter<TFallback> {
     // User provided explicit converter. Use it
     if (converter) return converter;
 

@@ -2,32 +2,32 @@ import { resolve } from 'node:path';
 
 import { expect } from 'chai';
 
-import { Envapt, Envapter } from '../src';
+import { Converters, Envapt, Envapter } from '../src';
 
 describe('Built-in Converters', () => {
   before(() => (Envapter.envPaths = resolve(__dirname, '.env.builtin-test')));
 
   describe('basic type converters', () => {
     class BasicTypeTest {
-      @Envapt('TEST_STRING', { converter: 'string', fallback: 'default' })
+      @Envapt('TEST_STRING', { converter: Converters.String, fallback: 'default' })
       static readonly testString: string;
 
-      @Envapt('TEST_NUMBER', { converter: 'number', fallback: 0 })
+      @Envapt('TEST_NUMBER', { converter: Converters.Number, fallback: 0 })
       static readonly testNumber: number;
 
-      @Envapt('TEST_BOOLEAN', { converter: 'boolean', fallback: false })
+      @Envapt('TEST_BOOLEAN', { converter: Converters.Boolean, fallback: false })
       static readonly testBoolean: boolean;
 
-      @Envapt('TEST_INTEGER', { converter: 'integer', fallback: 0 })
+      @Envapt('TEST_INTEGER', { converter: Converters.Integer, fallback: 0 })
       static readonly testInteger: number;
 
-      @Envapt('TEST_FLOAT', { converter: 'float', fallback: 0.0 })
+      @Envapt('TEST_FLOAT', { converter: Converters.Float, fallback: 0.0 })
       static readonly testFloat: number;
 
-      @Envapt('TEST_BIGINT', { converter: 'bigint', fallback: 0n })
+      @Envapt('TEST_BIGINT', { converter: Converters.Bigint, fallback: 0n })
       static readonly testBigint: bigint;
 
-      @Envapt('TEST_SYMBOL', { converter: 'symbol', fallback: Symbol('default') })
+      @Envapt('TEST_SYMBOL', { converter: Converters.Symbol, fallback: Symbol('default') })
       static readonly testSymbol: symbol;
     }
 
@@ -63,7 +63,7 @@ describe('Built-in Converters', () => {
 
   describe('array converters', () => {
     class ArrayTest {
-      @Envapt('TEST_ARRAY_COMMA', { converter: 'array', fallback: [] })
+      @Envapt('TEST_ARRAY_COMMA', { converter: Converters.Array, fallback: [] })
       static readonly arrayDefault: string[];
 
       @Envapt('TEST_ARRAY_COMMA', { converter: { delimiter: ',' }, fallback: [] })
@@ -72,25 +72,25 @@ describe('Built-in Converters', () => {
       @Envapt('TEST_ARRAY_SPACE', { converter: { delimiter: ' ' }, fallback: [] })
       static readonly arraySpace: string[];
 
-      @Envapt('TEST_ARRAY_EMPTY', { converter: 'array', fallback: ['default'] })
+      @Envapt('TEST_ARRAY_EMPTY', { converter: Converters.Array, fallback: ['default'] })
       static readonly arrayEmpty: string[];
 
-      @Envapt('TEST_ARRAY_WHITESPACE_ONLY', { converter: 'array', fallback: [] })
+      @Envapt('TEST_ARRAY_WHITESPACE_ONLY', { converter: Converters.Array, fallback: [] })
       static readonly arrayWhitespaceOnly: string[];
 
       @Envapt('TEST_ARRAY_COMMA_SPACE', { converter: { delimiter: ', ' }, fallback: [] })
       static readonly arrayCommaSpace: string[];
 
-      @Envapt('NONEXISTENT_ARRAY', { converter: 'array', fallback: ['fallback1', 'fallback2'] })
+      @Envapt('NONEXISTENT_ARRAY', { converter: Converters.Array, fallback: ['fallback1', 'fallback2'] })
       static readonly nonexistentArray: string[];
 
-      @Envapt('TEST_ARRAY_NUMBERS', { converter: { delimiter: ',', type: 'number' }, fallback: [] })
+      @Envapt('TEST_ARRAY_NUMBERS', { converter: { delimiter: ',', type: Converters.Number }, fallback: [] })
       static readonly arrayNumbers: number[];
 
-      @Envapt('TEST_ARRAY_BOOLEANS', { converter: { delimiter: ',', type: 'boolean' }, fallback: [] })
+      @Envapt('TEST_ARRAY_BOOLEANS', { converter: { delimiter: ',', type: Converters.Boolean }, fallback: [] })
       static readonly arrayBooleans: boolean[];
 
-      @Envapt('TEST_ARRAY_TIME', { converter: { delimiter: ',', type: 'time' }, fallback: [] })
+      @Envapt('TEST_ARRAY_TIME', { converter: { delimiter: ',', type: Converters.Time }, fallback: [] })
       static readonly arrayTime: number[];
     }
 
@@ -138,16 +138,16 @@ describe('Built-in Converters', () => {
 
   describe('json converter', () => {
     class JsonTest {
-      @Envapt('TEST_JSON_OBJECT', { converter: 'json', fallback: {} })
+      @Envapt('TEST_JSON_OBJECT', { converter: Converters.Json, fallback: {} })
       static readonly jsonObject: object;
 
-      @Envapt('TEST_JSON_ARRAY', { converter: 'json', fallback: [] })
+      @Envapt('TEST_JSON_ARRAY', { converter: Converters.Json, fallback: [] })
       static readonly jsonArray: unknown[];
 
-      @Envapt('TEST_JSON_INVALID', { converter: 'json', fallback: { error: 'fallback' } })
+      @Envapt('TEST_JSON_INVALID', { converter: Converters.Json, fallback: { error: 'fallback' } })
       static readonly jsonInvalid: object;
 
-      @Envapt('NONEXISTENT_JSON', { converter: 'json', fallback: { default: true } })
+      @Envapt('NONEXISTENT_JSON', { converter: Converters.Json, fallback: { default: true } })
       static readonly nonexistentJson: object;
     }
 
@@ -170,13 +170,13 @@ describe('Built-in Converters', () => {
 
   describe('url converter', () => {
     class UrlTest {
-      @Envapt('TEST_URL_VALID', { converter: 'url' })
+      @Envapt('TEST_URL_VALID', { converter: Converters.Url })
       static readonly validUrl: URL;
 
-      @Envapt('TEST_URL_INVALID', { converter: 'url', fallback: new URL('http://fallback.com') })
+      @Envapt('TEST_URL_INVALID', { converter: Converters.Url, fallback: new URL('http://fallback.com') })
       static readonly invalidUrl: URL;
 
-      @Envapt('NONEXISTENT_URL', { converter: 'url', fallback: new URL('http://default.com') })
+      @Envapt('NONEXISTENT_URL', { converter: Converters.Url, fallback: new URL('http://default.com') })
       static readonly nonexistentUrl: URL;
     }
 
@@ -198,25 +198,25 @@ describe('Built-in Converters', () => {
 
   describe('regexp converter', () => {
     class RegexpTest {
-      @Envapt('TEST_REGEXP_SIMPLE', { converter: 'regexp' })
+      @Envapt('TEST_REGEXP_SIMPLE', { converter: Converters.Regexp })
       static readonly simpleRegexp: RegExp;
 
-      @Envapt('TEST_REGEXP_WITH_FLAGS', { converter: 'regexp' })
+      @Envapt('TEST_REGEXP_WITH_FLAGS', { converter: Converters.Regexp })
       static readonly regexpWithFlags: RegExp;
 
-      @Envapt('TEST_REGEXP_EMAIL', { converter: 'regexp' })
+      @Envapt('TEST_REGEXP_EMAIL', { converter: Converters.Regexp })
       static readonly emailRegexp: RegExp;
 
-      @Envapt('TEST_REGEXP_URL_PATTERN', { converter: 'regexp' })
+      @Envapt('TEST_REGEXP_URL_PATTERN', { converter: Converters.Regexp })
       static readonly urlRegexp: RegExp;
 
-      @Envapt('TEST_REGEXP_PHONE', { converter: 'regexp' })
+      @Envapt('TEST_REGEXP_PHONE', { converter: Converters.Regexp })
       static readonly phoneRegexp: RegExp;
 
-      @Envapt('TEST_REGEXP_INVALID', { converter: 'regexp', fallback: /fallback/i })
+      @Envapt('TEST_REGEXP_INVALID', { converter: Converters.Regexp, fallback: /fallback/i })
       static readonly invalidRegexp: RegExp;
 
-      @Envapt('NONEXISTENT_REGEXP', { converter: 'regexp', fallback: /default/ })
+      @Envapt('NONEXISTENT_REGEXP', { converter: Converters.Regexp, fallback: /default/ })
       static readonly nonexistentRegexp: RegExp;
     }
 
@@ -315,16 +315,16 @@ describe('Built-in Converters', () => {
 
   describe('date converter', () => {
     class DateTest {
-      @Envapt('TEST_DATE_ISO', { converter: 'date' })
+      @Envapt('TEST_DATE_ISO', { converter: Converters.Date })
       static readonly isoDate: Date;
 
-      @Envapt('TEST_DATE_TIMESTAMP', { converter: 'date' })
+      @Envapt('TEST_DATE_TIMESTAMP', { converter: Converters.Date })
       static readonly timestampDate: Date;
 
-      @Envapt('TEST_DATE_INVALID', { converter: 'date', fallback: new Date('2023-01-01') })
+      @Envapt('TEST_DATE_INVALID', { converter: Converters.Date, fallback: new Date('2023-01-01') })
       static readonly invalidDate: Date;
 
-      @Envapt('NONEXISTENT_DATE', { converter: 'date', fallback: new Date('2024-01-01') })
+      @Envapt('NONEXISTENT_DATE', { converter: Converters.Date, fallback: new Date('2024-01-01') })
       static readonly nonexistentDate: Date;
     }
 
@@ -354,31 +354,31 @@ describe('Built-in Converters', () => {
 
   describe('time converter', () => {
     class TimeTest {
-      @Envapt('TEST_TIME_MILLISECONDS', { converter: 'time', fallback: 0 })
+      @Envapt('TEST_TIME_MILLISECONDS', { converter: Converters.Time, fallback: 0 })
       static readonly timeMs: number;
 
-      @Envapt('TEST_TIME_SECONDS', { converter: 'time', fallback: 0 })
+      @Envapt('TEST_TIME_SECONDS', { converter: Converters.Time, fallback: 0 })
       static readonly timeSeconds: number;
 
-      @Envapt('TEST_TIME_MINUTES', { converter: 'time', fallback: 0 })
+      @Envapt('TEST_TIME_MINUTES', { converter: Converters.Time, fallback: 0 })
       static readonly timeMinutes: number;
 
-      @Envapt('TEST_TIME_HOURS', { converter: 'time', fallback: 0 })
+      @Envapt('TEST_TIME_HOURS', { converter: Converters.Time, fallback: 0 })
       static readonly timeHours: number;
 
-      @Envapt('TEST_TIME_DECIMAL_SECONDS', { converter: 'time', fallback: 0 })
+      @Envapt('TEST_TIME_DECIMAL_SECONDS', { converter: Converters.Time, fallback: 0 })
       static readonly timeDecimalSeconds: number;
 
-      @Envapt('TEST_TIME_PLAIN_NUMBER', { converter: 'time', fallback: 0 })
+      @Envapt('TEST_TIME_PLAIN_NUMBER', { converter: Converters.Time, fallback: 0 })
       static readonly timePlainNumber: number;
 
-      @Envapt('TEST_TIME_INVALID', { converter: 'time', fallback: 999 })
+      @Envapt('TEST_TIME_INVALID', { converter: Converters.Time, fallback: 999 })
       static readonly timeInvalid: number;
 
-      @Envapt('TEST_TIME_INVALID_UNIT', { converter: 'time', fallback: 777 })
+      @Envapt('TEST_TIME_INVALID_UNIT', { converter: Converters.Time, fallback: 777 })
       static readonly timeInvalidUnit: number;
 
-      @Envapt('NONEXISTENT_TIME', { converter: 'time', fallback: 5000 })
+      @Envapt('NONEXISTENT_TIME', { converter: Converters.Time, fallback: 5000 })
       static readonly nonexistentTime: number;
     }
 
@@ -421,34 +421,34 @@ describe('Built-in Converters', () => {
 
   describe('boolean converter edge cases', () => {
     class BooleanEdgeCaseTest {
-      @Envapt('TEST_BOOL_TRUE_UPPER', { converter: 'boolean', fallback: false })
+      @Envapt('TEST_BOOL_TRUE_UPPER', { converter: Converters.Boolean, fallback: false })
       static readonly boolTrueUpper: boolean;
 
-      @Envapt('TEST_BOOL_YES', { converter: 'boolean', fallback: false })
+      @Envapt('TEST_BOOL_YES', { converter: Converters.Boolean, fallback: false })
       static readonly boolYes: boolean;
 
-      @Envapt('TEST_BOOL_ON', { converter: 'boolean', fallback: false })
+      @Envapt('TEST_BOOL_ON', { converter: Converters.Boolean, fallback: false })
       static readonly boolOn: boolean;
 
-      @Envapt('TEST_BOOL_ONE', { converter: 'boolean', fallback: false })
+      @Envapt('TEST_BOOL_ONE', { converter: Converters.Boolean, fallback: false })
       static readonly boolOne: boolean;
 
-      @Envapt('TEST_BOOL_FALSE_UPPER', { converter: 'boolean', fallback: true })
+      @Envapt('TEST_BOOL_FALSE_UPPER', { converter: Converters.Boolean, fallback: true })
       static readonly boolFalseUpper: boolean;
 
-      @Envapt('TEST_BOOL_NO', { converter: 'boolean', fallback: true })
+      @Envapt('TEST_BOOL_NO', { converter: Converters.Boolean, fallback: true })
       static readonly boolNo: boolean;
 
-      @Envapt('TEST_BOOL_OFF', { converter: 'boolean', fallback: true })
+      @Envapt('TEST_BOOL_OFF', { converter: Converters.Boolean, fallback: true })
       static readonly boolOff: boolean;
 
-      @Envapt('TEST_BOOL_ZERO', { converter: 'boolean', fallback: true })
+      @Envapt('TEST_BOOL_ZERO', { converter: Converters.Boolean, fallback: true })
       static readonly boolZero: boolean;
 
-      @Envapt('TEST_BOOL_EMPTY', { converter: 'boolean', fallback: true })
+      @Envapt('TEST_BOOL_EMPTY', { converter: Converters.Boolean, fallback: true })
       static readonly boolEmpty: boolean;
 
-      @Envapt('TEST_BOOL_UNKNOWN', { converter: 'boolean', fallback: true })
+      @Envapt('TEST_BOOL_UNKNOWN', { converter: Converters.Boolean, fallback: true })
       static readonly boolUnknown: boolean;
     }
 
@@ -496,35 +496,35 @@ describe('Built-in Converters', () => {
   describe('template variable resolution', () => {
     class TemplateTest {
       // String converter with templates
-      @Envapt('TEST_STRING_TEMPLATE', { converter: 'string', fallback: 'default' })
+      @Envapt('TEST_STRING_TEMPLATE', { converter: Converters.String, fallback: 'default' })
       static readonly stringTemplate: string;
 
       // Number converters with templates
-      @Envapt('TEST_NUMBER_TEMPLATE', { converter: 'number', fallback: 0 })
+      @Envapt('TEST_NUMBER_TEMPLATE', { converter: Converters.Number, fallback: 0 })
       static readonly numberTemplate: number;
 
-      @Envapt('TEST_INTEGER_TEMPLATE', { converter: 'integer', fallback: 0 })
+      @Envapt('TEST_INTEGER_TEMPLATE', { converter: Converters.Integer, fallback: 0 })
       static readonly integerTemplate: number;
 
-      @Envapt('TEST_FLOAT_TEMPLATE', { converter: 'float', fallback: 0.0 })
+      @Envapt('TEST_FLOAT_TEMPLATE', { converter: Converters.Float, fallback: 0.0 })
       static readonly floatTemplate: number;
 
       // Boolean converters with templates
-      @Envapt('TEST_BOOLEAN_TEMPLATE', { converter: 'boolean', fallback: false })
+      @Envapt('TEST_BOOLEAN_TEMPLATE', { converter: Converters.Boolean, fallback: false })
       static readonly booleanTemplate: boolean;
 
-      @Envapt('TEST_BOOLEAN_FALSE_TEMPLATE', { converter: 'boolean', fallback: true })
+      @Envapt('TEST_BOOLEAN_FALSE_TEMPLATE', { converter: Converters.Boolean, fallback: true })
       static readonly booleanFalseTemplate: boolean;
 
       // BigInt and Symbol converters with templates
-      @Envapt('TEST_BIGINT_TEMPLATE', { converter: 'bigint', fallback: 0n })
+      @Envapt('TEST_BIGINT_TEMPLATE', { converter: Converters.Bigint, fallback: 0n })
       static readonly bigintTemplate: bigint;
 
-      @Envapt('TEST_SYMBOL_TEMPLATE', { converter: 'symbol', fallback: Symbol('default') })
+      @Envapt('TEST_SYMBOL_TEMPLATE', { converter: Converters.Symbol, fallback: Symbol('default') })
       static readonly symbolTemplate: symbol;
 
       // Array converters with templates
-      @Envapt('TEST_ARRAY_COMMA_TEMPLATE', { converter: 'array', fallback: [] })
+      @Envapt('TEST_ARRAY_COMMA_TEMPLATE', { converter: Converters.Array, fallback: [] })
       static readonly arrayCommaTemplate: string[];
 
       @Envapt('TEST_ARRAY_SPACE_TEMPLATE', { converter: { delimiter: ' ' }, fallback: [] })
@@ -534,29 +534,29 @@ describe('Built-in Converters', () => {
       static readonly arrayCommaSpaceTemplate: string[];
 
       // JSON converter with templates
-      @Envapt('TEST_JSON_OBJECT_TEMPLATE', { converter: 'json', fallback: {} })
+      @Envapt('TEST_JSON_OBJECT_TEMPLATE', { converter: Converters.Json, fallback: {} })
       static readonly jsonObjectTemplate: object;
 
       // URL converter with templates
-      @Envapt('TEST_URL_TEMPLATE', { converter: 'url', fallback: new URL('http://fallback.com') })
+      @Envapt('TEST_URL_TEMPLATE', { converter: Converters.Url, fallback: new URL('http://fallback.com') })
       static readonly urlTemplate: URL;
 
       // RegExp converter with templates
-      @Envapt('TEST_REGEXP_TEMPLATE', { converter: 'regexp', fallback: /fallback/ })
+      @Envapt('TEST_REGEXP_TEMPLATE', { converter: Converters.Regexp, fallback: /fallback/ })
       static readonly regexpTemplate: RegExp;
 
-      @Envapt('TEST_REGEXP_EMAIL_TEMPLATE', { converter: 'regexp', fallback: /fallback/ })
+      @Envapt('TEST_REGEXP_EMAIL_TEMPLATE', { converter: Converters.Regexp, fallback: /fallback/ })
       static readonly regexpEmailTemplate: RegExp;
 
-      @Envapt('TEST_REGEXP_PHONE_TEMPLATE', { converter: 'regexp', fallback: /fallback/ })
+      @Envapt('TEST_REGEXP_PHONE_TEMPLATE', { converter: Converters.Regexp, fallback: /fallback/ })
       static readonly regexpPhoneTemplate: RegExp;
 
       // Date converter with templates
-      @Envapt('TEST_DATE_TEMPLATE', { converter: 'date', fallback: new Date('2020-01-01') })
+      @Envapt('TEST_DATE_TEMPLATE', { converter: Converters.Date, fallback: new Date('2020-01-01') })
       static readonly dateTemplate: Date;
 
       // Time converter with templates
-      @Envapt('TEST_TIME_TEMPLATE', { converter: 'time', fallback: 0 })
+      @Envapt('TEST_TIME_TEMPLATE', { converter: Converters.Time, fallback: 0 })
       static readonly timeTemplate: number;
     }
 

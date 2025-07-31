@@ -4,10 +4,10 @@ import { Parser } from './Parser';
 
 import type { EnvaptConverter, EnvaptOptions } from './Types';
 
-function createPropertyDecorator<FallbackType>(
+function createPropertyDecorator<TFallback>(
   key: string,
-  fallback: FallbackType | undefined,
-  converter: EnvaptConverter<FallbackType> | undefined,
+  fallback: TFallback | undefined,
+  converter: EnvaptConverter<TFallback> | undefined,
   hasFallback = true
 ): PropertyDecorator {
   return function (target: object, prop: string | symbol): void {
@@ -19,7 +19,7 @@ function createPropertyDecorator<FallbackType>(
       get: function () {
         // Check if the environment cache has been cleared (indicating config change)
         // If so, we need to re-evaluate our cached value
-        let value = EnvaptCache.get(cacheKey) as FallbackType | null | undefined;
+        let value = EnvaptCache.get(cacheKey) as TFallback | null | undefined;
 
         // Re-evaluate if we don't have a cached value
         if (value === undefined) {
@@ -53,20 +53,20 @@ function createPropertyDecorator<FallbackType>(
  * ‎ ‎ \@Envapt('PORT', { fallback: 3000 })
  * ‎ ‎ static readonly port: number;
  *
- * ‎ ‎ \@Envapt('FEATURES', { fallback: ['auth'], converter: 'array' })
+ * ‎ ‎ \@Envapt('FEATURES', { fallback: ['auth'], converter: Converters.Array })
  * ‎ ‎ declare private readonly features: string[];
  *
- * ‎ ‎ \@Envapt('CONFIG', { converter: 'json' })
+ * ‎ ‎ \@Envapt('CONFIG', { converter: Converters.Json })
  * ‎ ‎ static readonly config: object;
  *
- * ‎ ‎ \@Envapt('API_URL', { converter: 'url' })
+ * ‎ ‎ \@Envapt('API_URL', { converter: Converters.Url })
  * ‎ ‎ declare public readonly apiUrl: URL;
  *
  * ‎ ‎ \@Envapt('CUSTOM_LIST', {
  * ‎ ‎ ‎ ‎ fallback: [1, 2, 3],
  * ‎ ‎ ‎ ‎ converter: {
  * ‎ ‎ ‎ ‎   delimiter: ',',
- * ‎ ‎ ‎ ‎   type: 'number' // Convert each item to number
+ * ‎ ‎ ‎ ‎   type: Converters.Number // Convert each item to number
  * ‎ ‎ ‎ ‎ }
  * ‎ ‎ })
  * ‎ ‎ static readonly customList: string[];
@@ -92,20 +92,20 @@ function createPropertyDecorator<FallbackType>(
  *
  * @public
  */
-export function Envapt<FallbackType = unknown>(key: string, options?: EnvaptOptions<FallbackType>): PropertyDecorator;
-export function Envapt<FallbackType = string | number | boolean | bigint | symbol>(
+export function Envapt<TFallback = unknown>(key: string, options?: EnvaptOptions<TFallback>): PropertyDecorator;
+export function Envapt<TFallback = string | number | boolean | bigint | symbol>(
   key: string,
-  fallback?: FallbackType,
-  converter?: EnvaptConverter<FallbackType>
+  fallback?: TFallback,
+  converter?: EnvaptConverter<TFallback>
 ): PropertyDecorator;
-export function Envapt<FallbackType = unknown>(
+export function Envapt<TFallback = unknown>(
   key: string,
-  fallbackOrOptions?: FallbackType | EnvaptOptions<FallbackType>,
-  converter?: EnvaptConverter<FallbackType>
+  fallbackOrOptions?: TFallback | EnvaptOptions<TFallback>,
+  converter?: EnvaptConverter<TFallback>
 ): PropertyDecorator {
   // Determine if using new options API or classic API
-  let fallback: FallbackType | undefined;
-  let actualConverter: EnvaptConverter<FallbackType> | undefined;
+  let fallback: TFallback | undefined;
+  let actualConverter: EnvaptConverter<TFallback> | undefined;
   let hasFallback = true;
 
   if (
@@ -120,7 +120,7 @@ export function Envapt<FallbackType = unknown>(
     hasFallback = 'fallback' in options;
   } else {
     // Classic API
-    fallback = fallbackOrOptions as FallbackType;
+    fallback = fallbackOrOptions as TFallback;
     actualConverter = converter;
     hasFallback = arguments.length > 1;
   }

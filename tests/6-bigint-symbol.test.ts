@@ -2,20 +2,20 @@ import { resolve } from 'node:path';
 
 import { expect } from 'chai';
 
-import { Envapt, Envapter } from '../src';
+import { Converters, Envapt, Envapter } from '../src';
 
 describe('BigInt and Symbol Support', () => {
   before(() => (Envapter.envPaths = resolve(__dirname, '.env.bigint-symbol-test')));
 
   describe('BigInt support', () => {
     class BigIntTest {
-      @Envapt('TEST_BIGINT', { converter: 'bigint', fallback: 0n })
+      @Envapt('TEST_BIGINT', { converter: Converters.Bigint, fallback: 0n })
       static readonly testBigint: bigint;
 
       @Envapt('TEST_BIGINT_LARGE', { converter: BigInt, fallback: 0n })
       static readonly testBigintLarge: bigint;
 
-      @Envapt('NONEXISTENT_BIGINT', { converter: 'bigint', fallback: 999n })
+      @Envapt('NONEXISTENT_BIGINT', { converter: Converters.Bigint, fallback: 999n })
       static readonly nonexistentBigint: bigint;
     }
 
@@ -50,13 +50,13 @@ describe('BigInt and Symbol Support', () => {
 
   describe('Symbol support', () => {
     class SymbolTest {
-      @Envapt('TEST_SYMBOL', { converter: 'symbol', fallback: Symbol('default') })
+      @Envapt('TEST_SYMBOL', { converter: Converters.Symbol, fallback: Symbol('default') })
       static readonly testSymbol: symbol;
 
       @Envapt('TEST_SYMBOL_EMPTY', { converter: Symbol, fallback: Symbol('empty') })
       static readonly testSymbolEmpty: symbol;
 
-      @Envapt('NONEXISTENT_SYMBOL', { converter: 'symbol', fallback: Symbol('fallback') })
+      @Envapt('NONEXISTENT_SYMBOL', { converter: Converters.Symbol, fallback: Symbol('fallback') })
       static readonly nonexistentSymbol: symbol;
     }
 

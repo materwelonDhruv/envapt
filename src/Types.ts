@@ -1,4 +1,4 @@
-import type { Converters, ArrayElementConverters, ConverterValue, ArrayElementConverterValue } from './Converters';
+import type { Converters, ArrayElementConverter, ConverterValue, ArrayElementConverterValue } from './Converters';
 import type { DotenvConfigOptions } from 'dotenv';
 
 /**
@@ -25,7 +25,7 @@ type PrimitiveConstructor = typeof String | typeof Number | typeof Boolean | typ
  * Valid array converter element types (excludes array, json, regexp)
  * @public
  */
-type ValidArrayConverterBuiltInType = ArrayElementConverterValue | ArrayElementConverters;
+type ValidArrayConverterBuiltInType = ArrayElementConverterValue | ArrayElementConverter;
 
 /**
  * Array converter configuration for custom delimiters and element types
@@ -39,7 +39,7 @@ interface ArrayConverter {
   /**
    * Type to convert each array element to (excludes array, json, and regexp types)
    */
-  type?: ArrayElementConverters | ArrayElementConverterValue;
+  type?: ArrayElementConverter | ArrayElementConverterValue;
 }
 
 /**
@@ -55,7 +55,7 @@ type BaseInput = string | undefined;
  * @returns Parsed value of type T
  * @public
  */
-type ConverterFunction<FallbackType = unknown> = (raw: BaseInput, fallback?: FallbackType) => FallbackType;
+type ConverterFunction<TFallback = unknown> = (raw: BaseInput, fallback?: TFallback) => TFallback;
 
 /**
  * Environment variable converter - can be a primitive constructor, built-in converter string, array converter object, or custom parser function
@@ -65,27 +65,27 @@ type ConverterFunction<FallbackType = unknown> = (raw: BaseInput, fallback?: Fal
  * @see {@link ConverterFunction} for custom parser functions
  * @public
  */
-type EnvaptConverter<FallbackType> =
+type EnvaptConverter<TFallback> =
   | PrimitiveConstructor
   | Converters
   | ConverterValue
   | ArrayConverter
-  | ConverterFunction<FallbackType>;
+  | ConverterFunction<TFallback>;
 
 /**
  * Options for the \@Envapt decorator (modern API)
  * @public
  */
-interface EnvaptOptions<FallbackType = string> {
+interface EnvaptOptions<TFallback = string> {
   /**
    * Default value to use if environment variable is not found
    */
-  fallback?: FallbackType;
+  fallback?: TFallback;
   /**
    * Built-in converter, custom converter function, or boxed-primitives (String, Number, Boolean, Symbol, BigInt)
    * @see {@link EnvaptConverter} for details
    */
-  converter?: EnvaptConverter<FallbackType>;
+  converter?: EnvaptConverter<TFallback>;
 }
 
 type JsonPrimitive = string | number | boolean | null;
@@ -152,7 +152,7 @@ type TimeUnit = 'ms' | 's' | 'm' | 'h';
  * If fallback is provided, return ReturnType. If no fallback (undefined), return ReturnType | undefined.
  * @internal
  */
-type ConditionalReturn<ReturnType, FallbackType> = FallbackType extends undefined ? ReturnType | undefined : ReturnType;
+type ConditionalReturn<ReturnType, TFallback> = TFallback extends undefined ? ReturnType | undefined : ReturnType;
 
 export type {
   PermittedDotenvConfig,

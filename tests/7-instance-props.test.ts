@@ -2,7 +2,7 @@ import { resolve } from 'node:path';
 
 import { expect } from 'chai';
 
-import { Envapt, Envapter, Environment } from '../src';
+import { Converters, Envapt, Envapter, Environment } from '../src';
 
 describe('Instance Properties with @Envapt', () => {
   before(() => (Envapter.envPaths = resolve(__dirname, '.env.instance-props-test')));
@@ -45,22 +45,22 @@ describe('Instance Properties with @Envapt', () => {
 
   describe('type conversion on instance properties', () => {
     class TypeConversionInstance {
-      @Envapt('INSTANCE_NUMBER', { converter: 'number', fallback: 0 })
+      @Envapt('INSTANCE_NUMBER', { converter: Converters.Number, fallback: 0 })
       declare readonly numberProp: number;
 
-      @Envapt('INSTANCE_FLOAT', { converter: 'float', fallback: 0.0 })
+      @Envapt('INSTANCE_FLOAT', { converter: Converters.Float, fallback: 0.0 })
       declare readonly floatProp: number;
 
-      @Envapt('INSTANCE_INTEGER', { converter: 'integer', fallback: 0 })
+      @Envapt('INSTANCE_INTEGER', { converter: Converters.Integer, fallback: 0 })
       declare readonly integerProp: number;
 
-      @Envapt('INSTANCE_BOOLEAN_TRUE', { converter: 'boolean', fallback: false })
+      @Envapt('INSTANCE_BOOLEAN_TRUE', { converter: Converters.Boolean, fallback: false })
       declare readonly booleanTrueProp: boolean;
 
-      @Envapt('INSTANCE_BOOLEAN_FALSE', { converter: 'boolean', fallback: true })
+      @Envapt('INSTANCE_BOOLEAN_FALSE', { converter: Converters.Boolean, fallback: true })
       declare readonly booleanFalseProp: boolean;
 
-      @Envapt('INSTANCE_BIGINT', { converter: 'bigint', fallback: 0n })
+      @Envapt('INSTANCE_BIGINT', { converter: Converters.Bigint, fallback: 0n })
       declare readonly bigintProp: bigint;
     }
 
@@ -84,13 +84,13 @@ describe('Instance Properties with @Envapt', () => {
 
   describe('advanced converters on instance properties', () => {
     class AdvancedConvertersInstance {
-      @Envapt('INSTANCE_ARRAY', { converter: 'array', fallback: [] })
+      @Envapt('INSTANCE_ARRAY', { converter: Converters.Array, fallback: [] })
       declare readonly arrayProp: string[];
 
-      @Envapt('INSTANCE_JSON', { converter: 'json', fallback: {} })
+      @Envapt('INSTANCE_JSON', { converter: Converters.Json, fallback: {} })
       declare readonly jsonProp: object;
 
-      @Envapt('INSTANCE_URL', { converter: 'url', fallback: new URL('http://localhost') })
+      @Envapt('INSTANCE_URL', { converter: Converters.Url, fallback: new URL('http://localhost') })
       declare readonly urlProp: URL;
     }
 
@@ -147,13 +147,13 @@ describe('Instance Properties with @Envapt', () => {
       @Envapt('INSTANCE_MISSING_STRING', { fallback: 'default-string' })
       declare readonly missingString: string;
 
-      @Envapt('INSTANCE_MISSING_NUMBER', { converter: 'number', fallback: 999 })
+      @Envapt('INSTANCE_MISSING_NUMBER', { converter: Converters.Number, fallback: 999 })
       declare readonly missingNumber: number;
 
-      @Envapt('INSTANCE_MISSING_BOOLEAN', { converter: 'boolean', fallback: true })
+      @Envapt('INSTANCE_MISSING_BOOLEAN', { converter: Converters.Boolean, fallback: true })
       declare readonly missingBoolean: boolean;
 
-      @Envapt('INSTANCE_MISSING_ARRAY', { converter: 'array', fallback: ['default1', 'default2'] })
+      @Envapt('INSTANCE_MISSING_ARRAY', { converter: Converters.Array, fallback: ['default1', 'default2'] })
       declare readonly missingArray: string[];
     }
 
@@ -209,7 +209,7 @@ describe('Instance Properties with @Envapt', () => {
       @Envapt('INSTANCE_PROP_1', { fallback: 'default' })
       declare readonly prop1: string;
 
-      @Envapt('INSTANCE_NUMBER', { converter: 'number', fallback: 0 })
+      @Envapt('INSTANCE_NUMBER', { converter: Converters.Number, fallback: 0 })
       declare readonly numProp: number;
     }
 
@@ -234,7 +234,7 @@ describe('Instance Properties with @Envapt', () => {
       @Envapt('INSTANCE_PROP_1', { fallback: 'base-default' })
       declare readonly baseProp: string;
 
-      @Envapt('INSTANCE_NUMBER', { converter: 'number', fallback: 0 })
+      @Envapt('INSTANCE_NUMBER', { converter: Converters.Number, fallback: 0 })
       declare readonly baseNumber: number;
     }
 
@@ -242,7 +242,7 @@ describe('Instance Properties with @Envapt', () => {
       @Envapt('INSTANCE_PROP_2', { fallback: 'derived-default' })
       declare readonly derivedProp: string;
 
-      @Envapt('INSTANCE_BOOLEAN_TRUE', { converter: 'boolean', fallback: false })
+      @Envapt('INSTANCE_BOOLEAN_TRUE', { converter: Converters.Boolean, fallback: false })
       declare readonly derivedBoolean: boolean;
     }
 
@@ -264,13 +264,13 @@ describe('Instance Properties with @Envapt', () => {
       @Envapt('INSTANCE_PROP_1', { fallback: 'instance-default' })
       declare readonly instanceProp: string;
 
-      @Envapt('INSTANCE_NUMBER', { converter: 'number', fallback: 0 })
+      @Envapt('INSTANCE_NUMBER', { converter: Converters.Number, fallback: 0 })
       static readonly staticProp: number;
 
-      @Envapt('INSTANCE_BOOLEAN_TRUE', { converter: 'boolean', fallback: false })
+      @Envapt('INSTANCE_BOOLEAN_TRUE', { converter: Converters.Boolean, fallback: false })
       declare readonly instanceBoolean: boolean;
 
-      @Envapt('INSTANCE_ARRAY', { converter: 'array', fallback: [] })
+      @Envapt('INSTANCE_ARRAY', { converter: Converters.Array, fallback: [] })
       static readonly staticArray: string[];
     }
 

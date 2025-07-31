@@ -160,7 +160,7 @@ export class BuiltInConverters {
   /**
    * Get the converter function for a built-in converter type
    */
-  static getConverter<FallbackType extends BuiltInConverter>(type: FallbackType): BuiltInConverterFunction {
+  static getConverter<TFallback extends BuiltInConverter>(type: TFallback): BuiltInConverterFunction {
     const converters: MapOfConverterFunctions = {
       string: BuiltInConverters.string,
       number: BuiltInConverters.number,

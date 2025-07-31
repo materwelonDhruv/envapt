@@ -2,7 +2,7 @@ import { resolve } from 'node:path';
 
 import { expect } from 'chai';
 
-import { Envapt, Envapter, EnvaptErrorCodes } from '../src';
+import { Converters, Envapt, Envapter, EnvaptErrorCodes } from '../src';
 import { EnvaptError } from '../src/Error';
 import { Validator } from '../src/Validators';
 
@@ -164,41 +164,41 @@ describe('Runtime Validation', () => {
 
   describe('Fallback type validation for built-in converters', () => {
     class FallbackTypeValidationTests {
-      @Envapt('NONEXISTENT_STRING_VAR', { converter: 'string', fallback: 42 })
+      @Envapt('NONEXISTENT_STRING_VAR', { converter: Converters.String, fallback: 42 })
       static readonly stringWithNumberFallback: string;
 
-      @Envapt('NONEXISTENT_NUMBER_VAR', { converter: 'number', fallback: 'not-a-number' })
+      @Envapt('NONEXISTENT_NUMBER_VAR', { converter: Converters.Number, fallback: 'not-a-number' })
       static readonly numberWithStringFallback: number;
 
-      @Envapt('NONEXISTENT_BOOLEAN_VAR', { converter: 'boolean', fallback: 'not-a-boolean' })
+      @Envapt('NONEXISTENT_BOOLEAN_VAR', { converter: Converters.Boolean, fallback: 'not-a-boolean' })
       static readonly booleanWithStringFallback: boolean;
 
-      @Envapt('NONEXISTENT_BIGINT_VAR', { converter: 'bigint', fallback: 42 })
+      @Envapt('NONEXISTENT_BIGINT_VAR', { converter: Converters.Bigint, fallback: 42 })
       static readonly bigintWithNumberFallback: bigint;
 
-      @Envapt('NONEXISTENT_SYMBOL_VAR', { converter: 'symbol', fallback: 'not-a-symbol' })
+      @Envapt('NONEXISTENT_SYMBOL_VAR', { converter: Converters.Symbol, fallback: 'not-a-symbol' })
       static readonly symbolWithStringFallback: symbol;
 
-      @Envapt('NONEXISTENT_URL_VAR', { converter: 'url', fallback: 'not-a-url-object' })
+      @Envapt('NONEXISTENT_URL_VAR', { converter: Converters.Url, fallback: 'not-a-url-object' })
       static readonly urlWithStringFallback: URL;
 
-      @Envapt('NONEXISTENT_REGEXP_VAR', { converter: 'regexp', fallback: 'not-a-regexp-object' })
+      @Envapt('NONEXISTENT_REGEXP_VAR', { converter: Converters.Regexp, fallback: 'not-a-regexp-object' })
       static readonly regexpWithStringFallback: RegExp;
 
-      @Envapt('NONEXISTENT_DATE_VAR', { converter: 'date', fallback: 'not-a-date-object' })
+      @Envapt('NONEXISTENT_DATE_VAR', { converter: Converters.Date, fallback: 'not-a-date-object' })
       static readonly dateWithStringFallback: Date;
 
-      @Envapt('NONEXISTENT_TIME_VAR', { converter: 'time', fallback: 'not-a-number' })
+      @Envapt('NONEXISTENT_TIME_VAR', { converter: Converters.Time, fallback: 'not-a-number' })
       static readonly timeWithStringFallback: number;
 
-      @Envapt('NONEXISTENT_JSON_VAR', { converter: 'json', fallback: Symbol('not-a-json') })
+      @Envapt('NONEXISTENT_JSON_VAR', { converter: Converters.Json, fallback: Symbol('not-a-json') })
       static readonly jsonWithStringFallback: JsonValue;
 
       // Valid fallbacks for comparison
-      @Envapt('NONEXISTENT_STRING_VAR', { converter: 'string', fallback: 'valid-string' })
+      @Envapt('NONEXISTENT_STRING_VAR', { converter: Converters.String, fallback: 'valid-string' })
       static readonly stringWithValidFallback: string;
 
-      @Envapt('NONEXISTENT_URL_VAR', { converter: 'url', fallback: new URL('http://example.com') })
+      @Envapt('NONEXISTENT_URL_VAR', { converter: Converters.Url, fallback: new URL('http://example.com') })
       static readonly urlWithValidFallback: URL;
     }
 
@@ -272,40 +272,40 @@ describe('Runtime Validation', () => {
     class ArrayConverterValidationTests {
       // Array converter with mixed-type fallback elements
       @Envapt('NONEXISTENT_ARRAY_VAR', {
-        converter: { delimiter: ',', type: 'string' },
+        converter: { delimiter: ',', type: Converters.String },
         fallback: ['string', 42, 'another-string']
       })
       static readonly arrayWithMixedTypeElements: string[];
 
       // Array converter where type doesn't match fallback element type
       @Envapt('NONEXISTENT_ARRAY_VAR', {
-        converter: { delimiter: ',', type: 'number' },
+        converter: { delimiter: ',', type: Converters.Number },
         fallback: ['not-a-number', 'also-not-a-number']
       })
       static readonly arrayWithWrongElementType: number[];
 
       // Default 'array' converter with mixed-type fallback elements
       @Envapt('NONEXISTENT_ARRAY_VAR', {
-        converter: 'array',
+        converter: Converters.Array,
         fallback: ['string', 42, true]
       })
       static readonly defaultArrayWithMixedTypes: string[];
 
       // Valid array converters for comparison
       @Envapt('NONEXISTENT_ARRAY_VAR', {
-        converter: { delimiter: ',', type: 'string' },
+        converter: { delimiter: ',', type: Converters.String },
         fallback: ['all', 'strings', 'here']
       })
       static readonly validStringArray: string[];
 
       @Envapt('NONEXISTENT_ARRAY_VAR', {
-        converter: { delimiter: ',', type: 'number' },
+        converter: { delimiter: ',', type: Converters.Number },
         fallback: [1, 2, 3]
       })
       static readonly validNumberArray: number[];
 
       @Envapt('NONEXISTENT_ARRAY_VAR', {
-        converter: 'array',
+        converter: Converters.Array,
         fallback: ['all', 'strings']
       })
       static readonly validDefaultArray: string[];

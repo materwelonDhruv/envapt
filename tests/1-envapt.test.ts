@@ -2,7 +2,7 @@ import { resolve } from 'node:path';
 
 import { expect } from 'chai';
 
-import { Envapt, Envapter } from '../src';
+import { Converters, Envapt, Envapter } from '../src';
 
 describe('Envapt', () => {
   before(() => (Envapter.envPaths = resolve(__dirname, '.env.envapt-test')));
@@ -212,22 +212,22 @@ describe('Envapt', () => {
 
   describe('built-in converters showcase', () => {
     class BuiltInConverterShowcase {
-      @Envapt('DATABASE_CONFIG', { converter: 'json' })
+      @Envapt('DATABASE_CONFIG', { converter: Converters.Json })
       static readonly databaseConfig: object;
 
       @Envapt('API_ENDPOINTS', { converter: { delimiter: ';' } })
       static readonly apiEndpoints: string[];
 
-      @Envapt('CORS_ORIGINS', { converter: { delimiter: '|', type: 'url' } })
+      @Envapt('CORS_ORIGINS', { converter: { delimiter: '|', type: Converters.Url } })
       static readonly corsOrigins: URL[];
 
       @Envapt('SERVICE_TAGS', { converter: { delimiter: ' ' } })
       static readonly serviceTags: string[];
 
-      @Envapt('ENABLED_FEATURES', { converter: 'boolean' })
+      @Envapt('ENABLED_FEATURES', { converter: Converters.Boolean })
       static readonly enabledFeatures: boolean;
 
-      @Envapt('API_TIMEOUT', { converter: 'integer' })
+      @Envapt('API_TIMEOUT', { converter: Converters.Integer })
       static readonly apiTimeout: number;
     }
 
@@ -280,7 +280,7 @@ describe('Envapt', () => {
       @Envapt('MULTI_LINE_WITH_BACKSLASHN')
       public static readonly multiLineWithBackslashN: string;
 
-      @Envapt('MULTI_LINE_NUMBER', { converter: 'number' })
+      @Envapt('MULTI_LINE_NUMBER', { converter: Converters.Number })
       public static readonly multiLineNumber: number;
     }
 
