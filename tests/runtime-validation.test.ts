@@ -106,9 +106,9 @@ describe('Runtime Validation', () => {
         static readonly invalidArrayFallback: string[];
       }
 
-      expect(() => InvalidArrayFallbackTest.invalidArrayFallback).to.throw(
-        'ArrayConverter requires that the fallback be an array, got string'
-      );
+      expect(() => InvalidArrayFallbackTest.invalidArrayFallback)
+        .to.throw(EnvaptError)
+        .with.property('code', EnvaptErrorCodes.InvalidFallback);
     });
 
     it('should return null when ArrayConverter is used without fallback for missing env var', () => {
