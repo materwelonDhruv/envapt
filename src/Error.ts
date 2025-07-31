@@ -11,6 +11,7 @@ export enum EnvaptErrorCodes {
   InvalidBuiltInConverter = 202,
   InvalidCustomConverter = 203,
   InvalidConverterType = 204,
+  PrimitiveCoercionFailed = 205,
 
   // Other errors
   // This doesn't happen because 789432 is thrown when object without delimiter is passed

@@ -81,6 +81,18 @@ describe('Envapt', () => {
       @Envapt('TEST_STRING_AS_NUMBER', { fallback: '100', converter: Number })
       public static readonly testStringAsNumber: number;
 
+      @Envapt('TEST_STRING_AS_BOOLEAN', { fallback: 'true', converter: Boolean })
+      public static readonly testStringAsBoolean: boolean;
+
+      @Envapt('TEST_NUMBER_AS_BIGINT', { fallback: 123456789, converter: BigInt })
+      public static readonly testNumberAsBigInt: bigint;
+
+      @Envapt('TEST_STRING_AS_BIGINT', { fallback: '987654321', converter: BigInt })
+      public static readonly testStringAsBigInt: bigint;
+
+      @Envapt('TEST_STRING_AS_SYMBOL', { fallback: 'test-symbol', converter: Symbol })
+      public static readonly testStringAsSymbol: symbol;
+
       @Envapt('TEST_VAR', { fallback: undefined })
       public static readonly testVar: string;
 
@@ -102,6 +114,26 @@ describe('Envapt', () => {
     it('should use Number converter override despite string fallback', () => {
       expect(typeof TestEnv.testStringAsNumber).to.equal('number');
       expect(TestEnv.testStringAsNumber).to.equal(100);
+    });
+
+    it('should use Boolean converter override despite string fallback', () => {
+      expect(typeof TestEnv.testStringAsBoolean).to.equal('boolean');
+      expect(TestEnv.testStringAsBoolean).to.be.true;
+    });
+
+    it('should use BigInt converter override with number fallback', () => {
+      expect(typeof TestEnv.testNumberAsBigInt).to.equal('bigint');
+      expect(TestEnv.testNumberAsBigInt).to.equal(123456789n);
+    });
+
+    it('should use BigInt converter override with string fallback', () => {
+      expect(typeof TestEnv.testStringAsBigInt).to.equal('bigint');
+      expect(TestEnv.testStringAsBigInt).to.equal(987654321n);
+    });
+
+    it('should use Symbol converter override with string fallback', () => {
+      expect(typeof TestEnv.testStringAsSymbol).to.equal('symbol');
+      expect(TestEnv.testStringAsSymbol.toString()).to.equal('Symbol(test-symbol)');
     });
 
     it('should resolve template variables in environment values', () => {

@@ -13,7 +13,7 @@ export class Validator {
   /**
    * Check if a value is a built-in converter type
    */
-  static isBuiltInConverter(value: EnvaptConverter<unknown>): value is BuiltInConverter {
+  static isBuiltInConverter<FallbackType>(value: EnvaptConverter<FallbackType>): value is BuiltInConverter {
     if (typeof value === 'string') return ListOfBuiltInConverters.includes(value);
     return false;
   }
@@ -126,20 +126,81 @@ export class Validator {
   }
 
   /**
-   * Validate that array converter type matches the fallback element type
+   * Validate that array converter type matches fallback element types
    */
-  static validateArrayConverterFallbackMatch(converterType: ValidArrayConverterBuiltInType, fallback: unknown[]): void {
+  static validateArrayConverterElementTypeMatch(converterType: string, fallback: unknown[]): void {
     if (fallback.length === 0) return; // Empty array is valid
 
-    this.validateArrayFallbackElementTypes(fallback);
-
     const firstElement = fallback[0];
-    const typeChecker = BuiltInConverterTypeCheckers[converterType];
+    const typeChecker = BuiltInConverterTypeCheckers[converterType as keyof typeof BuiltInConverterTypeCheckers];
+
     if (!typeChecker(firstElement)) {
       throw new EnvaptError(
         EnvaptErrorCodes.ArrayFallbackElementTypeMismatch,
-        `Array converter type "${converterType}" does not match fallback element type.`
+        `Array converter type "${converterType}" does not match fallback element type. Expected ${converterType} compatible elements.`
       );
     }
+  }
+
+  /**
+   * Check if a value is a primitive constructor
+   */
+  static isPrimitiveConstructor(
+    value: unknown
+  ): value is typeof String | typeof Number | typeof Boolean | typeof BigInt | typeof Symbol {
+    return value === String || value === Number || value === Boolean || value === BigInt || value === Symbol;
+  }
+
+  /**
+   * Safely coerce a fallback value using a primitive constructor
+   */
+  static coercePrimitiveFallback<CoercedType>(
+    converter: typeof String | typeof Number | typeof Boolean | typeof BigInt | typeof Symbol,
+    fallback: unknown
+  ): CoercedType {
+    // Check if fallback is already the correct type and return as-is
+    if (this.isCorrectPrimitiveType(converter, fallback)) return fallback as CoercedType;
+
+    // Otherwise, coerce the value
+    return this.performPrimitiveCoercion<CoercedType>(converter, fallback);
+  }
+
+  /**
+   * Check if fallback is already the correct primitive type
+   */
+  private static isCorrectPrimitiveType(
+    converter: typeof String | typeof Number | typeof Boolean | typeof BigInt | typeof Symbol,
+    fallback: unknown
+  ): boolean {
+    if (converter === String && typeof fallback === 'string') return true;
+    if (converter === Number && typeof fallback === 'number') return true;
+    if (converter === Boolean && typeof fallback === 'boolean') return true;
+    if (converter === BigInt && typeof fallback === 'bigint') return true;
+    if (converter === Symbol && typeof fallback === 'symbol') return true;
+    return false;
+  }
+
+  /**
+   * Perform the actual primitive coercion
+   */
+  private static performPrimitiveCoercion<CoercedType>(
+    converter: typeof String | typeof Number | typeof Boolean | typeof BigInt | typeof Symbol,
+    fallback: unknown
+  ): CoercedType {
+    try {
+      if (converter === String) return String(fallback) as CoercedType;
+      if (converter === Number) return Number(fallback) as CoercedType;
+      if (converter === Boolean) return Boolean(fallback) as CoercedType;
+      if (converter === BigInt) return BigInt(fallback as string | number | bigint) as CoercedType;
+      if (converter === Symbol) return Symbol(fallback as string | number) as CoercedType;
+    } catch (error) {
+      throw new EnvaptError(
+        EnvaptErrorCodes.PrimitiveCoercionFailed,
+        `Failed to coerce fallback value using ${converter.name}: ${(error as Error).message}`
+      );
+    }
+
+    // This should never happen but TypeScript needs it
+    throw new EnvaptError(EnvaptErrorCodes.PrimitiveCoercionFailed, `Unknown primitive converter: ${converter.name}`);
   }
 }

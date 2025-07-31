@@ -146,5 +146,6 @@ export type {
   BuiltInConverterReturnType,
   BuiltInConverterFunction,
   MapOfConverterFunctions,
+  ReturnValuesOfConverterFunctions,
   TimeUnit
 };

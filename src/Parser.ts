@@ -2,7 +2,7 @@ import { BuiltInConverters } from './BuiltInConverters';
 import { EnvaptError, EnvaptErrorCodes } from './Error';
 import { Validator } from './Validators';
 
-import type { EnvaptConverter } from './Types';
+import type { EnvaptConverter, PrimitiveConstructor, ArrayConverter, BuiltInConverter } from './Types';
 
 /**
  * @internal
@@ -52,12 +52,59 @@ export class Parser {
     return out;
   }
 
+  convertValue<FallbackType>(
+    key: string,
+    fallback: FallbackType | undefined,
+    converter: EnvaptConverter<FallbackType> | undefined,
+    hasFallback = true
+  ): FallbackType | null | undefined {
+    const resolvedConverter = this.resolveConverter(converter, fallback);
+    const processedFallback = this.processFallbackForConverter(resolvedConverter, fallback);
+
+    // Handle different converter types
+    if (Validator.isArrayConverter(resolvedConverter)) {
+      return this.processArrayConverter(key, processedFallback, resolvedConverter, hasFallback);
+    }
+
+    if (Validator.isPrimitiveConstructor(resolvedConverter)) {
+      const stringConverter = this.convertPrimitiveToString(resolvedConverter);
+      return this.processBuiltInConverter(key, processedFallback, stringConverter, hasFallback, true);
+    }
+
+    if (Validator.isBuiltInConverter(resolvedConverter)) {
+      return this.processBuiltInConverter(key, processedFallback, resolvedConverter, hasFallback, false);
+    }
+
+    return this.processCustomConverter(key, processedFallback, resolvedConverter, hasFallback);
+  }
+
+  private processFallbackForConverter<FallbackType>(
+    converter: EnvaptConverter<FallbackType>,
+    fallback: FallbackType | undefined
+  ): FallbackType | undefined {
+    // For primitive constructors, coerce the fallback to match the converter
+    if (Validator.isPrimitiveConstructor(converter) && fallback !== undefined) {
+      return Validator.coercePrimitiveFallback<FallbackType>(converter, fallback);
+    }
+    return fallback;
+  }
+
+  private convertPrimitiveToString(primitiveConstructor: PrimitiveConstructor): BuiltInConverter {
+    if (primitiveConstructor === String) return 'string';
+    if (primitiveConstructor === Number) return 'number';
+    if (primitiveConstructor === Boolean) return 'boolean';
+    if (primitiveConstructor === BigInt) return 'bigint';
+    if (primitiveConstructor === Symbol) return 'symbol';
+
+    throw new EnvaptError(EnvaptErrorCodes.InvalidConverterType, `Unknown primitive constructor`);
+  }
+
   private processBuiltInConverter<FallbackType>(
     key: string,
     fallback: FallbackType | undefined,
-    resolvedConverter: EnvaptConverter<FallbackType>,
+    resolvedConverter: BuiltInConverter,
     hasFallback: boolean,
-    wasOriginallyConstructor = false
+    wasOriginallyConstructor: boolean
   ): FallbackType | null | undefined {
     // Validate the built-in converter at runtime
     Validator.builtInConverter(resolvedConverter);
@@ -67,7 +114,7 @@ export class Parser {
     if (hasFallback && fallback !== undefined && !wasOriginallyConstructor) {
       Validator.validateBuiltInConverterFallback(resolvedConverter, fallback);
 
-      // Special handling for 'array' converter. also check array element consistency
+      // Special handling for 'array' converter - check array element consistency
       if (resolvedConverter === 'array' && Array.isArray(fallback)) {
         Validator.validateArrayFallbackElementTypes(fallback);
       }
@@ -89,7 +136,7 @@ export class Parser {
   private processArrayConverter<FallbackType>(
     key: string,
     fallback: FallbackType | undefined,
-    resolvedConverter: EnvaptConverter<FallbackType>,
+    resolvedConverter: ArrayConverter,
     hasFallback: boolean
   ): FallbackType | null | undefined {
     // Validate the ArrayConverter configuration at runtime
@@ -104,13 +151,13 @@ export class Parser {
     }
 
     // Additional validations for array converter fallbacks
-    if (Array.isArray(fallback)) {
+    if (hasFallback && Array.isArray(fallback)) {
       // Validate that all elements in fallback array have consistent types
       Validator.validateArrayFallbackElementTypes(fallback);
 
-      // Validate that array converter type matches fallback element type
+      // For array converters with a type, validate that converter type matches fallback elements
       if (resolvedConverter.type) {
-        Validator.validateArrayConverterFallbackMatch(resolvedConverter.type, fallback);
+        Validator.validateArrayConverterElementTypeMatch(resolvedConverter.type, fallback);
       }
     }
 
@@ -126,39 +173,12 @@ export class Parser {
     return result as FallbackType;
   }
 
-  convertValue<FallbackType>(
+  private processCustomConverter<FallbackType>(
     key: string,
     fallback: FallbackType | undefined,
-    converter: EnvaptConverter<FallbackType> | undefined,
-    hasFallback = true
+    resolvedConverter: EnvaptConverter<FallbackType>,
+    hasFallback: boolean
   ): FallbackType | null | undefined {
-    // Determine which converter to use
-    let resolvedConverter = this.resolveConverter(converter, fallback);
-
-    // Track if this was originally a constructor to avoid strict validation
-    const wasOriginallyConstructor =
-      resolvedConverter === Number ||
-      resolvedConverter === Boolean ||
-      resolvedConverter === String ||
-      resolvedConverter === BigInt ||
-      resolvedConverter === Symbol;
-
-    if (resolvedConverter === Number) resolvedConverter = 'number';
-    else if (resolvedConverter === Boolean) resolvedConverter = 'boolean';
-    else if (resolvedConverter === String) resolvedConverter = 'string';
-    else if (resolvedConverter === BigInt) resolvedConverter = 'bigint';
-    else if (resolvedConverter === Symbol) resolvedConverter = 'symbol';
-
-    // Check if it's an ArrayConverter object
-    if (Validator.isArrayConverter(resolvedConverter)) {
-      return this.processArrayConverter(key, fallback, resolvedConverter, hasFallback);
-    }
-
-    // Check if it's a built-in converter
-    if (Validator.isBuiltInConverter(resolvedConverter as EnvaptConverter<unknown>)) {
-      return this.processBuiltInConverter(key, fallback, resolvedConverter, hasFallback, wasOriginallyConstructor);
-    }
-
     Validator.customConvertor(resolvedConverter);
 
     // Custom converter function
