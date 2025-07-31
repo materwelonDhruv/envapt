@@ -1,10 +1,11 @@
+import type { ConverterValue } from './Converters';
 import type { JsonValue } from './Types';
 
 /**
  * List of built-in converters for Envapt.
  * @internal
  */
-export const ListOfBuiltInConverters = [
+export const ListOfBuiltInConverters: ConverterValue[] = [
   'string',
   'number',
   'boolean',
@@ -24,10 +25,7 @@ export const ListOfBuiltInConverters = [
  * Type checking functions for built-in converter return types.
  * @internal
  */
-export const BuiltInConverterTypeCheckers: Record<
-  (typeof ListOfBuiltInConverters)[number],
-  (value: unknown) => boolean
-> = {
+export const BuiltInConverterTypeCheckers: Record<ConverterValue, (value: unknown) => boolean> = {
   string: (value: unknown): value is string => typeof value === 'string',
   number: (value: unknown): value is number => typeof value === 'number',
   boolean: (value: unknown): value is boolean => typeof value === 'boolean',

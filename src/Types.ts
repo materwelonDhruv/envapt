@@ -1,4 +1,4 @@
-import type { ListOfBuiltInConverters } from './ListOfBuiltInConverters';
+import type { Converters, ArrayElementConverters, ConverterValue, ArrayElementConverterValue } from './Converters';
 import type { DotenvConfigOptions } from 'dotenv';
 
 /**
@@ -13,7 +13,7 @@ type PermittedDotenvConfig = Omit<DotenvConfigOptions, 'processEnv' | 'path'>;
  * Built-in converter types for common environment variable patterns
  * @public
  */
-type BuiltInConverter = (typeof ListOfBuiltInConverters)[number];
+type BuiltInConverter = ConverterValue | Converters;
 
 /**
  * Primitive types supported by Envapter
@@ -21,7 +21,11 @@ type BuiltInConverter = (typeof ListOfBuiltInConverters)[number];
  */
 type PrimitiveConstructor = typeof String | typeof Number | typeof Boolean | typeof BigInt | typeof Symbol;
 
-type ValidArrayConverterBuiltInType = Exclude<BuiltInConverter, 'array' | 'json' | 'regexp'>;
+/**
+ * Valid array converter element types (excludes array, json, regexp)
+ * @public
+ */
+type ValidArrayConverterBuiltInType = ArrayElementConverterValue | ArrayElementConverters;
 
 /**
  * Array converter configuration for custom delimiters and element types
@@ -35,7 +39,7 @@ interface ArrayConverter {
   /**
    * Type to convert each array element to (excludes array, json, and regexp types)
    */
-  type?: ValidArrayConverterBuiltInType;
+  type?: ArrayElementConverters | ArrayElementConverterValue;
 }
 
 /**
@@ -56,14 +60,15 @@ type ConverterFunction<FallbackType = unknown> = (raw: BaseInput, fallback?: Fal
 /**
  * Environment variable converter - can be a primitive constructor, built-in converter string, array converter object, or custom parser function
  * @see {@link PrimitiveConstructor} for primitive types
- * @see {@link BuiltInConverter} for built-in types
+ * @see {@link Converters} for built-in types
  * @see {@link ArrayConverter} for array converter configuration
  * @see {@link ConverterFunction} for custom parser functions
  * @public
  */
 type EnvaptConverter<FallbackType> =
   | PrimitiveConstructor
-  | BuiltInConverter
+  | Converters
+  | ConverterValue
   | ArrayConverter
   | ConverterFunction<FallbackType>;
 
@@ -77,7 +82,7 @@ interface EnvaptOptions<FallbackType = string> {
    */
   fallback?: FallbackType;
   /**
-   * Built-in converter, custom converter function, or boxed-primitives (String, Number, Boolean)
+   * Built-in converter, custom converter function, or boxed-primitives (String, Number, Boolean, Symbol, BigInt)
    * @see {@link EnvaptConverter} for details
    */
   converter?: EnvaptConverter<FallbackType>;
