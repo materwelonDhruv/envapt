@@ -1,6 +1,6 @@
 # Envapt - The apt way to handle env
 
-A powerful TypeScript-first environment configuration library that provides type conversion, template variable resolution, and decorator-based class property configuration by extending dotenv.
+A TypeScript environment configuration library that eliminates the boilerplate of parsing .env files. Get properly runtime-typed environment variables with fallbacks, template support, and automatic, built-in, & custom type conversion - no more `process.env.PORT || '3000'` everywhere.
 
 ## Features
 
@@ -27,6 +27,7 @@ A powerful TypeScript-first environment configuration library that provides type
   - [Custom Converters](#custom-converters)
   - [Handling Missing Values](#handling-missing-values)
   - [Functional API](#functional-api)
+  - [Converter Type Quick Reference](#converter-type-quick-reference)
 - [Environment Detection](#environment-detection)
 - [Template Variables](#template-variables)
 - [Configuration](#configuration)
@@ -158,7 +159,7 @@ The `@Envapt` decorator can be used on both **static** and **instance** class pr
 
 #### Automatic Runtime Type Detection
 
-Types are automatically inferred from fallback values. Use static properties for app-wide config and instance properties for service-specific config:
+Types are automatically inferred from fallback values.
 
 ```ts
 class Config extends Envapter {
@@ -217,6 +218,10 @@ class Config extends Envapter {
   // Instance properties work the same way
   @Envapt('CONNECTION_TIMEOUT', { fallback: 5000, converter: Number })
   declare readonly timeout: number;
+
+  // Type coercion example
+  @Envapt('PERMISSIONS', { fallback: '72394823472342983', converter: BigInt })
+  declare readonly permissions: bigint; // Converts "72394823472342983" to BigInt
 }
 ```
 
@@ -230,7 +235,7 @@ class Config extends Envapter {
 Envapt provides many built-in converters for common patterns:
 
 > [!IMPORTANT]
-> Built-in converters enforce **strict type validation** between the converter and fallback types. The fallback must match the converter's expected return type.
+> Built-in converters enforce **strict type validation** between the converter and fallback types. The converter's expected return type must match the fallback's type.
 
 ```ts
 class Config extends Envapter {
@@ -412,6 +417,18 @@ const envapter = new Envapter();
 const value = envapter.get('VAR', 'default');
 ```
 
+### Converter Type Quick Reference
+
+| **Use Case**           | **Converter Type**        | **Example**                                      |
+| ---------------------- | ------------------------- | ------------------------------------------------ |
+| **Type coercion**      | Primitive constructors    | `converter: String`                              |
+| **Strict validation**  | Built-in converters       | `converter: 'string'`                            |
+| **Array parsing**      | Built-in Array converters | `converter: { delimiter: ',', type?: 'string' }` |
+| **Complex transforms** | Custom function           | `converter: (raw, fallback) => ...`              |
+
+> [!TIP]
+> Start with built-in converters, use primitive constructors when you need coercion, and custom converters for complex transforms.
+
 ## Environment Detection
 
 Envapt automatically detects your environment from these variables (in order):
@@ -428,7 +445,7 @@ Supported values: `development`, `staging`, `production` (case-sensitive)
 import { Envapter, EnvaptEnvironment } from 'envapt';
 
 // Check current environment
-console.log(Envapter.environment); // Environment.Development
+console.log(Envapter.environment); // Environment.Development (default)
 console.log(Envapter.isProduction); // false
 console.log(Envapter.isDevelopment); // true
 console.log(Envapter.isStaging); // false
@@ -545,7 +562,7 @@ try {
 | `PrimitiveCoercionFailed` (205)          | Primitive type coercion failed                            |
 | `MissingDelimiter` (301)                 | Delimiter is missing in array converter configuration     |
 | `InvalidUserDefinedConfig` (302)         | Invalid user-defined configuration provided               |
-| `EnvFileNotFound` (303)                  | Specified environment file doesn't exist                  |
+| `EnvFilesNotFound` (303)                 | Specified environment file doesn't exist                  |
 
 ## Advanced Examples
 
@@ -591,15 +608,3 @@ class AppConfig extends Envapter {
   }
 }
 ```
-
-### Converter Type Quick Reference
-
-| **Use Case**           | **Converter Type**         | **Example**                         |
-| ---------------------- | -------------------------- | ----------------------------------- |
-| **Type coercion**      | Primitive constructors     | `converter: String`                 |
-| **Strict validation**  | Built-in string converters | `converter: 'string'`               |
-| **Array parsing**      | Array converter object     | `converter: { delimiter: ',' }`     |
-| **Complex transforms** | Custom function            | `converter: (raw, fallback) => ...` |
-
-> [!TIP]
-> Start with built-in converters for type safety, use primitive constructors when you need coercion, and custom converters for complex transforms.
