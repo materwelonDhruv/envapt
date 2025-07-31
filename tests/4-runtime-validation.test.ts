@@ -142,7 +142,7 @@ describe('Runtime Validation', () => {
   describe('Custom converter validation', () => {
     class CustomConverterTests {
       // TODO: This should show a type error, doesn't at the moment for some reason.
-      @Envapt('CUSTOM_CONVERTER_VAR', { converter: 'lol' })
+      @Envapt('CUSTOM_CONVERTER_VAR', { converter: 'lol' as unknown as never })
       static readonly customConverter: string;
 
       @Envapt('CUSTOM_CONVERTER_INCONSISTENT_FALLBACK_TYPE', {

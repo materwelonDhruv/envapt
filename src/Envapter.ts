@@ -4,7 +4,7 @@ import { BuiltInConverters } from './BuiltInConverters';
 import { Parser, type EnvapterService } from './Parser';
 import { Validator } from './Validators';
 
-import type { PermittedDotenvConfig } from './Types';
+import type { ConditionalReturn, PermittedDotenvConfig } from './Types';
 
 /**
  * Internal cache for environment variables and computed values
@@ -138,17 +138,24 @@ export class Envapter implements EnvapterService {
     return EnvaptCache;
   }
 
-  private static _get(key: string, type: Primitive = Primitive.String, def?: unknown): unknown {
+  private static _get<EnvVarReturnType, DefaultType extends EnvVarReturnType | undefined = undefined>(
+    key: string,
+    type: Primitive = Primitive.String,
+    def?: DefaultType
+  ): ConditionalReturn<EnvVarReturnType, DefaultType> {
     const rawVal = this.config.get(key) as string | number | boolean;
-    if (!rawVal) return def;
+    if (!rawVal) return def as ConditionalReturn<EnvVarReturnType, DefaultType>;
 
     const parsed = this.parser.resolveTemplate(key, String(rawVal));
 
-    if (type === Primitive.Number) return BuiltInConverters.number(parsed, def as number);
-    if (type === Primitive.Boolean) return BuiltInConverters.boolean(parsed, def as boolean);
-    if (type === Primitive.BigInt) return BuiltInConverters.bigint(parsed, def as bigint);
-    if (type === Primitive.Symbol) return BuiltInConverters.symbol(parsed, def as symbol);
-    return BuiltInConverters.string(parsed, def as string);
+    let result: EnvVarReturnType;
+    if (type === Primitive.Number) result = BuiltInConverters.number(parsed, def as number) as EnvVarReturnType;
+    else if (type === Primitive.Boolean) result = BuiltInConverters.boolean(parsed, def as boolean) as EnvVarReturnType;
+    else if (type === Primitive.BigInt) result = BuiltInConverters.bigint(parsed, def as bigint) as EnvVarReturnType;
+    else if (type === Primitive.Symbol) result = BuiltInConverters.symbol(parsed, def as symbol) as EnvVarReturnType;
+    else result = BuiltInConverters.string(parsed, def as string) as EnvVarReturnType;
+
+    return result as ConditionalReturn<EnvVarReturnType, DefaultType>;
   }
 
   private static determineEnvironment(env?: string | Environment): void {
@@ -254,22 +261,26 @@ export class Envapter implements EnvapterService {
    *
    * @param key - Environment variable name
    * @param def - Default value if variable is not found
-   * @returns The environment variable value or default
+   * @returns The environment variable value or default; if no default is provided, may return undefined
    *
    * @example
    * ```ts
-   * const apiUrl = Envapter.get('API_URL', 'http://localhost:3000');
+   * const apiUrl = Envapter.get('API_URL', 'http://localhost:3000'); // returns string
+   * const maybeMissing = Envapter.get('MAYBE_MISSING'); // returns string | undefined
    * ```
    */
-  static get(key: string, def?: string): string {
-    return this._get(key, Primitive.String, def) as string;
+  static get<Default extends string | undefined = undefined>(
+    key: string,
+    def?: Default
+  ): ConditionalReturn<string, Default> {
+    return this._get(key, Primitive.String, def);
   }
 
   /**
    * @see {@link Envapter.get}
    */
-  get(key: string, def?: string): string {
-    return Envapter._get(key, Primitive.String, def) as string;
+  get<Default extends string | undefined = undefined>(key: string, def?: Default): ConditionalReturn<string, Default> {
+    return Envapter._get(key, Primitive.String, def);
   }
 
   /**
@@ -278,22 +289,23 @@ export class Envapter implements EnvapterService {
    *
    * @param key - Environment variable name
    * @param def - Default value if variable is not found or cannot be converted
-   * @returns The environment variable value as number or default
-   *
-   * @example
-   * ```ts
-   * const port = Envapter.getNumber('PORT', 3000);
-   * ```
+   * @returns The environment variable value as number or default; if no default is provided, may return undefined
    */
-  static getNumber(key: string, def?: number): number {
-    return this._get(key, Primitive.Number, def) as number;
+  static getNumber<Default extends number | undefined = undefined>(
+    key: string,
+    def?: Default
+  ): ConditionalReturn<number, Default> {
+    return this._get(key, Primitive.Number, def);
   }
 
   /**
-   * @see {@link Envapter.getNumber
+   * @see {@link Envapter.getNumber}
    */
-  getNumber(key: string, def?: number): number {
-    return Envapter._get(key, Primitive.Number, def) as number;
+  getNumber<Default extends number | undefined = undefined>(
+    key: string,
+    def?: Default
+  ): ConditionalReturn<number, Default> {
+    return Envapter._get(key, Primitive.Number, def);
   }
 
   /**
@@ -302,22 +314,23 @@ export class Envapter implements EnvapterService {
    *
    * @param key - Environment variable name
    * @param def - Default value if variable is not found or cannot be converted
-   * @returns The environment variable value as boolean or default
-   *
-   * @example
-   * ```ts
-   * const isProduction = Envapter.getBoolean('IS_PRODUCTION', false);
-   * ```
+   * @returns The environment variable value as boolean or default; if no default is provided, may return undefined
    */
-  static getBoolean(key: string, def?: boolean): boolean {
-    return this._get(key, Primitive.Boolean, def) as boolean;
+  static getBoolean<Default extends boolean | undefined = undefined>(
+    key: string,
+    def?: Default
+  ): ConditionalReturn<boolean, Default> {
+    return this._get(key, Primitive.Boolean, def);
   }
 
   /**
    * @see {@link Envapter.getBoolean}
    */
-  getBoolean(key: string, def?: boolean): boolean {
-    return Envapter._get(key, Primitive.Boolean, def) as boolean;
+  getBoolean<Default extends boolean | undefined = undefined>(
+    key: string,
+    def?: Default
+  ): ConditionalReturn<boolean, Default> {
+    return Envapter._get(key, Primitive.Boolean, def);
   }
 
   /**
@@ -326,22 +339,23 @@ export class Envapter implements EnvapterService {
    *
    * @param key - Environment variable name
    * @param def - Default value if variable is not found or cannot be converted
-   * @returns The environment variable value as bigint or default
-   *
-   * @example
-   * ```ts
-   * const largeNumber = Envapter.getBigInt('LARGE_NUMBER', 123456789012345678901234567890n);
-   * ```
+   * @returns The environment variable value as bigint or default; if no default is provided, may return undefined
    */
-  static getBigInt(key: string, def?: bigint): bigint {
-    return this._get(key, Primitive.BigInt, def) as bigint;
+  static getBigInt<Default extends bigint | undefined = undefined>(
+    key: string,
+    def?: Default
+  ): ConditionalReturn<bigint, Default> {
+    return this._get(key, Primitive.BigInt, def);
   }
 
   /**
    * @see {@link Envapter.getBigInt}
    */
-  getBigInt(key: string, def?: bigint): bigint {
-    return Envapter._get(key, Primitive.BigInt, def) as bigint;
+  getBigInt<Default extends bigint | undefined = undefined>(
+    key: string,
+    def?: Default
+  ): ConditionalReturn<bigint, Default> {
+    return Envapter._get(key, Primitive.BigInt, def);
   }
 
   /**
@@ -350,22 +364,23 @@ export class Envapter implements EnvapterService {
    *
    * @param key - Environment variable name
    * @param def - Default value if variable is not found
-   * @returns The environment variable value as symbol or default
-   *
-   * @example
-   * ```ts
-   * const uniqueKey = Envapter.getSymbol('UNIQUE_KEY', Symbol('default'));
-   * ```
+   * @returns The environment variable value as symbol or default; if no default is provided, may return undefined
    */
-  static getSymbol(key: string, def?: symbol): symbol {
-    return this._get(key, Primitive.Symbol, def) as symbol;
+  static getSymbol<Default extends symbol | undefined = undefined>(
+    key: string,
+    def?: Default
+  ): ConditionalReturn<symbol, Default> {
+    return this._get(key, Primitive.Symbol, def);
   }
 
   /**
    * @see {@link Envapter.getSymbol}
    */
-  getSymbol(key: string, def?: symbol): symbol {
-    return Envapter._get(key, Primitive.Symbol, def) as symbol;
+  getSymbol<Default extends symbol | undefined = undefined>(
+    key: string,
+    def?: Default
+  ): ConditionalReturn<symbol, Default> {
+    return Envapter._get(key, Primitive.Symbol, def);
   }
 
   /**

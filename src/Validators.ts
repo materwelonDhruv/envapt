@@ -111,8 +111,7 @@ export class Validator {
    * Validate that all elements in an array fallback have consistent types
    */
   static validateArrayFallbackElementTypes(fallback: unknown[]): void {
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    if (fallback && fallback.length === 0) return; // Empty array is valid
+    if (fallback.length === 0) return; // Empty array is valid
 
     const firstElementType = typeof fallback[0];
     const hasInconsistentTypes = fallback.some((element, index) => {

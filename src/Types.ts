@@ -142,6 +142,13 @@ type MapOfConverterFunctions = Record<BuiltInConverter, BuiltInConverterFunction
  */
 type TimeUnit = 'ms' | 's' | 'm' | 'h';
 
+/**
+ * Helper type for getter methods that conditionally return undefined based on whether a fallback is provided
+ * If fallback is provided, return ReturnType. If no fallback (undefined), return ReturnType | undefined.
+ * @internal
+ */
+type ConditionalReturn<ReturnType, FallbackType> = FallbackType extends undefined ? ReturnType | undefined : ReturnType;
+
 export type {
   PermittedDotenvConfig,
   BuiltInConverter,
@@ -157,5 +164,6 @@ export type {
   BuiltInConverterFunction,
   MapOfConverterFunctions,
   ReturnValuesOfConverterFunctions,
-  TimeUnit
+  TimeUnit,
+  ConditionalReturn
 };

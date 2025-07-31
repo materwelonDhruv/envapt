@@ -46,7 +46,7 @@ Logs/
 
 # Ignore coverage reports
 .nyc_output/
-# coverage/
+coverage/
 
 # Ignore temporary files
 *.tmp

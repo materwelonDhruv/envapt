@@ -9,9 +9,9 @@ import type { EnvaptConverter, PrimitiveConstructor, ArrayConverter, BuiltInConv
  */
 export interface EnvapterService {
   getRaw(key: string): string | undefined;
-  get(key: string, def?: string): string;
-  getNumber(key: string, def?: number): number;
-  getBoolean(key: string, def?: boolean): boolean;
+  get(key: string, def?: string): string | undefined;
+  getNumber(key: string, def?: number): number | undefined;
+  getBoolean(key: string, def?: boolean): boolean | undefined;
 }
 
 /**
@@ -125,7 +125,7 @@ export class Parser {
     }
 
     const parsed = this.envService.get(key, undefined);
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+
     if (parsed === undefined) return hasFallback ? fallback : null;
 
     const converterFn = BuiltInConverters.getConverter(resolvedConverter);
@@ -166,7 +166,7 @@ export class Parser {
     }
 
     const parsed = this.envService.get(key, undefined);
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+
     if (parsed === undefined) return hasFallback ? fallback : null;
 
     const result = BuiltInConverters.processArrayConverter(parsed, fallback, resolvedConverter);
@@ -190,7 +190,7 @@ export class Parser {
 
     // If no fallback provided and no value found, return null
     // If explicit undefined fallback and no value found, return undefined
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+
     if (raw === undefined) return hasFallback ? fallback : null;
 
     return resolvedConverter(raw, fallback);
