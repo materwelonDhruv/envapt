@@ -1,10 +1,9 @@
-/* eslint-disable @typescript-eslint/no-unused-expressions */
 import { resolve } from 'node:path';
 
 import { expect } from 'chai';
 
 import { Envapt } from '../src/Envapt';
-import { Envapter } from '../src/Envapter';
+import { Envapter, Environment } from '../src/Envapter';
 
 describe('Envapter', () => {
   before(() => (Envapter.envPaths = resolve(__dirname, '.env.test')));
@@ -152,6 +151,9 @@ describe('Envapter', () => {
     // isStaging is present because we extended the Envapter class
     it('should be true for isStaging environment set in .env.extra', () => {
       expect(TestEnv.isStaging).to.be.true;
+      expect(TestEnv.isProduction).to.be.false;
+      expect(TestEnv.isDevelopment).to.be.false;
+      expect(TestEnv.environment).to.equal(Environment.Staging);
     });
   });
 

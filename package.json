@@ -41,6 +41,8 @@
     "typecheck": "tsc --noEmit",
     "test": "mocha",
     "test:watch": "mocha --watch",
+    "coverage:dev": "nyc pnpm run test",
+    "coverage:prod": "nyc --reporter=lcov --reporter=text-summary pnpm run test",
     "prepare": "husky",
     "prepublishOnly": "pnpm run clean && pnpm run build"
   },
@@ -81,6 +83,7 @@
     "eslint-plugin-security": "^3.0.1",
     "husky": "^9.1.7",
     "mocha": "^11.7.1",
+    "nyc": "^17.1.0",
     "prettier": "^3.6.2",
     "tsup": "^8.5.0",
     "tsx": "^4.20.3",

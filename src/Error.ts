@@ -21,7 +21,7 @@ export class EnvaptError extends Error {
 
   constructor(code: EnvaptErrorCodes, message: string) {
     super(message);
-    this.name = `EnvaptError[${code}]`;
+    this.name = `EnvaptError [${code}]`;
     this.code = code;
 
     Error.captureStackTrace(this, EnvaptError);

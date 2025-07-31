@@ -13,7 +13,7 @@ describe('BigInt and Symbol Support', () => {
       @Envapt('TEST_BIGINT', { converter: 'bigint', fallback: 0n })
       static readonly testBigint: bigint;
 
-      @Envapt('TEST_BIGINT_LARGE', { converter: 'bigint', fallback: 0n })
+      @Envapt('TEST_BIGINT_LARGE', { converter: BigInt, fallback: 0n })
       static readonly testBigintLarge: bigint;
 
       @Envapt('NONEXISTENT_BIGINT', { converter: 'bigint', fallback: 999n })
@@ -54,7 +54,7 @@ describe('BigInt and Symbol Support', () => {
       @Envapt('TEST_SYMBOL', { converter: 'symbol', fallback: Symbol('default') })
       static readonly testSymbol: symbol;
 
-      @Envapt('TEST_SYMBOL_EMPTY', { converter: 'symbol', fallback: Symbol('empty') })
+      @Envapt('TEST_SYMBOL_EMPTY', { converter: Symbol, fallback: Symbol('empty') })
       static readonly testSymbolEmpty: symbol;
 
       @Envapt('NONEXISTENT_SYMBOL', { converter: 'symbol', fallback: Symbol('fallback') })
