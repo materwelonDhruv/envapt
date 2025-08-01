@@ -12,7 +12,6 @@ describe('BigInt and Symbol Support', () => {
       @Envapt('TEST_BIGINT', { converter: Converters.Bigint, fallback: 0n })
       static readonly testBigint: bigint;
 
-      // @ts-expect-error Just for committing
       @Envapt('TEST_BIGINT_LARGE', { converter: BigInt, fallback: 0n })
       static readonly testBigintLarge: bigint;
 

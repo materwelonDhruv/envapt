@@ -2,7 +2,7 @@ import { resolve } from 'node:path';
 
 import { expect } from 'chai';
 
-import { Envapt, Envapter } from '../src';
+import { Converters, Envapt, Envapter } from '../src';
 
 import type { JsonValue } from '../src';
 
@@ -122,15 +122,11 @@ describe('Edge Cases', () => {
       @Envapt('STRING_TO_NUMBER', { fallback: Number.NaN, converter: Number })
       static readonly stringToNumber: number;
 
-      // @ts-expect-error Just for committing
       @Envapt('OBJECT_FALLBACK', {
-        fallback: { key: 'default' } as JsonValue,
-        converter: (raw, fallback) => {
-          if (typeof raw !== 'string' || !fallback) return fallback;
-          return JSON.parse(raw) as JsonValue;
-        }
+        fallback: { key: 'default' },
+        converter: Converters.Json
       })
-      static readonly objectFallback: object;
+      static readonly objectFallback: JsonValue;
     }
 
     it('should handle invalid number conversions', () => {

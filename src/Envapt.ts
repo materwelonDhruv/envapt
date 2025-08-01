@@ -71,6 +71,29 @@ export function Envapt<TConverter extends ArrayConverter>(
 
 /**
  * @param key - Environment variable name to load
+ * @param options - Configuration options with primitive constructor
+ * @public
+ */
+export function Envapt<TConstructor extends PrimitiveConstructor>(
+  key: string,
+  options: {
+    converter: TConstructor;
+    fallback?: TConstructor extends typeof String
+      ? string
+      : TConstructor extends typeof Number
+        ? number
+        : TConstructor extends typeof Boolean
+          ? boolean
+          : TConstructor extends typeof BigInt
+            ? bigint
+            : TConstructor extends typeof Symbol
+              ? symbol
+              : never;
+  }
+): PropertyDecorator;
+
+/**
+ * @param key - Environment variable name to load
  * @param options - Configuration options with custom converter
  * @public
  */
@@ -116,6 +139,29 @@ export function Envapt<TConverter extends ArrayConverter>(
   key: string,
   fallback: AdvancedConverterReturn<TConverter, undefined>,
   converter: TConverter
+): PropertyDecorator;
+
+/**
+ * Classic API: Primitive constructor with fallback
+ * @param key - Environment variable name to load
+ * @param fallback - Default value
+ * @param converter - Primitive constructor (String, Number, Boolean, BigInt, Symbol)
+ * @public
+ */
+export function Envapt<TConstructor extends PrimitiveConstructor>(
+  key: string,
+  fallback: TConstructor extends typeof String
+    ? string
+    : TConstructor extends typeof Number
+      ? number
+      : TConstructor extends typeof Boolean
+        ? boolean
+        : TConstructor extends typeof BigInt
+          ? bigint
+          : TConstructor extends typeof Symbol
+            ? symbol
+            : never,
+  converter: TConstructor
 ): PropertyDecorator;
 
 /**
