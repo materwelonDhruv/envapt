@@ -47,7 +47,31 @@ function createPropertyDecorator<TFallback>(
 }
 
 /**
- * Usage 1
+ * Usage 1: Custom converter function with fallback provided
+ *
+ * @param key - Environment variable name to load
+ * @param options - Configuration options with custom converter and required fallback
+ * @public
+ */
+export function Envapt<TFallback>(
+  key: string,
+  options: { converter: (raw: string | undefined, fallback: TFallback) => TFallback; fallback: TFallback }
+): PropertyDecorator;
+
+/**
+ * Usage 2: Custom converter function without fallback
+ *
+ * @param key - Environment variable name to load
+ * @param options - Configuration options with custom converter only
+ * @public
+ */
+export function Envapt<TReturnType>(
+  key: string,
+  options: { converter: ConverterFunction<TReturnType> }
+): PropertyDecorator;
+
+/**
+ * Usage 3: Built-in converter with optional fallback
  *
  * @param key - Environment variable name to load
  * @param options - Configuration options with built-in converter
@@ -59,7 +83,7 @@ export function Envapt<TConverter extends BuiltInConverter>(
 ): PropertyDecorator;
 
 /**
- * Usage 2
+ * Usage 4: Array converter with optional fallback
  *
  * @param key - Environment variable name to load
  * @param options - Configuration options with array converter
@@ -71,7 +95,7 @@ export function Envapt<TConverter extends ArrayConverter>(
 ): PropertyDecorator;
 
 /**
- * Usage 3
+ * Usage 5: Primitive constructor with optional fallback
  *
  * @param key - Environment variable name to load
  * @param options - Configuration options with primitive constructor
@@ -86,25 +110,17 @@ export function Envapt<TConstructor extends PrimitiveConstructor>(
 ): PropertyDecorator;
 
 /**
- * Usage 4
- *
- * @param key - Environment variable name to load
- * @param options - Configuration options with custom converter
- * @public
- */
-export function Envapt<TReturnType>(
-  key: string,
-  options: { converter: ConverterFunction<TReturnType>; fallback?: TReturnType }
-): PropertyDecorator;
-
-/**
- * Usage 5
+ * Usage 6: Fallback only (no converter)
  *
  * @param key - Environment variable name to load
  * @param options - Configuration options with fallback only
  * @public
  */
-export function Envapt<TFallback>(key: string, options: { fallback: TFallback }): PropertyDecorator;
+export function Envapt<TFallback>(
+  key: string,
+  // eslint-disable-next-line @typescript-eslint/unified-signatures
+  options: { fallback: TFallback; converter?: undefined }
+): PropertyDecorator;
 
 /**
  * Classic API: No fallback

@@ -165,7 +165,7 @@ describe('Envapt', () => {
       @Envapt('ALLOWED_CHANNELS', {
         fallback: ['default-channel'],
         converter: (raw, fallback) => {
-          if (!raw || raw.trim() === '') return fallback ?? [];
+          if (!raw || raw.trim() === '') return fallback;
           return raw
             .split(',')
             .map((s) => s.trim())
@@ -177,7 +177,7 @@ describe('Envapt', () => {
       @Envapt('FEATURE_FLAGS', {
         fallback: new Set(['basic']),
         converter: (raw, fallback) => {
-          if (!raw || raw.trim() === '') return fallback ?? new Set();
+          if (!raw || raw.trim() === '') return fallback;
           const flags = raw
             .split(',')
             .map((s) => s.trim())
@@ -190,7 +190,7 @@ describe('Envapt', () => {
       @Envapt('NONEXISTENT_ARRAY', {
         fallback: ['default1', 'default2'],
         converter: (raw, fallback) => {
-          if (!raw || raw.trim() === '') return fallback ?? [];
+          if (!raw || raw.trim() === '') return fallback;
           return raw.split(',').map((s) => s.trim());
         }
       })

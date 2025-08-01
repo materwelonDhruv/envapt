@@ -147,6 +147,7 @@ describe('Runtime Validation', () => {
       @Envapt('CUSTOM_CONVERTER_VAR', { converter: 'lol' })
       static readonly customConverter: string;
 
+      // TODO: why is this using the "Usage 1"
       // @ts-expect-error Inconsistent fallback type
       @Envapt('CUSTOM_CONVERTER_INCONSISTENT_FALLBACK_TYPE', {
         fallback: 42,
