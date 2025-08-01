@@ -19,10 +19,7 @@ function createTsupConfig({
   minify = false,
   keepNames = true,
   sourcemap = true,
-  outDir = 'dist',
-  outExtension = ({ format }) => {
-    return { js: `.${format === 'esm' ? 'mjs' : 'js'}`, dts: '.d.ts' };
-  }
+  outDir = 'dist'
 }: Options = {}) {
   return defineConfig({
     format,
@@ -40,8 +37,7 @@ function createTsupConfig({
     keepNames,
     sourcemap,
     treeshake,
-    outDir,
-    outExtension
+    outDir
   });
 }
 
