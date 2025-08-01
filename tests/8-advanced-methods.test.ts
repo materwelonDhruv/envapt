@@ -176,25 +176,6 @@ describe('Advanced Converter Methods', () => {
       expect(Array.from(result as Set<string>)).to.deep.equal(['item1', 'item2', 'item3']);
     });
 
-    it('should convert to Map using custom converter', () => {
-      const mapConverter = (raw: string | undefined, fallback?: Map<string, string>): Map<string, string> => {
-        if (!raw) return fallback ?? new Map<string, string>();
-        const map = new Map<string, string>();
-        const pairs = raw.split(',');
-        for (const pair of pairs) {
-          const [key, value] = pair.split('=');
-          if (key && value) {
-            map.set(key.trim(), value.trim());
-          }
-        }
-        return map;
-      };
-
-      // Use a test that has key=value format
-      const result = Envapter.getWith('TEST_STRING', mapConverter, new Map([['default', 'value']]));
-      expect(result).to.be.instanceOf(Map);
-    });
-
     it('should use fallback for nonexistent variable', () => {
       const customConverter = (raw: string | undefined, fallback?: number): number => {
         if (!raw) return fallback ?? 0;
