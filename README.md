@@ -8,47 +8,19 @@
   <strong>No more <code>process.env.PORT || '3000'</code> everywhere!</strong>
 </p>
 
-<p align="center">
-  <a href="https://github.com/materwelondhruv/envapt/actions">
-    <img alt="Build" src="https://img.shields.io/github/actions/workflow/status/materwelondhruv/envapt/publish.yml?branch=main&label=build&style=flat-square&color=0d1117&logo=github">
-  </a>
-  <a href="https://app.codecov.io/gh/materwelondhruv/envapt">
-    <img alt="Coverage" src="https://img.shields.io/codecov/c/github/materwelondhruv/envapt?style=flat-square&color=f01f7a&logo=codecov">
-  </a>
-  <a href="https://www.npmjs.com/package/envapt">
-    <img alt="npm version" src="https://img.shields.io/npm/v/envapt?style=flat-square&color=cb3838&logo=npm">
-  </a>
-  <a href="LICENSE">
-    <img alt="License" src="https://img.shields.io/npm/l/envapt?style=flat-square&color=e97826&logo=apache">
-  </a>
-</p>
-
-<p align="center">
-  <a href="https://www.typescriptlang.org/">
-    <img alt="Types" src="https://img.shields.io/badge/types-TypeScript-3178c6?style=flat-square&logo=typescript&logoColor=white">
-  </a>
-  <a href="https://nodejs.org/api/esm.html">
-    <img alt="ESM" src="https://img.shields.io/badge/ESM-Supported-ffca28?style=flat-square">
-  </a>
-  <a href="https://nodejs.org/api/modules.html">
-    <img alt="CJS" src="https://img.shields.io/badge/CJS-Supported-ff6b35?style=flat-square">
-  </a>
-  <a href="https://nodejs.org/">
-    <img alt="Node" src="https://img.shields.io/badge/node-%3E=22.0.0-339933?style=flat-square&logo=node.js&logoColor=white">
-  </a>
-</p>
-
-<p align="center">
-  <a href="https://bundlephobia.com/package/envapt">
-    <img alt="Bundle Size" src="https://img.shields.io/bundlephobia/minzip/envapt?style=flat-square&color=success">
-  </a>
-  <a href="https://www.npmjs.com/package/envapt">
-    <img alt="Downloads" src="https://img.shields.io/npm/dm/envapt?style=flat-square&color=blue">
-  </a>
-  <a href="https://github.com/materwelondhruv/envapt">
-    <img alt="GitHub Stars" src="https://img.shields.io/github/stars/materwelondhruv/envapt?style=flat-square&color=yellow">
-  </a>
-</p>
+<div align="center">
+  <a href="https://github.com/materwelondhruv/envapt/actions"><img alt="Build" src="https://img.shields.io/github/actions/workflow/status/materwelondhruv/envapt/publish.yml?branch=main&label=build&style=flat-square&color=0d1117&logo=github"></a>
+  <a href="https://app.codecov.io/gh/materwelondhruv/envapt"><img alt="Coverage" src="https://img.shields.io/codecov/c/github/materwelondhruv/envapt?style=flat-square&color=f01f7a&logo=codecov"></a>
+  <a href="https://www.npmjs.com/package/envapt"><img alt="npm version" src="https://img.shields.io/npm/v/envapt?style=flat-square&color=cb3838&logo=npm"></a>
+  <a href="LICENSE"><img alt="License" src="https://img.shields.io/npm/l/envapt?style=flat-square&color=e97826&logo=apache"></a>
+  <a href="https://www.typescriptlang.org/"><img alt="Types" src="https://img.shields.io/badge/types-TypeScript-3178c6?style=flat-square&logo=typescript&logoColor=white"></a>
+  <a href="https://nodejs.org/api/esm.html"><img alt="ESM" src="https://img.shields.io/badge/ESM-Supported-ffca28?style=flat-square"></a>
+  <a href="https://nodejs.org/api/modules.html"><img alt="CJS" src="https://img.shields.io/badge/CJS-Supported-ff6b35?style=flat-square"></a>
+  <a href="https://nodejs.org/"><img alt="Node" src="https://img.shields.io/badge/node-%3E=22.0.0-339933?style=flat-square&logo=node.js&logoColor=white"></a>
+  <a href="https://bundlephobia.com/package/envapt"><img alt="Bundle Size" src="https://img.shields.io/bundlephobia/minzip/envapt?style=flat-square&color=success"></a>
+  <a href="https://www.npmjs.com/package/envapt"><img alt="Downloads" src="https://img.shields.io/npm/dm/envapt?style=flat-square&color=blue"></a>
+  <a href="https://github.com/materwelondhruv/envapt"><img alt="GitHub Stars" src="https://img.shields.io/github/stars/materwelondhruv/envapt?style=flat-square&color=yellow"></a>
+</div>
 
 ---
 
