@@ -36,8 +36,10 @@ jobs:
 
       - uses: changesets/action@v1
         with:
-          publish: pnpm publish --no-git-checks
-          commitMode: github-api
+          publish: pnpm run release
+          commit: 'chore(release): version packages'
+          title: 'chore(release): version packages'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          HUSKY: 0 # skips all Husky hooks for this commit
