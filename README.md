@@ -453,7 +453,7 @@ import { Envapter, Converters } from 'envapt';
 const config = Envapter.getUsing('API_CONFIG', Converters.Json, { default: 'value' });
 const urls = Envapter.getUsing('SERVICE_URLS', { delimiter: '|', type: Converters.Url });
 const typedConfig = Envapter.getUsing<{ host: string; port: number; ssl: boolean }>('DATABASE_CONFIG', Converters.Json);
-// typedConfig is now typed as { host: string; port: number; ssl: boolean } instead of JsonValue
+// typedConfig is now typed as { host: string; port: number; ssl: boolean } instead of JsonValue | undefined
 
 // Use custom converter functions
 const processedData = Envapter.getWith(
@@ -477,7 +477,7 @@ const result = envapter.getUsing('DATABASE_CONFIG', Converters.Json);
 >
 > ```ts
 > // Default behavior
-> const config = Envapter.getUsing('CONFIG', Converters.Json); // type: JsonValue
+> const config = Envapter.getUsing('CONFIG', Converters.Json); // type: JsonValue | undefined (undefined because no fallback)
 >
 > // Override with specific interface
 > interface DatabaseConfig {

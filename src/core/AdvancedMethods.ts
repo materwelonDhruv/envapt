@@ -22,7 +22,7 @@ export class AdvancedMethods extends PrimitiveMethods {
     converter: TConverter,
     fallback?: TFallback
   ): AdvancedConverterReturn<TConverter, TFallback>;
-  static getUsing<TReturn>(key: string, converter: BuiltInConverter | ArrayConverter, fallback?: unknown): TReturn;
+  static getUsing<TReturn>(key: string, converter: BuiltInConverter | ArrayConverter, fallback?: TReturn): TReturn;
   static getUsing<TConverter extends BuiltInConverter | ArrayConverter, TFallback = undefined>(
     key: string,
     converter: TConverter,
@@ -46,7 +46,7 @@ export class AdvancedMethods extends PrimitiveMethods {
     converter: TConverter,
     fallback?: TFallback
   ): AdvancedConverterReturn<TConverter, TFallback>;
-  getUsing<TReturn>(key: string, converter: BuiltInConverter | ArrayConverter, fallback?: unknown): TReturn;
+  getUsing<TReturn>(key: string, converter: BuiltInConverter | ArrayConverter, fallback?: TReturn): TReturn;
   getUsing<TConverter extends BuiltInConverter | ArrayConverter, TFallback = undefined>(
     key: string,
     converter: TConverter,
