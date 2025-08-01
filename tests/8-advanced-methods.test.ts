@@ -21,7 +21,10 @@ describe('Advanced Converter Methods', () => {
     });
 
     it('should convert using Converters enum - Json', () => {
-      const result = Envapter.getUsing('TEST_JSON_OBJECT', Converters.Json);
+      const result = Envapter.getUsing<{ name: string; version: number; enabled: boolean }>(
+        'TEST_JSON_OBJECT',
+        Converters.Json
+      );
       expect(result).to.deep.equal({ name: 'test', version: 1, enabled: true });
     });
 
@@ -54,9 +57,9 @@ describe('Advanced Converter Methods', () => {
     });
 
     it('should convert using Converters enum - Date', () => {
-      const result = Envapter.getUsing('TEST_DATE_ISO', Converters.Date) as Date;
+      const result = Envapter.getUsing('TEST_DATE_ISO', Converters.Date);
       expect(result).to.be.instanceOf(Date);
-      expect(result.toISOString()).to.equal('2023-12-25T00:00:00.000Z');
+      expect(result?.toISOString()).to.equal('2023-12-25T00:00:00.000Z');
     });
 
     it('should convert using Converters enum - Time', () => {

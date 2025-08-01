@@ -21,6 +21,12 @@ export class AdvancedMethods extends PrimitiveMethods {
     key: string,
     converter: TConverter,
     fallback?: TFallback
+  ): AdvancedConverterReturn<TConverter, TFallback>;
+  static getUsing<TReturn>(key: string, converter: BuiltInConverter | ArrayConverter, fallback?: unknown): TReturn;
+  static getUsing<TConverter extends BuiltInConverter | ArrayConverter, TFallback = undefined>(
+    key: string,
+    converter: TConverter,
+    fallback?: TFallback
   ): AdvancedConverterReturn<TConverter, TFallback> {
     // Check if variable exists first, for consistency with primitive methods
     const rawVal = this.config.get(key);
@@ -35,6 +41,12 @@ export class AdvancedMethods extends PrimitiveMethods {
   /**
    * @see {@link AdvancedMethods.getUsing}
    */
+  getUsing<TConverter extends BuiltInConverter | ArrayConverter, TFallback = undefined>(
+    key: string,
+    converter: TConverter,
+    fallback?: TFallback
+  ): AdvancedConverterReturn<TConverter, TFallback>;
+  getUsing<TReturn>(key: string, converter: BuiltInConverter | ArrayConverter, fallback?: unknown): TReturn;
   getUsing<TConverter extends BuiltInConverter | ArrayConverter, TFallback = undefined>(
     key: string,
     converter: TConverter,

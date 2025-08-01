@@ -452,6 +452,8 @@ import { Envapter, Converters } from 'envapt';
 // Use built-in converters directly
 const config = Envapter.getUsing('API_CONFIG', Converters.Json, { default: 'value' });
 const urls = Envapter.getUsing('SERVICE_URLS', { delimiter: '|', type: Converters.Url });
+const typedConfig = Envapter.getUsing<{ host: string; port: number; ssl: boolean }>('DATABASE_CONFIG', Converters.Json);
+// typedConfig is now typed as { host: string; port: number; ssl: boolean } instead of JsonValue
 
 // Use custom converter functions
 const processedData = Envapter.getWith(
@@ -468,6 +470,25 @@ const envapter = new Envapter();
 const result = envapter.getUsing('DATABASE_CONFIG', Converters.Json);
 ```
 
+> [!TIP]
+> **Type Override with `getUsing`**
+>
+> You can explicitly specify the return type for `getUsing` when TypeScript's inference isn't specific enough (especially useful with `Converters.Json`):
+>
+> ```ts
+> // Default behavior
+> const config = Envapter.getUsing('CONFIG', Converters.Json); // type: JsonValue
+>
+> // Override with specific interface
+> interface DatabaseConfig {
+>   host: string;
+>   port: number;
+>   ssl: boolean;
+> }
+> const dbConfig = Envapter.getUsing<DatabaseConfig>('DB_CONFIG', Converters.Json);
+> // dbConfig is now properly typed as DatabaseConfig
+> ```
+
 ### Converter Type Quick Reference
 
 | **Use Case**            | **Converter Type**        | **Example**                                               |
@@ -477,6 +498,7 @@ const result = envapter.getUsing('DATABASE_CONFIG', Converters.Json);
 | **Array parsing**       | Built-in Array converters | `converter: { delimiter: ',', type?: Converters.String }` |
 | **Complex transforms**  | Custom function           | `converter: (raw, fallback) => ...`                       |
 | **Functional built-in** | `getUsing()` method       | `Envapter.getUsing('VAR', Converters.Json)`               |
+| **Type override**       | `getUsing<T>()` method    | `Envapter.getUsing<MyType>('VAR', Converters.Json)`       |
 | **Functional custom**   | `getWith()` method        | `Envapter.getWith('VAR', (raw) => transform(raw))`        |
 
 > [!TIP]
