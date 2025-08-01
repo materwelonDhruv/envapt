@@ -488,6 +488,8 @@ const result = envapter.getUsing('DATABASE_CONFIG', Converters.Json);
 > const dbConfig = Envapter.getUsing<DatabaseConfig>('DB_CONFIG', Converters.Json);
 > // dbConfig is now properly typed as DatabaseConfig
 > ```
+>
+> _Note: Make sure the fallback value matches the expected type, if you use a fallback. Otherwise you'll see a TypeScript error._
 
 ### Converter Type Quick Reference
 
