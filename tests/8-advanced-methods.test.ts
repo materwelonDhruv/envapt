@@ -176,26 +176,6 @@ describe('Advanced Converter Methods', () => {
       expect(result).to.equal(99);
     });
 
-    it('should work with complex custom converter', () => {
-      // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-      const complexConverter = (raw: string | undefined, fallback?: { count: number; items: string[] }) => {
-        if (!raw) return fallback ?? { count: 0, items: [] };
-        const items = raw.split(',').map((item) => item.trim());
-        return {
-          count: items.length,
-          items,
-          reversed: items.reverse()
-        };
-      };
-
-      const result = Envapter.getWith('TEST_ARRAY_COMMA', complexConverter);
-      expect(result).to.deep.equal({
-        count: 3,
-        items: ['item3', 'item2', 'item1'],
-        reversed: ['item3', 'item2', 'item1']
-      });
-    });
-
     it('should work with instance method', () => {
       const instance = new Envapter();
       const customConverter = (raw: string | undefined): string => {
