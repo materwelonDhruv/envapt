@@ -2,11 +2,14 @@
 
 A TypeScript environment configuration library that eliminates the boilerplate of parsing .env files. Get properly runtime-typed environment variables with fallbacks, template support, and automatic, built-in, & custom type conversion - no more `process.env.PORT || '3000'` everywhere.
 
-[![Build](https://github.com/materwelondhruv/envapt/actions/workflows/publish.yml/badge.svg)](https://github.com/materwelondhruv/envapt/actions)
-[![Coverage](https://codecov.io/gh/materwelondhruv/envapt/branch/main/graph/badge.svg)](https://app.codecov.io/gh/materwelondhruv/envapt)
-[![npm version](https://img.shields.io/npm/v/envapt.svg)](https://www.npmjs.com/package/envapt)
-[![Downloads](https://img.shields.io/npm/dm/envapt.svg)](https://www.npmjs.com/package/envapt)
-[![License](https://img.shields.io/npm/l/envapt.svg)](LICENSE)
+[![Build](https://img.shields.io/github/actions/workflow/status/materwelondhruv/envapt/publish.yml?branch=main&label=build&style=flat-square&color=brightgreen)](https://github.com/materwelondhruv/envapt/actions)
+[![Coverage](https://img.shields.io/codecov/c/github/materwelondhruv/envapt?style=flat-square&color=blueviolet)](https://app.codecov.io/gh/materwelondhruv/envapt)
+[![npm version](https://img.shields.io/npm/v/envapt?style=flat-square&color=orange)](https://www.npmjs.com/package/envapt)
+[![License](https://img.shields.io/npm/l/envapt?style=flat-square&color=success)](LICENSE)
+[![Types](https://img.shields.io/badge/types-TypeScript-3178c6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![ESM](https://img.shields.io/badge/ESM-Supported-ffca28?style=flat-square)](https://nodejs.org/api/esm.html)
+[![Node](https://img.shields.io/badge/node-%3E=22.0.0-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org/)
+[![Bundle Size](https://img.shields.io/bundlephobia/minzip/envapt?style=flat-square&color=success)](https://bundlephobia.com/package/envapt)
 
 ## Features
 
