@@ -3,12 +3,13 @@ import { Envapter } from './Envapter';
 import { Parser } from './Parser';
 
 import type {
-  AdvancedConverterReturn,
   ArrayConverter,
   BuiltInConverter,
   ConverterFunction,
   EnvaptConverter,
   EnvaptOptions,
+  InferConverterReturnType,
+  InferPrimitiveReturnType,
   PrimitiveConstructor
 } from './Types';
 
@@ -56,7 +57,7 @@ function createPropertyDecorator<TFallback>(
  */
 export function Envapt<TConverter extends BuiltInConverter>(
   key: string,
-  options: { converter: TConverter; fallback?: AdvancedConverterReturn<TConverter, undefined> }
+  options: { converter: TConverter; fallback?: InferConverterReturnType<TConverter> }
 ): PropertyDecorator;
 
 /**
@@ -66,7 +67,7 @@ export function Envapt<TConverter extends BuiltInConverter>(
  */
 export function Envapt<TConverter extends ArrayConverter>(
   key: string,
-  options: { converter: TConverter; fallback?: AdvancedConverterReturn<TConverter, undefined> }
+  options: { converter: TConverter; fallback?: InferConverterReturnType<TConverter> }
 ): PropertyDecorator;
 
 /**
@@ -78,17 +79,7 @@ export function Envapt<TConstructor extends PrimitiveConstructor>(
   key: string,
   options: {
     converter: TConstructor;
-    fallback?: TConstructor extends typeof String
-      ? string
-      : TConstructor extends typeof Number
-        ? number
-        : TConstructor extends typeof Boolean
-          ? boolean
-          : TConstructor extends typeof BigInt
-            ? bigint
-            : TConstructor extends typeof Symbol
-              ? symbol
-              : never;
+    fallback?: InferPrimitiveReturnType<TConstructor>;
   }
 ): PropertyDecorator;
 
@@ -124,7 +115,7 @@ export function Envapt<_TReturnType = string | null>(key: string): PropertyDecor
  */
 export function Envapt<TConverter extends BuiltInConverter>(
   key: string,
-  fallback: AdvancedConverterReturn<TConverter, undefined>,
+  fallback: InferConverterReturnType<TConverter>,
   converter: TConverter
 ): PropertyDecorator;
 
@@ -137,7 +128,7 @@ export function Envapt<TConverter extends BuiltInConverter>(
  */
 export function Envapt<TConverter extends ArrayConverter>(
   key: string,
-  fallback: AdvancedConverterReturn<TConverter, undefined>,
+  fallback: InferConverterReturnType<TConverter>,
   converter: TConverter
 ): PropertyDecorator;
 
@@ -150,17 +141,7 @@ export function Envapt<TConverter extends ArrayConverter>(
  */
 export function Envapt<TConstructor extends PrimitiveConstructor>(
   key: string,
-  fallback: TConstructor extends typeof String
-    ? string
-    : TConstructor extends typeof Number
-      ? number
-      : TConstructor extends typeof Boolean
-        ? boolean
-        : TConstructor extends typeof BigInt
-          ? bigint
-          : TConstructor extends typeof Symbol
-            ? symbol
-            : never,
+  fallback: InferPrimitiveReturnType<TConstructor>,
   converter: TConstructor
 ): PropertyDecorator;
 

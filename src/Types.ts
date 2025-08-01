@@ -119,7 +119,11 @@ interface ConverterMap {
  * Type mapping for built-in converters to their return types
  * @internal
  */
-type BuiltInConverterReturnType<ConverterKey extends BuiltInConverter> = ConverterMap[ConverterKey];
+type BuiltInConverterReturnType<ConverterKey extends BuiltInConverter> = ConverterKey extends Converters
+  ? ConverterMap[`${ConverterKey}`]
+  : ConverterKey extends keyof ConverterMap
+    ? ConverterMap[ConverterKey]
+    : never;
 
 /**
  * Return type for built-in converter functions
@@ -189,6 +193,22 @@ type AdvancedConverterReturn<
   TFallback = undefined
 > = ConditionalReturn<InferConverterReturnType<TConverter>, TFallback>;
 
+/**
+ * Type inference for primitive constructor return types
+ * @internal
+ */
+type InferPrimitiveReturnType<TConstructor extends PrimitiveConstructor> = TConstructor extends typeof String
+  ? string
+  : TConstructor extends typeof Number
+    ? number
+    : TConstructor extends typeof Boolean
+      ? boolean
+      : TConstructor extends typeof BigInt
+        ? bigint
+        : TConstructor extends typeof Symbol
+          ? symbol
+          : never;
+
 export type {
   PermittedDotenvConfig,
   BuiltInConverter,
@@ -208,5 +228,6 @@ export type {
   ConditionalReturn,
   InferConverterReturnType,
   InferFallbackType,
-  AdvancedConverterReturn
+  AdvancedConverterReturn,
+  InferPrimitiveReturnType
 };
