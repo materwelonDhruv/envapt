@@ -2,11 +2,11 @@
 
 # 🔑 Envapt
 
-### _The apt way to handle env_
+### _The apt way to handle environment variables_
 
 <p align="center">
   <em>A TypeScript environment configuration library that eliminates the boilerplate of parsing .env files.<br/>
-  Get properly runtime-typed environment variables with fallbacks, template support, and automatic, built-in, & custom transformations.<br/>
+  Get environment variables with correct runtime typing and fallbacks, template support, and automatic, built-in, & custom transformations.<br/>
   <strong>No more <code>process.env.PORT || '3000'</code> everywhere!</strong>
   </em>
 </p>
@@ -43,16 +43,21 @@
 - 📂 **Multiple .env Files** - Load from multiple sources
 - 💪 **Edge Case Handling** - Robust validation and parsing for all scenarios
 - 🛡️ **Type Safety** - Full TypeScript support with proper type inference
-- ⚡ **Lightweight** - Minimal overhead with `dotenv` bundled
+- ⚡ **Lightweight** - Minimal overhead with [`dotenv`](https://www.npmjs.com/package/dotenv) bundled
 
 ---
 
 ## 📚 Table of Contents
 
+### ⚙️ Essentials
+
 - [Requirements](#requirements)
 - [Quick Start](#quick-start)
   - [Installation](#installation)
   - [Basic Usage](#basic-usage)
+
+### 🧬 API Reference
+
 - [API Reference](#api-reference)
   - [Decorator API](#decorator-api)
     - [Modern Syntax (Recommended)](#modern-syntax-recommended)
@@ -65,15 +70,24 @@
     - [Handling Missing Values](#handling-missing-values)
   - [Functional API](#functional-api)
   - [Converter Type Quick Reference](#converter-type-quick-reference)
+
+### 🌍 Environment & Templates
+
 - [Environment Detection](#environment-detection)
   - [Environment Management](#environment-management)
 - [Template Variables](#template-variables)
   - [Circular Reference Protection](#circular-reference-protection)
+
+### 🛠 Configuration & Errors
+
 - [Configuration](#configuration)
   - [Multiple .env Files](#multiple-env-files)
   - [Dotenv Configuration](#dotenv-configuration)
 - [Error Handling](#error-handling)
   - [Error Code Reference](#error-code-reference)
+
+### 🚀 Examples
+
 - [Advanced Examples](#advanced-examples)
   - [Complex Configuration](#complex-configuration)
 
@@ -81,17 +95,29 @@
 
 ## Requirements
 
-- **Node.js**: v22 or later (recommended for ESM and nodenext support)
-- **TypeScript**: v5.8 or later
-- **Dependencies**:
-  - `dotenv` (runtime dependency | bundled)
-- **TypeScript Compiler Options**:
-  - `experimentalDecorators: true`
-  - `module: nodenext OR esnext`
-  - `moduleResolution: nodenext OR bundler`
-  - `target: ESnext`
-  - `lib: ESNext`
-- **ESM Support**: Project uses ESM, so your environment and tooling should support ES modules.
+#### 🟢 Runtime
+
+- **Node.js**: `>=22.0.0`  
+  _Recommended for full ESM and `nodenext` support_
+
+- **TypeScript**: `>=5.8`
+
+#### 📦 Runtime Dependency
+
+- **dotenv**: _(bundled at runtime)_
+
+#### 🛠️ TypeScript Compiler Options
+
+```jsonc
+// tsconfig.json (required settings)
+{
+  "experimentalDecorators": true,
+  "module": "esnext", // or "nodenext"
+  "moduleResolution": "bundler", // or "nodenext"
+  "target": "ESNext",
+  "lib": ["ESNext"]
+}
+```
 
 ## Quick Start
 
@@ -359,19 +385,21 @@ class Config extends Envapter {
 
 **Available Built-in Converters:**
 
-- `Converters.String` (`'string'`) - String values
-- `Converters.Number` (`'number'`) - Numeric values (integers and floats)
-- `Converters.Integer` (`'integer'`) - Integer values only
-- `Converters.Float` (`'float'`) - Float values only
-- `Converters.Boolean` (`'boolean'`) - Boolean values (`true`/`false`, `yes`/`no`, `on`/`off`, `1`/`0`)
-- `Converters.Bigint` (`'bigint'`) - BigInt values for large integers
-- `Converters.Symbol` (`'symbol'`) - Symbol values (creates symbols from string descriptions)
-- `Converters.Json` (`'json'`) - JSON objects/arrays (safe parsing with fallback)
-- `Converters.Array` (`'array'`) - Comma-separated string arrays
-- `Converters.Url` (`'url'`) - URL objects
-- `Converters.Regexp` (`'regexp'`) - Regular expressions (supports `/pattern/flags` syntax)
-- `Converters.Date` (`'date'`) - Date objects (supports ISO strings and timestamps)
-- `Converters.Time` (`'time'`) - Time values (converts `"5s"`, `"30m"`, `"2h"` to milliseconds)
+| **Converter**        | **Alias**   | **Description**                                                      |
+| -------------------- | ----------- | -------------------------------------------------------------------- |
+| `Converters.String`  | `'string'`  | String values                                                        |
+| `Converters.Number`  | `'number'`  | Numeric values (integers and floats)                                 |
+| `Converters.Integer` | `'integer'` | Integer values only                                                  |
+| `Converters.Float`   | `'float'`   | Float values only                                                    |
+| `Converters.Boolean` | `'boolean'` | Boolean values (`true`/`false`, `yes`/`no`, `on`/`off`, `1`/`0`)     |
+| `Converters.Bigint`  | `'bigint'`  | BigInt values for large integers                                     |
+| `Converters.Symbol`  | `'symbol'`  | Symbol values (creates symbols from string descriptions)             |
+| `Converters.Json`    | `'json'`    | JSON objects/arrays (safe parsing with fallback)                     |
+| `Converters.Array`   | `'array'`   | Comma-separated string arrays                                        |
+| `Converters.Url`     | `'url'`     | URL objects                                                          |
+| `Converters.Regexp`  | `'regexp'`  | Regular expressions (supports `/pattern/flags` syntax)               |
+| `Converters.Date`    | `'date'`    | Date objects (supports ISO strings and timestamps)                   |
+| `Converters.Time`    | `'time'`    | Time values (e.g. `"5s"`, `"30m"`, `"2h"` converted to milliseconds) |
 
 #### Custom Array Converters
 
@@ -677,7 +705,9 @@ try {
       case EnvaptErrorCodes.EnvFileNotFound:
         console.log('Environment file not found');
         break;
-      // ... handle other error codes
+      default:
+        console.warn('Unhandled error code:', error.code);
+        break;
     }
   }
 }
@@ -685,20 +715,32 @@ try {
 
 ### Error Code Reference
 
+#### 🔧 Fallback Errors (1xx)
+
 | **Error Code**                           | **Description**                                           |
 | ---------------------------------------- | --------------------------------------------------------- |
 | `InvalidFallback` (101)                  | Invalid fallback value provided                           |
 | `InvalidFallbackType` (102)              | Fallback value type doesn't match expected converter type |
 | `ArrayFallbackElementTypeMismatch` (103) | Array fallback contains elements of wrong type            |
 | `FallbackConverterTypeMismatch` (104)    | Fallback type doesn't match the specified converter       |
-| `InvalidArrayConverterType` (201)        | Invalid array converter configuration provided            |
-| `InvalidBuiltInConverter` (202)          | Invalid built-in converter specified                      |
-| `InvalidCustomConverter` (203)           | Custom converter function is invalid                      |
-| `InvalidConverterType` (204)             | Converter type is not recognized                          |
-| `PrimitiveCoercionFailed` (205)          | Primitive type coercion failed                            |
-| `MissingDelimiter` (301)                 | Delimiter is missing in array converter configuration     |
-| `InvalidUserDefinedConfig` (302)         | Invalid user-defined configuration provided               |
-| `EnvFilesNotFound` (303)                 | Specified environment file doesn't exist                  |
+
+#### 🧪 Converter Errors (2xx)
+
+| **Error Code**                    | **Description**                                |
+| --------------------------------- | ---------------------------------------------- |
+| `InvalidArrayConverterType` (201) | Invalid array converter configuration provided |
+| `InvalidBuiltInConverter` (202)   | Invalid built-in converter specified           |
+| `InvalidCustomConverter` (203)    | Custom converter function is invalid           |
+| `InvalidConverterType` (204)      | Converter type is not recognized               |
+| `PrimitiveCoercionFailed` (205)   | Primitive type coercion failed                 |
+
+#### 📂 Environment File & Config Errors (3xx)
+
+| **Error Code**                   | **Description**                                |
+| -------------------------------- | ---------------------------------------------- |
+| `MissingDelimiter` (301)         | Delimiter is missing in array converter config |
+| `InvalidUserDefinedConfig` (302) | Invalid user-defined configuration provided    |
+| `EnvFilesNotFound` (303)         | Specified environment file doesn't exist       |
 
 ## Advanced Examples
 
