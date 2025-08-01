@@ -49,30 +49,37 @@
 
 ## 📚 Table of Contents
 
-- [🔧 Requirements](#requirements)
-- [🚀 Quick Start](#quick-start)
-  - [📦 Installation](#installation)
-  - [⚡ Basic Usage](#basic-usage)
-- [📖 API Reference](#api-reference)
-  - [🎨 Decorator API](#decorator-api)
-  - [🔤 Primitive Converters](#primitive-converters)
-  - [🏗️ Built-in Converters](#built-in-converters)
-  - [🔢 Custom Array Converters](#custom-array-converters)
-  - [⚙️ Custom Converters](#custom-converters)
-  - [❓ Handling Missing Values](#handling-missing-values)
-  - [🛠️ Functional API](#functional-api)
-  - [📋 Converter Type Quick Reference](#converter-type-quick-reference)
-- [🌍 Environment Detection](#environment-detection)
-- [🔗 Template Variables](#template-variables)
-- [⚙️ Configuration](#configuration)
-  - [📂 Multiple .env Files](#multiple-env-files)
-  - [🔧 Dotenv Configuration](#dotenv-configuration)
-- [🚨 Error Handling](#error-handling)
-- [🎓 Advanced Examples](#advanced-examples)
+- [Requirements](#requirements)
+- [Quick Start](#quick-start)
+  - [Installation](#installation)
+  - [Basic Usage](#basic-usage)
+- [API Reference](#api-reference)
+  - [Decorator API](#decorator-api)
+    - [Modern Syntax (Recommended)](#modern-syntax-recommended)
+    - [Classic Syntax](#classic-syntax)
+    - [Automatic Runtime Type Detection](#automatic-runtime-type-detection)
+    - [Primitive Converters](#primitive-converters)
+    - [Built-in Converters](#built-in-converters)
+    - [Custom Array Converters](#custom-array-converters)
+    - [Custom Converters](#custom-converters)
+    - [Handling Missing Values](#handling-missing-values)
+  - [Functional API](#functional-api)
+  - [Converter Type Quick Reference](#converter-type-quick-reference)
+- [Environment Detection](#environment-detection)
+  - [Environment Management](#environment-management)
+- [Template Variables](#template-variables)
+  - [Circular Reference Protection](#circular-reference-protection)
+- [Configuration](#configuration)
+  - [Multiple .env Files](#multiple-env-files)
+  - [Dotenv Configuration](#dotenv-configuration)
+- [Error Handling](#error-handling)
+  - [Error Code Reference](#error-code-reference)
+- [Advanced Examples](#advanced-examples)
+  - [Complex Configuration](#complex-configuration)
 
 ---
 
-## 🔧 Requirements
+## Requirements
 
 - **Node.js**: v22 or later (recommended for ESM and nodenext support)
 - **TypeScript**: v5.8 or later
@@ -86,9 +93,9 @@
   - `lib: ESNext`
 - **ESM Support**: Project uses ESM, so your environment and tooling should support ES modules.
 
-## 🚀 Quick Start
+## Quick Start
 
-### 📦 Installation
+### Installation
 
 <table>
 <tr>
@@ -122,7 +129,7 @@ yarn add envapt
 </tr>
 </table>
 
-### ⚡ Basic Usage
+### Basic Usage
 
 **Step 1:** Create a `.env` file:
 
@@ -190,9 +197,9 @@ const url = Envapter.get('APP_URL', 'http://localhost:3000');
 const isProduction = Envapter.getBoolean('IS_PRODUCTION', false);
 ```
 
-## 📖 API Reference
+## API Reference
 
-### 🎨 Decorator API
+### Decorator API
 
 The `@Envapt` decorator can be used on both **static** and **instance** class properties:
 
@@ -470,7 +477,7 @@ class Config extends Envapter {
 }
 ```
 
-### 🛠️ Functional API
+### Functional API
 
 For functional-style environment variable on primitive types:
 
@@ -558,7 +565,7 @@ const result = envapter.getUsing('DATABASE_CONFIG', Converters.Json);
 > [!TIP]
 > **Use the `Converters` enum**. They look better. Start with built-in converters, use primitive constructors when you need coercion, and custom converters for complex transforms.
 
-## 🌍 Environment Detection
+## Environment Detection
 
 Envapt automatically detects your environment from these variables (in order):
 
@@ -584,9 +591,9 @@ Envapter.environment = EnvaptEnvironment.Production;
 Envapter.environment = 'staging'; // string also works
 ```
 
-## ⚙️ Configuration
+## Configuration
 
-### 📂 Multiple .env Files
+### Multiple .env Files
 
 ```ts
 import { resolve } from 'node:path';
@@ -601,7 +608,7 @@ Envapter.envPaths = resolve(__dirname, '.env.production');
 // Or just don't set a path for it to default to .env at the root of your project
 ```
 
-### 🔧 Dotenv Configuration
+### Dotenv Configuration
 
 Envapt allows you to customize dotenv behavior by setting configuration options:
 
@@ -624,7 +631,7 @@ console.log(Envapter.dotenvConfig);
 > [!NOTE]
 > The `path` and `processEnv` options are managed internally by Envapter and cannot be set via `dotenvConfig`.
 
-## 🔗 Template Variables
+## Template Variables
 
 Envapt supports variable interpolation with `${VARIABLE}` syntax:
 
@@ -647,7 +654,7 @@ CIRCULAR_B=${CIRCULAR_A}
 
 Circular references are detected and preserved as-is rather than causing infinite loops.
 
-## 🚨 Error Handling
+## Error Handling
 
 Envapt provides detailed error codes for better debugging and error handling:
 
@@ -693,7 +700,7 @@ try {
 | `InvalidUserDefinedConfig` (302)         | Invalid user-defined configuration provided               |
 | `EnvFilesNotFound` (303)                 | Specified environment file doesn't exist                  |
 
-## 🎓 Advanced Examples
+## Advanced Examples
 
 ### Complex Configuration
 
