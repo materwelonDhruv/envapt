@@ -1,6 +1,6 @@
 name: Lint / Test / Build / Security Audit
 
-on: [push, pull_request]
+on: [pull_request]
 
 jobs:
   build-and-check:
