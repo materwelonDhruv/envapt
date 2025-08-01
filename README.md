@@ -243,7 +243,7 @@ class Config extends Envapter {
 Envapt provides many built-in converters for common patterns:
 
 > [!IMPORTANT]
-> **Use the `Converters` enum** instead of string literals for better type safety and IntelliSense support:
+> **Use the `Converters` enum** instead of string literals. They look better, and provide better type inference:
 >
 > ```ts
 > import { Converters } from 'envapt';
@@ -508,7 +508,7 @@ const result = envapter.getUsing('DATABASE_CONFIG', Converters.Json);
 | **Functional custom**   | `getWith()` method        | `Envapter.getWith('VAR', (raw) => transform(raw))`        |
 
 > [!TIP]
-> **Always use the `Converters` enum** for better type safety and IntelliSense. Start with built-in converters, use primitive constructors when you need coercion, and custom converters for complex transforms.
+> **Use the `Converters` enum**, they look better. Start with built-in converters, use primitive constructors when you need coercion, and custom converters for complex transforms.
 
 ## Environment Detection
 
