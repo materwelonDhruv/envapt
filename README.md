@@ -7,7 +7,6 @@
   Get environment variables with correct runtime typing and fallbacks, template support, and automatic, built-in, & custom transformations.<br/>
   <strong>No more <code>process.env.PORT || '3000'</code> everywhere!</strong>
 </p>
-[![build]()](https://github.com/materwelonDhruv/envapt/actions)
 <div align="center">
   <a href="https://github.com/materwelonDhruv/envapt/actions/workflows/publish.yml">
   <img alt="Build" src="https://img.shields.io/github/actions/workflow/status/materwelonDhruv/envapt/publish.yml?branch=main&label=build&style=flat-square&logo=github"></a>
