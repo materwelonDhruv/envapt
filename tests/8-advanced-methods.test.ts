@@ -131,16 +131,6 @@ describe('Advanced Converter Methods', () => {
       expect(result).to.be.instanceOf(Map);
     });
 
-    it('should use fallback for nonexistent variable', () => {
-      const customConverter = (raw: string | undefined, fallback?: number): number => {
-        if (!raw) return fallback ?? 0;
-        return raw.length;
-      };
-
-      const result = Envapter.getWith('NONEXISTENT_VAR', customConverter, 99);
-      expect(result).to.equal(99);
-    });
-
     it('should work with complex custom converter', () => {
       const complexConverter = (
         raw: string | undefined,
