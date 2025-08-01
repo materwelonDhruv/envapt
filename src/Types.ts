@@ -173,18 +173,6 @@ type InferConverterReturnType<TConverter extends BuiltInConverter | ArrayConvert
       : unknown[];
 
 /**
- * Type helper for determining fallback type constraints based on converter
- * @internal
- */
-type InferFallbackType<TConverter extends BuiltInConverter | ArrayConverter> = TConverter extends BuiltInConverter
-  ? BuiltInConverterReturnType<TConverter> | undefined
-  : TConverter extends ArrayConverter
-    ? TConverter['type'] extends BuiltInConverter
-      ? BuiltInConverterReturnType<TConverter['type']>[] | undefined
-      : string[] | undefined
-    : unknown[] | undefined;
-
-/**
  * Complete type inference for advanced converter methods
  * @internal
  */
@@ -209,25 +197,39 @@ type InferPrimitiveReturnType<TConstructor extends PrimitiveConstructor> = TCons
           ? symbol
           : never;
 
+/**
+ * Type inference for primitive fallback values
+ * @internal
+ */
+type InferPrimitiveFallbackType<TFallback extends string | number | boolean | bigint | symbol | undefined> =
+  TFallback extends string
+    ? string
+    : TFallback extends number
+      ? number
+      : TFallback extends boolean
+        ? boolean
+        : TFallback extends bigint
+          ? bigint
+          : TFallback extends symbol
+            ? symbol
+            : undefined;
+
 export type {
   PermittedDotenvConfig,
   BuiltInConverter,
   PrimitiveConstructor,
   ValidArrayConverterBuiltInType,
   ArrayConverter,
-  BaseInput,
   ConverterFunction,
   EnvaptConverter,
   EnvaptOptions,
   JsonValue,
-  BuiltInConverterReturnType,
   BuiltInConverterFunction,
   MapOfConverterFunctions,
-  ReturnValuesOfConverterFunctions,
   TimeUnit,
   ConditionalReturn,
   InferConverterReturnType,
-  InferFallbackType,
   AdvancedConverterReturn,
-  InferPrimitiveReturnType
+  InferPrimitiveReturnType,
+  InferPrimitiveFallbackType
 };

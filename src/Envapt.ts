@@ -9,6 +9,7 @@ import type {
   EnvaptConverter,
   EnvaptOptions,
   InferConverterReturnType,
+  InferPrimitiveFallbackType,
   InferPrimitiveReturnType,
   PrimitiveConstructor
 } from './Types';
@@ -46,10 +47,7 @@ function createPropertyDecorator<TFallback>(
 }
 
 /**
- * Instance/Static Property decorator that automatically loads and converts environment variables.
- *
- * Supports multiple overloads for optimal type inference based on converter type.
- * Automatically detects types from fallback values and provides caching for performance.
+ * Usage 1
  *
  * @param key - Environment variable name to load
  * @param options - Configuration options with built-in converter
@@ -61,6 +59,8 @@ export function Envapt<TConverter extends BuiltInConverter>(
 ): PropertyDecorator;
 
 /**
+ * Usage 2
+ *
  * @param key - Environment variable name to load
  * @param options - Configuration options with array converter
  * @public
@@ -71,6 +71,8 @@ export function Envapt<TConverter extends ArrayConverter>(
 ): PropertyDecorator;
 
 /**
+ * Usage 3
+ *
  * @param key - Environment variable name to load
  * @param options - Configuration options with primitive constructor
  * @public
@@ -84,6 +86,8 @@ export function Envapt<TConstructor extends PrimitiveConstructor>(
 ): PropertyDecorator;
 
 /**
+ * Usage 4
+ *
  * @param key - Environment variable name to load
  * @param options - Configuration options with custom converter
  * @public
@@ -94,6 +98,8 @@ export function Envapt<TReturnType>(
 ): PropertyDecorator;
 
 /**
+ * Usage 5
+ *
  * @param key - Environment variable name to load
  * @param options - Configuration options with fallback only
  * @public
@@ -101,65 +107,16 @@ export function Envapt<TReturnType>(
 export function Envapt<TFallback>(key: string, options: { fallback: TFallback }): PropertyDecorator;
 
 /**
+ * Classic API: No fallback
+ *
  * @param key - Environment variable name to load
  */
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export function Envapt<_TReturnType = string | null>(key: string): PropertyDecorator;
 
 /**
- * Classic API: Built-in converter with fallback
- * @param key - Environment variable name to load
- * @param fallback - Default value with built-in converter
- * @param converter - Built-in converter
- * @public
- */
-export function Envapt<TConverter extends BuiltInConverter>(
-  key: string,
-  fallback: InferConverterReturnType<TConverter> | undefined,
-  converter: TConverter
-): PropertyDecorator;
-
-/**
- * Classic API: Array converter with fallback
- * @param key - Environment variable name to load
- * @param fallback - Default array value
- * @param converter - Array converter
- * @public
- */
-export function Envapt<TConverter extends ArrayConverter>(
-  key: string,
-  fallback: InferConverterReturnType<TConverter> | undefined,
-  converter: TConverter
-): PropertyDecorator;
-
-/**
- * Classic API: Primitive constructor with fallback
- * @param key - Environment variable name to load
- * @param fallback - Default value
- * @param converter - Primitive constructor (String, Number, Boolean, BigInt, Symbol)
- * @public
- */
-export function Envapt<TConstructor extends PrimitiveConstructor>(
-  key: string,
-  fallback: InferPrimitiveReturnType<TConstructor>,
-  converter: TConstructor
-): PropertyDecorator;
-
-/**
- * Classic API: Custom converter with fallback
- * @param key - Environment variable name to load
- * @param fallback - Default value
- * @param converter - Custom converter function
- * @public
- */
-export function Envapt<TReturnType>(
-  key: string,
-  fallback: TReturnType,
-  converter: ConverterFunction<TReturnType>
-): PropertyDecorator;
-
-/**
  * Classic API: Primitive fallback only
+ *
  * @param key - Environment variable name to load
  * @param fallback - Default primitive value
  * @param converter - Optional primitive constructor (String, Number, etc.)
@@ -167,11 +124,13 @@ export function Envapt<TReturnType>(
  */
 export function Envapt<TFallback extends string | number | boolean | bigint | symbol | undefined>(
   key: string,
-  fallback: TFallback,
+  fallback: InferPrimitiveFallbackType<TFallback>,
   converter?: PrimitiveConstructor
 ): PropertyDecorator;
 
-// Implementation
+/**
+ * Instance/Static Property decorator that automatically loads and converts environment variables.
+ */
 export function Envapt<TFallback = unknown>(
   key: string,
   fallbackOrOptions?: TFallback | EnvaptOptions<TFallback>,
