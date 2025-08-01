@@ -1,6 +1,6 @@
 name: Submit coverage to Codecov
 
-on: [pull_request]
+on: [pull_request, push]
 
 env:
   CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
