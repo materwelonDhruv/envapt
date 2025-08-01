@@ -4,7 +4,7 @@
 
 ### Major Changes
 
-- 7e3a440: ## Strict Runtime Validation
+- 7e3a440: Strict Runtime Validation
   - **BREAKING**: Runtime type validation between converter return types and fallback values exists now... and it's strict!
     - But only for built-in and array converters. You are free to do what you want with custom converters.
   - EnvaptError codes actually make sense now instead of the random numbers they were before
@@ -12,7 +12,7 @@
 
   Since this didn't exist before, it will break existing code that was previously passing incorrect types.
 
-- 7e3a440: ## Major Type Inference Improvements
+- 7e3a440: Major Type Inference Improvements
   - **BREAKING**: Improved type inference for `@Envapt` decorator with better type safety
     - Fallbacks and Converters are also validated against each other
       - Fallback always decides the type and converter has to match it, except when using a Primitive constructor.
@@ -26,17 +26,17 @@
 
 ### Minor Changes
 
-- 7e3a440: ## Enums for Built-in Converters
+- 7e3a440: Enums for Built-in Converters
   - Added `Converters` enum because they look better than string literals and provide better DX
     - Allows using `Converters.String`, `Converters.Number`, etc. instead of string literals
     - Maintains backward compatibility with string literal converter names
 
-- 7e3a440: ## Customize Dotenv Configs
+- 7e3a440: Customize Dotenv Configs
   - Change how dotenv loads your env files. (Excludes the `path` and `processEnv` options because Envapter handles those)
     - `Envapter.dotenvConfig` property for setting encoding, debug, override, and other dotenv options
     - Now validates the file paths you provide to ensure they exist
 
-- 7e3a440: ## New Functional API Methods
+- 7e3a440: New Functional API Methods
   - Added `getUsing()` method for using built-in converters functionally
     - Type overrides in `getUsing<T>()` if you need to specify a different type than the converter's inferred return type
   - Added `getWith()` method for using custom converter functions functionally
@@ -44,17 +44,16 @@
 
 ### Patch Changes
 
-- 7e3a440: ## Dev and Testing Improvements
+- 7e3a440: Dev and Testing Improvements
   - Coverage for codecov
   - Tests for BigInt and Symbol types
   - Tests for primitive type coercion and multi-line environment variables
   - LOTS more tests I don't remember
 
-- 7e3a440: ## Refactored Some Code
+- 7e3a440: Refactored Some Code
   - Envapter went over 400 lines and eslint started crying. It was a sign.
     - It's basically a mixin using inheritance now. Nothing changed for the user though.
   - Some Types were removed from the public API because they didn't have any use outside of internal code.
 
-- 7e3a440: - Make README.md pretty 🙏🏻
-  - Shorten some scripts in package.json
-    - And update files using said scripts
+- 7e3a440: Make README.md pretty 🙏🏻
+  - Also shorten some scripts in package.json and update files that use these scripts
