@@ -75,21 +75,27 @@ describe('Envapt', () => {
 
   describe('explicit overrides and other tests', () => {
     class TestEnv extends Envapter {
+      // @ts-expect-error Inconsistent fallback type
       @Envapt('TEST_NUMBER_AS_STRING', { fallback: 42, converter: String })
       public static readonly testNumberAsString: string;
 
+      // @ts-expect-error Inconsistent fallback type
       @Envapt('TEST_STRING_AS_NUMBER', { fallback: '100', converter: Number })
       public static readonly testStringAsNumber: number;
 
+      // @ts-expect-error Inconsistent fallback type
       @Envapt('TEST_STRING_AS_BOOLEAN', { fallback: 'true', converter: Boolean })
       public static readonly testStringAsBoolean: boolean;
 
+      // @ts-expect-error Inconsistent fallback type
       @Envapt('TEST_NUMBER_AS_BIGINT', { fallback: 123456789, converter: BigInt })
       public static readonly testNumberAsBigInt: bigint;
 
+      // @ts-expect-error Inconsistent fallback type
       @Envapt('TEST_STRING_AS_BIGINT', { fallback: '987654321', converter: BigInt })
       public static readonly testStringAsBigInt: bigint;
 
+      // @ts-expect-error Inconsistent fallback type
       @Envapt('TEST_STRING_AS_SYMBOL', { fallback: 'test-symbol', converter: Symbol })
       public static readonly testStringAsSymbol: symbol;
 

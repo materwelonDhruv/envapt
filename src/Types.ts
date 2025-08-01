@@ -154,6 +154,41 @@ type TimeUnit = 'ms' | 's' | 'm' | 'h';
  */
 type ConditionalReturn<ReturnType, TFallback> = TFallback extends undefined ? ReturnType | undefined : ReturnType;
 
+/**
+ * Advanced type inference for built-in and array converters
+ * Maps converter types to their expected return types
+ * @internal
+ */
+type InferConverterReturnType<TConverter extends BuiltInConverter | ArrayConverter> =
+  TConverter extends BuiltInConverter
+    ? BuiltInConverterReturnType<TConverter>
+    : TConverter extends ArrayConverter
+      ? TConverter['type'] extends BuiltInConverter
+        ? BuiltInConverterReturnType<TConverter['type']>[]
+        : string[]
+      : unknown[];
+
+/**
+ * Type helper for determining fallback type constraints based on converter
+ * @internal
+ */
+type InferFallbackType<TConverter extends BuiltInConverter | ArrayConverter> = TConverter extends BuiltInConverter
+  ? BuiltInConverterReturnType<TConverter> | undefined
+  : TConverter extends ArrayConverter
+    ? TConverter['type'] extends BuiltInConverter
+      ? BuiltInConverterReturnType<TConverter['type']>[] | undefined
+      : string[] | undefined
+    : unknown[] | undefined;
+
+/**
+ * Complete type inference for advanced converter methods
+ * @internal
+ */
+type AdvancedConverterReturn<
+  TConverter extends BuiltInConverter | ArrayConverter,
+  TFallback = undefined
+> = ConditionalReturn<InferConverterReturnType<TConverter>, TFallback>;
+
 export type {
   PermittedDotenvConfig,
   BuiltInConverter,
@@ -170,5 +205,8 @@ export type {
   MapOfConverterFunctions,
   ReturnValuesOfConverterFunctions,
   TimeUnit,
-  ConditionalReturn
+  ConditionalReturn,
+  InferConverterReturnType,
+  InferFallbackType,
+  AdvancedConverterReturn
 };

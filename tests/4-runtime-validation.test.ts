@@ -104,12 +104,14 @@ describe('Runtime Validation', () => {
 
   describe('Converter fallback validation', () => {
     class FallbackTests {
+      // @ts-expect-error Inconsistent fallback type
       @Envapt('NONEXISTENT_ARRAY_VAR', {
         converter: { delimiter: ',' },
         fallback: 'not-an-array'
       })
       static readonly invalidArrayFallback: string[];
 
+      // @ts-expect-error Inconsistent fallback type
       @Envapt('INVALID_ARRAY_CONVERTER_TYPE', {
         converter: { delimiter: ',', type: 'invalid' },
         fallback: []
@@ -141,9 +143,11 @@ describe('Runtime Validation', () => {
 
   describe('Custom converter validation', () => {
     class CustomConverterTests {
+      // @ts-expect-error Invalid custom converter type
       @Envapt('CUSTOM_CONVERTER_VAR', { converter: 'lol' })
       static readonly customConverter: string;
 
+      // @ts-expect-error Inconsistent fallback type
       @Envapt('CUSTOM_CONVERTER_INCONSISTENT_FALLBACK_TYPE', {
         fallback: 42,
         converter: (_raw, fallback) => String(fallback)
@@ -164,33 +168,43 @@ describe('Runtime Validation', () => {
 
   describe('Fallback type validation for built-in converters', () => {
     class FallbackTypeValidationTests {
+      // @ts-expect-error Inconsistent fallback type
       @Envapt('NONEXISTENT_STRING_VAR', { converter: Converters.String, fallback: 42 })
       static readonly stringWithNumberFallback: string;
 
+      // @ts-expect-error Inconsistent fallback type
       @Envapt('NONEXISTENT_NUMBER_VAR', { converter: Converters.Number, fallback: 'not-a-number' })
       static readonly numberWithStringFallback: number;
 
+      // @ts-expect-error Inconsistent fallback type
       @Envapt('NONEXISTENT_BOOLEAN_VAR', { converter: Converters.Boolean, fallback: 'not-a-boolean' })
       static readonly booleanWithStringFallback: boolean;
 
+      // @ts-expect-error Inconsistent fallback type
       @Envapt('NONEXISTENT_BIGINT_VAR', { converter: Converters.Bigint, fallback: 42 })
       static readonly bigintWithNumberFallback: bigint;
 
+      // @ts-expect-error Inconsistent fallback type
       @Envapt('NONEXISTENT_SYMBOL_VAR', { converter: Converters.Symbol, fallback: 'not-a-symbol' })
       static readonly symbolWithStringFallback: symbol;
 
+      // @ts-expect-error Inconsistent fallback type
       @Envapt('NONEXISTENT_URL_VAR', { converter: Converters.Url, fallback: 'not-a-url-object' })
       static readonly urlWithStringFallback: URL;
 
+      // @ts-expect-error Inconsistent fallback type
       @Envapt('NONEXISTENT_REGEXP_VAR', { converter: Converters.Regexp, fallback: 'not-a-regexp-object' })
       static readonly regexpWithStringFallback: RegExp;
 
+      // @ts-expect-error Inconsistent fallback type
       @Envapt('NONEXISTENT_DATE_VAR', { converter: Converters.Date, fallback: 'not-a-date-object' })
       static readonly dateWithStringFallback: Date;
 
+      // @ts-expect-error Inconsistent fallback type
       @Envapt('NONEXISTENT_TIME_VAR', { converter: Converters.Time, fallback: 'not-a-number' })
       static readonly timeWithStringFallback: number;
 
+      // @ts-expect-error Inconsistent fallback type
       @Envapt('NONEXISTENT_JSON_VAR', { converter: Converters.Json, fallback: Symbol('not-a-json') })
       static readonly jsonWithStringFallback: JsonValue;
 
@@ -271,6 +285,7 @@ describe('Runtime Validation', () => {
   describe('Array converter fallback element type validation', () => {
     class ArrayConverterValidationTests {
       // Array converter with mixed-type fallback elements
+      // @ts-expect-error Inconsistent fallback type
       @Envapt('NONEXISTENT_ARRAY_VAR', {
         converter: { delimiter: ',', type: Converters.String },
         fallback: ['string', 42, 'another-string']
@@ -278,6 +293,7 @@ describe('Runtime Validation', () => {
       static readonly arrayWithMixedTypeElements: string[];
 
       // Array converter where type doesn't match fallback element type
+      // @ts-expect-error Inconsistent fallback type
       @Envapt('NONEXISTENT_ARRAY_VAR', {
         converter: { delimiter: ',', type: Converters.Number },
         fallback: ['not-a-number', 'also-not-a-number']
@@ -285,6 +301,7 @@ describe('Runtime Validation', () => {
       static readonly arrayWithWrongElementType: number[];
 
       // Default 'array' converter with mixed-type fallback elements
+      // @ts-expect-error Inconsistent fallback type
       @Envapt('NONEXISTENT_ARRAY_VAR', {
         converter: Converters.Array,
         fallback: ['string', 42, true]

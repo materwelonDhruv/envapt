@@ -1,9 +1,16 @@
-/* eslint-disable security/detect-bidi-characters */
 import { EnvaptCache } from './core/EnvapterBase';
 import { Envapter } from './Envapter';
 import { Parser } from './Parser';
 
-import type { EnvaptConverter, EnvaptOptions } from './Types';
+import type {
+  AdvancedConverterReturn,
+  ArrayConverter,
+  BuiltInConverter,
+  ConverterFunction,
+  EnvaptConverter,
+  EnvaptOptions,
+  PrimitiveConstructor
+} from './Types';
 
 function createPropertyDecorator<TFallback>(
   key: string,
@@ -40,65 +47,104 @@ function createPropertyDecorator<TFallback>(
 /**
  * Instance/Static Property decorator that automatically loads and converts environment variables.
  *
- * Supports both modern options-based API and classic parameter-based API.
+ * Supports multiple overloads for optimal type inference based on converter type.
  * Automatically detects types from fallback values and provides caching for performance.
  *
- * Note: Using \@Envapt on a variable for an env that doesn't exist will set the value to `null` if no fallback is provided, regardless of a converter being used.
- *
  * @param key - Environment variable name to load
- * @param options - Configuration options (modern API)
- *
- * @example Modern API (recommended):
- * ```ts
- * class Config extends Envapter {
- * ‎ ‎ \@Envapt('PORT', { fallback: 3000 })
- * ‎ ‎ static readonly port: number;
- *
- * ‎ ‎ \@Envapt('FEATURES', { fallback: ['auth'], converter: Converters.Array })
- * ‎ ‎ declare private readonly features: string[];
- *
- * ‎ ‎ \@Envapt('CONFIG', { converter: Converters.Json })
- * ‎ ‎ static readonly config: object;
- *
- * ‎ ‎ \@Envapt('API_URL', { converter: Converters.Url })
- * ‎ ‎ declare public readonly apiUrl: URL;
- *
- * ‎ ‎ \@Envapt('CUSTOM_LIST', {
- * ‎ ‎ ‎ ‎ fallback: [1, 2, 3],
- * ‎ ‎ ‎ ‎ converter: {
- * ‎ ‎ ‎ ‎   delimiter: ',',
- * ‎ ‎ ‎ ‎   type: Converters.Number // Convert each item to number
- * ‎ ‎ ‎ ‎ }
- * ‎ ‎ })
- * ‎ ‎ static readonly customList: string[];
- * }
- * ```
- *
- * @param key - Environment variable name to load
- * @param fallback - Default value if variable is not found. Only suppoerts primitive types (string, number, boolean, bigint, symbol).
- * @param converter - Custom converter function or built-in converter
- *
- * @example Classic API
- * ```ts
- * class HealthCheck {
- * ‎ ‎ \@Envapt('PORT', 3000) declare readonly port: number;
- *
- * ‎ ‎ // code to start server
- * ‎ ‎ public start() {
- * ‎ ‎ ‎ ‎ // works on instance properties
- * ‎ ‎ ‎ ‎ console.log(`Server running on port ${this.port}`);
- * ‎ ‎ }
- * }
- * ```
- *
+ * @param options - Configuration options with built-in converter
  * @public
  */
-export function Envapt<TFallback = unknown>(key: string, options?: EnvaptOptions<TFallback>): PropertyDecorator;
-export function Envapt<TFallback = string | number | boolean | bigint | symbol>(
+export function Envapt<TConverter extends BuiltInConverter>(
   key: string,
-  fallback?: TFallback,
-  converter?: EnvaptConverter<TFallback>
+  options: { converter: TConverter; fallback?: AdvancedConverterReturn<TConverter, undefined> }
 ): PropertyDecorator;
+
+/**
+ * @param key - Environment variable name to load
+ * @param options - Configuration options with array converter
+ * @public
+ */
+export function Envapt<TConverter extends ArrayConverter>(
+  key: string,
+  options: { converter: TConverter; fallback?: AdvancedConverterReturn<TConverter, undefined> }
+): PropertyDecorator;
+
+/**
+ * @param key - Environment variable name to load
+ * @param options - Configuration options with custom converter
+ * @public
+ */
+export function Envapt<TReturnType>(
+  key: string,
+  options: { converter: ConverterFunction<TReturnType>; fallback?: TReturnType }
+): PropertyDecorator;
+
+/**
+ * @param key - Environment variable name to load
+ * @param options - Configuration options with fallback only
+ * @public
+ */
+export function Envapt<TFallback>(key: string, options: { fallback: TFallback }): PropertyDecorator;
+
+/**
+ * @param key - Environment variable name to load
+ */
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export function Envapt<_TReturnType = string | null>(key: string): PropertyDecorator;
+
+/**
+ * Classic API: Built-in converter with fallback
+ * @param key - Environment variable name to load
+ * @param fallback - Default value with built-in converter
+ * @param converter - Built-in converter
+ * @public
+ */
+export function Envapt<TConverter extends BuiltInConverter>(
+  key: string,
+  fallback: AdvancedConverterReturn<TConverter, undefined>,
+  converter: TConverter
+): PropertyDecorator;
+
+/**
+ * Classic API: Array converter with fallback
+ * @param key - Environment variable name to load
+ * @param fallback - Default array value
+ * @param converter - Array converter
+ * @public
+ */
+export function Envapt<TConverter extends ArrayConverter>(
+  key: string,
+  fallback: AdvancedConverterReturn<TConverter, undefined>,
+  converter: TConverter
+): PropertyDecorator;
+
+/**
+ * Classic API: Custom converter with fallback
+ * @param key - Environment variable name to load
+ * @param fallback - Default value
+ * @param converter - Custom converter function
+ * @public
+ */
+export function Envapt<TReturnType>(
+  key: string,
+  fallback: TReturnType,
+  converter: ConverterFunction<TReturnType>
+): PropertyDecorator;
+
+/**
+ * Classic API: Primitive fallback only
+ * @param key - Environment variable name to load
+ * @param fallback - Default primitive value
+ * @param converter - Optional primitive constructor (String, Number, etc.)
+ * @public
+ */
+export function Envapt<TFallback extends string | number | boolean | bigint | symbol | undefined>(
+  key: string,
+  fallback: TFallback,
+  converter?: PrimitiveConstructor
+): PropertyDecorator;
+
+// Implementation
 export function Envapt<TFallback = unknown>(
   key: string,
   fallbackOrOptions?: TFallback | EnvaptOptions<TFallback>,

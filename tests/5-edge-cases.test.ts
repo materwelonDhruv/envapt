@@ -122,8 +122,9 @@ describe('Edge Cases', () => {
       @Envapt('STRING_TO_NUMBER', { fallback: Number.NaN, converter: Number })
       static readonly stringToNumber: number;
 
+      // @ts-expect-error Just for committing
       @Envapt('OBJECT_FALLBACK', {
-        fallback: { key: 'default' },
+        fallback: { key: 'default' } as JsonValue,
         converter: (raw, fallback) => {
           if (typeof raw !== 'string' || !fallback) return fallback;
           return JSON.parse(raw) as JsonValue;

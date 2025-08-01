@@ -1,9 +1,9 @@
 import { PrimitiveMethods } from './PrimitiveMethods';
 
 import type {
+  AdvancedConverterReturn,
   ArrayConverter,
   BuiltInConverter,
-  BuiltInConverterReturnType,
   ConditionalReturn,
   ConverterFunction
 } from '../Types';
@@ -17,41 +17,29 @@ export class AdvancedMethods extends PrimitiveMethods {
    * Get an environment variable using a built-in converter.
    * Supports both Converter enum values and array converter configurations.
    */
-  static getUsing<
-    TConverter extends BuiltInConverter | ArrayConverter,
-    TReturnType = TConverter extends BuiltInConverter
-      ? BuiltInConverterReturnType<TConverter>
-      : TConverter extends ArrayConverter
-        ? TConverter['type'] extends BuiltInConverter
-          ? BuiltInConverterReturnType<TConverter['type']>[]
-          : string[]
-        : unknown[],
-    TFallback extends TReturnType | undefined = undefined
-  >(key: string, converter: TConverter, fallback?: TFallback): ConditionalReturn<TReturnType, TFallback> {
+  static getUsing<TConverter extends BuiltInConverter | ArrayConverter, TFallback = undefined>(
+    key: string,
+    converter: TConverter,
+    fallback?: TFallback
+  ): AdvancedConverterReturn<TConverter, TFallback> {
     // Check if variable exists first, for consistency with primitive methods
     const rawVal = this.config.get(key);
-    if (!rawVal) return fallback as ConditionalReturn<TReturnType, TFallback>;
+    if (!rawVal) return fallback as AdvancedConverterReturn<TConverter, TFallback>;
 
     const hasFallback = fallback !== undefined;
     const result = this.parser.convertValue(key, fallback, converter, hasFallback);
 
-    return result as ConditionalReturn<TReturnType, TFallback>;
+    return result as AdvancedConverterReturn<TConverter, TFallback>;
   }
 
   /**
    * @see {@link AdvancedMethods.getUsing}
    */
-  getUsing<
-    TConverter extends BuiltInConverter | ArrayConverter,
-    TReturnType = TConverter extends BuiltInConverter
-      ? BuiltInConverterReturnType<TConverter>
-      : TConverter extends ArrayConverter
-        ? TConverter['type'] extends BuiltInConverter
-          ? BuiltInConverterReturnType<TConverter['type']>[]
-          : string[]
-        : unknown[],
-    TFallback extends TReturnType | undefined = undefined
-  >(key: string, converter: TConverter, fallback?: TFallback): ConditionalReturn<TReturnType, TFallback> {
+  getUsing<TConverter extends BuiltInConverter | ArrayConverter, TFallback = undefined>(
+    key: string,
+    converter: TConverter,
+    fallback?: TFallback
+  ): AdvancedConverterReturn<TConverter, TFallback> {
     return AdvancedMethods.getUsing(key, converter, fallback);
   }
 
