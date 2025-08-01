@@ -1,35 +1,54 @@
-<div align="center">
-
-# 🔑 Envapt
-
-### _The apt way to handle environment variables_
-
 <p align="center">
-  <em>A TypeScript environment configuration library that eliminates the boilerplate of parsing .env files.<br/>
-  Get environment variables with correct runtime typing and fallbacks, template support, and automatic, built-in, & custom transformations.<br/>
-  <strong>No more <code>process.env.PORT || '3000'</code> everywhere!</strong>
-  </em>
+  <img src="assets/banner.png" alt="Envapt – The apt way to handle environment variables" width="100%" />
 </p>
 
-<div align="center">
+<p align="center">
+  A TypeScript environment configuration library that eliminates the boilerplate of parsing <code>.env</code> files.<br/>
+  Get environment variables with correct runtime typing and fallbacks, template support, and automatic, built-in, & custom transformations.<br/>
+  <strong>No more <code>process.env.PORT || '3000'</code> everywhere!</strong>
+</p>
 
-[![Build](https://img.shields.io/github/actions/workflow/status/materwelondhruv/envapt/publish.yml?branch=main&label=build&style=flat-square&color=0d1117&logo=github)](https://github.com/materwelondhruv/envapt/actions)
-[![Coverage](https://img.shields.io/codecov/c/github/materwelondhruv/envapt?style=flat-square&color=f01f7a&logo=codecov)](https://app.codecov.io/gh/materwelondhruv/envapt)
-[![npm version](https://img.shields.io/npm/v/envapt?style=flat-square&color=cb3838&logo=npm)](https://www.npmjs.com/package/envapt)
-[![License](https://img.shields.io/npm/l/envapt?style=flat-square&color=e97826&logo=apache)](LICENSE)
+<p align="center">
+  <a href="https://github.com/materwelondhruv/envapt/actions">
+    <img alt="Build" src="https://img.shields.io/github/actions/workflow/status/materwelondhruv/envapt/publish.yml?branch=main&label=build&style=flat-square&color=0d1117&logo=github">
+  </a>
+  <a href="https://app.codecov.io/gh/materwelondhruv/envapt">
+    <img alt="Coverage" src="https://img.shields.io/codecov/c/github/materwelondhruv/envapt?style=flat-square&color=f01f7a&logo=codecov">
+  </a>
+  <a href="https://www.npmjs.com/package/envapt">
+    <img alt="npm version" src="https://img.shields.io/npm/v/envapt?style=flat-square&color=cb3838&logo=npm">
+  </a>
+  <a href="LICENSE">
+    <img alt="License" src="https://img.shields.io/npm/l/envapt?style=flat-square&color=e97826&logo=apache">
+  </a>
+</p>
 
-[![Types](https://img.shields.io/badge/types-TypeScript-3178c6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![ESM](https://img.shields.io/badge/ESM-Supported-ffca28?style=flat-square)](https://nodejs.org/api/esm.html)
-[![CJS](https://img.shields.io/badge/CJS-Supported-ff6b35?style=flat-square)](https://nodejs.org/api/modules.html)
-[![Node](https://img.shields.io/badge/node-%3E=22.0.0-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org/)
+<p align="center">
+  <a href="https://www.typescriptlang.org/">
+    <img alt="Types" src="https://img.shields.io/badge/types-TypeScript-3178c6?style=flat-square&logo=typescript&logoColor=white">
+  </a>
+  <a href="https://nodejs.org/api/esm.html">
+    <img alt="ESM" src="https://img.shields.io/badge/ESM-Supported-ffca28?style=flat-square">
+  </a>
+  <a href="https://nodejs.org/api/modules.html">
+    <img alt="CJS" src="https://img.shields.io/badge/CJS-Supported-ff6b35?style=flat-square">
+  </a>
+  <a href="https://nodejs.org/">
+    <img alt="Node" src="https://img.shields.io/badge/node-%3E=22.0.0-339933?style=flat-square&logo=node.js&logoColor=white">
+  </a>
+</p>
 
-[![Bundle Size](https://img.shields.io/bundlephobia/minzip/envapt?style=flat-square&color=success)](https://bundlephobia.com/package/envapt)
-[![Downloads](https://img.shields.io/npm/dm/envapt?style=flat-square&color=blue)](https://www.npmjs.com/package/envapt)
-[![GitHub Stars](https://img.shields.io/github/stars/materwelondhruv/envapt?style=flat-square&color=yellow)](https://github.com/materwelondhruv/envapt)
-
-</div>
-
-</div>
+<p align="center">
+  <a href="https://bundlephobia.com/package/envapt">
+    <img alt="Bundle Size" src="https://img.shields.io/bundlephobia/minzip/envapt?style=flat-square&color=success">
+  </a>
+  <a href="https://www.npmjs.com/package/envapt">
+    <img alt="Downloads" src="https://img.shields.io/npm/dm/envapt?style=flat-square&color=blue">
+  </a>
+  <a href="https://github.com/materwelondhruv/envapt">
+    <img alt="GitHub Stars" src="https://img.shields.io/github/stars/materwelondhruv/envapt?style=flat-square&color=yellow">
+  </a>
+</p>
 
 ---
 
@@ -123,37 +142,11 @@
 
 ### Installation
 
-<table>
-<tr>
-<td width="33%">
-
-**npm**
-
-```bash
-npm install envapt
-```
-
-</td>
-<td width="33%">
-
-**pnpm**
-
-```bash
-pnpm add envapt
-```
-
-</td>
-<td width="33%">
-
-**yarn**
-
-```bash
-yarn add envapt
-```
-
-</td>
-</tr>
-</table>
+| Package Manager | Command              |
+| --------------- | -------------------- |
+| **npm**         | `npm install envapt` |
+| **pnpm**        | `pnpm add envapt`    |
+| **yarn**        | `yarn add envapt`    |
 
 ### Basic Usage
 
@@ -213,7 +206,7 @@ const dbService = new DatabaseService();
 await dbService.connect();
 ```
 
-Or use functionally:\
+Or use functionally:
 
 ```ts
 import { Envapter } from 'envapt';
@@ -789,10 +782,17 @@ class AppConfig extends Envapter {
 
 ---
 
-<div align="center">
+<hr/>
 
-**[⭐ Star on GitHub](https://github.com/materwelondhruv/envapt)** • **[📦 npm Package](https://www.npmjs.com/package/envapt)** • **[🐛 Report Issues](https://github.com/materwelondhruv/envapt/issues)** • **[💡 Request Features](https://github.com/materwelondhruv/envapt/issues/new)**
+<p align="center">
+  <a href="https://github.com/materwelondhruv/envapt">⭐️ Star it on GitHub</a> •
+  <a href="https://github.com/materwelondhruv/envapt/issues">🐛 Report a bug</a> • 
+  <a href="https://github.com/materwelondhruv/envapt/issues/new?labels=enhancement">💡 Request a feature</a>
+</p>
 
-<sub>Built by [@materwelonDhruv](https://github.com/materwelonDhruv) • Licensed under [Apache 2.0](LICENSE)</sub>
-
-</div>
+<p align="center">
+  <sub>
+    Built by <a href="https://github.com/materwelondhruv">@materwelonDhruv</a> • Licensed under 
+    <a href="LICENSE">Apache 2.0</a>
+  </sub>
+</p>
