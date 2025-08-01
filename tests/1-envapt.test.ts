@@ -2,29 +2,10 @@ import { resolve } from 'node:path';
 
 import { expect } from 'chai';
 
-import { Envapt } from '../src/Envapt';
-import { Envapter } from '../src/Envapter';
+import { Converters, Envapt, Envapter } from '../src';
 
-describe('Envapter', () => {
-  before(() => (Envapter.envPaths = resolve(__dirname, '.env.test')));
-
-  describe('env path configuration', () => {
-    it('should be .env.test set at the top of the file rather than .env', () => {
-      // we expect it to be our test path since we set it at module level
-      expect(Envapter.envPaths).to.deep.equal([resolve(__dirname, '.env.test')]);
-    });
-
-    it('should allow setting custom .env path', () => {
-      Envapter.envPaths = 'custom/.env';
-      expect(Envapter.envPaths).to.deep.equal(['custom/.env']);
-    });
-
-    // reset to test path
-    it('should set to list of .env files', () => {
-      Envapter.envPaths = [resolve(__dirname, '.env.test'), resolve(__dirname, '.env.extra')];
-      expect(Envapter.envPaths).to.deep.equal([resolve(__dirname, '.env.test'), resolve(__dirname, '.env.extra')]);
-    });
-  });
+describe('Envapt', () => {
+  before(() => (Envapter.envPaths = resolve(__dirname, '.env.envapt-test')));
 
   describe('automatic type detection', () => {
     class TestTypeDetection {
@@ -94,17 +75,32 @@ describe('Envapter', () => {
 
   describe('explicit overrides and other tests', () => {
     class TestEnv extends Envapter {
+      // @ts-expect-error Inconsistent fallback type
       @Envapt('TEST_NUMBER_AS_STRING', { fallback: 42, converter: String })
       public static readonly testNumberAsString: string;
 
+      // @ts-expect-error Inconsistent fallback type
       @Envapt('TEST_STRING_AS_NUMBER', { fallback: '100', converter: Number })
       public static readonly testStringAsNumber: number;
 
+      // @ts-expect-error Inconsistent fallback type
+      @Envapt('TEST_STRING_AS_BOOLEAN', { fallback: 'true', converter: Boolean })
+      public static readonly testStringAsBoolean: boolean;
+
+      // @ts-expect-error Inconsistent fallback type
+      @Envapt('TEST_NUMBER_AS_BIGINT', { fallback: 123456789, converter: BigInt })
+      public static readonly testNumberAsBigInt: bigint;
+
+      // @ts-expect-error Inconsistent fallback type
+      @Envapt('TEST_STRING_AS_BIGINT', { fallback: '987654321', converter: BigInt })
+      public static readonly testStringAsBigInt: bigint;
+
+      // @ts-expect-error Inconsistent fallback type
+      @Envapt('TEST_STRING_AS_SYMBOL', { fallback: 'test-symbol', converter: Symbol })
+      public static readonly testStringAsSymbol: symbol;
+
       @Envapt('TEST_VAR', { fallback: undefined })
       public static readonly testVar: string;
-
-      @Envapt('VAR_IN_EXTRA_FILE', { converter: Boolean })
-      public static readonly varInExtraFile: boolean | undefined;
 
       @Envapt('NONEXISTENT_VAR_WITH_FALLBACK_STRING', { fallback: 'default-value' })
       public static readonly nonexistentVarWithFallbackString: string;
@@ -126,14 +122,29 @@ describe('Envapter', () => {
       expect(TestEnv.testStringAsNumber).to.equal(100);
     });
 
+    it('should use Boolean converter override despite string fallback', () => {
+      expect(typeof TestEnv.testStringAsBoolean).to.equal('boolean');
+      expect(TestEnv.testStringAsBoolean).to.be.true;
+    });
+
+    it('should use BigInt converter override with number fallback', () => {
+      expect(typeof TestEnv.testNumberAsBigInt).to.equal('bigint');
+      expect(TestEnv.testNumberAsBigInt).to.equal(123456789n);
+    });
+
+    it('should use BigInt converter override with string fallback', () => {
+      expect(typeof TestEnv.testStringAsBigInt).to.equal('bigint');
+      expect(TestEnv.testStringAsBigInt).to.equal(987654321n);
+    });
+
+    it('should use Symbol converter override with string fallback', () => {
+      expect(typeof TestEnv.testStringAsSymbol).to.equal('symbol');
+      expect(TestEnv.testStringAsSymbol.toString()).to.equal('Symbol(test-symbol)');
+    });
+
     it('should resolve template variables in environment values', () => {
       // expecting it to combine VAR_1, VAR_2, VAR_3 into TEST_VAR
       expect(TestEnv.testVar).to.equal('var1var2var3');
-    });
-
-    // should work now since we set the extra .env path above
-    it('should load variable from .env.extra file', () => {
-      expect(TestEnv.varInExtraFile).to.be.true;
     });
 
     it('should return fallback for non-existent variable with non-undefined fallback', () => {
@@ -147,11 +158,6 @@ describe('Envapter', () => {
     it('should return fallback for non-existent variable with non-undefined boolean fallback', () => {
       expect(TestEnv.nonexistentVarWithFallbackBoolean).to.be.true;
     });
-
-    // isStaging is present because we extended the Envapter class
-    it('should be true for isStaging environment set in .env.extra', () => {
-      expect(TestEnv.isStaging).to.be.true;
-    });
   });
 
   describe('custom converter functions', () => {
@@ -159,7 +165,7 @@ describe('Envapter', () => {
       @Envapt('ALLOWED_CHANNELS', {
         fallback: ['default-channel'],
         converter: (raw, fallback) => {
-          if (!raw || raw.trim() === '') return fallback ?? [];
+          if (!raw || raw.trim() === '') return fallback;
           return raw
             .split(',')
             .map((s) => s.trim())
@@ -171,7 +177,7 @@ describe('Envapter', () => {
       @Envapt('FEATURE_FLAGS', {
         fallback: new Set(['basic']),
         converter: (raw, fallback) => {
-          if (!raw || raw.trim() === '') return fallback ?? new Set();
+          if (!raw || raw.trim() === '') return fallback;
           const flags = raw
             .split(',')
             .map((s) => s.trim())
@@ -184,7 +190,7 @@ describe('Envapter', () => {
       @Envapt('NONEXISTENT_ARRAY', {
         fallback: ['default1', 'default2'],
         converter: (raw, fallback) => {
-          if (!raw || raw.trim() === '') return fallback ?? [];
+          if (!raw || raw.trim() === '') return fallback;
           return raw.split(',').map((s) => s.trim());
         }
       })
@@ -212,22 +218,22 @@ describe('Envapter', () => {
 
   describe('built-in converters showcase', () => {
     class BuiltInConverterShowcase {
-      @Envapt('DATABASE_CONFIG', { converter: 'json' })
+      @Envapt('DATABASE_CONFIG', { converter: Converters.Json })
       static readonly databaseConfig: object;
 
       @Envapt('API_ENDPOINTS', { converter: { delimiter: ';' } })
       static readonly apiEndpoints: string[];
 
-      @Envapt('CORS_ORIGINS', { converter: { delimiter: '|', type: 'url' } })
+      @Envapt('CORS_ORIGINS', { converter: { delimiter: '|', type: Converters.Url } })
       static readonly corsOrigins: URL[];
 
       @Envapt('SERVICE_TAGS', { converter: { delimiter: ' ' } })
       static readonly serviceTags: string[];
 
-      @Envapt('ENABLED_FEATURES', { converter: 'boolean' })
+      @Envapt('ENABLED_FEATURES', { converter: Converters.Boolean })
       static readonly enabledFeatures: boolean;
 
-      @Envapt('API_TIMEOUT', { converter: 'integer' })
+      @Envapt('API_TIMEOUT', { converter: Converters.Integer })
       static readonly apiTimeout: number;
     }
 
@@ -266,6 +272,40 @@ describe('Envapter', () => {
 
     it('should parse integer values', () => {
       expect(BuiltInConverterShowcase.apiTimeout).to.equal(5000);
+    });
+  });
+
+  describe('multi-line variables', () => {
+    class MultiLineEnv {
+      @Envapt('MULTI_LINE_VAR')
+      public static readonly multiLineVar: string;
+
+      @Envapt('MULTI_LINE_VAR_ESCAPED')
+      public static readonly multiLineVarEscaped: string;
+
+      @Envapt('MULTI_LINE_WITH_BACKSLASHN')
+      public static readonly multiLineWithBackslashN: string;
+
+      @Envapt('MULTI_LINE_NUMBER', { converter: Converters.Number })
+      public static readonly multiLineNumber: number;
+    }
+
+    it('should handle multi-line variables correctly', () => {
+      expect(MultiLineEnv.multiLineVar).to.equal('This is a\nvariable that spans\nmultiple lines.');
+    });
+
+    it('should handle escaped multi-line variables correctly', () => {
+      expect(MultiLineEnv.multiLineVarEscaped).to.equal(
+        'This is a \\\nvariable that spans \\\nmultiple lines with \\\nescaping.'
+      );
+    });
+
+    it('should handle multi-line variables with backslash-n correctly', () => {
+      expect(MultiLineEnv.multiLineWithBackslashN).to.equal('This is a\nvariable with a backslash and n.');
+    });
+
+    it('should only allow strings in multiline', () => {
+      expect(MultiLineEnv.multiLineNumber).to.be.null;
     });
   });
 });

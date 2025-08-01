@@ -1,6 +1,6 @@
 name: Lint / Test / Build / Security Audit
 
-on: [push, pull_request]
+on: [pull_request]
 
 jobs:
   build-and-check:
@@ -25,7 +25,7 @@ jobs:
         run: pnpm lint
 
       - name: Typecheck
-        run: pnpm typecheck
+        run: pnpm tc
 
       - name: Test
         run: pnpm test

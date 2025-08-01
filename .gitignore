@@ -45,6 +45,7 @@ Logs/
 .eslintcache
 
 # Ignore coverage reports
+.nyc_output/
 coverage/
 
 # Ignore temporary files

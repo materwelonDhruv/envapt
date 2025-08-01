@@ -1,12 +1,11 @@
 name: Publish
-
 on:
   push:
-    tags:
-      - 'v*.*.*'
+    branches:
+      - main
 
 permissions:
-  contents: read
+  contents: write
   id-token: write
 
 env:
@@ -15,37 +14,29 @@ env:
 jobs:
   release:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v4
 
-      - name: Setup node
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: pnpm
           registry-url: 'https://registry.npmjs.org'
           always-auth: true
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm tc
+      - run: pnpm test
+      - run: pnpm run prepublishOnly
 
-      - name: Lint
-        run: pnpm lint
-
-      - name: Typecheck
-        run: pnpm typecheck
-
-      - name: Test
-        run: pnpm test
-
-      - name: Build
-        run: pnpm run build
-
-      - name: Publish to NPM
-        run: pnpm publish --no-git-checks
+      - uses: changesets/action@v1
+        with:
+          publish: pnpm publish --no-git-checks
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

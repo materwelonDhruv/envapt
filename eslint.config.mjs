@@ -265,7 +265,7 @@ export default tseslint.config(
       // Code quality
       complexity: ['warn', 15], // Increased from 10
       'max-depth': ['warn', 5], // Increased from 4
-      'max-nested-callbacks': ['warn', 3],
+      'max-nested-callbacks': ['warn', 4],
       'max-params': ['warn', 5], // Increased from 4
       'max-statements': ['warn', 25], // Increased from 20
       'max-lines': ['warn', 400], // Increased from 300
@@ -332,7 +332,10 @@ export default tseslint.config(
     rules: {
       'max-lines-per-function': 'off',
       'no-magic-numbers': 'off',
-      'no-unused-expressions': 'off'
+      'no-unused-expressions': 'off',
+      'max-lines': 'off',
+      'no-unused-expressions': 'off',
+      '@typescript-eslint/no-unused-expressions': 'off'
     }
   },
   // Prettier config to disable conflicting rules

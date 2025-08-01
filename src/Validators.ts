@@ -1,20 +1,22 @@
+import fs from 'node:fs';
+
 import { EnvaptError, EnvaptErrorCodes } from './Error';
-import { ListOfBuiltInConverters } from './ListOfBuiltInConverters';
+import { ListOfBuiltInConverters, BuiltInConverterTypeCheckers } from './ListOfBuiltInConverters';
 
 import type {
-  EnvaptConverter,
-  ConverterFunction,
   ArrayConverter,
   BuiltInConverter,
-  ValidArrayConverterBuiltInType,
-  BuiltInConverterReturnType
+  ConverterFunction,
+  EnvaptConverter,
+  PermittedDotenvConfig,
+  ValidArrayConverterBuiltInType
 } from './Types';
 
 export class Validator {
   /**
    * Check if a value is a built-in converter type
    */
-  static isBuiltInConverter(value: EnvaptConverter<unknown>): value is BuiltInConverter {
+  static isBuiltInConverter<TFallback>(value: EnvaptConverter<TFallback>): value is BuiltInConverter {
     if (typeof value === 'string') return ListOfBuiltInConverters.includes(value);
     return false;
   }
@@ -47,21 +49,9 @@ export class Validator {
     return validTypes.includes(value as ValidArrayConverterBuiltInType);
   }
 
-  /**
-   * Check if a value is a valid custom converter function
-   */
-  static isValidConverterFunction<FallbackType extends BuiltInConverter>(
-    converter: unknown
-  ): converter is (
-    raw: string | undefined,
-    fallback?: BuiltInConverterReturnType[FallbackType]
-  ) => BuiltInConverterReturnType[FallbackType] {
-    return typeof converter === 'function';
-  }
-
-  static customConvertor<FallbackType>(
-    converter: EnvaptConverter<FallbackType>
-  ): asserts converter is ConverterFunction<FallbackType> {
+  static customConvertor<TFallback>(
+    converter: EnvaptConverter<TFallback>
+  ): asserts converter is ConverterFunction<TFallback> {
     if (typeof converter !== 'function') {
       throw new EnvaptError(
         EnvaptErrorCodes.InvalidCustomConverter,
@@ -98,6 +88,163 @@ export class Validator {
       throw new EnvaptError(
         EnvaptErrorCodes.InvalidBuiltInConverter,
         `"${value}" is not a valid converter type. Valid types are: ${ListOfBuiltInConverters.join(',')}`
+      );
+    }
+  }
+
+  /**
+   * Validate that fallback type matches the converter's return type for built-in converters
+   */
+  static validateBuiltInConverterFallback(converter: BuiltInConverter, fallback: unknown): void {
+    const typeChecker = BuiltInConverterTypeCheckers[converter];
+    if (!typeChecker(fallback)) {
+      throw new EnvaptError(
+        EnvaptErrorCodes.FallbackConverterTypeMismatch,
+        `Fallback type does not match converter "${converter}". Expected ${converter} compatible type.`
+      );
+    }
+  }
+
+  /**
+   * Validate that all elements in an array fallback have consistent types
+   */
+  static validateArrayFallbackElementTypes(fallback: unknown[]): void {
+    if (fallback.length === 0) return; // Empty array is valid
+
+    const firstElementType = typeof fallback[0];
+    const hasInconsistentTypes = fallback.some((element, index) => {
+      if (index === 0) return false; // Skip first element
+      return typeof element !== firstElementType;
+    });
+
+    if (hasInconsistentTypes) {
+      throw new EnvaptError(
+        EnvaptErrorCodes.ArrayFallbackElementTypeMismatch,
+        `All elements in array fallback must have the same type. Found mixed types.`
+      );
+    }
+  }
+
+  /**
+   * Validate that array converter type matches fallback element types
+   */
+  static validateArrayConverterElementTypeMatch(converterType: string, fallback: unknown[]): void {
+    if (fallback.length === 0) return; // Empty array is valid
+
+    const firstElement = fallback[0];
+    const typeChecker = BuiltInConverterTypeCheckers[converterType as keyof typeof BuiltInConverterTypeCheckers];
+
+    if (!typeChecker(firstElement)) {
+      throw new EnvaptError(
+        EnvaptErrorCodes.ArrayFallbackElementTypeMismatch,
+        `Array converter type "${converterType}" does not match fallback element type. Expected ${converterType} compatible elements.`
+      );
+    }
+  }
+
+  /**
+   * Check if a value is a primitive constructor
+   */
+  static isPrimitiveConstructor(
+    value: unknown
+  ): value is typeof String | typeof Number | typeof Boolean | typeof BigInt | typeof Symbol {
+    return value === String || value === Number || value === Boolean || value === BigInt || value === Symbol;
+  }
+
+  /**
+   * Safely coerce a fallback value using a primitive constructor
+   */
+  static coercePrimitiveFallback<CoercedType>(
+    converter: typeof String | typeof Number | typeof Boolean | typeof BigInt | typeof Symbol,
+    fallback: unknown
+  ): CoercedType {
+    // Check if fallback is already the correct type and return as-is
+    if (this.isCorrectPrimitiveType(converter, fallback)) return fallback as CoercedType;
+
+    // Otherwise, coerce the value
+    return this.performPrimitiveCoercion<CoercedType>(converter, fallback);
+  }
+
+  /**
+   * Check if fallback is already the correct primitive type
+   */
+  private static isCorrectPrimitiveType(
+    converter: typeof String | typeof Number | typeof Boolean | typeof BigInt | typeof Symbol,
+    fallback: unknown
+  ): boolean {
+    if (converter === String && typeof fallback === 'string') return true;
+    if (converter === Number && typeof fallback === 'number') return true;
+    if (converter === Boolean && typeof fallback === 'boolean') return true;
+    if (converter === BigInt && typeof fallback === 'bigint') return true;
+    if (converter === Symbol && typeof fallback === 'symbol') return true;
+    return false;
+  }
+
+  /**
+   * Perform the actual primitive coercion
+   */
+  private static performPrimitiveCoercion<CoercedType>(
+    converter: typeof String | typeof Number | typeof Boolean | typeof BigInt | typeof Symbol,
+    fallback: unknown
+  ): CoercedType {
+    try {
+      if (converter === String) return String(fallback) as CoercedType;
+      if (converter === Number) return Number(fallback) as CoercedType;
+      if (converter === Boolean) return Boolean(fallback) as CoercedType;
+      if (converter === BigInt) return BigInt(fallback as string | number | bigint) as CoercedType;
+      if (converter === Symbol) return Symbol(fallback as string | number) as CoercedType;
+    } catch (error) {
+      throw new EnvaptError(
+        EnvaptErrorCodes.PrimitiveCoercionFailed,
+        `Failed to coerce fallback value using ${converter.name}: ${(error as Error).message}`
+      );
+    }
+
+    // This should never happen but TypeScript needs it
+    throw new EnvaptError(EnvaptErrorCodes.PrimitiveCoercionFailed, `Unknown primitive converter: ${converter.name}`);
+  }
+
+  /**
+   * Make sure the user hasn't provided prohibited options in their dotenv config
+   */
+  static validateDotenvConfig(config: Record<string, unknown>): config is PermittedDotenvConfig {
+    if ('path' in config || 'processEnv' in config) {
+      throw new EnvaptError(
+        EnvaptErrorCodes.InvalidUserDefinedConfig,
+        'Custom dotenvConfig should not include "path" or "processEnv" options. Those are managed by Envapter.'
+      );
+    }
+
+    const validKeys = new Set(['encoding', 'quiet', 'debug', 'override', 'DOTENV_KEY']);
+    const invalidKeys = Object.keys(config).filter((key) => !validKeys.has(key));
+
+    if (invalidKeys.length > 0) {
+      throw new EnvaptError(
+        EnvaptErrorCodes.InvalidUserDefinedConfig,
+        `Invalid dotenvConfig options: ${invalidKeys.join(', ')}. Allowed options: ${Array.from(validKeys).join(', ')}`
+      );
+    }
+
+    return true;
+  }
+
+  /**
+   * Check if each provided path resolves to an env file by trying to access it
+   */
+  static validateEnvFilesExist(paths: string[]): void {
+    const missing = paths.filter((p) => {
+      try {
+        fs.accessSync(p, fs.constants.F_OK);
+        return false;
+      } catch {
+        return true;
+      }
+    });
+
+    if (missing.length > 0) {
+      throw new EnvaptError(
+        EnvaptErrorCodes.EnvFilesNotFound,
+        `Environment file not found at path: ${missing.join(', ')}`
       );
     }
   }
