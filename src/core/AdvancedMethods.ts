@@ -1,8 +1,12 @@
-import { BuiltInConverters } from '../BuiltInConverters';
-import { Validator } from '../Validators';
 import { PrimitiveMethods } from './PrimitiveMethods';
 
-import type { ArrayConverter, BuiltInConverter, ConverterFunction, ConditionalReturn } from '../Types';
+import type {
+  ArrayConverter,
+  BuiltInConverter,
+  BuiltInConverterReturnType,
+  ConditionalReturn,
+  ConverterFunction
+} from '../Types';
 
 /**
  * Mixin for advanced methods for environment variable conversion using built-in and custom converters
@@ -13,82 +17,76 @@ export class AdvancedMethods extends PrimitiveMethods {
    * Get an environment variable using a built-in converter.
    * Supports both Converter enum values and array converter configurations.
    */
-  static getUsing<ReturnType, Default extends ReturnType | undefined = undefined>(
-    key: string,
-    converter: BuiltInConverter | ArrayConverter,
-    def?: Default
-  ): ConditionalReturn<ReturnType, Default> {
-    if (Validator.isArrayConverter(converter)) {
-      return this.processArrayConverter(key, def, converter) as ConditionalReturn<ReturnType, Default>;
-    }
+  static getUsing<
+    TConverter extends BuiltInConverter | ArrayConverter,
+    TReturnType = TConverter extends BuiltInConverter
+      ? BuiltInConverterReturnType<TConverter>
+      : TConverter extends ArrayConverter
+        ? TConverter['type'] extends BuiltInConverter
+          ? BuiltInConverterReturnType<TConverter['type']>[]
+          : string[]
+        : unknown[],
+    TFallback extends TReturnType | undefined = undefined
+  >(key: string, converter: TConverter, fallback?: TFallback): ConditionalReturn<TReturnType, TFallback> {
+    // Check if variable exists first, for consistency with primitive methods
+    const rawVal = this.config.get(key);
+    if (!rawVal) return fallback as ConditionalReturn<TReturnType, TFallback>;
 
-    Validator.builtInConverter(converter);
-    return this.processBuiltInConverter(key, def, converter) as ConditionalReturn<ReturnType, Default>;
+    const hasFallback = fallback !== undefined;
+    const result = this.parser.convertValue(key, fallback, converter, hasFallback);
+
+    return result as ConditionalReturn<TReturnType, TFallback>;
   }
 
   /**
    * @see {@link AdvancedMethods.getUsing}
    */
-  getUsing<ReturnType, Default extends ReturnType | undefined = undefined>(
-    key: string,
-    converter: BuiltInConverter | ArrayConverter,
-    def?: Default
-  ): ConditionalReturn<ReturnType, Default> {
-    return AdvancedMethods.getUsing(key, converter, def);
+  getUsing<
+    TConverter extends BuiltInConverter | ArrayConverter,
+    TReturnType = TConverter extends BuiltInConverter
+      ? BuiltInConverterReturnType<TConverter>
+      : TConverter extends ArrayConverter
+        ? TConverter['type'] extends BuiltInConverter
+          ? BuiltInConverterReturnType<TConverter['type']>[]
+          : string[]
+        : unknown[],
+    TFallback extends TReturnType | undefined = undefined
+  >(key: string, converter: TConverter, fallback?: TFallback): ConditionalReturn<TReturnType, TFallback> {
+    return AdvancedMethods.getUsing(key, converter, fallback);
   }
 
   /**
    * Get an environment variable using a custom converter function.
    */
-  static getWith<ReturnType, Default extends ReturnType | undefined = undefined>(
+  static getWith<TReturnType, TFallback extends TReturnType | undefined = undefined>(
     key: string,
-    converter: ConverterFunction<ReturnType>,
-    def?: Default
-  ): ConditionalReturn<ReturnType, Default> {
-    Validator.customConvertor(converter);
+    converter: ConverterFunction<TReturnType>,
+    fallback?: TFallback
+  ): ConditionalReturn<TReturnType, TFallback> {
+    // Check if variable exists first, for consistency with primitive methods
+    const rawVal = this.config.get(key);
+    if (!rawVal) return fallback as ConditionalReturn<TReturnType, TFallback>;
 
-    const raw = this.get(key, undefined);
-    if (raw === undefined) return def as ConditionalReturn<ReturnType, Default>;
+    const hasFallback = fallback !== undefined;
+    // Convert the converter to match the expected signature via unknown
+    const result = this.parser.convertValue(
+      key,
+      fallback,
+      converter as unknown as ConverterFunction<TFallback>,
+      hasFallback
+    );
 
-    return converter(raw, def) as ConditionalReturn<ReturnType, Default>;
+    return result as ConditionalReturn<TReturnType, TFallback>;
   }
 
   /**
    * @see {@link AdvancedMethods.getWith}
    */
-  getWith<ReturnType, Default extends ReturnType | undefined = undefined>(
+  getWith<TReturnType, TFallback extends TReturnType | undefined = undefined>(
     key: string,
-    converter: ConverterFunction<ReturnType>,
-    def?: Default
-  ): ConditionalReturn<ReturnType, Default> {
-    return AdvancedMethods.getWith(key, converter, def);
-  }
-
-  private static processBuiltInConverter<ReturnType>(
-    key: string,
-    fallback: ReturnType | undefined,
-    converter: BuiltInConverter
-  ): ReturnType | undefined {
-    const parsed = this.get(key, undefined);
-    if (parsed === undefined) return fallback;
-
-    const converterFn = BuiltInConverters.getConverter(converter);
-    const result = converterFn(parsed, fallback);
-
-    return result as ReturnType | undefined;
-  }
-
-  private static processArrayConverter<ReturnType>(
-    key: string,
-    fallback: ReturnType | undefined,
-    converter: ArrayConverter
-  ): ReturnType | undefined {
-    Validator.arrayConverter(converter);
-
-    const parsed = this.get(key, undefined);
-    if (parsed === undefined) return fallback;
-
-    const result = BuiltInConverters.processArrayConverter(parsed, fallback, converter);
-    return result as ReturnType | undefined;
+    converter: ConverterFunction<TReturnType>,
+    fallback?: TFallback
+  ): ConditionalReturn<TReturnType, TFallback> {
+    return AdvancedMethods.getWith(key, converter, fallback);
   }
 }

@@ -20,7 +20,7 @@ enum Primitive {
  * @internal
  */
 export class PrimitiveMethods extends EnvironmentMethods implements EnvapterService {
-  private static readonly parser = new Parser(new PrimitiveMethods());
+  protected static readonly parser = new Parser(new PrimitiveMethods());
 
   private static _get<EnvVarReturnType, DefaultType extends EnvVarReturnType | undefined = undefined>(
     key: string,
