@@ -30,7 +30,7 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
-      - run: pnpm typecheck
+      - run: pnpm tc
       - run: pnpm test
       - run: pnpm run prepublishOnly
 

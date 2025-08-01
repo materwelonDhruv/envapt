@@ -1,17 +1,39 @@
-# Envapt - The apt way to handle env
+<div align="center">
 
-A TypeScript environment configuration library that eliminates the boilerplate of parsing .env files. Get properly runtime-typed environment variables with fallbacks, template support, and automatic, built-in, & custom type conversion - no more `process.env.PORT || '3000'` everywhere.
+# 🔑 Envapt
 
-[![Build](https://img.shields.io/github/actions/workflow/status/materwelondhruv/envapt/publish.yml?branch=main&label=build&style=flat-square&color=brightgreen)](https://github.com/materwelondhruv/envapt/actions)
-[![Coverage](https://img.shields.io/codecov/c/github/materwelondhruv/envapt?style=flat-square&color=blueviolet)](https://app.codecov.io/gh/materwelondhruv/envapt)
-[![npm version](https://img.shields.io/npm/v/envapt?style=flat-square&color=orange)](https://www.npmjs.com/package/envapt)
-[![License](https://img.shields.io/npm/l/envapt?style=flat-square&color=success)](LICENSE)
+### _The apt way to handle env_
+
+<p align="center">
+  <em>A TypeScript environment configuration library that eliminates the boilerplate of parsing .env files.<br/>
+  Get properly runtime-typed environment variables with fallbacks, template support, and automatic, built-in, & custom transformations.<br/>
+  <strong>No more <code>process.env.PORT || '3000'</code> everywhere!</strong>
+  </em>
+</p>
+
+<div align="center">
+
+[![Build](https://img.shields.io/github/actions/workflow/status/materwelondhruv/envapt/publish.yml?branch=main&label=build&style=flat-square&color=0d1117&logo=github)](https://github.com/materwelondhruv/envapt/actions)
+[![Coverage](https://img.shields.io/codecov/c/github/materwelondhruv/envapt?style=flat-square&color=f01f7a&logo=codecov)](https://app.codecov.io/gh/materwelondhruv/envapt)
+[![npm version](https://img.shields.io/npm/v/envapt?style=flat-square&color=cb3838&logo=npm)](https://www.npmjs.com/package/envapt)
+[![License](https://img.shields.io/npm/l/envapt?style=flat-square&color=e97826&logo=apache)](LICENSE)
+
 [![Types](https://img.shields.io/badge/types-TypeScript-3178c6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![ESM](https://img.shields.io/badge/ESM-Supported-ffca28?style=flat-square)](https://nodejs.org/api/esm.html)
+[![CJS](https://img.shields.io/badge/CJS-Supported-ff6b35?style=flat-square)](https://nodejs.org/api/modules.html)
 [![Node](https://img.shields.io/badge/node-%3E=22.0.0-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org/)
-[![Bundle Size](https://img.shields.io/bundlephobia/minzip/envapt?style=flat-square&color=success)](https://bundlephobia.com/package/envapt)
 
-## Features
+[![Bundle Size](https://img.shields.io/bundlephobia/minzip/envapt?style=flat-square&color=success)](https://bundlephobia.com/package/envapt)
+[![Downloads](https://img.shields.io/npm/dm/envapt?style=flat-square&color=blue)](https://www.npmjs.com/package/envapt)
+[![GitHub Stars](https://img.shields.io/github/stars/materwelondhruv/envapt?style=flat-square&color=yellow)](https://github.com/materwelondhruv/envapt)
+
+</div>
+
+</div>
+
+---
+
+## ✨ Features
 
 - 🔧 **Automatic Type Detection** - Runtime types inferred from fallback values
 - 🔗 **Template Variables** - `${VAR}` syntax with circular reference protection
@@ -21,31 +43,36 @@ A TypeScript environment configuration library that eliminates the boilerplate o
 - 📂 **Multiple .env Files** - Load from multiple sources
 - 💪 **Edge Case Handling** - Robust validation and parsing for all scenarios
 - 🛡️ **Type Safety** - Full TypeScript support with proper type inference
+- ⚡ **Lightweight** - Minimal overhead with `dotenv` bundled
 
-## Table of Contents
+---
 
-- [Requirements](#requirements)
-- [Quick Start](#quick-start)
-  - [Installation](#installation)
-  - [Basic Usage](#basic-usage)
-- [API Reference](#api-reference)
-  - [Decorator API](#decorator-api)
-  - [Primitive Converters](#primitive-converters)
-  - [Built-in Converters](#built-in-converters)
-  - [Custom Array Converters](#custom-array-converters)
-  - [Custom Converters](#custom-converters)
-  - [Handling Missing Values](#handling-missing-values)
-  - [Functional API](#functional-api)
-  - [Converter Type Quick Reference](#converter-type-quick-reference)
-- [Environment Detection](#environment-detection)
-- [Template Variables](#template-variables)
-- [Configuration](#configuration)
-  - [Multiple .env Files](#multiple-env-files)
-  - [Dotenv Configuration](#dotenv-configuration)
-- [Error Handling](#error-handling)
-- [Advanced Examples](#advanced-examples)
+## 📚 Table of Contents
 
-## Requirements
+- [🔧 Requirements](#requirements)
+- [🚀 Quick Start](#quick-start)
+  - [📦 Installation](#installation)
+  - [⚡ Basic Usage](#basic-usage)
+- [📖 API Reference](#api-reference)
+  - [🎨 Decorator API](#decorator-api)
+  - [🔤 Primitive Converters](#primitive-converters)
+  - [🏗️ Built-in Converters](#built-in-converters)
+  - [🔢 Custom Array Converters](#custom-array-converters)
+  - [⚙️ Custom Converters](#custom-converters)
+  - [❓ Handling Missing Values](#handling-missing-values)
+  - [🛠️ Functional API](#functional-api)
+  - [📋 Converter Type Quick Reference](#converter-type-quick-reference)
+- [🌍 Environment Detection](#environment-detection)
+- [🔗 Template Variables](#template-variables)
+- [⚙️ Configuration](#configuration)
+  - [📂 Multiple .env Files](#multiple-env-files)
+  - [🔧 Dotenv Configuration](#dotenv-configuration)
+- [🚨 Error Handling](#error-handling)
+- [🎓 Advanced Examples](#advanced-examples)
+
+---
+
+## 🔧 Requirements
 
 - **Node.js**: v22 or later (recommended for ESM and nodenext support)
 - **TypeScript**: v5.8 or later
@@ -59,24 +86,45 @@ A TypeScript environment configuration library that eliminates the boilerplate o
   - `lib: ESNext`
 - **ESM Support**: Project uses ESM, so your environment and tooling should support ES modules.
 
-## Quick Start
+## 🚀 Quick Start
 
-### Installation
+### 📦 Installation
+
+<table>
+<tr>
+<td width="33%">
+
+**npm**
 
 ```bash
-# npm
 npm install envapt
+```
 
-# pnpm
+</td>
+<td width="33%">
+
+**pnpm**
+
+```bash
 pnpm add envapt
+```
 
-# yarn
+</td>
+<td width="33%">
+
+**yarn**
+
+```bash
 yarn add envapt
 ```
 
-### Basic Usage
+</td>
+</tr>
+</table>
 
-Create a `.env` file:
+### ⚡ Basic Usage
+
+**Step 1:** Create a `.env` file:
 
 ```env
 APP_PORT=8443
@@ -142,9 +190,9 @@ const url = Envapter.get('APP_URL', 'http://localhost:3000');
 const isProduction = Envapter.getBoolean('IS_PRODUCTION', false);
 ```
 
-## API Reference
+## 📖 API Reference
 
-### Decorator API
+### 🎨 Decorator API
 
 The `@Envapt` decorator can be used on both **static** and **instance** class properties:
 
@@ -422,7 +470,7 @@ class Config extends Envapter {
 }
 ```
 
-### Functional API
+### 🛠️ Functional API
 
 For functional-style environment variable on primitive types:
 
@@ -508,9 +556,9 @@ const result = envapter.getUsing('DATABASE_CONFIG', Converters.Json);
 | **Functional custom**   | `getWith()` method        | `Envapter.getWith('VAR', (raw) => transform(raw))`        |
 
 > [!TIP]
-> **Use the `Converters` enum**, they look better. Start with built-in converters, use primitive constructors when you need coercion, and custom converters for complex transforms.
+> **Use the `Converters` enum**. They look better. Start with built-in converters, use primitive constructors when you need coercion, and custom converters for complex transforms.
 
-## Environment Detection
+## 🌍 Environment Detection
 
 Envapt automatically detects your environment from these variables (in order):
 
@@ -536,9 +584,9 @@ Envapter.environment = EnvaptEnvironment.Production;
 Envapter.environment = 'staging'; // string also works
 ```
 
-## Configuration
+## ⚙️ Configuration
 
-### Multiple .env Files
+### 📂 Multiple .env Files
 
 ```ts
 import { resolve } from 'node:path';
@@ -553,7 +601,7 @@ Envapter.envPaths = resolve(__dirname, '.env.production');
 // Or just don't set a path for it to default to .env at the root of your project
 ```
 
-### Dotenv Configuration
+### 🔧 Dotenv Configuration
 
 Envapt allows you to customize dotenv behavior by setting configuration options:
 
@@ -576,7 +624,7 @@ console.log(Envapter.dotenvConfig);
 > [!NOTE]
 > The `path` and `processEnv` options are managed internally by Envapter and cannot be set via `dotenvConfig`.
 
-## Template Variables
+## 🔗 Template Variables
 
 Envapt supports variable interpolation with `${VARIABLE}` syntax:
 
@@ -599,7 +647,7 @@ CIRCULAR_B=${CIRCULAR_A}
 
 Circular references are detected and preserved as-is rather than causing infinite loops.
 
-## Error Handling
+## 🚨 Error Handling
 
 Envapt provides detailed error codes for better debugging and error handling:
 
@@ -645,7 +693,7 @@ try {
 | `InvalidUserDefinedConfig` (302)         | Invalid user-defined configuration provided               |
 | `EnvFilesNotFound` (303)                 | Specified environment file doesn't exist                  |
 
-## Advanced Examples
+## 🎓 Advanced Examples
 
 ### Complex Configuration
 
@@ -689,3 +737,13 @@ class AppConfig extends Envapter {
   }
 }
 ```
+
+---
+
+<div align="center">
+
+**[⭐ Star on GitHub](https://github.com/materwelondhruv/envapt)** • **[📦 npm Package](https://www.npmjs.com/package/envapt)** • **[🐛 Report Issues](https://github.com/materwelondhruv/envapt/issues)** • **[💡 Request Features](https://github.com/materwelondhruv/envapt/issues/new)**
+
+<sub>Built by [@materwelonDhruv](https://github.com/materwelonDhruv) • Licensed under [Apache 2.0](LICENSE)</sub>
+
+</div>
