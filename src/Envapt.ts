@@ -115,7 +115,7 @@ export function Envapt<_TReturnType = string | null>(key: string): PropertyDecor
  */
 export function Envapt<TConverter extends BuiltInConverter>(
   key: string,
-  fallback: InferConverterReturnType<TConverter>,
+  fallback: InferConverterReturnType<TConverter> | undefined,
   converter: TConverter
 ): PropertyDecorator;
 
@@ -128,7 +128,7 @@ export function Envapt<TConverter extends BuiltInConverter>(
  */
 export function Envapt<TConverter extends ArrayConverter>(
   key: string,
-  fallback: InferConverterReturnType<TConverter>,
+  fallback: InferConverterReturnType<TConverter> | undefined,
   converter: TConverter
 ): PropertyDecorator;
 
