@@ -1,5 +1,6 @@
 /* eslint-disable security/detect-bidi-characters */
-import { Envapter, EnvaptCache } from './Envapter';
+import { EnvaptCache } from './core/EnvapterBase';
+import { Envapter } from './Envapter';
 import { Parser } from './Parser';
 
 import type { EnvaptConverter, EnvaptOptions } from './Types';

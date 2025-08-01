@@ -12,7 +12,7 @@ A TypeScript environment configuration library that eliminates the boilerplate o
 
 - 🔧 **Automatic Type Detection** - Runtime types inferred from fallback values
 - 🔗 **Template Variables** - `${VAR}` syntax with circular reference protection
-- 🎯 **Class Properties** - Decorator-based configuration for class members
+- 🎯 **Class Properties** - Functional and Decorator-based configuration for class members
 - 🏷️ **Built-in & Custom Converters** - Ready-to-use converters for common patterns + custom transformations
 - 🌍 **Environment Detection** - Built-in development/staging/production handling
 - 📂 **Multiple .env Files** - Load from multiple sources
@@ -84,7 +84,7 @@ MAX_CONNECTIONS=100
 ALLOWED_ORIGINS=https://app.com,https://admin.com
 ```
 
-Use with decorators (recommended):
+Use with decorators:
 
 ```ts
 import { Envapt, Envapter, Converters } from 'envapt';
@@ -130,7 +130,6 @@ await dbService.connect();
 ```
 
 Or use functionally:\
-<sub>Limited to primitives, String, Number, Boolean, Symbol, and BigInt. Does not support converters.</sub>
 
 ```ts
 import { Envapter } from 'envapt';
@@ -422,27 +421,63 @@ class Config extends Envapter {
 
 ### Functional API
 
-```ts
-import { Envapter } from 'envapt';
+For functional-style environment variable on primitive types:
 
-// Type-specific getters
+```ts
+import { Envapter, Converters } from 'envapt';
+
+// Basic type-specific getters
 const str = Envapter.get('STRING_VAR', 'default');
 const num = Envapter.getNumber('NUMBER_VAR', 42);
 const bool = Envapter.getBoolean('BOOLEAN_VAR', false);
+const bigint = Envapter.getBigInt('BIGINT_VAR', 100n);
+const symbol = Envapter.getSymbol('SYMBOL_VAR', Symbol('default'));
 
-// Instance methods (same API)
+// Advanced converter methods
+const jsonData = Envapter.getUsing('CONFIG_JSON', Converters.Json);
+const urlArray = Envapter.getUsing('API_URLS', { delimiter: ',', type: Converters.Url });
+const customData = Envapter.getWith('RAW_DATA', (raw) => raw?.split('|').map((s) => s.trim()));
+
+// Instance methods (same API available)
 const envapter = new Envapter();
 const value = envapter.get('VAR', 'default');
+const processed = envapter.getUsing('DATA', Converters.Array);
+```
+
+For functional-style environment variable access with converters:
+
+```ts
+import { Envapter, Converters } from 'envapt';
+
+// Use built-in converters directly
+const config = Envapter.getUsing('API_CONFIG', Converters.Json, { default: 'value' });
+const urls = Envapter.getUsing('SERVICE_URLS', { delimiter: '|', type: Converters.Url });
+
+// Use custom converter functions
+const processedData = Envapter.getWith(
+  'RAW_DATA',
+  (raw, fallback) => {
+    if (!raw) return fallback ?? [];
+    return raw.split(',').map((item) => ({ name: item.trim(), enabled: true }));
+  },
+  []
+);
+
+// Instance methods work the same way
+const envapter = new Envapter();
+const result = envapter.getUsing('DATABASE_CONFIG', Converters.Json);
 ```
 
 ### Converter Type Quick Reference
 
-| **Use Case**           | **Converter Type**        | **Example**                                               |
-| ---------------------- | ------------------------- | --------------------------------------------------------- |
-| **Type coercion**      | Primitive constructors    | `converter: String`                                       |
-| **Strict validation**  | Built-in converters       | `converter: Converters.String`                            |
-| **Array parsing**      | Built-in Array converters | `converter: { delimiter: ',', type?: Converters.String }` |
-| **Complex transforms** | Custom function           | `converter: (raw, fallback) => ...`                       |
+| **Use Case**            | **Converter Type**        | **Example**                                               |
+| ----------------------- | ------------------------- | --------------------------------------------------------- |
+| **Type coercion**       | Primitive constructors    | `converter: String`                                       |
+| **Strict validation**   | Built-in converters       | `converter: Converters.String`                            |
+| **Array parsing**       | Built-in Array converters | `converter: { delimiter: ',', type?: Converters.String }` |
+| **Complex transforms**  | Custom function           | `converter: (raw, fallback) => ...`                       |
+| **Functional built-in** | `getUsing()` method       | `Envapter.getUsing('VAR', Converters.Json)`               |
+| **Functional custom**   | `getWith()` method        | `Envapter.getWith('VAR', (raw) => transform(raw))`        |
 
 > [!TIP]
 > **Always use the `Converters` enum** for better type safety and IntelliSense. Start with built-in converters, use primitive constructors when you need coercion, and custom converters for complex transforms.
