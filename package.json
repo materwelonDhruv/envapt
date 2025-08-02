@@ -3,7 +3,7 @@
   "type": "module",
   "version": "2.1.1",
   "description": "The apt way to handle env",
-  "main": "./dist/index.js",
+  "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "exports": {
