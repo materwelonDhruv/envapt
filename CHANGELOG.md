@@ -1,5 +1,11 @@
 # envapt
 
+## 2.2.2
+
+### Patch Changes
+
+- 6c1caaa: Fix grammar mistake in README
+
 ## 2.2.1
 
 ### Patch Changes

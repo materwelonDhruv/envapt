@@ -4,7 +4,7 @@
 
 <p align="center">
   A JavaScript/TypeScript environment configuration library that eliminates the boilerplate of transforming parsed <code>.env</code><br/>
-  Get environment variables with correct runtime typing and fallbacks, template support, and automatic, built-in, & custom transformations, and tagged template resolver.<br/>
+  Get environment variables with correct runtime typing & fallbacks, template support, automatic, built-in, & custom transformations, and a tagged template resolver.<br/>
   <strong>No more <code>process.env.PORT || '3000'</code> everywhere!</strong>
 </p>
 <div align="center">
