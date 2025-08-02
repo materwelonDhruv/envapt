@@ -308,4 +308,38 @@ describe('Envapt', () => {
       expect(MultiLineEnv.multiLineNumber).to.be.null;
     });
   });
+
+  describe('calling Envapt on the same variable multiple times with different options', () => {
+    class MultiEnv {
+      @Envapt('TEST_VAR_MULTI_CALL', { fallback: 'default' })
+      public static readonly testVar: string;
+
+      @Envapt('TEST_VAR_MULTI_CALL', { converter: String })
+      public static readonly testVarWithConverter: string;
+
+      @Envapt('TEST_VAR_MULTI_CALL', { converter: Number })
+      public static readonly testVarWithFallbackAndConverter: number;
+    }
+
+    it('should return the correct string value for testVar', () => {
+      expect(MultiEnv.testVar).to.equal('42');
+    });
+
+    it('should return the correct string value for testVarWithConverter', () => {
+      expect(MultiEnv.testVarWithConverter).to.equal('42');
+    });
+
+    it('should return the correct number value for testVarWithFallbackAndConverter', () => {
+      expect(MultiEnv.testVarWithFallbackAndConverter).to.equal(42);
+    });
+
+    it('should return the same value for testVar and testVarWithConverter', () => {
+      expect(MultiEnv.testVar).to.equal(MultiEnv.testVarWithConverter);
+    });
+
+    it('should return the string "42" for both testVar and testVarWithConverter', () => {
+      expect(MultiEnv.testVarWithConverter).to.equal('42');
+      expect(MultiEnv.testVar).to.equal('42');
+    });
+  });
 });
