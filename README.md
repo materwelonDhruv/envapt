@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  A TypeScript environment configuration library that eliminates the boilerplate of parsing <code>.env</code> files.<br/>
+  A TypeScript environment configuration library that eliminates the boilerplate of transforming parsed <code>.env</code><br/>
   Get environment variables with correct runtime typing and fallbacks, template support, and automatic, built-in, & custom transformations.<br/>
   <strong>No more <code>process.env.PORT || '3000'</code> everywhere!</strong>
 </p>
