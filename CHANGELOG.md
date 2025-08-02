@@ -1,5 +1,11 @@
 # envapt
 
+## 2.1.1
+
+### Patch Changes
+
+- "boilerplate of parsing" → "boilerplate of transforming parsed" in README
+
 ## 2.1.0
 
 ### Minor Changes
