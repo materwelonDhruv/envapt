@@ -4,7 +4,7 @@
 
 <p align="center">
   A TypeScript environment configuration library that eliminates the boilerplate of transforming parsed <code>.env</code><br/>
-  Get environment variables with correct runtime typing and fallbacks, template support, and automatic, built-in, & custom transformations.<br/>
+  Get environment variables with correct runtime typing and fallbacks, template support, and automatic, built-in, & custom transformations, and tagged template resolver.<br/>
   <strong>No more <code>process.env.PORT || '3000'</code> everywhere!</strong>
 </p>
 <div align="center">
@@ -29,10 +29,11 @@
 - 🔗 **Template Variables** - `${VAR}` syntax with circular reference protection
 - 🎯 **Class Properties** - Functional and Decorator-based configuration for class members
 - 🏷️ **Built-in & Custom Converters** - Ready-to-use converters for common patterns + custom transformations
+- 🔖 **Tagged Template Resolver** - Tagged template literals with environment variable resolution
 - 🌍 **Environment Detection** - Built-in development/staging/production handling
-- 📂 **Multiple .env Files** - Load from multiple sources
 - 💪 **Edge Case Handling** - Robust validation and parsing for all scenarios
 - 🛡️ **Type Safety** - Full TypeScript support with proper type inference
+- 📂 **Multiple .env Files** - Load from multiple sources
 - ⚡ **Lightweight** - Minimal overhead with [`dotenv`](https://www.npmjs.com/package/dotenv) bundled
 
 ---
@@ -59,6 +60,7 @@
     - [Custom Converters](#custom-converters)
     - [Handling Missing Values](#handling-missing-values)
   - [Functional API](#functional-api)
+  - [Tagged Template Resolver](#tagged-template-resolver)
   - [Converter Type Quick Reference](#converter-type-quick-reference)
 
 ### 🌍 Environment & Templates
@@ -556,6 +558,50 @@ const result = envapter.getUsing('DATABASE_CONFIG', Converters.Json);
 
 > [!TIP]
 > **Use the `Converters` enum**. They look better. Start with built-in converters, use primitive constructors when you need coercion, and custom converters for complex transforms.
+
+### Tagged Template Resolver
+
+Envapt provides a convenient tagged template literal syntax for resolving environment variables directly in template strings:
+
+```ts
+import { Envapter } from 'envapt';
+
+// Given these environment variables:
+// API_HOST=api.example.com
+// API_PORT=8080
+// API_URL=https://${API_HOST}:${API_PORT}
+// SERVICE_NAME=UserService
+
+// Use tagged template literals for string interpolation
+const endpoint = Envapter.resolve`Connecting to ${'SERVICE_NAME'} at ${'API_URL'}`;
+// Returns: "Connecting to UserService at https://api.example.com:8080"
+
+const logMessage = Envapter.resolve`Starting ${'SERVICE_NAME'} on port ${'API_PORT'}`;
+// Returns: "Starting UserService on port 8080"
+
+// Works with instance methods too
+const envapter = new Envapter();
+const status = envapter.resolve`${'SERVICE_NAME'} is running`;
+// Returns: "UserService is running"
+```
+
+Works seamlessly with template variables in your `.env` file:
+
+```env
+# Your .env file
+API_HOST=api.example.com
+API_PORT=8080
+API_URL=https://${API_HOST}:${API_PORT}  # Template resolved first
+SERVICE_NAME=UserService
+```
+
+```ts
+const message = Envapter.resolve`Service ${'SERVICE_NAME'} endpoint: ${'API_URL'}`;
+// Returns: "Service UserService endpoint: https://api.example.com:8080"
+```
+
+> [!NOTE]
+> Tagged template literals work with any environment variables, including those that use `${VAR}` template syntax in your `.env` file. The template resolution happens first, then the tagged template interpolation.
 
 ## Environment Detection
 
