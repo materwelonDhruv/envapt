@@ -22,7 +22,11 @@ function createPropertyDecorator<TFallback>(
 ): PropertyDecorator {
   return function (target: object, prop: string | symbol): void {
     const propKey = String(prop);
-    const cacheKey = `${target.constructor.name}.${propKey}`;
+    // For static properties, target is the constructor function itself
+    // For instance properties, target is the prototype and we need target.constructor
+    // This prevents cache collisions between static and instance properties with the same name
+    const className = typeof target === 'function' ? target.name : target.constructor.name;
+    const cacheKey = `${className}.${propKey}`;
 
     // Create a property with a getter that handles environment changes
     Object.defineProperty(target, propKey, {

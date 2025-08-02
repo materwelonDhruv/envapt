@@ -1,5 +1,17 @@
 # envapt
 
+## 2.2.0
+
+### Minor Changes
+
+- a74e97d: Tagged Template resolver for a easily "one-lining" multiple parsed envs in a string literal. It also supports template variables like `${VAR}`! Check README for usage and examples.
+
+### Patch Changes
+
+- c479505: Missing export for `EnvaptError`
+- f15ddc9: Fix cache collisions on Envapt used on a static property in one class, and an instance property in another class with the property name being the same for both
+- 447aaa4: Fix incorrect "main" export in package.json
+
 ## 2.1.1
 
 ### Patch Changes

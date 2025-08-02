@@ -1,9 +1,9 @@
 {
   "name": "envapt",
   "type": "module",
-  "version": "2.1.1",
+  "version": "2.2.0",
   "description": "The apt way to handle env",
-  "main": "./dist/index.js",
+  "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "exports": {
