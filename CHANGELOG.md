@@ -1,5 +1,11 @@
 # envapt
 
+## 2.1.0
+
+### Minor Changes
+
+- Fix missing `.mjs` build
+
 ## 2.0.0
 
 ### Major Changes

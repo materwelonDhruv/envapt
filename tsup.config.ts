@@ -19,7 +19,16 @@ function createTsupConfig({
   minify = false,
   keepNames = true,
   sourcemap = true,
-  outDir = 'dist'
+  outDir = 'dist',
+  outExtension = (ctx) => {
+    if (ctx.format === 'cjs') {
+      return { js: '.cjs' };
+    }
+    if (ctx.format === 'esm') {
+      return { js: '.mjs' };
+    }
+    return { js: '.js' };
+  }
 }: Options = {}) {
   return defineConfig({
     format,
@@ -28,7 +37,6 @@ function createTsupConfig({
     shims,
     skipNodeModulesBundle,
     clean,
-
     platform,
     target,
     cjsInterop,
@@ -37,7 +45,8 @@ function createTsupConfig({
     keepNames,
     sourcemap,
     treeshake,
-    outDir
+    outDir,
+    outExtension
   });
 }
 
