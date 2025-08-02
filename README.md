@@ -81,7 +81,8 @@
 ### 🚀 Examples
 
 - [Advanced Examples](#advanced-examples)
-  - [Complex Configuration](#complex-configuration)
+  - [JavaScript](#javascript)
+  - [TypeScript](#typescript)
 
 ---
 
@@ -774,7 +775,7 @@ try {
 
 ## Advanced Examples
 
-### JavaScript (Functional API)
+### JavaScript
 
 ```js
 import { Envapter, Converters } from 'envapt';
@@ -813,7 +814,7 @@ class DatabaseService {
 }
 ```
 
-### TypeScript (Decorator API, but can use Functional API too)
+### TypeScript
 
 ```ts
 import { Envapt, Envapter, Converters } from 'envapt';

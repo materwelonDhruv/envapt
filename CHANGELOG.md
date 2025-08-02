@@ -1,5 +1,11 @@
 # envapt
 
+## 2.2.1
+
+### Patch Changes
+
+- f1c81cc: Make clear that Envapt can be used with JavaScript too
+
 ## 2.2.0
 
 ### Minor Changes
