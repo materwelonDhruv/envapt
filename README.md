@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  A TypeScript environment configuration library that eliminates the boilerplate of transforming parsed <code>.env</code><br/>
+  A JavaScript/TypeScript environment configuration library that eliminates the boilerplate of transforming parsed <code>.env</code><br/>
   Get environment variables with correct runtime typing and fallbacks, template support, and automatic, built-in, & custom transformations, and tagged template resolver.<br/>
   <strong>No more <code>process.env.PORT || '3000'</code> everywhere!</strong>
 </p>
@@ -27,12 +27,12 @@
 
 - 🔧 **Automatic Type Detection** - Runtime types inferred from fallback values
 - 🔗 **Template Variables** - `${VAR}` syntax with circular reference protection
-- 🎯 **Class Properties** - Functional and Decorator-based configuration for class members
+- 🎯 **Class Properties** - Functional and Decorator-based configuration for class members _(Decorators: TypeScript only)_
 - 🏷️ **Built-in & Custom Converters** - Ready-to-use converters for common patterns + custom transformations
 - 🔖 **Tagged Template Resolver** - Tagged template literals with environment variable resolution
 - 🌍 **Environment Detection** - Built-in development/staging/production handling
 - 💪 **Edge Case Handling** - Robust validation and parsing for all scenarios
-- 🛡️ **Type Safety** - Full TypeScript support with proper type inference
+- 🛡️ **Type Safety** - Full TypeScript support with proper type inference _(TypeScript optional)_
 - 📂 **Multiple .env Files** - Load from multiple sources
 - ⚡ **Lightweight** - Minimal overhead with [`dotenv`](https://www.npmjs.com/package/dotenv) bundled
 
@@ -81,7 +81,8 @@
 ### 🚀 Examples
 
 - [Advanced Examples](#advanced-examples)
-  - [Complex Configuration](#complex-configuration)
+  - [JavaScript](#javascript)
+  - [TypeScript](#typescript)
 
 ---
 
@@ -92,16 +93,16 @@
 - **Node.js**: `>=22.0.0`  
   _Recommended for full ESM and `nodenext` support_
 
-- **TypeScript**: `>=5.8`
-
 #### 📦 Runtime Dependency
 
 - **dotenv**: _(bundled at runtime)_
 
-#### 🛠️ TypeScript Compiler Options
+#### 🛠️ TypeScript Users Only
+
+- **TypeScript**: `>=5.8` _(Only required for decorator API)_
 
 ```jsonc
-// tsconfig.json (required settings)
+// tsconfig.json (required settings for decorators)
 {
   "experimentalDecorators": true,
   "module": "esnext", // or "nodenext"
@@ -110,6 +111,9 @@
   "lib": ["ESNext"]
 }
 ```
+
+> [!NOTE]
+> **JavaScript users** can use all features except the `@Envapt` decorator API. The [Functional API](#functional-api), [Tagged Template Resolver](#tagged-template-resolver), and all converters work perfectly in plain JavaScript.
 
 ## Quick Start
 
@@ -134,7 +138,29 @@ MAX_CONNECTIONS=100
 ALLOWED_ORIGINS=https://app.com,https://admin.com
 ```
 
-Use with decorators:
+**JavaScript Example (Functional API):**
+
+```js
+import { Envapter, Converters } from 'envapt';
+
+// Basic usage
+const port = Envapter.getNumber('APP_PORT', 3000);
+const url = Envapter.get('APP_URL', 'http://localhost:3000');
+const isProduction = Envapter.isProduction;
+
+console.log(`Server running on port ${port}`); // 8443
+console.log(`URL: ${url}`); // "http://localhost:8443"
+
+// Advanced converters
+const corsOrigins = Envapter.getUsing('ALLOWED_ORIGINS', Converters.Array, []);
+const dbConfig = Envapter.getUsing('DATABASE_CONFIG', Converters.Json, {});
+
+// Tagged template literals
+const message = Envapter.resolve`Server ${'APP_URL'} is ready!`;
+console.log(message); // "Server http://localhost:8443 is ready!"
+```
+
+**TypeScript Example (Decorator API):**
 
 ```ts
 import { Envapt, Envapter, Converters } from 'envapt';
@@ -173,30 +199,23 @@ class DatabaseService {
 
 // Usage
 console.log(AppConfig.port); // 8443 (number)
-console.log(AppConfig.url.href); // "http://localhost:8443" (templated!)
+console.log(AppConfig.url.href); // "http://localhost:8443"
 
 const dbService = new DatabaseService();
 await dbService.connect();
-```
-
-Or use functionally:
-
-```ts
-import { Envapter } from 'envapt';
-
-const port = Envapter.getNumber('APP_PORT', 3000);
-const url = Envapter.get('APP_URL', 'http://localhost:3000');
-const isProduction = Envapter.getBoolean('IS_PRODUCTION', false);
 ```
 
 ## API Reference
 
 ### Decorator API
 
+> [!IMPORTANT]
+> **TypeScript Only**: The `@Envapt` decorator API requires TypeScript with `experimentalDecorators: true`. JavaScript users should use the [Functional API](#functional-api) instead.
+
 The `@Envapt` decorator can be used on both **static** and **instance** class properties:
 
-- **Static properties**: Use for global configuration that's shared across your entire application (e.g., app port, global features, environment settings)
-- **Instance properties**: Use for service-specific configuration that may vary per service or when you want the configuration tied to a specific class instance (e.g., database connections, service endpoints, per-service settings)
+- **Static properties**: Can use for global configuration that's shared across your entire application (e.g., app port, global features, environment settings)
+- **Instance properties**: Can use for service-specific configuration that may vary per service or when you want the configuration tied to a specific class instance (e.g., database connections, service endpoints, per-service settings)
 
 **Important**: Instance properties must be declared with `declare` keyword or `!` assertion since they're populated by the decorator rather than set in a constructor.
 
@@ -473,9 +492,9 @@ class Config extends Envapter {
 
 ### Functional API
 
-For functional-style environment variable on primitive types:
+For functional-style environment variable access on primitive types:
 
-```ts
+```js
 import { Envapter, Converters } from 'envapt';
 
 // Basic type-specific getters
@@ -498,12 +517,14 @@ const processed = envapter.getUsing('DATA', Converters.Array);
 
 For functional-style environment variable access with converters:
 
-```ts
+```js
 import { Envapter, Converters } from 'envapt';
 
 // Use built-in converters directly
 const config = Envapter.getUsing('API_CONFIG', Converters.Json, { default: 'value' });
 const urls = Envapter.getUsing('SERVICE_URLS', { delimiter: '|', type: Converters.Url });
+
+// TypeScript: Use type override for better type inference
 const typedConfig = Envapter.getUsing<{ host: string; port: number; ssl: boolean }>('DATABASE_CONFIG', Converters.Json);
 // typedConfig is now typed as { host: string; port: number; ssl: boolean } instead of JsonValue | undefined
 
@@ -563,7 +584,7 @@ const result = envapter.getUsing('DATABASE_CONFIG', Converters.Json);
 
 Envapt provides a convenient tagged template literal syntax for resolving environment variables directly in template strings:
 
-```ts
+```js
 import { Envapter } from 'envapt';
 
 // Given these environment variables:
@@ -615,7 +636,7 @@ Supported values: `development`, `staging`, `production` (case-sensitive)
 
 ### Environment Management
 
-```ts
+```js
 import { Envapter, EnvaptEnvironment } from 'envapt';
 
 // Check current environment
@@ -633,7 +654,7 @@ Envapter.environment = 'staging'; // string also works
 
 ### Multiple .env Files
 
-```ts
+```js
 import { resolve } from 'node:path';
 import { Envapter } from 'envapt';
 
@@ -650,7 +671,7 @@ Envapter.envPaths = resolve(__dirname, '.env.production');
 
 Envapt allows you to customize dotenv behavior by setting configuration options:
 
-```ts
+```js
 import { Envapter } from 'envapt';
 
 // Set dotenv configuration options
@@ -696,7 +717,7 @@ Circular references are detected and preserved as-is rather than causing infinit
 
 Envapt provides detailed error codes for better debugging and error handling:
 
-```ts
+```js
 import { EnvaptError, EnvaptErrorCodes } from 'envapt';
 
 try {
@@ -754,7 +775,46 @@ try {
 
 ## Advanced Examples
 
-### Complex Configuration
+### JavaScript
+
+```js
+import { Envapter, Converters } from 'envapt';
+
+// Global configuration
+const config = {
+  port: Envapter.getNumber('PORT', 3000),
+  requestTimeout: Envapter.getUsing('REQUEST_TIMEOUT', Converters.Time, 10000), // "5s" -> 5000ms
+  featureFlags: Envapter.getWith(
+    'FEATURE_FLAGS',
+    (raw, fallback) => {
+      if (!raw) return fallback;
+      return new Set(raw.split(',').map((s) => s.trim()));
+    },
+    new Set(['basic'])
+  )
+};
+
+// Service configuration
+class DatabaseService {
+  constructor() {
+    this.databaseUrl = Envapter.get('DB_URL', 'sqlite://memory');
+    this.cacheTtl = Envapter.getUsing('CACHE_TTL', Converters.Time, 3600000); // "1h" -> 3600000ms
+    this.redisUrls = Envapter.getWith(
+      'REDIS_URLS',
+      (raw, fallback) => (raw ? raw.split(',').map((s) => new URL(s)) : fallback),
+      [new URL('redis://localhost:6379')]
+    );
+  }
+
+  async initialize() {
+    console.log(`App running on port ${config.port}`);
+    console.log(`Database: ${this.databaseUrl}`);
+    console.log(`Cache TTL: ${this.cacheTtl}ms`);
+  }
+}
+```
+
+### TypeScript
 
 ```ts
 import { Envapt, Envapter, Converters } from 'envapt';
