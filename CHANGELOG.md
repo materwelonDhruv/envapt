@@ -1,5 +1,12 @@
 # envapt
 
+## 2.2.3
+
+### Patch Changes
+
+- 73162d8: `undefined` as fallback causing type errors when provided with a BuiltIn or Array Converter
+- d56fe89: Fix incorrect example in the README for URL converter and add some comments for `@Envapt` overloads
+
 ## 2.2.2
 
 ### Patch Changes
