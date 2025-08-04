@@ -170,7 +170,8 @@ class AppConfig extends Envapter {
   @Envapt('APP_PORT', 3000)
   static readonly port: number;
 
-  @Envapt('APP_URL', 'http://localhost:3000', Converters.Url)
+  // The Classic Syntax only works for Primitive Converters. Converters.Url is a Built-in Converter.
+  @Envapt('APP_URL', { fallback: new URL('http://localhost:3000'), converter: Converters.Url })
   static readonly url: URL;
 
   @Envapt('ALLOWED_ORIGINS', {
@@ -185,7 +186,8 @@ class DatabaseService {
   @Envapt('DATABASE_URL', 'sqlite://memory')
   declare readonly databaseUrl: string;
 
-  @Envapt('MAX_CONNECTIONS', { converter: Converters.Number, fallback: 10 })
+  // Will detect that '10' is a number and set the runtime type accordingly
+  @Envapt('MAX_CONNECTIONS', 10)
   declare readonly maxConnections: number;
 
   @Envapt('REQUEST_TIMEOUT', { converter: Converters.Time, fallback: 5000 })
