@@ -83,7 +83,7 @@ export function Envapt<TReturnType>(
  */
 export function Envapt<TConverter extends BuiltInConverter>(
   key: string,
-  options: { converter: TConverter; fallback?: InferConverterReturnType<TConverter> }
+  options: { converter: TConverter; fallback?: InferConverterReturnType<TConverter> | undefined }
 ): PropertyDecorator;
 
 /**
@@ -95,7 +95,7 @@ export function Envapt<TConverter extends BuiltInConverter>(
  */
 export function Envapt<TConverter extends ArrayConverter>(
   key: string,
-  options: { converter: TConverter; fallback?: InferConverterReturnType<TConverter> }
+  options: { converter: TConverter; fallback?: InferConverterReturnType<TConverter> | undefined }
 ): PropertyDecorator;
 
 /**
