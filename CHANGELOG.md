@@ -5,6 +5,9 @@
 ### Patch Changes
 
 - 435a738: Add jsr publishing support and a test for the previous version's type-error patch
+- f17ca67: Bump deps: @types/node
+- 6d47364: Bump deps: @typescript-eslint/parser
+- fe12794: Bump deps: typescript-eslint
 
 ## 2.2.3
 
