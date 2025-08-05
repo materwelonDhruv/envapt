@@ -1,5 +1,11 @@
 # envapt
 
+## 2.2.4
+
+### Patch Changes
+
+- 435a738: Add jsr publishing support and a test for the previous version's type-error patch
+
 ## 2.2.3
 
 ### Patch Changes
