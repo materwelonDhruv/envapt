@@ -1,7 +1,7 @@
 {
   "name": "envapt",
   "type": "module",
-  "version": "2.2.3",
+  "version": "2.2.4",
   "description": "The apt way to handle env",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -45,6 +45,7 @@
     "cs": "changeset",
     "cs:publish": "changeset publish",
     "cs:status": "changeset status",
+    "bump": "pnpm cs version && pnpm tsx scripts/bump-jsr.ts",
     "release": "pnpm run build && pnpm run cs:publish",
     "prepare": "husky",
     "prepublishOnly": "pnpm run clean && pnpm run build"
@@ -75,9 +76,9 @@
     "@eslint/js": "^9.32.0",
     "@types/chai": "^5.2.2",
     "@types/mocha": "^10.0.10",
-    "@types/node": "^24.1.0",
+    "@types/node": "^24.2.0",
     "@typescript-eslint/eslint-plugin": "^8.38.0",
-    "@typescript-eslint/parser": "^8.38.0",
+    "@typescript-eslint/parser": "^8.39.0",
     "chai": "^5.2.1",
     "eslint": "^9.32.0",
     "eslint-config-prettier": "^10.1.8",
@@ -92,7 +93,7 @@
     "tsup": "^8.5.0",
     "tsx": "^4.20.3",
     "typescript": "^5.8.3",
-    "typescript-eslint": "^8.38.0"
+    "typescript-eslint": "^8.39.0"
   },
   "dependencies": {
     "dotenv": "^17.2.1"

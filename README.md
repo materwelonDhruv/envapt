@@ -10,7 +10,8 @@
 <div align="center">
   <img alt="Build" src="https://img.shields.io/github/actions/workflow/status/materwelonDhruv/envapt/publish.yaml?branch=main&label=build&style=flat&logo=github&color=3fb950"></a>
   <a href="https://codecov.io/github/materwelonDhruv/envapt"><img src="https://codecov.io/github/materwelonDhruv/envapt/branch/main/graph/badge.svg?token=IQ4GC645LO"/></a>
-  <a href="https://www.npmjs.com/package/envapt"><img alt="npm version" src="https://img.shields.io/npm/v/envapt?style=flat&color=cb3838&logo=npm"></a>
+  <a href="https://www.npmjs.com/package/envapt"><img alt="npm" src="https://img.shields.io/npm/v/envapt?style=flat&color=cb3838&logo=npm"></a>
+  <a href="https://jsr.io/badges/@materwelon/envapt"><img alt="jsr" src="https://jsr.io/badges/@materwelon/envapt"></a>
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/npm/l/envapt?style=flat&color=e97826&logo=apache"></a>
   <a href="https://www.typescriptlang.org/"><img alt="Types" src="https://img.shields.io/badge/types-TypeScript-3178c6?style=flat&logo=typescript&logoColor=white"></a>
   <a href="https://nodejs.org/api/esm.html"><img alt="ESM" src="https://img.shields.io/badge/ESM-Supported-ffca28?style=flat"></a>
