@@ -1,1 +1,1 @@
-pnpm lint && pnpm fmt && pnpm tc
+pnpm lint && pnpm tc

@@ -1,6 +1,10 @@
-name: Publish & Release
+# .github/workflows/publish.yml
+name: Publish and Release
+
 on:
-  push:
+  workflow_run:
+    workflows: ['Lint Test Typecheck Security Build']
+    types: [completed]
     branches:
       - main
 
@@ -13,30 +17,47 @@ env:
   NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
 jobs:
-  npm-publish:
+  dry-run-npm:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
       - uses: pnpm/action-setup@v4
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm publish --dry-run
 
+  dry-run-jsr:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - run: deno publish --unstable-sloppy-imports --no-check --dry-run
+
+  npm-publish:
+    needs: [dry-run-npm]
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: 22
           cache: pnpm
-          registry-url: 'https://registry.npmjs.org'
+          registry-url: https://registry.npmjs.org
           always-auth: true
-
       - run: pnpm install --frozen-lockfile
-      - run: pnpm lint
-      - run: pnpm tc
-      - run: pnpm test
       - run: pnpm run prepublishOnly
-
       - uses: changesets/action@v1
-        name: Publish and Release
         with:
           publish: pnpm run release
           commit: 'chore(release): version packages'
@@ -44,24 +65,24 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          HUSKY: 0 # skips all Husky hooks for this commit
+          HUSKY: 0
+
   jsr-publish:
+    needs: [dry-run-jsr]
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
-
     permissions:
       contents: read
       id-token: write
-
     steps:
-      - name: Clone repository
-        uses: actions/checkout@v4
-
-      - name: Set up Deno
-        uses: denoland/setup-deno@v2
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - run: pnpm install --frozen-lockfile
+      - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
           cache: true
-
-      - name: Publish to JSR
-        run: deno publish --unstable-sloppy-imports --no-check
+      - run: deno publish --unstable-sloppy-imports --no-check
