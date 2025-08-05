@@ -110,6 +110,18 @@ describe('Envapt', () => {
 
       @Envapt('NONEXISTENT_VAR_WITH_FALLBACK_BOOLEAN', { fallback: true })
       public static readonly nonexistentVarWithFallbackBoolean: boolean;
+
+      @Envapt('TEST_VAR_UNDEFINED_FALLBACK_WITH_CONVERTER', {
+        fallback: undefined,
+        converter: Converters.Time
+      })
+      public static readonly undefinedFallbackWithConverter: string;
+
+      @Envapt('TEST_VAR_UNDEFINED_FALLBACK_WITH_CONVERTER', {
+        fallback: undefined,
+        converter: { delimiter: ',', type: Converters.Time }
+      })
+      public static readonly undefinedFallbackWithArrayConverter: string;
     }
 
     it('should use String converter override despite number fallback', () => {
@@ -157,6 +169,11 @@ describe('Envapt', () => {
 
     it('should return fallback for non-existent variable with non-undefined boolean fallback', () => {
       expect(TestEnv.nonexistentVarWithFallbackBoolean).to.be.true;
+    });
+
+    it('should return undefined for variable with undefined fallback', () => {
+      expect(TestEnv.undefinedFallbackWithConverter).to.be.undefined;
+      expect(TestEnv.undefinedFallbackWithArrayConverter).to.be.undefined;
     });
   });
 
