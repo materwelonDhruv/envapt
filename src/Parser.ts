@@ -27,7 +27,7 @@ export class Parser {
    * Resolve template variables in a string while handling circular references and missing variables
    * @internal
    */
-  resolveTemplate(key: string, value: string, stack = new Set<string>()): string {
+  resolveTemplate(key: string, value: string, stack: Set<string> = new Set<string>()): string {
     stack.add(key);
 
     const out = value.replace(this.TEMPLATE_REGEX, (template) => {
