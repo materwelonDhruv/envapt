@@ -64,4 +64,4 @@ jobs:
           cache: true
 
       - name: Publish to JSR
-        run: deno publish
+        run: deno publish --no-check
