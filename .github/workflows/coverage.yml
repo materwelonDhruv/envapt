@@ -1,4 +1,3 @@
-# .github/workflows/coverage.yml
 name: Codecov
 
 on:

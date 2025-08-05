@@ -1,4 +1,3 @@
-# .github/workflows/commitlint.yml
 name: Commit lint
 
 on:
