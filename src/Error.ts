@@ -47,7 +47,5 @@ export class EnvaptError extends Error {
     super(message);
     this.name = `EnvaptError [${code}]`;
     this.code = code;
-
-    Error.captureStackTrace(this, EnvaptError);
   }
 }
