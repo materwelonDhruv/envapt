@@ -1,6 +1,7 @@
 import { resolve } from 'node:path';
 
 import { expect } from 'chai';
+import { it, describe, before, afterEach } from 'mocha';
 
 import { Envapt, Envapter, Environment } from '../src';
 
