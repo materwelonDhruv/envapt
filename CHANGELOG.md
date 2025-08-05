@@ -1,5 +1,11 @@
 # envapt
 
+## 2.2.5
+
+### Patch Changes
+
+- 7bb1923: Fixing types and removing `Error.captureStackTrace` to follow ECMAScript specifications
+
 ## 2.2.4
 
 ### Patch Changes
