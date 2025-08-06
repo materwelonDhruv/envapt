@@ -1,8 +1,10 @@
+import process from 'node:process';
+
 import { config } from 'dotenv';
 
-import { Validator } from '../Validators';
+import { Validator } from '../Validators.ts';
 
-import type { PermittedDotenvConfig } from '../Types';
+import type { PermittedDotenvConfig } from '../Types.ts';
 
 /**
  * Base cache for environment variables and computed values

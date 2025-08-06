@@ -1,6 +1,6 @@
-export { Envapt } from './Envapt';
-export { Envapter, Environment } from './Envapter';
-export { Converters } from './Converters';
-export * from './Error';
+export { Envapt } from './Envapt.ts';
+export { Envapter, Environment } from './Envapter.ts';
+export { Converters } from './Converters.ts';
+export * from './Error.ts';
 
-export type * from './Types';
+export type * from './Types.ts';

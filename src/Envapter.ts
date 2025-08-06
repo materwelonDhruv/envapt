@@ -1,7 +1,7 @@
-import { AdvancedMethods } from './core/AdvancedMethods';
+import { AdvancedMethods } from './core/AdvancedMethods.ts';
 
-export { EnvaptCache } from './core/EnvapterBase';
-export { Environment } from './core/EnvironmentMethods';
+export { EnvaptCache } from './core/EnvapterBase.ts';
+export { Environment } from './core/EnvironmentMethods.ts';
 
 /**
  * Main configuration class for environment variable management.

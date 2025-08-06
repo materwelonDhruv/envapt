@@ -3,10 +3,12 @@ import { resolve } from 'node:path';
 import { expect } from 'chai';
 import { it, describe, before } from 'mocha';
 
-import { Converters, Envapt, Envapter } from '../src';
+import { Converters, Envapt, Envapter } from '../src/index.ts';
+
+const importMeta = import.meta as { dirname: string }
 
 describe('Built-in Converters', () => {
-  before(() => (Envapter.envPaths = resolve(__dirname, '.env.builtin-test')));
+  before(() => (Envapter.envPaths = resolve(importMeta.dirname + '.env.builtin-test')));
 
   describe('basic type converters', () => {
     class BasicTypeTest {

@@ -3,10 +3,12 @@ import { resolve } from 'node:path';
 import { expect } from 'chai';
 import { it, describe, before } from 'mocha';
 
-import { Converters, Envapt, Envapter, Environment } from '../src';
+import { Converters, Envapt, Envapter, Environment } from '../src/index.ts';
+
+const importMeta = import.meta as { dirname: string }
 
 describe('Instance Properties with @Envapt', () => {
-  before(() => (Envapter.envPaths = resolve(__dirname, '.env.instance-props-test')));
+  before(() => (Envapter.envPaths = resolve(importMeta.dirname + '.env.instance-props-test')));
 
   describe('basic instance properties', () => {
     class BasicInstanceProperties extends Envapter {

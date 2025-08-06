@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 
-import { Envapt, Envapter } from '../src';
+import { Envapt, Envapter } from '../src/index.ts';
 
 // Testing what happens when env paths aren't explicitly set AND no .env file exists
 // Basically, it should work regardless.

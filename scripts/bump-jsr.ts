@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import { resolve } from 'node:path';
 
 const importMeta = import.meta as { dirname: string }
+console.log(importMeta.dirname)
 
 const packagePath = resolve(importMeta.dirname, '../package.json');
 const packageJson = JSON.parse(fs.readFileSync(packagePath, 'utf-8')) as Record<string, unknown>;

@@ -1,8 +1,8 @@
-import { BuiltInConverters } from './BuiltInConverters';
-import { EnvaptError, EnvaptErrorCodes } from './Error';
-import { Validator } from './Validators';
+import { BuiltInConverters } from './BuiltInConverters.ts';
+import { EnvaptError, EnvaptErrorCodes } from './Error.ts';
+import { Validator } from './Validators.ts';
 
-import type { EnvaptConverter, PrimitiveConstructor, ArrayConverter, BuiltInConverter } from './Types';
+import type { EnvaptConverter, PrimitiveConstructor, ArrayConverter, BuiltInConverter } from './Types.ts';
 
 /**
  * @internal

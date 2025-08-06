@@ -1,16 +1,18 @@
-import { resolve } from 'node:path';
+import { resolve } from "node:path";
 
 import { expect } from 'chai';
 import { it, describe, before, afterEach } from 'mocha';
 
-import { Envapt, Envapter, Environment } from '../src';
+import { Envapt, Envapter, Environment } from '../src/index.ts';
+
+const importMeta = import.meta as { dirname: string }
 
 describe('Envapter', () => {
-  before(() => (Envapter.envPaths = resolve(__dirname, '.env.envapter-test')));
+  before(() => (Envapter.envPaths = resolve(importMeta.dirname + '/.env.envapter-test')));
 
   describe('env path configuration and environment type', () => {
     it('should be .env.envapter-test set before tests rather than .env', () => {
-      expect(Envapter.envPaths).to.deep.equal([resolve(__dirname, '.env.envapter-test')]);
+      expect(Envapter.envPaths).to.deep.equal([resolve(importMeta.dirname + '/.env.envapter-test')]);
     });
 
     it('should be true for isDevelopment environment by default', () => {
@@ -22,17 +24,17 @@ describe('Envapter', () => {
 
     it('should allow setting custom .env path', () => {
       // Use existing test file instead of non-existent custom/.env
-      const testPath = resolve(__dirname, '.env.envapter-test');
+      const testPath = resolve(importMeta.dirname + '/.env.envapter.test')
       Envapter.envPaths = testPath;
       expect(Envapter.envPaths).to.deep.equal([testPath]);
     });
 
     // reset to test path
     it('should set to list of .env files', () => {
-      Envapter.envPaths = [resolve(__dirname, '.env.envapter-test'), resolve(__dirname, '.env.extra')];
+      Envapter.envPaths = [resolve(importMeta.dirname + '/.env.envapter-test'), resolve(importMeta.dirname + '/.env.extra')];
       expect(Envapter.envPaths).to.deep.equal([
-        resolve(__dirname, '.env.envapter-test'),
-        resolve(__dirname, '.env.extra')
+        resolve(importMeta.dirname + '/.env.envapter-test'),
+        resolve(importMeta.dirname + '/.env.extra')
       ]);
     });
 
@@ -116,7 +118,7 @@ describe('Envapter', () => {
     });
 
     describe('envPaths', () => {
-      const testPath = resolve(__dirname, '.env.envapt-test');
+      const testPath = resolve(importMeta.dirname + '.env.envapt-test');
 
       it('should get default envPaths', () => {
         // Default should be ['.env'] but we can't test it because .env doesn't exist

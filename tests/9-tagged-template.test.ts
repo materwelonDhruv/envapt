@@ -3,10 +3,12 @@ import { resolve } from 'node:path';
 import { expect } from 'chai';
 import { it, describe, before } from 'mocha';
 
-import { Envapter } from '../src';
+import { Envapter } from '../src/index.ts';
+
+const importMeta = import.meta as { dirname: string }
 
 describe('Tagged Template Resolver', () => {
-  before(() => (Envapter.envPaths = resolve(__dirname, '.env.tagged-template-test')));
+  before(() => (Envapter.envPaths = resolve(importMeta.dirname + '.env.tagged-template-test')));
 
   describe('static resolve method', () => {
     it('should resolve environment variables in template strings', () => {
