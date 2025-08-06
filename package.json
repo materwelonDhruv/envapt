@@ -20,10 +20,9 @@
   },
   "files": [
     "dist",
-    "NOTICE",
+    "NOTICE.md",
     "LICENSE",
-    "README.md",
-    "envuments.license"
+    "README.md"
   ],
   "repository": {
     "type": "git",

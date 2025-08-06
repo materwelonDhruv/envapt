@@ -8,18 +8,19 @@
   <strong>No more <code>process.env.PORT || '3000'</code> everywhere!</strong>
 </p>
 <div align="center">
-  <img alt="Build" src="https://img.shields.io/github/actions/workflow/status/materwelonDhruv/envapt/publish.yaml?branch=main&label=build&style=flat&logo=github&color=3fb950"></a>
-  <a href="https://codecov.io/github/materwelonDhruv/envapt"><img src="https://codecov.io/github/materwelonDhruv/envapt/branch/main/graph/badge.svg?token=IQ4GC645LO"/></a>
-  <a href="https://www.npmjs.com/package/envapt"><img alt="npm" src="https://img.shields.io/npm/v/envapt?style=flat&color=cb3838&logo=npm"></a>
-  <a href="https://jsr.io/badges/@materwelon/envapt"><img alt="jsr" src="https://jsr.io/badges/@materwelon/envapt"></a>
-  <a href="LICENSE"><img alt="License" src="https://img.shields.io/npm/l/envapt?style=flat&color=e97826&logo=apache"></a>
-  <a href="https://www.typescriptlang.org/"><img alt="Types" src="https://img.shields.io/badge/types-TypeScript-3178c6?style=flat&logo=typescript&logoColor=white"></a>
-  <a href="https://nodejs.org/api/esm.html"><img alt="ESM" src="https://img.shields.io/badge/ESM-Supported-ffca28?style=flat"></a>
-  <a href="https://nodejs.org/api/modules.html"><img alt="CJS" src="https://img.shields.io/badge/CJS-Supported-ff6b35?style=flat"></a>
+  <a href="https://www.npmjs.com/package/envapt"><img alt="npm" src="https://img.shields.io/npm/v/envapt?logo=npm&logoColor=cb3838&label=%20&labelColor=103544&color=cb3838"></a>
+  <a href="https://jsr.io/@materwelon/envapt"><img alt="jsr" src="https://jsr.io/badges/@materwelon/envapt"></a>
+  <img alt="CI" src="https://img.shields.io/github/actions/workflow/status/materwelonDhruv/envapt/check.yaml?branch=main&label=tests&style=flat&logo=github&color=3fb950&labelColor=103544"></a>
+  <a href="https://codecov.io/github/materwelonDhruv/envapt"><img alt="codecov" src="https://img.shields.io/codecov/c/github/materwelonDhruv/envapt/main?token=IQ4GC645LO&logo=codecov&color=f01f7a&labelColor=103544"/></a>
+  <br>
+  <a href="LICENSE"><img alt="License" src="https://img.shields.io/npm/l/envapt?style=flat&color=e97826&logo=apache&label="></a>
+  <a href="https://www.typescriptlang.org/"><img alt="Types" src="https://img.shields.io/badge/TypeScript-3178c6?style=flat&logo=typescript&logoColor=white"></a>
+  <a href="https://nodejs.org/api/esm.html"><img alt="ESM" src="https://img.shields.io/badge/ESM-ffca28?style=flat"></a>
+  <a href="https://nodejs.org/api/modules.html"><img alt="CJS" src="https://img.shields.io/badge/CJS-ff6b35?style=flat"></a>
   <a href="https://nodejs.org/"><img alt="Node" src="https://img.shields.io/badge/node-%3E=22.0.0-339933?style=flat&logo=node.js&logoColor=white"></a>
-  <a href="https://bundlephobia.com/package/envapt"><img alt="Bundle Size" src="https://img.shields.io/bundlephobia/minzip/envapt?style=flat&color=success"></a>
-  <a href="https://www.npmjs.com/package/envapt"><img alt="Downloads" src="https://img.shields.io/npm/dm/envapt?style=flat&color=blue"></a>
-  <a href="https://github.com/materwelondhruv/envapt"><img alt="GitHub Stars" src="https://img.shields.io/github/stars/materwelondhruv/envapt?style=flat&color=yellow"></a>
+  <a href="https://bundlephobia.com/package/envapt"><img alt="Bundle Size" src="https://img.shields.io/bundlephobia/minzip/envapt?style=flat&color=212121"></a>
+  <a href="https://www.npmjs.com/package/envapt"><img alt="Downloads" src="https://img.shields.io/npm/dm/envapt?style=flat&color=f7f6e8"></a>
+  <a href="https://github.com/materwelonDhruv/envapt/stargazers"><img alt="GitHub Stars" src="https://img.shields.io/github/stars/materwelondhruv/envapt?style=flat&color=e3b341"></a>
 </div>
 
 ---
@@ -94,10 +95,6 @@
 - **Node.js**: `>=22.0.0`  
   _Recommended for full ESM and `nodenext` support_
 
-#### 📦 Runtime Dependency
-
-- **dotenv**: _(bundled at runtime)_
-
 #### 🛠️ TypeScript Users Only
 
 - **TypeScript**: `>=5.8` _(Only required for decorator API)_
@@ -120,11 +117,14 @@
 
 ### Installation
 
-| Package Manager | Command              |
-| --------------- | -------------------- |
-| **npm**         | `npm install envapt` |
-| **pnpm**        | `pnpm add envapt`    |
-| **yarn**        | `yarn add envapt`    |
+| Package Manager | Command                           |
+| --------------- | --------------------------------- |
+| **pnpm**        | `pnpm add envapt`                 |
+| **yarn**        | `yarn add envapt`                 |
+| **npm**         | `npm install envapt`              |
+| **deno** (jsr)  | `deno add jsr:@materwelon/envapt` |
+| **deno** (npm)  | `deno add npm:envapt`             |
+| **bun**         | `bun add envapt`                  |
 
 ### Basic Usage
 
@@ -666,6 +666,8 @@ Envapter.envPaths = [resolve(__dirname, '.env.local'), resolve(__dirname, '.env.
 
 // Or single file
 Envapter.envPaths = resolve(__dirname, '.env.production');
+
+// Can use `import.meta.dirname` in ESM
 
 // Or just don't set a path for it to default to .env at the root of your project
 ```
