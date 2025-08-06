@@ -40,7 +40,7 @@ jobs:
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
-      - run: deno publish --unstable-sloppy-imports --no-check --dry-run
+      - run: deno publish --no-check --dry-run
 
   npm-publish:
     needs: [dry-run-npm]
@@ -87,4 +87,4 @@ jobs:
         with:
           deno-version: v2.x
           cache: true
-      - run: deno publish --unstable-sloppy-imports --no-check
+      - run: deno publish --no-check

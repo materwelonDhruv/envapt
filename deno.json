@@ -1,0 +1,18 @@
+{
+  "$schema": "https://raw.githubusercontent.com/denoland/deno/main/cli/schemas/config-file.v1.json",
+  "name": "@materwelon/envapt",
+  "version": "2.2.5",
+  "exports": "./src/index.ts",
+  "license": "Apache-2.0",
+  "publish": {
+    "include": [
+      "src/**/*.ts",
+      "README.md",
+      "LICENSE",
+      "NOTICE.md"
+    ]
+  },
+  "unstable": [
+    "sloppy-imports"
+  ]
+}
