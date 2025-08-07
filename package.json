@@ -1,7 +1,7 @@
 {
   "name": "envapt",
   "type": "module",
-  "version": "2.2.5",
+  "version": "2.2.6",
   "description": "The apt way to handle env",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -20,10 +20,9 @@
   },
   "files": [
     "dist",
-    "NOTICE",
+    "NOTICE.md",
     "LICENSE",
-    "README.md",
-    "envuments.license"
+    "README.md"
   ],
   "repository": {
     "type": "git",

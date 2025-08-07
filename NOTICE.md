@@ -1,3 +1,11 @@
+Inspired by [Envuments](https://github.com/mason-rogers/envuments)
+
+This product includes software originally developed by Mason Rogers.
+
+Fully rewritten under the MIT License by Dhruv Jain.
+
+---
+
 MIT License
 
 Copyright (c) 2020-2020 Mason Rogers <viction.dev@gmail.com>

@@ -1,6 +1,7 @@
 import { resolve } from 'node:path';
 
 import { expect } from 'chai';
+import { it, describe, before } from 'mocha';
 
 import { Converters, Envapt, Envapter, EnvaptErrorCodes } from '../src';
 import { EnvaptError } from '../src/Error';

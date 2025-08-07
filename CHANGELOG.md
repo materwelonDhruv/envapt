@@ -1,5 +1,12 @@
 # envapt
 
+## 2.2.6
+
+### Patch Changes
+
+- 01b1ba0: Fix deno missing mocha types error by explicitly importing mocha types in test files
+- 0be2af4: Better test names and some badge formatting in README. Also condensed NOTICE and the other license file into one NOTICE.md file.
+
 ## 2.2.5
 
 ### Patch Changes
