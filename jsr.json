@@ -1,0 +1,15 @@
+{
+  "$schema": "https://jsr.io/schema/config-file.v1.json",
+  "name": "@materwelon/envapt",
+  "version": "2.2.6",
+  "exports": "./src/index.ts",
+  "license": "Apache-2.0",
+  "publish": {
+    "include": [
+      "src/**/*.ts",
+      "README.md",
+      "LICENSE",
+      "NOTICE.md"
+    ]
+  }
+}
