@@ -10,7 +10,7 @@
 <div align="center">
   <a href="https://www.npmjs.com/package/envapt"><img alt="npm" src="https://img.shields.io/npm/v/envapt?logo=npm&logoColor=cb3838&label=%20&labelColor=103544&color=cb3838"></a>
   <a href="https://jsr.io/@materwelon/envapt"><img alt="jsr" src="https://jsr.io/badges/@materwelon/envapt"></a>
-  <img alt="CI" src="https://img.shields.io/github/actions/workflow/status/materwelonDhruv/envapt/check.yaml?branch=main&label=tests&style=flat&logo=github&color=3fb950&labelColor=103544"></a>
+  <img alt="CI" src="https://img.shields.io/github/actions/workflow/status/materwelonDhruv/envapt/check.yml?branch=main&label=tests&style=flat&logo=github&color=3fb950&labelColor=103544"></a>
   <a href="https://codecov.io/github/materwelonDhruv/envapt"><img alt="codecov" src="https://img.shields.io/codecov/c/github/materwelonDhruv/envapt/main?token=IQ4GC645LO&logo=codecov&color=f01f7a&labelColor=103544"/></a>
   <br>
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/npm/l/envapt?style=flat&color=e97826&logo=apache&label="></a>
