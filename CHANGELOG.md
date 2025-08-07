@@ -1,5 +1,11 @@
 # envapt
 
+## 2.2.7
+
+### Patch Changes
+
+- Fix readme badge for tests CI and make file ext consistent in workflows dir
+
 ## 2.2.6
 
 ### Patch Changes
