@@ -1,4 +1,4 @@
-import { EnvapterBase } from './EnvapterBase.ts';
+import { EnvapterBase } from './EnvapterBase';
 
 /**
  * Environment types supported by Envapter

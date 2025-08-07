@@ -1,6 +1,6 @@
-import { EnvaptCache } from './core/EnvapterBase.ts';
-import { Envapter } from './Envapter.ts';
-import { Parser } from './Parser.ts';
+import { EnvaptCache } from './core/EnvapterBase';
+import { Envapter } from './Envapter';
+import { Parser } from './Parser';
 
 import type {
   ArrayConverter,
@@ -12,7 +12,7 @@ import type {
   InferPrimitiveFallbackType,
   InferPrimitiveReturnType,
   PrimitiveConstructor
-} from './Types.ts';
+} from './Types';
 
 function createPropertyDecorator<TFallback>(
   key: string,

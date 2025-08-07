@@ -1,16 +1,16 @@
 import { resolve } from 'node:path';
 
 import { expect } from 'chai';
-import { it, describe, before } from 'mocha';
+import { it, describe, beforeAll } from 'vitest';
 
-import { Converters, Envapt, Envapter } from '../src/index.ts';
+import { Converters, Envapt, Envapter } from '../src/';
 
-import type { JsonValue } from '../src/index.ts';
+import type { JsonValue } from '../src/';
 
 const importMeta = import.meta as { dirname: string }
 
 describe('Edge Cases', () => {
-  before(() => (Envapter.envPaths = resolve(importMeta.dirname + '.env.edge-cases')));
+  beforeAll(() => (Envapter.envPaths = resolve(importMeta.dirname, '.env.edge-cases')));
 
   describe('Number conversion edge cases', () => {
     class NumberEdgeCases {

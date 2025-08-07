@@ -1,8 +1,8 @@
-import { BuiltInConverters } from '../BuiltInConverters.ts';
-import { Parser, type EnvapterService } from '../Parser.ts';
-import { EnvironmentMethods } from './EnvironmentMethods.ts';
+import { BuiltInConverters } from '../BuiltInConverters';
+import { Parser, type EnvapterService } from '../Parser';
+import { EnvironmentMethods } from './EnvironmentMethods';
 
-import type { ConditionalReturn } from '../Types.ts';
+import type { ConditionalReturn } from '../Types';
 
 /**
  * @internal

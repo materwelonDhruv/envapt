@@ -1,14 +1,14 @@
 import { resolve } from 'node:path';
 
 import { expect } from 'chai';
-import { it, describe, before } from 'mocha';
+import { it, describe, beforeAll } from 'vitest';
 
-import { Converters, Envapter } from '../src/index.ts';
+import { Converters, Envapter } from '../src/';
 
 const importMeta = import.meta as { dirname: string }
 
 describe('Advanced Converter Methods', () => {
-  before(() => (Envapter.envPaths = resolve(importMeta.dirname + '.env.builtin-test')));
+  beforeAll(() => (Envapter.envPaths = resolve(importMeta.dirname, '.env.builtin-test')));
 
   describe('getUsing method', () => {
     it('should convert using Converters enum - Number', () => {

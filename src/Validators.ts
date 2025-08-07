@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 
-import { EnvaptError, EnvaptErrorCodes } from './Error.ts';
-import { ListOfBuiltInConverters, BuiltInConverterTypeCheckers } from './ListOfBuiltInConverters.ts';
+import { EnvaptError, EnvaptErrorCodes } from './Error';
+import { ListOfBuiltInConverters, BuiltInConverterTypeCheckers } from './ListOfBuiltInConverters';
 
 import type {
   ArrayConverter,
@@ -10,7 +10,7 @@ import type {
   EnvaptConverter,
   PermittedDotenvConfig,
   ValidArrayConverterBuiltInType
-} from './Types.ts';
+} from './Types';
 
 export class Validator {
   /**

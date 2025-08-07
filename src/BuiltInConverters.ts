@@ -7,7 +7,7 @@ import type {
   JsonValue,
   MapOfConverterFunctions,
   TimeUnit
-} from './Types.ts';
+} from './Types';
 
 /**
  * Built-in converter implementations

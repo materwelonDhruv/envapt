@@ -1,14 +1,14 @@
 import { resolve } from 'node:path';
 
 import { expect } from 'chai';
-import { it, describe, before } from 'mocha';
+import { it, describe, beforeEach } from 'vitest';
 
-import { Converters, Envapt, Envapter } from '../src/index.ts';
+import { Converters, Envapt, Envapter } from '../src/';
 
 const importMeta = import.meta as { dirname: string }
 
 describe('Built-in Converters', () => {
-  before(() => (Envapter.envPaths = resolve(importMeta.dirname + '.env.builtin-test')));
+  beforeEach(() => (Envapter.envPaths = resolve(importMeta.dirname + '/.env.builtin-test')));
 
   describe('basic type converters', () => {
     class BasicTypeTest {

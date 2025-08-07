@@ -1,4 +1,4 @@
-import { PrimitiveMethods } from './PrimitiveMethods.ts';
+import { PrimitiveMethods } from './PrimitiveMethods';
 
 import type {
   AdvancedConverterReturn,
@@ -6,7 +6,7 @@ import type {
   BuiltInConverter,
   ConditionalReturn,
   ConverterFunction
-} from '../Types.ts';
+} from '../Types';
 
 /**
  * Mixin for advanced methods for environment variable conversion using built-in and custom converters

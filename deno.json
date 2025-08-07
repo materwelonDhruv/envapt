@@ -11,5 +11,8 @@
       "LICENSE",
       "NOTICE.md"
     ]
-  }
+  },
+  "unstable": [
+    "sloppy-imports"
+  ]
 }

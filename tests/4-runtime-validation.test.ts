@@ -1,18 +1,18 @@
 import { resolve } from 'node:path';
 
 import { expect } from 'chai';
-import { it, describe, before } from 'mocha';
+import { it, describe, beforeAll } from 'vitest';
 
-import { Converters, Envapt, Envapter, EnvaptErrorCodes } from '../src/index.ts';
-import { EnvaptError } from '../src/Error.ts';
-import { Validator } from '../src/Validators.ts';
+import { Converters, Envapt, Envapter, EnvaptErrorCodes } from '../src/index';
+import { EnvaptError } from '../src/Error';
+import { Validator } from '../src/Validators';
 
-import type { JsonValue } from '../src/index.ts';
+import type { JsonValue } from '../src/index';
 
 const importMeta = import.meta as { dirname: string }
 
 describe('Runtime Validation', () => {
-  before(() => (Envapter.envPaths = resolve(importMeta.dirname + '.env.extra')));
+  beforeAll(() => (Envapter.envPaths = resolve(importMeta.dirname, '.env.extra')));
 
   describe('Built-in converter validation', () => {
     it('should validate correct built-in converter types', () => {
@@ -511,7 +511,7 @@ describe('Runtime Validation', () => {
     });
 
     it('should not throw error for existing file', () => {
-      const testEnvPath = resolve(importMeta.dirname + '.env.envapt-test');
+      const testEnvPath = resolve(importMeta.dirname, '.env.envapt-test');
       expect(() => Validator.validateEnvFilesExist([testEnvPath])).to.not.throw();
     });
   });

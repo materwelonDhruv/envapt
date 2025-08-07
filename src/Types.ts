@@ -1,4 +1,4 @@
-import type { Converters, ArrayElementConverter, ConverterValue, ArrayElementConverterValue } from './Converters.ts';
+import type { Converters, ArrayElementConverter, ConverterValue, ArrayElementConverterValue } from './Converters';
 import type { DotenvConfigOptions } from 'dotenv';
 
 /**

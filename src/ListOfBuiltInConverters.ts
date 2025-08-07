@@ -1,5 +1,5 @@
-import type { ConverterValue } from './Converters.ts';
-import type { JsonValue } from './Types.ts';
+import type { ConverterValue } from './Converters';
+import type { JsonValue } from './Types';
 
 /**
  * List of built-in converters for Envapt.
