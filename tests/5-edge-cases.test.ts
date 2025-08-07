@@ -3,11 +3,11 @@ import { resolve } from 'node:path';
 import { expect } from 'chai';
 import { it, describe, beforeAll } from 'vitest';
 
-import { Converters, Envapt, Envapter } from '../src/';
+import { Converters, Envapt, Envapter } from '../src';
 
-import type { JsonValue } from '../src/';
+import type { JsonValue } from '../src';
 
-const importMeta = import.meta as { dirname: string }
+const importMeta = import.meta as { dirname: string };
 
 describe('Edge Cases', () => {
   beforeAll(() => (Envapter.envPaths = resolve(importMeta.dirname, '.env.edge-cases')));

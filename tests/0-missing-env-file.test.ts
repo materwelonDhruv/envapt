@@ -1,7 +1,7 @@
 import { expect } from 'chai';
-import { describe, it } from "vitest"
+import { describe, it } from 'vitest';
 
-import { Envapt, Envapter } from '../src/';
+import { Envapt, Envapter } from '../src';
 
 // Testing what happens when env paths aren't explicitly set AND no .env file exists
 // Basically, it should work regardless.

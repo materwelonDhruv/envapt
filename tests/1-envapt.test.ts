@@ -1,14 +1,14 @@
-import { resolve } from "node:path";
+import { resolve } from 'node:path';
 
 import { expect } from 'chai';
 import { it, describe, beforeAll } from 'vitest';
 
-import { Converters, Envapt, Envapter } from '../src/';
+import { Converters, Envapt, Envapter } from '../src';
 
-const importMeta = import.meta as { dirname: string }
+const importMeta = import.meta as { dirname: string };
 
 describe('Envapt', () => {
-  beforeAll(() => (Envapter.envPaths = resolve(importMeta.dirname + '/.env.envapt-test')));
+  beforeAll(() => (Envapter.envPaths = resolve(`${importMeta.dirname}/.env.envapt-test`)));
 
   describe('automatic type detection', () => {
     class TestTypeDetection {

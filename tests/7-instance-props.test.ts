@@ -1,16 +1,17 @@
 import { resolve } from 'node:path';
+import process from 'node:process';
 
 import { expect } from 'chai';
 import { it, describe, beforeAll } from 'vitest';
 
-import { Converters, Envapt, Envapter, Environment } from '../src/';
+import { Converters, Envapt, Envapter, Environment } from '../src';
 
-const importMeta = import.meta as { dirname: string }
+const importMeta = import.meta as { dirname: string };
 
 describe('Instance Properties with @Envapt', () => {
   beforeAll(() => {
-    process.env = {}
-    Envapter.envPaths = resolve(importMeta.dirname, '.env.instance-props-test')
+    delete process.env.BASE_URL;
+    Envapter.envPaths = resolve(importMeta.dirname, '.env.instance-props-test');
   });
 
   describe('basic instance properties', () => {

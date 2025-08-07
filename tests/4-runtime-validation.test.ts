@@ -3,13 +3,13 @@ import { resolve } from 'node:path';
 import { expect } from 'chai';
 import { it, describe, beforeAll } from 'vitest';
 
-import { Converters, Envapt, Envapter, EnvaptErrorCodes } from '../src/index';
+import { Converters, Envapt, Envapter, EnvaptErrorCodes } from '../src';
 import { EnvaptError } from '../src/Error';
 import { Validator } from '../src/Validators';
 
-import type { JsonValue } from '../src/index';
+import type { JsonValue } from '../src';
 
-const importMeta = import.meta as { dirname: string }
+const importMeta = import.meta as { dirname: string };
 
 describe('Runtime Validation', () => {
   beforeAll(() => (Envapter.envPaths = resolve(importMeta.dirname, '.env.extra')));
