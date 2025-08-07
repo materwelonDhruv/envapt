@@ -12,6 +12,13 @@
       "NOTICE.md"
     ]
   },
+  "lint": {
+    "rules": {
+        "exclude": [
+            "no-sloppy-imports"
+        ]
+    }
+  },
   "unstable": [
     "sloppy-imports"
   ]

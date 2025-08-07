@@ -5,8 +5,7 @@ import { expect } from 'chai';
 import { it, describe, beforeAll } from 'vitest';
 
 import { Converters, Envapt, Envapter, Environment } from '../src';
-
-const importMeta = import.meta as { dirname: string };
+import { importMeta } from './utils';
 
 describe('Instance Properties with @Envapt', () => {
   beforeAll(() => {

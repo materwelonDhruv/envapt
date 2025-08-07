@@ -4,8 +4,7 @@ import { expect } from 'chai';
 import { it, describe, beforeAll } from 'vitest';
 
 import { Envapter } from '../src';
-
-const importMeta = import.meta as { dirname: string };
+import { importMeta } from './utils';
 
 const taggedTemplatePath = resolve(`${importMeta.dirname}/.env.tagged-template-test`);
 

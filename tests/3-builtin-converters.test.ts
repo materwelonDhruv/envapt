@@ -4,8 +4,7 @@ import { expect } from 'chai';
 import { it, describe, beforeEach } from 'vitest';
 
 import { Converters, Envapt, Envapter } from '../src';
-
-const importMeta = import.meta as { dirname: string };
+import { importMeta } from './utils';
 
 describe('Built-in Converters', () => {
   beforeEach(() => (Envapter.envPaths = resolve(`${importMeta.dirname}/.env.builtin-test`)));

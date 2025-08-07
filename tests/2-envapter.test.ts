@@ -5,8 +5,7 @@ import { expect } from 'chai';
 import { it, describe, beforeAll, afterEach } from 'vitest';
 
 import { Envapt, Envapter, Environment } from '../src';
-
-const importMeta = import.meta as { dirname: string };
+import { importMeta } from './utils';
 
 describe('Envapter', () => {
   beforeAll(() => {

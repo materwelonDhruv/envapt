@@ -4,12 +4,11 @@ import { expect } from 'chai';
 import { it, describe, beforeAll } from 'vitest';
 
 import { Converters, Envapt, Envapter, EnvaptErrorCodes } from '../src';
+import { importMeta } from './utils';
 import { EnvaptError } from '../src/Error';
 import { Validator } from '../src/Validators';
 
 import type { JsonValue } from '../src';
-
-const importMeta = import.meta as { dirname: string };
 
 describe('Runtime Validation', () => {
   beforeAll(() => (Envapter.envPaths = resolve(importMeta.dirname, '.env.extra')));

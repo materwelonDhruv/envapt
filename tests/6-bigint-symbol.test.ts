@@ -4,8 +4,7 @@ import { expect } from 'chai';
 import { it, describe, beforeAll } from 'vitest';
 
 import { Converters, Envapt, Envapter } from '../src';
-
-const importMeta = import.meta as { dirname: string };
+import { importMeta } from './utils';
 
 describe('BigInt and Symbol Support', () => {
   beforeAll(() => (Envapter.envPaths = resolve(importMeta.dirname, '.env.bigint-symbol-test')));
