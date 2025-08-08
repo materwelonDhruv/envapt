@@ -18,7 +18,8 @@ export default {
         'revert',
         'types',
         'merge',
-        'release'
+        'release',
+        'nit'
       ]
     ]
   }

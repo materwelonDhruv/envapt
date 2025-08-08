@@ -1,8 +1,8 @@
-import console from "node:console";
+import console from 'node:console';
 import fs from 'node:fs';
 import { resolve } from 'node:path';
 
-const importMeta = import.meta as { dirname: string }
+const importMeta = import.meta as { dirname: string };
 
 const packagePath = resolve(importMeta.dirname, '../package.json');
 const packageJson = JSON.parse(fs.readFileSync(packagePath, 'utf-8')) as Record<string, unknown>;
@@ -18,7 +18,7 @@ const denoConfig = {
 };
 
 fs.writeFileSync(denoConfigPath, `${JSON.stringify(denoConfig, null, 2)}\n`, 'utf-8');
-// eslint-disable-next-line no-console
+
 console.log(
   `JSR publish version updated from ${denoJson.version as string} to ${packageJson.version as string} in deno.json`
 );
