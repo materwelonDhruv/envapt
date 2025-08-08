@@ -1,15 +1,13 @@
 import { resolve } from 'node:path';
-import process from 'node:process';
 
 import { expect } from 'chai';
-import { it, describe, beforeAll, afterEach } from 'vitest';
+import { afterEach, beforeAll, describe, it } from 'vitest';
 
 import { Envapt, Envapter, Environment } from '../src';
 import { importMeta } from './utils';
 
 describe('Envapter', () => {
   beforeAll(() => {
-    delete process.env.NODE_ENV;
     Envapter.envPaths = resolve(`${importMeta.dirname}/.env.envapter-test`);
   });
 
