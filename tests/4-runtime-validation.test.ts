@@ -1,16 +1,17 @@
 import { resolve } from 'node:path';
 
 import { expect } from 'chai';
-import { it, describe, before } from 'mocha';
+import { it, describe, beforeAll } from 'vitest';
 
 import { Converters, Envapt, Envapter, EnvaptErrorCodes } from '../src';
+import { importMeta } from './utils';
 import { EnvaptError } from '../src/Error';
 import { Validator } from '../src/Validators';
 
 import type { JsonValue } from '../src';
 
 describe('Runtime Validation', () => {
-  before(() => (Envapter.envPaths = resolve(__dirname, '.env.extra')));
+  beforeAll(() => (Envapter.envPaths = resolve(importMeta.dirname, '.env.extra')));
 
   describe('Built-in converter validation', () => {
     it('should validate correct built-in converter types', () => {
@@ -509,7 +510,7 @@ describe('Runtime Validation', () => {
     });
 
     it('should not throw error for existing file', () => {
-      const testEnvPath = resolve(__dirname, '.env.envapt-test');
+      const testEnvPath = resolve(importMeta.dirname, '.env.envapt-test');
       expect(() => Validator.validateEnvFilesExist([testEnvPath])).to.not.throw();
     });
   });

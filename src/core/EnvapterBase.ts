@@ -1,3 +1,5 @@
+import process from 'node:process';
+
 import { config } from 'dotenv';
 
 import { Validator } from '../Validators';
