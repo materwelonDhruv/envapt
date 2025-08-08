@@ -1,5 +1,11 @@
 # envapt
 
+## 2.2.8
+
+### Patch Changes
+
+- e9e359e: Port tests to vitest
+
 ## 2.2.7
 
 ### Patch Changes
