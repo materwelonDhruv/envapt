@@ -1,15 +1,13 @@
 import { resolve } from 'node:path';
-import process from 'node:process';
 
 import { expect } from 'chai';
-import { it, describe, beforeAll } from 'vitest';
+import { beforeAll, describe, it } from 'vitest';
 
 import { Converters, Envapt, Envapter, Environment } from '../src';
 import { importMeta } from './utils';
 
 describe('Instance Properties with @Envapt', () => {
   beforeAll(() => {
-    delete process.env.BASE_URL;
     Envapter.envPaths = resolve(importMeta.dirname, '.env.instance-props-test');
   });
 
@@ -125,8 +123,8 @@ describe('Instance Properties with @Envapt', () => {
       @Envapt('INSTANCE_SERVICE_CONFIG', { fallback: 'default-service:8080@dev' })
       declare readonly serviceConfig: string;
 
-      @Envapt('BASE_URL', { fallback: 'http://localhost' })
-      declare readonly baseUrl: string;
+      @Envapt('BASE_API_URL', { fallback: 'http://localhost' })
+      declare readonly baseApiUrl: string;
 
       @Envapt('API_VERSION', { fallback: 'v1' })
       declare readonly apiVersion: string;
@@ -143,7 +141,7 @@ describe('Instance Properties with @Envapt', () => {
     });
 
     it('should work with individual template components', () => {
-      expect(instance.baseUrl).to.equal('https://api.example.com');
+      expect(instance.baseApiUrl).to.equal('https://api.example.com');
       expect(instance.apiVersion).to.equal('v2');
     });
   });
