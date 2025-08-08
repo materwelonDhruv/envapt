@@ -49,6 +49,6 @@
 
     "rootDir": "."
   },
-  "include": ["src/**/*", "tests/**/*", "tsup.config.ts", "scripts/**/*"],
+  "include": ["src/**/*", "tests/**/*", "tsup.config.ts", "scripts/**/*", "vitest.config.ts"],
   "exclude": ["node_modules", "dist"]
 }
