@@ -7,4 +7,4 @@ updates:
   open-pull-requests-limit: 5
   versioning-strategy: "increase"
   commit-message:
-    prefix: "deps"
+    prefix: "chore(deps)"
