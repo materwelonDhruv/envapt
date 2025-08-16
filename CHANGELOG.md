@@ -1,5 +1,16 @@
 # envapt
 
+## 2.2.9
+
+### Patch Changes
+
+- b263044: Ensure expected behavior to reject non ISO strings for Date converters
+- 953bcb2: Improve test coverage by ignoring unreachable defensive programming blocks
+- 8f0722d: Linting for TSDoc
+- bc945d4: Safety when attempting to coerce to Symbol
+- a21de8c: Augment ImportMeta instead of exporting a method
+- dbd99b9: Cleanup files and configure vitest extension
+
 ## 2.2.8
 
 ### Patch Changes
