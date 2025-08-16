@@ -4,10 +4,9 @@ import { expect } from 'chai';
 import { it, describe, beforeEach } from 'vitest';
 
 import { Converters, Envapt, Envapter } from '../src';
-import { importMeta } from './utils';
 
 describe('Built-in Converters', () => {
-  beforeEach(() => (Envapter.envPaths = resolve(`${importMeta.dirname}/.env.builtin-test`)));
+  beforeEach(() => (Envapter.envPaths = resolve(`${import.meta.dirname}/.env.builtin-test`)));
 
   describe('basic type converters', () => {
     class BasicTypeTest {
@@ -332,25 +331,25 @@ describe('Built-in Converters', () => {
 
     it('should parse ISO date strings', () => {
       expect(DateTest.isoDate).to.be.instanceOf(Date);
-      expect(DateTest.isoDate.getFullYear()).to.equal(2023);
-      expect(DateTest.isoDate.getMonth()).to.equal(11); // December (0-indexed)
-      expect(DateTest.isoDate.getDate()).to.equal(25);
+      expect(DateTest.isoDate.getUTCFullYear()).to.equal(2023);
+      expect(DateTest.isoDate.getUTCMonth()).to.equal(11); // December (0-indexed)
+      expect(DateTest.isoDate.getUTCDate()).to.equal(25);
     });
 
     it('should parse timestamp dates', () => {
       expect(DateTest.timestampDate).to.be.instanceOf(Date);
       // 1640995200000 is 2022-01-01T00:00:00.000Z
-      expect(DateTest.timestampDate.getFullYear()).to.equal(2022);
+      expect(DateTest.timestampDate.getUTCFullYear()).to.equal(2022);
     });
 
     it('should use fallback for invalid dates', () => {
       expect(DateTest.invalidDate).to.be.instanceOf(Date);
-      expect(DateTest.invalidDate.getFullYear()).to.equal(2023);
+      expect(DateTest.invalidDate.getUTCFullYear()).to.equal(2023);
     });
 
     it('should use fallback for nonexistent dates', () => {
       expect(DateTest.nonexistentDate).to.be.instanceOf(Date);
-      expect(DateTest.nonexistentDate.getFullYear()).to.equal(2024);
+      expect(DateTest.nonexistentDate.getUTCFullYear()).to.equal(2024);
     });
   });
 
@@ -674,9 +673,9 @@ describe('Built-in Converters', () => {
 
     it('should resolve templates in Date converter', () => {
       expect(TemplateTest.dateTemplate).to.be.instanceOf(Date);
-      expect(TemplateTest.dateTemplate.getFullYear()).to.equal(2023);
-      expect(TemplateTest.dateTemplate.getMonth()).to.equal(11); // December (0-indexed)
-      expect(TemplateTest.dateTemplate.getDate()).to.equal(25);
+      expect(TemplateTest.dateTemplate.getUTCFullYear()).to.equal(2023);
+      expect(TemplateTest.dateTemplate.getUTCMonth()).to.equal(11); // December (0-indexed)
+      expect(TemplateTest.dateTemplate.getUTCDate()).to.equal(25);
     });
 
     it('should resolve templates in Time converter', () => {

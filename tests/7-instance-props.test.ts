@@ -4,11 +4,10 @@ import { expect } from 'chai';
 import { beforeAll, describe, it } from 'vitest';
 
 import { Converters, Envapt, Envapter, Environment } from '../src';
-import { importMeta } from './utils';
 
 describe('Instance Properties with @Envapt', () => {
   beforeAll(() => {
-    Envapter.envPaths = resolve(importMeta.dirname, '.env.instance-props-test');
+    Envapter.envPaths = resolve(import.meta.dirname, '.env.instance-props-test');
   });
 
   describe('basic instance properties', () => {

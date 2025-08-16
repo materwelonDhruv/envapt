@@ -4,10 +4,9 @@ import { expect } from 'chai';
 import { it, describe, beforeAll } from 'vitest';
 
 import { Converters, Envapter } from '../src';
-import { importMeta } from './utils';
 
 describe('Advanced Converter Methods', () => {
-  beforeAll(() => (Envapter.envPaths = resolve(importMeta.dirname, '.env.builtin-test')));
+  beforeAll(() => (Envapter.envPaths = resolve(import.meta.dirname, '.env.builtin-test')));
 
   describe('getUsing method', () => {
     it('should convert using Converters enum - Number', () => {

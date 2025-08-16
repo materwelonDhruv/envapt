@@ -2,14 +2,12 @@ import console from 'node:console';
 import fs from 'node:fs';
 import { resolve } from 'node:path';
 
-const importMeta = import.meta as { dirname: string };
-
-const packagePath = resolve(importMeta.dirname, '../package.json');
+const packagePath = resolve(import.meta.dirname, '../package.json');
 const packageJson = JSON.parse(fs.readFileSync(packagePath, 'utf-8')) as Record<string, unknown>;
 
 if (!packageJson.version) throw new Error('Version not found in package.json');
 
-const denoConfigPath = resolve(importMeta.dirname, '../deno.json');
+const denoConfigPath = resolve(import.meta.dirname, '../deno.json');
 const denoJson = JSON.parse(fs.readFileSync(denoConfigPath, 'utf-8')) as Record<string, unknown>;
 
 const denoConfig = {
