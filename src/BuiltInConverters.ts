@@ -105,7 +105,11 @@ export class BuiltInConverters {
       return Number.isNaN(parsed.getTime()) ? fallback : parsed;
     }
 
-    // Try parsing as regular date string
+    // Only accept ISO 8601 date strings (strict format)
+    // eslint-disable-next-line security/detect-unsafe-regex
+    const isoRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z$/u;
+    if (!isoRegex.test(raw)) return fallback;
+
     const parsed = new Date(raw);
     return Number.isNaN(parsed.getTime()) ? fallback : parsed;
   }

@@ -327,6 +327,15 @@ describe('Built-in Converters', () => {
 
       @Envapt('NONEXISTENT_DATE', { converter: Converters.Date, fallback: new Date('2024-01-01') })
       static readonly nonexistentDate: Date;
+
+      @Envapt('TEST_DATE_NON_ISO_1', { converter: Converters.Date, fallback: new Date('2024-01-01') })
+      static readonly nonIsoDate1: Date;
+
+      @Envapt('TEST_DATE_NON_ISO_2', { converter: Converters.Date, fallback: new Date('2024-01-01') })
+      static readonly nonIsoDate2: Date;
+
+      @Envapt('TEST_DATE_NO_Z', { converter: Converters.Date, fallback: new Date('2024-01-01') })
+      static readonly noZDate: Date;
     }
 
     it('should parse ISO date strings', () => {
@@ -350,6 +359,20 @@ describe('Built-in Converters', () => {
     it('should use fallback for nonexistent dates', () => {
       expect(DateTest.nonexistentDate).to.be.instanceOf(Date);
       expect(DateTest.nonexistentDate.getUTCFullYear()).to.equal(2024);
+    });
+
+    it('should reject non-ISO date strings and use fallback', () => {
+      // Test reject "December 25, 2023" format
+      expect(DateTest.nonIsoDate1).to.be.instanceOf(Date);
+      expect(DateTest.nonIsoDate1.getUTCFullYear()).to.equal(2024);
+
+      // Test reject "12/25/2023" format
+      expect(DateTest.nonIsoDate2).to.be.instanceOf(Date);
+      expect(DateTest.nonIsoDate2.getUTCFullYear()).to.equal(2024);
+
+      // Test reject ISO format without Z
+      expect(DateTest.noZDate).to.be.instanceOf(Date);
+      expect(DateTest.noZDate.getUTCFullYear()).to.equal(2024);
     });
   });
 
