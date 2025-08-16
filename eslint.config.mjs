@@ -2,6 +2,7 @@ import prettierConfig from 'eslint-config-prettier';
 import eslintImport from 'eslint-plugin-import';
 import eslintPrettier from 'eslint-plugin-prettier';
 import eslintSecurity from 'eslint-plugin-security';
+import eslintTsdoc from 'eslint-plugin-tsdoc';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
@@ -39,6 +40,26 @@ export default tseslint.config(
     },
     rules: {
       ...eslintSecurity.configs.recommended.rules
+    }
+  },
+
+  // TSDoc plugin
+  {
+    plugins: {
+      tsdoc: eslintTsdoc
+    },
+    rules: {
+      'tsdoc/syntax': 'warn',
+      '@typescript-eslint/explicit-function-return-type': [
+        'warn',
+        {
+          allowExpressions: true,
+          allowTypedFunctionExpressions: true,
+          allowHigherOrderFunctions: true,
+          allowDirectConstAssertionInArrowFunctions: true
+        }
+      ],
+      '@typescript-eslint/explicit-module-boundary-types': 'warn'
     }
   },
 
