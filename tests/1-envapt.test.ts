@@ -4,10 +4,9 @@ import { expect } from 'chai';
 import { it, describe, beforeAll } from 'vitest';
 
 import { Converters, Envapt, Envapter } from '../src';
-import { importMeta } from './utils';
 
 describe('Envapt', () => {
-  beforeAll(() => (Envapter.envPaths = resolve(`${importMeta.dirname}/.env.envapt-test`)));
+  beforeAll(() => (Envapter.envPaths = resolve(`${import.meta.dirname}/.env.envapt-test`)));
 
   describe('automatic type detection', () => {
     class TestTypeDetection {

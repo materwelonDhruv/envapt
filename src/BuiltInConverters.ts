@@ -43,16 +43,21 @@ export class BuiltInConverters {
   }
 
   static symbol(raw: string, fallback?: symbol): symbol | undefined {
-    return raw ? Symbol(raw) : fallback;
+    try {
+      return raw ? Symbol.for(raw) : fallback;
+      /* v8 ignore next 3 */
+    } catch {
+      return fallback;
+    }
   }
 
   static integer(raw: string, fallback?: number): number | undefined {
-    const parsed = parseInt(raw, 10);
+    const parsed = Number.parseInt(raw, 10);
     return Number.isNaN(parsed) ? fallback : parsed;
   }
 
   static float(raw: string, fallback?: number): number | undefined {
-    const parsed = parseFloat(raw);
+    const parsed = Number.parseFloat(raw);
     return Number.isNaN(parsed) ? fallback : parsed;
   }
 
@@ -101,7 +106,11 @@ export class BuiltInConverters {
       return Number.isNaN(parsed.getTime()) ? fallback : parsed;
     }
 
-    // Try parsing as regular date string
+    // Only accept ISO 8601 date strings (strict format)
+    // eslint-disable-next-line security/detect-unsafe-regex
+    const isoRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z$/u;
+    if (!isoRegex.test(raw)) return fallback;
+
     const parsed = new Date(raw);
     return Number.isNaN(parsed.getTime()) ? fallback : parsed;
   }

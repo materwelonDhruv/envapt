@@ -192,7 +192,7 @@ export class Validator {
       if (converter === Number) return Number(fallback) as CoercedType;
       if (converter === Boolean) return Boolean(fallback) as CoercedType;
       if (converter === BigInt) return BigInt(fallback as string | number | bigint) as CoercedType;
-      if (converter === Symbol) return Symbol(fallback as string | number) as CoercedType;
+      if (converter === Symbol) return Symbol.for(String(fallback)) as CoercedType;
     } catch (error) {
       throw new EnvaptError(
         EnvaptErrorCodes.PrimitiveCoercionFailed,
@@ -201,6 +201,7 @@ export class Validator {
     }
 
     // This should never happen but TypeScript needs it
+    /* v8 ignore next */
     throw new EnvaptError(EnvaptErrorCodes.PrimitiveCoercionFailed, `Unknown primitive converter: ${converter.name}`);
   }
 

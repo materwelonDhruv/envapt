@@ -14,13 +14,13 @@
     "eamodio.gitlens",
     "github.copilot",
     "github.copilot-chat",
+    "github.vscode-github-actions",
+    "github.vscode-pull-request-github",
 
     // Project-specific tools
-    // Use the official MongoDB Compass app for MongoDB management
-    "prisma.prisma",
     "mikestead.dotenv",
 
-    // Development productivity
-    "gruntfuggly.todo-tree"
+    // Testing
+    "vitest.explorer"
   ]
 }

@@ -4,9 +4,8 @@ import { expect } from 'chai';
 import { it, describe, beforeAll } from 'vitest';
 
 import { Envapter } from '../src';
-import { importMeta } from './utils';
 
-const taggedTemplatePath = resolve(`${importMeta.dirname}/.env.tagged-template-test`);
+const taggedTemplatePath = resolve(`${import.meta.dirname}/.env.tagged-template-test`);
 
 describe('Tagged Template Resolver', () => {
   beforeAll(() => (Envapter.envPaths = taggedTemplatePath));

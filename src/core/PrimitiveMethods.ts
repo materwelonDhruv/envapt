@@ -44,7 +44,7 @@ export class PrimitiveMethods extends EnvironmentMethods implements EnvapterServ
 
   /**
    * Get a string environment variable with optional fallback.
-   * Supports template variable resolution using ${VAR} syntax.
+   * Supports template variable resolution using $\{VAR\} syntax.
    */
   static get<Default extends string | undefined = undefined>(
     key: string,

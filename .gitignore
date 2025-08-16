@@ -25,9 +25,6 @@ build/
 **/.idea
 **/.vs
 
-# But keep .vscode settings for team consistency
-# **/.vscode (removed - we want to share VS Code settings)
-
 # Turborepo
 .turbo/
 

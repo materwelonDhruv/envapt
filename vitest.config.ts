@@ -6,7 +6,7 @@ export default defineConfig({
     coverage: {
       enabled: true,
       provider: 'v8',
-      reporter: [['lcovonly', { file: 'lcov.info' }], ['html']],
+      reporter: [['lcovonly', { file: 'lcov.info' }], ['html'], ['text']],
       include: ['src']
     }
   }

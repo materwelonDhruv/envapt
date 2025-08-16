@@ -76,5 +76,6 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "files.trimTrailingWhitespace": false
   },
-  "github-actions.use-enterprise": false
+  "github-actions.use-enterprise": false,
+  "vitest.shellType": "terminal"
 }

@@ -10,8 +10,6 @@ import type { EnvaptConverter, PrimitiveConstructor, ArrayConverter, BuiltInConv
 export interface EnvapterService {
   getRaw(key: string): string | undefined;
   get(key: string, def?: string): string | undefined;
-  getNumber(key: string, def?: number): number | undefined;
-  getBoolean(key: string, def?: boolean): boolean | undefined;
 }
 
 /**
@@ -97,6 +95,7 @@ export class Parser {
     if (primitiveConstructor === BigInt) return 'bigint';
     if (primitiveConstructor === Symbol) return 'symbol';
 
+    /* v8 ignore next */
     throw new EnvaptError(EnvaptErrorCodes.InvalidConverterType, `Unknown primitive constructor`);
   }
 

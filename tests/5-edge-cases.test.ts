@@ -4,12 +4,11 @@ import { expect } from 'chai';
 import { it, describe, beforeAll } from 'vitest';
 
 import { Converters, Envapt, Envapter } from '../src';
-import { importMeta } from './utils';
 
 import type { JsonValue } from '../src';
 
 describe('Edge Cases', () => {
-  beforeAll(() => (Envapter.envPaths = resolve(importMeta.dirname, '.env.edge-cases')));
+  beforeAll(() => (Envapter.envPaths = resolve(import.meta.dirname, '.env.edge-cases')));
 
   describe('Number conversion edge cases', () => {
     class NumberEdgeCases {
