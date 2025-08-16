@@ -45,6 +45,7 @@ export class BuiltInConverters {
   static symbol(raw: string, fallback?: symbol): symbol | undefined {
     try {
       return raw ? Symbol.for(raw) : fallback;
+      /* v8 ignore next 3 */
     } catch {
       return fallback;
     }

@@ -95,6 +95,7 @@ export class Parser {
     if (primitiveConstructor === BigInt) return 'bigint';
     if (primitiveConstructor === Symbol) return 'symbol';
 
+    /* v8 ignore next */
     throw new EnvaptError(EnvaptErrorCodes.InvalidConverterType, `Unknown primitive constructor`);
   }
 

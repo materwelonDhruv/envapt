@@ -201,6 +201,7 @@ export class Validator {
     }
 
     // This should never happen but TypeScript needs it
+    /* v8 ignore next */
     throw new EnvaptError(EnvaptErrorCodes.PrimitiveCoercionFailed, `Unknown primitive converter: ${converter.name}`);
   }
 
