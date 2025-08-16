@@ -10,8 +10,6 @@ import type { EnvaptConverter, PrimitiveConstructor, ArrayConverter, BuiltInConv
 export interface EnvapterService {
   getRaw(key: string): string | undefined;
   get(key: string, def?: string): string | undefined;
-  getNumber(key: string, def?: number): number | undefined;
-  getBoolean(key: string, def?: boolean): boolean | undefined;
 }
 
 /**

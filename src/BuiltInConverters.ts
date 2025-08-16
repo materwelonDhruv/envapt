@@ -43,16 +43,20 @@ export class BuiltInConverters {
   }
 
   static symbol(raw: string, fallback?: symbol): symbol | undefined {
-    return raw ? Symbol(raw) : fallback;
+    try {
+      return raw ? Symbol.for(raw) : fallback;
+    } catch {
+      return fallback;
+    }
   }
 
   static integer(raw: string, fallback?: number): number | undefined {
-    const parsed = parseInt(raw, 10);
+    const parsed = Number.parseInt(raw, 10);
     return Number.isNaN(parsed) ? fallback : parsed;
   }
 
   static float(raw: string, fallback?: number): number | undefined {
-    const parsed = parseFloat(raw);
+    const parsed = Number.parseFloat(raw);
     return Number.isNaN(parsed) ? fallback : parsed;
   }
 
