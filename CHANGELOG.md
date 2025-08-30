@@ -1,5 +1,11 @@
 # envapt
 
+## 2.2.10
+
+### Patch Changes
+
+- remove codecov config
+
 ## 2.2.9
 
 ### Patch Changes
