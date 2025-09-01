@@ -177,17 +177,12 @@ export class Parser {
     key: string,
     fallback: TFallback | undefined,
     resolvedConverter: EnvaptConverter<TFallback>,
-    hasFallback: boolean
+    _hasFallback: boolean // hasFallback is not needed because customConverter is called even if the raw value is undefined
   ): TFallback | null | undefined {
     Validator.customConvertor(resolvedConverter);
 
     // Custom converter function
     const raw = this.envService.get(key, undefined);
-
-    // If no fallback provided and no value found, return null
-    // If explicit undefined fallback and no value found, return undefined
-
-    if (raw === undefined) return hasFallback ? fallback : null;
 
     return resolvedConverter(raw, fallback);
   }
