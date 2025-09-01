@@ -90,12 +90,7 @@
 
 ## Requirements
 
-#### 🟢 Runtime
-
-- **Node.js**: `>=22.0.0`  
-  _Recommended for full ESM and `nodenext` support_
-
-#### 🛠️ TypeScript Users Only
+### 🛠️ TypeScript Users Only
 
 - **TypeScript**: `>=5.8` _(Only required for decorator API)_
 
@@ -322,8 +317,7 @@ Envapt provides many built-in converters for common patterns:
 > // ❌ Discouraged: String literals (still supported for compatibility)
 > @Envapt('PORT', { converter: 'number', fallback: 3000 })
 > ```
-
-> [!IMPORTANT]
+>
 > Built-in converters enforce **strict type validation** between the converter and fallback types. The converter's expected return type must match the fallback's type.
 
 ```ts
@@ -662,12 +656,12 @@ import { resolve } from 'node:path';
 import { Envapter } from 'envapt';
 
 // Load from multiple files
-Envapter.envPaths = [resolve(__dirname, '.env.local'), resolve(__dirname, '.env.production')];
+Envapter.envPaths = [resolve(import.meta.dirname, '.env.local'), resolve(import.meta.dirname, '.env.production')];
 
 // Or single file
-Envapter.envPaths = resolve(__dirname, '.env.production');
+Envapter.envPaths = resolve(import.meta.dirname, '.env.production');
 
-// Can use `import.meta.dirname` in ESM
+// Can use `__dirname` in CJS
 
 // Or just don't set a path for it to default to .env at the root of your project
 ```
@@ -868,13 +862,13 @@ class AppConfig extends Envapter {
 
 <p align="center">
   <a href="https://github.com/materwelondhruv/envapt">⭐️ Star it on GitHub</a> •
-  <a href="https://github.com/materwelondhruv/envapt/issues">🐛 Report a bug</a> • 
+  <a href="https://github.com/materwelondhruv/envapt/issues">🐛 Report a bug</a> •
   <a href="https://github.com/materwelondhruv/envapt/issues/new?labels=enhancement">💡 Request a feature</a>
 </p>
 
 <p align="center">
   <sub>
-    Built by <a href="https://github.com/materwelondhruv">@materwelonDhruv</a> • Licensed under 
+    Built by <a href="https://github.com/materwelondhruv">@materwelonDhruv</a> • Licensed under
     <a href="LICENSE">Apache 2.0</a>
   </sub>
 </p>
