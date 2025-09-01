@@ -77,5 +77,15 @@
     "files.trimTrailingWhitespace": false
   },
   "github-actions.use-enterprise": false,
-  "vitest.shellType": "terminal"
+
+  // Vitest configuration
+  "vitest.shellType": "terminal",
+
+  // Markdownlint configuration
+  "markdownlint.config": {
+    "MD033": false,
+    "MD013": false,
+    "MD041": false,
+    "MD024": false
+  }
 }

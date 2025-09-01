@@ -4,6 +4,7 @@
     "esbenp.prettier-vscode",
     "dbaeumer.vscode-eslint",
     "editorconfig.editorconfig",
+    "DavidAnson.vscode-markdownlint",
 
     // TypeScript/JavaScript development
     "christian-kohler.path-intellisense",

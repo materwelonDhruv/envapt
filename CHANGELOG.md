@@ -1,5 +1,15 @@
 # envapt
 
+## 3.0.0
+
+### Major Changes
+
+- 482eb6d: BREAKING: Custom Converters will now execute even if an env variable is not present in the source env file(s). This allows for using `@Envapt` to validate the existence of variables by throwing errors inside the user-defined Custom Converters
+
+### Patch Changes
+
+- 5d1df34: update README to include new things and better navigation
+
 ## 2.2.10
 
 ### Patch Changes

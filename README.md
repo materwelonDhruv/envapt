@@ -40,7 +40,7 @@
 
 ---
 
-## 📚 Table of Contents
+## Table of Contents
 
 ### ⚙️ Essentials
 
@@ -86,16 +86,17 @@
   - [JavaScript](#javascript)
   - [TypeScript](#typescript)
 
+<div align="right">
+
+**[⬆️ Back to Top](#table-of-contents)**
+
+</div>
+
 ---
 
 ## Requirements
 
-#### 🟢 Runtime
-
-- **Node.js**: `>=22.0.0`  
-  _Recommended for full ESM and `nodenext` support_
-
-#### 🛠️ TypeScript Users Only
+### TypeScript Users Only
 
 - **TypeScript**: `>=5.8` _(Only required for decorator API)_
 
@@ -112,6 +113,12 @@
 
 > [!NOTE]
 > **JavaScript users** can use all features except the `@Envapt` decorator API. The [Functional API](#functional-api), [Tagged Template Resolver](#tagged-template-resolver), and all converters work perfectly in plain JavaScript.
+
+<div align="right">
+
+**[⬆️ Back to Top](#table-of-contents)**
+
+</div>
 
 ## Quick Start
 
@@ -208,6 +215,12 @@ const dbService = new DatabaseService();
 await dbService.connect();
 ```
 
+<div align="right">
+
+**[⬆️ Back to Top](#table-of-contents)**
+
+</div>
+
 ## API Reference
 
 ### Decorator API
@@ -227,6 +240,20 @@ The `@Envapt` decorator can be used on both **static** and **instance** class pr
 ```ts
 @Envapt('ENV_VAR', { fallback?: T, converter?: EnvConverter<T> })
 ```
+
+> [!TIP]
+> **Generic Typing for Better IntelliSense**
+>
+> You can specify explicit types using generics for better type safety and IntelliSense:
+>
+> ```ts
+> // Explicit typing provides better IntelliSense for complex types
+> @Envapt<DatabaseConfig>('DB_CONFIG', {
+>   fallback: { host: 'localhost', port: 5432, ssl: false },
+>   converter: Converters.Json
+> })
+> static readonly dbConfig: DatabaseConfig;
+> ```
 
 #### Classic Syntax
 
@@ -322,8 +349,7 @@ Envapt provides many built-in converters for common patterns:
 > // ❌ Discouraged: String literals (still supported for compatibility)
 > @Envapt('PORT', { converter: 'number', fallback: 3000 })
 > ```
-
-> [!IMPORTANT]
+>
 > Built-in converters enforce **strict type validation** between the converter and fallback types. The converter's expected return type must match the fallback's type.
 
 ```ts
@@ -468,6 +494,25 @@ class Config extends Envapter {
   declare readonly channels: Map<string, string>;
 }
 ```
+
+> [!TIP]
+> **Custom Validation with Error Throwing**
+>
+> Custom converters can throw errors for validation. The custom converter is called even when a variable is not found in the env file(s):
+>
+> ```ts
+> @Envapt<string>('API_KEY', {
+>   converter(raw, _fallback) {
+>     if (typeof raw !== 'string' || raw === '') {
+>       throw new Error('API_KEY is required and cannot be empty');
+>     }
+>     return raw;
+>   }
+> })
+> static readonly apiKey: string;
+> ```
+>
+> _No `fallback` needed here because the converter throws an error if a value is not what we want it to be_
 
 #### Handling Missing Values
 
@@ -627,6 +672,12 @@ const message = Envapter.resolve`Service ${'SERVICE_NAME'} endpoint: ${'API_URL'
 > [!NOTE]
 > Tagged template literals work with any environment variables, including those that use `${VAR}` template syntax in your `.env` file. The template resolution happens first, then the tagged template interpolation.
 
+<div align="right">
+
+**[⬆️ Back to Top](#table-of-contents)**
+
+</div>
+
 ## Environment Detection
 
 Envapt automatically detects your environment from these variables (in order):
@@ -653,6 +704,12 @@ Envapter.environment = EnvaptEnvironment.Production;
 Envapter.environment = 'staging'; // string also works
 ```
 
+<div align="right">
+
+**[⬆️ Back to Top](#table-of-contents)**
+
+</div>
+
 ## Configuration
 
 ### Multiple .env Files
@@ -662,14 +719,14 @@ import { resolve } from 'node:path';
 import { Envapter } from 'envapt';
 
 // Load from multiple files
-Envapter.envPaths = [resolve(__dirname, '.env.local'), resolve(__dirname, '.env.production')];
+Envapter.envPaths = [resolve(import.meta.dirname, '.env.local'), resolve(import.meta.dirname, '.env.production')];
 
 // Or single file
-Envapter.envPaths = resolve(__dirname, '.env.production');
-
-// Can use `import.meta.dirname` in ESM
+Envapter.envPaths = resolve(import.meta.dirname, '.env.production');
 
 // Or just don't set a path for it to default to .env at the root of your project
+
+// Also, in CommonJS, use `__dirname` instead of `import.meta.dirname`:
 ```
 
 ### Dotenv Configuration
@@ -695,6 +752,12 @@ console.log(Envapter.dotenvConfig);
 > [!NOTE]
 > The `path` and `processEnv` options are managed internally by Envapter and cannot be set via `dotenvConfig`.
 
+<div align="right">
+
+**[⬆️ Back to Top](#table-of-contents)**
+
+</div>
+
 ## Template Variables
 
 Envapt supports variable interpolation with `${VARIABLE}` syntax:
@@ -717,6 +780,12 @@ CIRCULAR_B=${CIRCULAR_A}
 ```
 
 Circular references are detected and preserved as-is rather than causing infinite loops.
+
+<div align="right">
+
+**[⬆️ Back to Top](#table-of-contents)**
+
+</div>
 
 ## Error Handling
 
@@ -777,6 +846,12 @@ try {
 | `MissingDelimiter` (301)         | Delimiter is missing in array converter config |
 | `InvalidUserDefinedConfig` (302) | Invalid user-defined configuration provided    |
 | `EnvFilesNotFound` (303)         | Specified environment file doesn't exist       |
+
+<div align="right">
+
+**[⬆️ Back to Top](#table-of-contents)**
+
+</div>
 
 ## Advanced Examples
 
@@ -862,19 +937,25 @@ class AppConfig extends Envapter {
 }
 ```
 
+<div align="right">
+
+**[⬆️ Back to Top](#table-of-contents)**
+
+</div>
+
 ---
 
 <hr/>
 
 <p align="center">
   <a href="https://github.com/materwelondhruv/envapt">⭐️ Star it on GitHub</a> •
-  <a href="https://github.com/materwelondhruv/envapt/issues">🐛 Report a bug</a> • 
+  <a href="https://github.com/materwelondhruv/envapt/issues">🐛 Report a bug</a> •
   <a href="https://github.com/materwelondhruv/envapt/issues/new?labels=enhancement">💡 Request a feature</a>
 </p>
 
 <p align="center">
   <sub>
-    Built by <a href="https://github.com/materwelondhruv">@materwelonDhruv</a> • Licensed under 
+    Built by <a href="https://github.com/materwelondhruv">@materwelonDhruv</a> • Licensed under
     <a href="LICENSE">Apache 2.0</a>
   </sub>
 </p>
