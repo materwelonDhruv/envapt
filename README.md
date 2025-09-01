@@ -694,9 +694,9 @@ Envapter.envPaths = [resolve(import.meta.dirname, '.env.local'), resolve(import.
 // Or single file
 Envapter.envPaths = resolve(import.meta.dirname, '.env.production');
 
-// Can use `__dirname` in CJS
-
 // Or just don't set a path for it to default to .env at the root of your project
+
+// Also, in CommonJS, use `__dirname` instead of `import.meta.dirname`:
 ```
 
 ### Dotenv Configuration
