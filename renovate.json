@@ -1,0 +1,33 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "enabledManagers": ["npm"],
+  "schedule": ["* 0-3 * * 1"],
+  "dependencyDashboard": true,
+  "prConcurrentLimit": 2,
+  "prHourlyLimit": 2,
+  "rangeStrategy": "bump",
+
+  "commitMessagePrefix": "chore(deps):",
+  "commitMessageAction": "bump",
+  "commitMessageTopic": "deps",
+  "commitMessageExtra": "",
+  "commitMessageSuffix": "",
+  "commitBody": "",
+  "prTitle": "chore(deps): bump deps",
+
+  "packageRules": [
+    {
+      "matchManagers": ["npm"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "all non major npm updates",
+      "prTitle": "chore(deps): bump deps",
+      "commitMessagePrefix": "chore(deps):",
+      "commitMessageAction": "bump",
+      "commitMessageTopic": "deps",
+      "commitMessageExtra": "",
+      "commitMessageSuffix": "",
+      "commitBody": ""
+    }
+  ]
+}
