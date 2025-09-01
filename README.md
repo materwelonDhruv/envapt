@@ -223,6 +223,20 @@ The `@Envapt` decorator can be used on both **static** and **instance** class pr
 @Envapt('ENV_VAR', { fallback?: T, converter?: EnvConverter<T> })
 ```
 
+> [!TIP]
+> **Generic Typing for Better IntelliSense**
+>
+> You can specify explicit types using generics for better type safety and IntelliSense:
+>
+> ```ts
+> // Explicit typing provides better IntelliSense for complex types
+> @Envapt<DatabaseConfig>('DB_CONFIG', {
+>   fallback: { host: 'localhost', port: 5432, ssl: false },
+>   converter: Converters.Json
+> })
+> static readonly dbConfig: DatabaseConfig;
+> ```
+
 #### Classic Syntax
 
 ```ts
@@ -462,6 +476,25 @@ class Config extends Envapter {
   declare readonly channels: Map<string, string>;
 }
 ```
+
+> [!TIP]
+> **Custom Validation with Error Throwing**
+>
+> Custom converters can throw errors for validation. The custom converter is called even when a variable is not found in the env file(s):
+>
+> ```ts
+> @Envapt<string>('API_KEY', {
+>   converter(raw, _fallback) {
+>     if (typeof raw !== 'string' || raw === '') {
+>       throw new Error('API_KEY is required and cannot be empty');
+>     }
+>     return raw;
+>   }
+> })
+> static readonly apiKey: string;
+> ```
+>
+> _No `fallback` needed here because the converter throws an error if a value is not what we want it to be_
 
 #### Handling Missing Values
 
