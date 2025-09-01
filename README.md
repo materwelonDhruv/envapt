@@ -40,7 +40,7 @@
 
 ---
 
-## 📚 Table of Contents
+## Table of Contents
 
 ### ⚙️ Essentials
 
@@ -86,11 +86,17 @@
   - [JavaScript](#javascript)
   - [TypeScript](#typescript)
 
+<div align="right">
+
+**[⬆️ Back to Top](#table-of-contents)**
+
+</div>
+
 ---
 
 ## Requirements
 
-### 🛠️ TypeScript Users Only
+### TypeScript Users Only
 
 - **TypeScript**: `>=5.8` _(Only required for decorator API)_
 
@@ -107,6 +113,12 @@
 
 > [!NOTE]
 > **JavaScript users** can use all features except the `@Envapt` decorator API. The [Functional API](#functional-api), [Tagged Template Resolver](#tagged-template-resolver), and all converters work perfectly in plain JavaScript.
+
+<div align="right">
+
+**[⬆️ Back to Top](#table-of-contents)**
+
+</div>
 
 ## Quick Start
 
@@ -202,6 +214,12 @@ console.log(AppConfig.url.href); // "http://localhost:8443"
 const dbService = new DatabaseService();
 await dbService.connect();
 ```
+
+<div align="right">
+
+**[⬆️ Back to Top](#table-of-contents)**
+
+</div>
 
 ## API Reference
 
@@ -654,6 +672,12 @@ const message = Envapter.resolve`Service ${'SERVICE_NAME'} endpoint: ${'API_URL'
 > [!NOTE]
 > Tagged template literals work with any environment variables, including those that use `${VAR}` template syntax in your `.env` file. The template resolution happens first, then the tagged template interpolation.
 
+<div align="right">
+
+**[⬆️ Back to Top](#table-of-contents)**
+
+</div>
+
 ## Environment Detection
 
 Envapt automatically detects your environment from these variables (in order):
@@ -679,6 +703,12 @@ console.log(Envapter.isStaging); // false
 Envapter.environment = EnvaptEnvironment.Production;
 Envapter.environment = 'staging'; // string also works
 ```
+
+<div align="right">
+
+**[⬆️ Back to Top](#table-of-contents)**
+
+</div>
 
 ## Configuration
 
@@ -722,6 +752,12 @@ console.log(Envapter.dotenvConfig);
 > [!NOTE]
 > The `path` and `processEnv` options are managed internally by Envapter and cannot be set via `dotenvConfig`.
 
+<div align="right">
+
+**[⬆️ Back to Top](#table-of-contents)**
+
+</div>
+
 ## Template Variables
 
 Envapt supports variable interpolation with `${VARIABLE}` syntax:
@@ -744,6 +780,12 @@ CIRCULAR_B=${CIRCULAR_A}
 ```
 
 Circular references are detected and preserved as-is rather than causing infinite loops.
+
+<div align="right">
+
+**[⬆️ Back to Top](#table-of-contents)**
+
+</div>
 
 ## Error Handling
 
@@ -804,6 +846,12 @@ try {
 | `MissingDelimiter` (301)         | Delimiter is missing in array converter config |
 | `InvalidUserDefinedConfig` (302) | Invalid user-defined configuration provided    |
 | `EnvFilesNotFound` (303)         | Specified environment file doesn't exist       |
+
+<div align="right">
+
+**[⬆️ Back to Top](#table-of-contents)**
+
+</div>
 
 ## Advanced Examples
 
@@ -888,6 +936,12 @@ class AppConfig extends Envapter {
   }
 }
 ```
+
+<div align="right">
+
+**[⬆️ Back to Top](#table-of-contents)**
+
+</div>
 
 ---
 
