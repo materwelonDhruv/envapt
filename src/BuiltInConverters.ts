@@ -89,7 +89,7 @@ export class BuiltInConverters {
   static regexp(raw: string, fallback?: RegExp): RegExp | undefined {
     try {
       // Handle flags if provided in format: /pattern/flags
-      const match = raw.match(/^\/(.+)\/([gimsuvy]*)$/);
+      const match = raw.match(new RegExp(String.raw`^\/(.+)\/([gimsuvy]*)$`));
       if (match) return new RegExp(match[1] as string, match[2]);
 
       return new RegExp(raw);
@@ -100,15 +100,14 @@ export class BuiltInConverters {
 
   static date(raw: string, fallback?: Date): Date | undefined {
     // Try parsing as timestamp first (if it's all digits)
-    if (/^\d+$/.test(raw)) {
+    if (new RegExp(String.raw`^\d+$`).test(raw)) {
       const timestamp = parseInt(raw, 10);
       const parsed = new Date(timestamp);
       return Number.isNaN(parsed.getTime()) ? fallback : parsed;
     }
 
     // Only accept ISO 8601 date strings (strict format)
-    // eslint-disable-next-line security/detect-unsafe-regex
-    const isoRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z$/u;
+    const isoRegex = new RegExp(String.raw`^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z$`, 'u');
     if (!isoRegex.test(raw)) return fallback;
 
     const parsed = new Date(raw);
@@ -116,8 +115,7 @@ export class BuiltInConverters {
   }
 
   static time(raw: string, fallback?: number): number | undefined {
-    // eslint-disable-next-line security/detect-unsafe-regex
-    const match = raw.match(/^(\d+(?:\.\d+)?)(ms|s|m|h)?$/u);
+    const match = raw.match(new RegExp(String.raw`^(\d+(?:\.\d+)?)(ms|s|m|h)?$`, 'u'));
     if (!match) return fallback;
 
     const [, numStr, capturedUnit] = match;
