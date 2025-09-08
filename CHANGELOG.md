@@ -1,5 +1,11 @@
 # envapt
 
+## 3.0.1
+
+### Patch Changes
+
+- bump deps and refactor regexes to use String.raw and RegExp obj in BuiltInConverters to avoid disabling eslint rules
+
 ## 3.0.0
 
 ### Major Changes
