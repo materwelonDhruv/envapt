@@ -1,5 +1,11 @@
 # envapt
 
+## 4.0.0
+
+### Major Changes
+
+- **BREAKING:** Simplify exports and type definitions for ESM and CJS. Replaced the nested exports map with flat fields import, require, and default. Types are now only at ./dist/index.d.ts. Removed the build step that renamed index.d.cts to index.d.mts.
+
 ## 3.0.2
 
 ### Patch Changes
@@ -16,7 +22,7 @@
 
 ### Major Changes
 
-- 482eb6d: BREAKING: Custom Converters will now execute even if an env variable is not present in the source env file(s). This allows for using `@Envapt` to validate the existence of variables by throwing errors inside the user-defined Custom Converters
+- 482eb6d: **BREAKING:** Custom Converters will now execute even if an env variable is not present in the source env file(s). This allows for using `@Envapt` to validate the existence of variables by throwing errors inside the user-defined Custom Converters
 
 ### Patch Changes
 
@@ -121,7 +127,7 @@
 ### Major Changes
 
 - 7e3a440: Strict Runtime Validation
-  - **BREAKING**: Runtime type validation between converter return types and fallback values exists now... and it's strict!
+  - **BREAKING:** Runtime type validation between converter return types and fallback values exists now... and it's strict!
     - But only for built-in and array converters. You are free to do what you want with custom converters.
   - EnvaptError codes actually make sense now instead of the random numbers they were before
   - Added primitive type coercion validation and better error handling
@@ -129,11 +135,11 @@
   Since this didn't exist before, it will break existing code that was previously passing incorrect types.
 
 - 7e3a440: Major Type Inference Improvements
-  - **BREAKING**: Improved type inference for `@Envapt` decorator with better type safety
+  - **BREAKING:** Improved type inference for `@Envapt` decorator with better type safety
     - Fallbacks and Converters are also validated against each other
       - Fallback always decides the type and converter has to match it, except when using a Primitive constructor.
   - Fixed incorrect type inference in **many** cases
-  - **BREAKING**: `@Envapt` won't allow you to use its Classic API for any custom converters anymore. Please use the decorator's Modern API, or the Functional API instead.
+  - **BREAKING:** `@Envapt` won't allow you to use its Classic API for any custom converters anymore. Please use the decorator's Modern API, or the Functional API instead.
     - I updated the overloads for `@Envapt` which fixed most of the type inference issues and also the point above.
 
   Improved type checking may break existing code that was previously passing incorrect types. Typecheck your files after you update pls.

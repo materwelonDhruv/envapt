@@ -1,21 +1,17 @@
 {
   "name": "envapt",
   "type": "module",
-  "version": "3.0.2",
+  "version": "4.0.0",
   "description": "The apt way to handle env",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "require": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/index.cjs"
-      },
-      "import": {
-        "types": "./dist/index.d.mts",
-        "default": "./dist/index.mjs"
-      }
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.mjs"
     }
   },
   "files": [
@@ -31,7 +27,7 @@
   "homepage": "https://github.com/materwelonDhruv/envapt/blob/main/README.md",
   "scripts": {
     "clean": "rm -rf dist",
-    "build": "tsup && mv dist/index.d.cts dist/index.d.mts",
+    "build": "tsup",
     "dev": "tsc --watch",
     "lint": "eslint '{src,tests,scripts}/**/*.{ts,tsx}' --cache",
     "lint:fix": "eslint '{src,tests,scripts}/**/*.{ts,tsx}' --fix --cache",
