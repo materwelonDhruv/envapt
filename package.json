@@ -92,7 +92,7 @@
     "bun": ">=1.2.0",
     "deno": ">=2.4.0"
   },
-  "packageManager": "pnpm@10.17.1",
+  "packageManager": "pnpm@10.18.3",
   "publishConfig": {
     "access": "public",
     "provenance": true
