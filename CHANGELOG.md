@@ -1,5 +1,11 @@
 # envapt
 
+## 4.0.1
+
+### Patch Changes
+
+- bump deps
+
 ## 4.0.0
 
 ### Major Changes

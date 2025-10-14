@@ -2,7 +2,7 @@ name: publish-n-release
 
 on:
   workflow_run:
-    workflows: ['tests']
+    workflows: ["tests"]
     types: [completed]
     branches:
       - main
@@ -11,9 +11,6 @@ permissions:
   contents: write
   id-token: write
   pull-requests: write
-
-env:
-  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
 jobs:
   dry-run-npm:
@@ -62,11 +59,10 @@ jobs:
       - uses: changesets/action@v1
         with:
           publish: pnpm run release
-          commit: 'chore(release): version packages'
-          title: 'chore(release): version packages'
+          commit: "chore(release): version packages"
+          title: "chore(release): version packages"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           HUSKY: 0
 
   jsr-publish:
