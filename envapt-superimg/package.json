@@ -1,0 +1,42 @@
+{
+  "name": "@funeste38/envapt-superimg",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Super-image secrets loader for envapt (single PNG -> JSON secrets)",
+  "main": "dist-cjs/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist-cjs/index.cjs",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json && tsc -p tsconfig.cjs.json",
+    "prepare": "npm run build",
+    "test": "node --input-type=module src/__test__/verify-oc8.cjs",
+    "coverage": "nyc --reporter=text node src/__test__/oc8-roundtrip.cjs"
+  },
+  "keywords": [
+    "env",
+    "envapt",
+    "secrets",
+    "superimg",
+    "nezlephant"
+  ],
+  "author": "funeste38",
+  "license": "MIT",
+  "peerDependencies": {
+    "envapt": ">=1.0.0"
+  },
+  "dependencies": {
+    "envapt": "file:../envapt"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0",
+    "pngjs": "^6.0.0",
+    "nyc": "^15.1.0"
+  }
+}

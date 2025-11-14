@@ -1,71 +1,10 @@
-# dependencies
+.vs/
 node_modules/
-
-# debug
-npm-debug.*
-
-# local env files
 .env
-
-# typescript
-*.tsbuildinfo
-
-# misc
-debugging/
-**/.DS_Store
-
-# Certs
-certs/
-
-# Ignore build output directories
-dist/
-build/
-
-# Ignore IDE specific files
-**/.idea
-**/.vs
-
-# Turborepo
-.turbo/
-
-# Package manager caches
-.pnpm-store/
-.yarn/
-.npm/
-
-# Ignore log files
-*.log
-logs/
-Logs/
-
-# ESLint cache
-.eslintcache
-
-# Ignore coverage reports
-.nyc_output/
-coverage/
-
-# Ignore temporary files
-*.tmp
-*.swp
-
-# Ignore OS generated files
-Thumbs.db
+npm-debug.log
 .DS_Store
-
-# Ignore Docker files
-# **/Dockerfile*
-# **/docker-compose*
-
-# Ignore secrets
-**/secrets.dev.yaml
-**/values.dev.yaml
-
-# Ignore miscellaneous project files
-**/.project
-**/.classpath
-**/.settings
-**/.toolstarget
-**/*.*proj.user
-**/*.dbmdl
-**/*.jfm
+coverage/
+dist/
+.idea/
+.vscode/
+package-lock.json
