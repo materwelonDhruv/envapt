@@ -38,6 +38,11 @@ export interface NezOptions {
    * Decoder function used to extract the secret from the file.
    */
   decoder?: NezSecretDecoder;
+
+  /**
+   * Optional resolver hook for `nez:id:<id>` tokens. Should return an absolute or relative file path or null.
+   */
+  resolveId?: (id: string) => string | null;
 }
 
 /**
@@ -142,6 +147,27 @@ function makeNezConverter(opts?: NezOptions) {
 
     const relPath = raw.slice(marker.length).trim();
 
+    // support id: prefix using resolveId
+    if (relPath.startsWith('id:')) {
+      const id = relPath.slice('id:'.length);
+      if (opts?.resolveId) {
+        const resolved = opts.resolveId(id);
+        if (!resolved) {
+          if (fallback !== undefined) return fallback;
+          return raw;
+        }
+        try {
+          return resolveAndDecode(resolved, opts);
+        } catch {
+          if (fallback !== undefined) return fallback;
+          return raw;
+        }
+      }
+      // no resolver provided, fallback
+      if (fallback !== undefined) return fallback;
+      return raw;
+    }
+
     try {
       const decoded = resolveAndDecode(relPath, opts);
       return decoded;
@@ -169,6 +195,23 @@ export function getNezSecret(
       if (candidate !== undefined && candidate !== null && candidate !== '') {
         if (isNezPointer(candidate, options?.marker ?? 'nez:')) {
           const rel = (candidate as string).slice((options?.marker ?? 'nez:').length).trim();
+
+          // support id: tokens in array mode
+          if (rel.startsWith('id:')) {
+            const id = rel.slice('id:'.length);
+            if (options?.resolveId) {
+              const resolved = options.resolveId(id);
+              if (!resolved) continue;
+              try {
+                return resolveAndDecode(resolved, options);
+              } catch {
+                continue;
+              }
+            }
+            // no resolver -> skip
+            continue;
+          }
+
           try {
             return resolveAndDecode(rel, options);
           } catch {
