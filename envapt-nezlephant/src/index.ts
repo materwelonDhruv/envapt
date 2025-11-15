@@ -7,10 +7,13 @@ export interface NezSecretDecoder {
   (filePath: string, buffer: Buffer): string;
 }
 
+export type IdResolver = (id: string) => string | null;
+
 export interface NezOptions {
   marker?: string;
   baseDir?: string;
   decoder?: NezSecretDecoder;
+  resolveId?: IdResolver;
 }
 
 const defaultDecoder: NezSecretDecoder = (_filePath, buffer) => {
@@ -38,8 +41,21 @@ function makeNezConverter(opts?: NezOptions) {
 
     if (!raw.startsWith(marker)) return raw;
 
-    const relPath = raw.slice(marker.length).trim();
-    const decoded = resolveAndDecode(relPath, opts);
+    const ref = raw.slice(marker.length).trim();
+
+    // support id: prefix using resolveId
+    if (ref.startsWith('id:')) {
+      const id = ref.slice('id:'.length);
+      if (opts?.resolveId) {
+        const resolved = opts.resolveId(id);
+        if (!resolved) throw new Error(`Unknown Nez id: ${id}`);
+        return resolveAndDecode(resolved, opts);
+      }
+      throw new Error(`Nez id reference but no resolveId provided: ${id}`);
+    }
+
+    // mode simple : ref = chemin
+    const decoded = resolveAndDecode(ref, opts);
     return decoded;
   };
 }
