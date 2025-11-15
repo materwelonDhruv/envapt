@@ -1,0 +1,28 @@
+{
+  "name": "@funeste38/envapt-systems",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "node --loader ts-node/esm envapt-systems/src/example.ts"
+  },
+  "description": "System decoder registry for envapt-style system prefixes (nez:, json:, b64:, file:)",
+  "keywords": [
+    "envapt",
+    "env",
+    "systems",
+    "decoder",
+    "nez"
+  ],
+  "author": "funeste38",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}

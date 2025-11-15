@@ -60,11 +60,7 @@ function makeNezConverter(opts?: NezOptions) {
   };
 }
 
-export function getNezSecret(
-  key: string | string[],
-  fallback?: string,
-  options?: NezOptions
-): string {
+export function getNezSecret(key: string | string[], fallback?: string, options?: NezOptions): string {
   const converter = makeNezConverter(options);
   return Envapter.getWith(key as any, converter as any, fallback as any) as string;
 }

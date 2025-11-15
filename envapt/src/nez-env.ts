@@ -182,11 +182,7 @@ function makeNezConverter(opts?: NezOptions) {
 /**
  * Main helper: retrieves a secret (string) via Envapt + Nezlephant.
  */
-export function getNezSecret(
-  key: string | string[],
-  fallback?: string,
-  options?: NezOptions
-): string {
+export function getNezSecret(key: string | string[], fallback?: string, options?: NezOptions): string {
   const converter = makeNezConverter(options);
 
   if (Array.isArray(key)) {

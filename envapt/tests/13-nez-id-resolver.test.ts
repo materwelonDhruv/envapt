@@ -13,7 +13,9 @@ describe('nez:id resolver option', () => {
     // ensure clean env
     delete process.env.TEST_NEZ_ID;
     EnvaptCache.clear();
-    try { if (fs.existsSync(tmpFile)) fs.unlinkSync(tmpFile);} catch {}
+    try {
+      if (fs.existsSync(tmpFile)) fs.unlinkSync(tmpFile);
+    } catch {}
   });
 
   it('should use resolveId to map id to file path', () => {
