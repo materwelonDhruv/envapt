@@ -1,8 +1,8 @@
-import { BuiltInConverters } from './BuiltInConverters';
-import { EnvaptError, EnvaptErrorCodes } from './Error';
-import { Validator } from './Validators';
+import { BuiltInConverters } from './BuiltInConverters.js';
+import { EnvaptError, EnvaptErrorCodes } from './Error.js';
+import { Validator } from './Validators.js';
 
-import type { EnvaptConverter, PrimitiveConstructor, ArrayConverter, BuiltInConverter } from './Types';
+import type { EnvaptConverter, PrimitiveConstructor, ArrayConverter, BuiltInConverter, ConverterFunction } from './Types.js';
 
 /**
  * @internal
@@ -62,7 +62,7 @@ export class Parser {
 
     // Handle different converter types
     if (Validator.isArrayConverter(resolvedConverter)) {
-      return this.processArrayConverter(key, processedFallback, resolvedConverter, hasFallback);
+      return this.processArrayConverter(key, processedFallback, resolvedConverter as ArrayConverter, hasFallback);
     }
 
     if (Validator.isPrimitiveConstructor(resolvedConverter)) {
@@ -184,7 +184,8 @@ export class Parser {
     // Custom converter function
     const raw = this.envService.get(key, undefined);
 
-    return resolvedConverter(raw, fallback);
+    const fn = resolvedConverter as ConverterFunction<TFallback>;
+    return fn(raw, fallback);
   }
 
   private resolveConverter<TFallback>(

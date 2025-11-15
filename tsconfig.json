@@ -17,9 +17,9 @@
     // Modules
     "moduleDetection": "force",
     "allowArbitraryExtensions": false,
-    "allowImportingTsExtensions": false,
-    "module": "esnext",
-    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "module": "NodeNext",
+    "moduleResolution": "nodenext",
     "resolveJsonModule": true,
     "resolvePackageJsonExports": true,
     "resolvePackageJsonImports": true,
@@ -37,18 +37,18 @@
 
     // Interop Constraints
     "allowSyntheticDefaultImports": true,
-    "esModuleInterop": false,
+    "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": true,
 
     // Language and Environment
     "experimentalDecorators": true,
     "lib": ["ESNext", "esnext.disposable", "Decorators", "Decorators.Legacy"],
-    "target": "ESNext",
+    "target": "ES2020",
     "useDefineForClassFields": true,
 
     "rootDir": "."
   },
   "include": ["src/**/*", "tests/**/*", "tsup.config.ts", "scripts/**/*", "vitest.config.ts"],
-  "exclude": ["node_modules", "dist"]
+  "exclude": ["node_modules", "**/AppData/**", "**/Local/Temp/**", "**/Temp/**"]
 }
