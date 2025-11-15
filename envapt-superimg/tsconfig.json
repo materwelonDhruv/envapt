@@ -1,20 +1,9 @@
 {
+  "extends": "../tsconfig.json",
   "compilerOptions": {
-    "target": "ES2020",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "baseUrl": "./",
-    "paths": {
-      "envapt": ["../envapt/src/index.ts"]
-    },
-    "declaration": true,
-    "declarationMap": true,
-    "outDir": "dist",
     "rootDir": "src",
-    "strict": true,
-    "esModuleInterop": true,
-    "resolveJsonModule": true,
-    "skipLibCheck": true
+    "outDir": "lib"
   },
-  "include": ["src"]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "**/AppData/**", "**/Local/Temp/**", "**/Temp/**"]
 }

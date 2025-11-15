@@ -1,6 +1,6 @@
-import { EnvaptCache } from './core/EnvapterBase';
-import { Envapter } from './Envapter';
-import { Parser } from './Parser';
+import { EnvaptCache } from './core/EnvapterBase.js';
+import { Envapter } from './Envapter.js';
+import { Parser } from './Parser.js';
 
 import type {
   ArrayConverter,
@@ -12,7 +12,9 @@ import type {
   InferPrimitiveFallbackType,
   InferPrimitiveReturnType,
   PrimitiveConstructor
-} from './Types';
+} from './Types.js';
+
+import type { EnvapterService } from './Parser.js';
 
 function createPropertyDecorator<TFallback>(
   key: string,
@@ -37,7 +39,7 @@ function createPropertyDecorator<TFallback>(
 
         // Re-evaluate if we don't have a cached value
         if (value === undefined) {
-          const parser = new Parser(new Envapter());
+          const parser = new Parser(new Envapter() as unknown as EnvapterService);
           value = parser.convertValue(key, fallback, converter, hasFallback);
           EnvaptCache.set(cacheKey, value);
         }

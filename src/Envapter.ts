@@ -1,7 +1,7 @@
-import { AdvancedMethods } from './core/AdvancedMethods';
+import { AdvancedMethods } from './core/AdvancedMethods.js';
 
-export { EnvaptCache } from './core/EnvapterBase';
-export { Environment } from './core/EnvironmentMethods';
+export { EnvaptCache } from './core/EnvapterBase.js';
+export { Environment } from './core/EnvironmentMethods.js';
 
 /**
  * Main configuration class for environment variable management.

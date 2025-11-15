@@ -1,10 +1,9 @@
-import process from 'node:process';
-
+import * as process from 'node:process';
 import { config } from 'dotenv';
 
-import { Validator } from '../Validators';
+import { Validator } from '../Validators.js';
 
-import type { PermittedDotenvConfig } from '../Types';
+import type { PermittedDotenvConfig } from '../Types.js';
 
 /**
  * Base cache for environment variables and computed values
@@ -63,15 +62,20 @@ export abstract class EnvapterBase {
 
   protected static get config(): Map<string, unknown> {
     if (EnvaptCache.size === 0) {
-      // create isolated environment object to avoid mutating process.env
-      const isolatedEnv: Record<string, string> = { ...(process.env as Record<string, string>) };
+      // create isolated environment object starting from process.env so test modifications are respected
+      const isolatedEnv: Record<string, string> = { ...(process.env as unknown as Record<string, string>) };
 
       try {
+        // prepare dotenv config ensuring .env files override process.env by default
+        const effectiveConfig = { path: this._envPaths, processEnv: isolatedEnv, ...this._userDefinedDotenvConfig } as Record<string, unknown>;
+        if (!('override' in effectiveConfig)) (effectiveConfig as any).override = true;
+
         // load _envPath file from custom path into isolated environment object
-        config({ path: this._envPaths, processEnv: isolatedEnv, ...this._userDefinedDotenvConfig });
+        config(effectiveConfig as any);
         /* v8 ignore next */
       } catch {}
-      // populate the Map with global environment variables
+
+      // populate the Map with environment variables loaded into isolatedEnv
       for (const [key, value] of Object.entries(isolatedEnv)) EnvaptCache.set(key, value);
     }
 

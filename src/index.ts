@@ -1,6 +1,6 @@
-export { Envapt } from './Envapt';
-export { Envapter, Environment } from './Envapter';
-export { Converters } from './Converters';
-export * from './Error';
+export { Envapt } from './Envapt.js';
+export { Envapter, Environment } from './Envapter.js';
+export { Converters } from './Converters.js';
+export * from './Error.js';
 
-export type * from './Types';
+export type * from './Types.js';

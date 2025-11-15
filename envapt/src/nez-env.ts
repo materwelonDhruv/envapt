@@ -1,7 +1,6 @@
-import { Envapter } from 'envapt';
-import fs from 'node:fs';
-import path from 'node:path';
-import { EnvaptCache } from './core/EnvapterBase';
+import { Envapter } from './Envapter';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import { EnvapterBase } from './core/EnvapterBase';
 
 // Try to import the real nezlephant decoder if available in the workspace
@@ -16,38 +15,33 @@ try {
 
 export interface NezSecretDecoder {
   /**
-   * @param filePath Chemin absolu du fichier (après résolution)
-   * @param buffer   Contenu du fichier (ex: image PNG Nezlephant)
-   * @returns        Le secret décodé sous forme de string (token)
+   * @param filePath Absolute file path (after resolution)
+   * @param buffer   File contents (e.g., Nezlephant PNG image)
+   * @returns        The decoded secret as a string (token)
    */
   (filePath: string, buffer: Buffer): string;
 }
 
 export interface NezOptions {
   /**
-   * Préfixe utilisé dans les .env pour marquer un secret Nezlephant.
-   * Exemple dans .env:
-   *   DISCORD_TOKEN=nez:./secrets/discord.png
+   * Prefix used in .env to mark a Nezlephant secret, e.g. `DISCORD_TOKEN=nez:./secrets/discord.png`.
    * Default: "nez:"
    */
   marker?: string;
 
   /**
-   * Répertoire de base pour résoudre les chemins relatifs.
-   * Default: process.cwd()
+   * Base directory for resolving relative paths. Default: process.cwd()
    */
   baseDir?: string;
 
   /**
-   * Fonction de décodage Nezlephant.
-   * À brancher sur ton vrai décodeur (KeyKey/Nez).
+   * Decoder function used to extract the secret from the file.
    */
   decoder?: NezSecretDecoder;
 }
 
 /**
- * Décodage par défaut : si le package '@funeste38/nezlephant' est installé, on l'utilise.
- * Sinon on tente de retourner le buffer en utf8 (utile pour les stubs de tests).
+ * Default decoder: if '@funeste38/nezlephant' is present use it, otherwise fall back to utf8 string.
  */
 const defaultDecoder: NezSecretDecoder = (_filePath, buf) => {
   if (_decodeNezlephantBuffer) {
@@ -83,8 +77,11 @@ function walkUpFind(base: string, relativeParts: string[], maxLevels = 5): strin
 function resolveAndDecode(filePath: string, opts?: NezOptions): string {
   const baseDir = opts?.baseDir ?? process.cwd();
 
-  // Normalize incoming path
-  const normalized = filePath.replace(/^\.\/|^\//, '');
+  // Normalize incoming path (remove leading ./ or /)
+  let normalized = filePath;
+  if (normalized.startsWith('./')) normalized = normalized.slice(2);
+  else if (normalized.startsWith('/')) normalized = normalized.slice(1);
+
   const basename = path.basename(normalized);
 
   const candidates: string[] = [];
@@ -157,7 +154,7 @@ function makeNezConverter(opts?: NezOptions) {
 }
 
 /**
- * Helper principal: récupère un secret (string) via Envapt + Nezlephant.
+ * Main helper: retrieves a secret (string) via Envapt + Nezlephant.
  */
 export function getNezSecret(
   key: string | string[],
@@ -182,7 +179,7 @@ export function getNezSecret(
         return candidate as string;
       }
     }
-    return fallback as string;
+    return fallback ?? '';
   }
 
   // Single key: quick path - if a plain value exists in the environment cache, return it

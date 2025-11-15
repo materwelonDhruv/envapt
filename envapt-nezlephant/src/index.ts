@@ -1,6 +1,6 @@
 import { Envapter } from 'envapt';
-import fs from 'node:fs';
-import path from 'node:path';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import { decodeNezlephantBuffer } from '@funeste38/nezlephant';
 
 export interface NezSecretDecoder {
@@ -13,10 +13,9 @@ export interface NezOptions {
   decoder?: NezSecretDecoder;
 }
 
-const defaultDecoder: NezSecretDecoder = (filePath, buffer) => {
+const defaultDecoder: NezSecretDecoder = (_filePath, buffer) => {
   const out = decodeNezlephantBuffer(buffer);
-  if (typeof out === 'string') return out;
-  return out.toString('utf8');
+  return typeof out === 'string' ? out : out.toString('utf8');
 };
 
 function resolveAndDecode(filePath: string, opts?: NezOptions): string {

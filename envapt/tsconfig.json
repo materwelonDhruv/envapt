@@ -18,7 +18,7 @@
     "moduleDetection": "force",
     "allowArbitraryExtensions": false,
     "allowImportingTsExtensions": false,
-    "module": "esnext",
+    "module": "nodenext",
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "resolvePackageJsonExports": true,
@@ -37,7 +37,7 @@
 
     // Interop Constraints
     "allowSyntheticDefaultImports": true,
-    "esModuleInterop": false,
+    "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": true,
 
@@ -51,5 +51,5 @@
     "types": ["vitest"]
   },
   "include": ["src/**/*", "tests/**/*", "tsup.config.ts", "scripts/**/*", "vitest.config.ts"],
-  "exclude": ["node_modules", "dist"]
+  "exclude": ["node_modules", "dist", "**/AppData/**", "**/Local/Temp/**", "**/Temp/**"]
 }

@@ -34,8 +34,9 @@
   "files.exclude": {
     "**/node_modules": true,
     // "**/dist": true,
-    "**/.eslintcache": true
-    // "**/logs": true
+    "**/.eslintcache": true,
+    "**/AppData/Local/Temp": true,
+    "**/Temp": true
   },
 
   // Terminal
@@ -46,7 +47,9 @@
     "**/node_modules": true,
     "**/dist": true,
     "**/.eslintcache": true,
-    "**/logs": true
+    "**/logs": true,
+    "**/AppData/Local/Temp": true,
+    "**/Temp": true
   },
 
   // Git and Version Control

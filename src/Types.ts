@@ -1,4 +1,4 @@
-import type { Converters, ArrayElementConverter, ConverterValue, ArrayElementConverterValue } from './Converters';
+import type { Converters, ArrayElementConverter, ConverterValue, ArrayElementConverterValue } from './Converters.js';
 import type { DotenvConfigOptions } from 'dotenv';
 
 /**
@@ -119,17 +119,18 @@ interface ConverterMap {
  * Type mapping for built-in converters to their return types
  * @internal
  */
-type BuiltInConverterReturnType<ConverterKey extends BuiltInConverter> = ConverterKey extends Converters
-  ? ConverterMap[`${ConverterKey}`]
-  : ConverterKey extends keyof ConverterMap
-    ? ConverterMap[ConverterKey]
-    : never;
+type BuiltInConverterReturnType<ConverterKey extends BuiltInConverter> =
+  ConverterKey extends Converters
+    ? ConverterMap[Extract<ConverterKey, keyof ConverterMap>]
+    : ConverterKey extends keyof ConverterMap
+      ? ConverterMap[ConverterKey]
+      : never;
 
 /**
  * Return type for built-in converter functions
  * @internal
  */
-type ReturnValuesOfConverterFunctions = ConverterMap[BuiltInConverter];
+type ReturnValuesOfConverterFunctions = ConverterMap[keyof ConverterMap];
 
 /**
  * Function type for built-in converter functions

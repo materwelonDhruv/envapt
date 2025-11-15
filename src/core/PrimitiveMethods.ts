@@ -1,8 +1,8 @@
-import { BuiltInConverters } from '../BuiltInConverters';
-import { Parser, type EnvapterService } from '../Parser';
-import { EnvironmentMethods } from './EnvironmentMethods';
+import { BuiltInConverters } from '../BuiltInConverters.js';
+import { Parser, type EnvapterService } from '../Parser.js';
+import { EnvironmentMethods } from './EnvironmentMethods.js';
 
-import type { ConditionalReturn } from '../Types';
+import type { ConditionalReturn } from '../Types.js';
 
 /**
  * @internal
