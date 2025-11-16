@@ -1,5 +1,12 @@
 # envapt
 
+## 4.0.2
+
+### Patch Changes
+
+- 9c7b728: bump versions
+- 9c7b728: add examples for each overload of the Envapt decorator
+
 ## 4.0.1
 
 ### Patch Changes
