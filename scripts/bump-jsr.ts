@@ -15,7 +15,8 @@ const denoConfig = {
     version: packageJson.version
 };
 
-fs.writeFileSync(denoConfigPath, `${JSON.stringify(denoConfig, null, 2)}\n`, 'utf-8');
+// eslint-disable-next-line no-magic-numbers
+fs.writeFileSync(denoConfigPath, `${JSON.stringify(denoConfig, null, 4)}\n`, 'utf-8');
 
 console.log(
     `JSR publish version updated from ${denoJson.version as string} to ${packageJson.version as string} in deno.json`
