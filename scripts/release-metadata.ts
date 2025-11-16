@@ -75,7 +75,7 @@ const readPackageVersion = async (): Promise<string | null> => {
 const main = async (): Promise<void> => {
     const version = (await readChangesetVersion()) ?? (await readPackageVersion());
 
-    const title = version ? `Release v${version}` : 'Release Packages';
+    const title = version ? `v${version}` : 'release latest version';
 
     process.stdout.write(`version=${version ?? ''}\n`);
     process.stdout.write(`title=${title}\n`);
