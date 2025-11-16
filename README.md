@@ -34,8 +34,8 @@
 - 🔖 **Tagged Template Resolver** - Tagged template literals with environment variable resolution
 - 🌍 **Environment Detection** - Built-in development/staging/production handling
 - 💪 **Edge Case Handling** - Robust validation and parsing for all scenarios
-- � **Multi-Key Lookups** - Provide ordered lists of env keys and Envapt will use the first value it finds
-- �🛡️ **Type Safety** - Full TypeScript support with proper type inference _(TypeScript optional)_
+- 🔑 **Multi-Key Lookups** - Provide ordered lists of env keys and Envapt will use the first value it finds
+- 🛡️ **Type Safety** - Full TypeScript support with proper type inference _(TypeScript optional)_
 - 📂 **Multiple .env Files** - Load from multiple sources
 - ⚡ **Lightweight** - Minimal overhead with [`dotenv`](https://www.npmjs.com/package/dotenv) bundled
 
@@ -871,6 +871,7 @@ try {
 | `MissingDelimiter` (301)         | Delimiter is missing in array converter config |
 | `InvalidUserDefinedConfig` (302) | Invalid user-defined configuration provided    |
 | `EnvFilesNotFound` (303)         | Specified environment file doesn't exist       |
+| `InvalidKeyInput` (304)          | Invalid key input (not string or string array) |
 
 <div align="right">
 
