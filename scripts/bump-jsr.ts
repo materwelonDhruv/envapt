@@ -11,12 +11,12 @@ const denoConfigPath = resolve(import.meta.dirname, '../deno.json');
 const denoJson = JSON.parse(fs.readFileSync(denoConfigPath, 'utf-8')) as Record<string, unknown>;
 
 const denoConfig = {
-  ...denoJson,
-  version: packageJson.version
+    ...denoJson,
+    version: packageJson.version
 };
 
 fs.writeFileSync(denoConfigPath, `${JSON.stringify(denoConfig, null, 2)}\n`, 'utf-8');
 
 console.log(
-  `JSR publish version updated from ${denoJson.version as string} to ${packageJson.version as string} in deno.json`
+    `JSR publish version updated from ${denoJson.version as string} to ${packageJson.version as string} in deno.json`
 );

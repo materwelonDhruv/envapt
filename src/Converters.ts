@@ -3,19 +3,19 @@
  * @public
  */
 export enum Converters {
-  String = 'string',
-  Number = 'number',
-  Boolean = 'boolean',
-  Bigint = 'bigint',
-  Symbol = 'symbol',
-  Integer = 'integer',
-  Float = 'float',
-  Json = 'json',
-  Array = 'array',
-  Url = 'url',
-  Regexp = 'regexp',
-  Date = 'date',
-  Time = 'time'
+    String = 'string',
+    Number = 'number',
+    Boolean = 'boolean',
+    Bigint = 'bigint',
+    Symbol = 'symbol',
+    Integer = 'integer',
+    Float = 'float',
+    Json = 'json',
+    Array = 'array',
+    Url = 'url',
+    Regexp = 'regexp',
+    Date = 'date',
+    Time = 'time'
 }
 
 /**

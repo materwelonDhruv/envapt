@@ -32,14 +32,14 @@ type ValidArrayConverterBuiltInType = ArrayElementConverterValue | ArrayElementC
  * @public
  */
 interface ArrayConverter {
-  /**
-   * Delimiter to split the string by
-   */
-  delimiter: string;
-  /**
-   * Type to convert each array element to (excludes array, json, and regexp types)
-   */
-  type?: ArrayElementConverter | ArrayElementConverterValue;
+    /**
+     * Delimiter to split the string by
+     */
+    delimiter: string;
+    /**
+     * Type to convert each array element to (excludes array, json, and regexp types)
+     */
+    type?: ArrayElementConverter | ArrayElementConverterValue;
 }
 
 /**
@@ -66,32 +66,32 @@ type ConverterFunction<TFallback = unknown> = (raw: BaseInput, fallback?: TFallb
  * @public
  */
 type EnvaptConverter<TFallback> =
-  | PrimitiveConstructor
-  | Converters
-  | ConverterValue
-  | ArrayConverter
-  | ConverterFunction<TFallback>;
+    | PrimitiveConstructor
+    | Converters
+    | ConverterValue
+    | ArrayConverter
+    | ConverterFunction<TFallback>;
 
 /**
  * Options for the \@Envapt decorator (modern API)
  * @public
  */
 interface EnvaptOptions<TFallback = string> {
-  /**
-   * Default value to use if environment variable is not found
-   */
-  fallback?: TFallback;
-  /**
-   * Built-in converter, custom converter function, or boxed-primitives (String, Number, Boolean, Symbol, BigInt)
-   * @see {@link EnvaptConverter} for details
-   */
-  converter?: EnvaptConverter<TFallback>;
+    /**
+     * Default value to use if environment variable is not found
+     */
+    fallback?: TFallback;
+    /**
+     * Built-in converter, custom converter function, or boxed-primitives (String, Number, Boolean, Symbol, BigInt)
+     * @see {@link EnvaptConverter} for details
+     */
+    converter?: EnvaptConverter<TFallback>;
 }
 
 type JsonPrimitive = string | number | boolean | null;
 type JsonArray = JsonValue[];
 interface JsonObject {
-  [key: string]: JsonValue;
+    [key: string]: JsonValue;
 }
 /**
  * JSON value types for custom converters
@@ -100,19 +100,19 @@ interface JsonObject {
 type JsonValue = JsonPrimitive | JsonArray | JsonObject;
 
 interface ConverterMap {
-  string: string;
-  number: number;
-  boolean: boolean;
-  bigint: bigint;
-  symbol: symbol;
-  integer: number;
-  float: number;
-  json: JsonValue;
-  array: string[];
-  url: URL;
-  regexp: RegExp;
-  date: Date;
-  time: number;
+    string: string;
+    number: number;
+    boolean: boolean;
+    bigint: bigint;
+    symbol: symbol;
+    integer: number;
+    float: number;
+    json: JsonValue;
+    array: string[];
+    url: URL;
+    regexp: RegExp;
+    date: Date;
+    time: number;
 }
 
 /**
@@ -120,10 +120,10 @@ interface ConverterMap {
  * @internal
  */
 type BuiltInConverterReturnType<ConverterKey extends BuiltInConverter> = ConverterKey extends Converters
-  ? ConverterMap[`${ConverterKey}`]
-  : ConverterKey extends keyof ConverterMap
-    ? ConverterMap[ConverterKey]
-    : never;
+    ? ConverterMap[`${ConverterKey}`]
+    : ConverterKey extends keyof ConverterMap
+      ? ConverterMap[ConverterKey]
+      : never;
 
 /**
  * Return type for built-in converter functions
@@ -136,7 +136,7 @@ type ReturnValuesOfConverterFunctions = ConverterMap[BuiltInConverter];
  * @internal
  */
 type BuiltInConverterFunction = (
-  ...args: Parameters<(...args: any[]) => ReturnValuesOfConverterFunctions>
+    ...args: Parameters<(...args: any[]) => ReturnValuesOfConverterFunctions>
 ) => ReturnValuesOfConverterFunctions | undefined;
 
 /**
@@ -164,21 +164,21 @@ type ConditionalReturn<ReturnType, TFallback> = TFallback extends undefined ? Re
  * @internal
  */
 type InferConverterReturnType<TConverter extends BuiltInConverter | ArrayConverter> =
-  TConverter extends BuiltInConverter
-    ? BuiltInConverterReturnType<TConverter>
-    : TConverter extends ArrayConverter
-      ? TConverter['type'] extends BuiltInConverter
-        ? BuiltInConverterReturnType<TConverter['type']>[]
-        : string[]
-      : unknown[];
+    TConverter extends BuiltInConverter
+        ? BuiltInConverterReturnType<TConverter>
+        : TConverter extends ArrayConverter
+          ? TConverter['type'] extends BuiltInConverter
+              ? BuiltInConverterReturnType<TConverter['type']>[]
+              : string[]
+          : unknown[];
 
 /**
  * Complete type inference for advanced converter methods
  * @internal
  */
 type AdvancedConverterReturn<
-  TConverter extends BuiltInConverter | ArrayConverter,
-  TFallback = undefined
+    TConverter extends BuiltInConverter | ArrayConverter,
+    TFallback = undefined
 > = ConditionalReturn<InferConverterReturnType<TConverter>, TFallback>;
 
 /**
@@ -186,50 +186,50 @@ type AdvancedConverterReturn<
  * @internal
  */
 type InferPrimitiveReturnType<TConstructor extends PrimitiveConstructor> = TConstructor extends typeof String
-  ? string
-  : TConstructor extends typeof Number
-    ? number
-    : TConstructor extends typeof Boolean
-      ? boolean
-      : TConstructor extends typeof BigInt
-        ? bigint
-        : TConstructor extends typeof Symbol
-          ? symbol
-          : never;
+    ? string
+    : TConstructor extends typeof Number
+      ? number
+      : TConstructor extends typeof Boolean
+        ? boolean
+        : TConstructor extends typeof BigInt
+          ? bigint
+          : TConstructor extends typeof Symbol
+            ? symbol
+            : never;
 
 /**
  * Type inference for primitive fallback values
  * @internal
  */
 type InferPrimitiveFallbackType<TFallback extends string | number | boolean | bigint | symbol | undefined> =
-  TFallback extends string
-    ? string
-    : TFallback extends number
-      ? number
-      : TFallback extends boolean
-        ? boolean
-        : TFallback extends bigint
-          ? bigint
-          : TFallback extends symbol
-            ? symbol
-            : undefined;
+    TFallback extends string
+        ? string
+        : TFallback extends number
+          ? number
+          : TFallback extends boolean
+            ? boolean
+            : TFallback extends bigint
+              ? bigint
+              : TFallback extends symbol
+                ? symbol
+                : undefined;
 
 export type {
-  PermittedDotenvConfig,
-  BuiltInConverter,
-  PrimitiveConstructor,
-  ValidArrayConverterBuiltInType,
-  ArrayConverter,
-  ConverterFunction,
-  EnvaptConverter,
-  EnvaptOptions,
-  JsonValue,
-  BuiltInConverterFunction,
-  MapOfConverterFunctions,
-  TimeUnit,
-  ConditionalReturn,
-  InferConverterReturnType,
-  AdvancedConverterReturn,
-  InferPrimitiveReturnType,
-  InferPrimitiveFallbackType
+    PermittedDotenvConfig,
+    BuiltInConverter,
+    PrimitiveConstructor,
+    ValidArrayConverterBuiltInType,
+    ArrayConverter,
+    ConverterFunction,
+    EnvaptConverter,
+    EnvaptOptions,
+    JsonValue,
+    BuiltInConverterFunction,
+    MapOfConverterFunctions,
+    TimeUnit,
+    ConditionalReturn,
+    InferConverterReturnType,
+    AdvancedConverterReturn,
+    InferPrimitiveReturnType,
+    InferPrimitiveFallbackType
 };

@@ -1,91 +1,91 @@
 {
-  // Editor Settings
-  "editor.detectIndentation": false,
-  "editor.trimAutoWhitespace": true,
-  "files.trimTrailingWhitespace": true,
-  "files.insertFinalNewline": true,
-  "files.trimFinalNewlines": true,
-  "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "explicit"
-  },
+    // Editor Settings
+    "editor.detectIndentation": false,
+    "editor.trimAutoWhitespace": true,
+    "files.trimTrailingWhitespace": true,
+    "files.insertFinalNewline": true,
+    "files.trimFinalNewlines": true,
+    "editor.codeActionsOnSave": {
+        "source.fixAll.eslint": "explicit"
+    },
 
-  // Prettier Settings
-  "editor.formatOnSave": true,
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "prettier.requireConfig": true,
-  "prettier.useEditorConfig": true,
-
-  // ESLint Settings
-  "eslint.validate": ["typescript", "javascript"],
-  "eslint.run": "onType",
-  "eslint.format.enable": false,
-  "eslint.lintTask.enable": true,
-  "eslint.codeActionsOnSave.mode": "all",
-
-  // EditorConfig Support
-  "editorconfig.generateAuto": false,
-
-  // TypeScript Settings
-  "typescript.preferences.importModuleSpecifier": "relative",
-  "typescript.suggest.autoImports": true,
-  "typescript.updateImportsOnFileMove.enabled": "prompt",
-
-  // File Explorer
-  "files.exclude": {
-    "**/node_modules": true,
-    // "**/dist": true,
-    "**/.eslintcache": true
-    // "**/logs": true
-  },
-
-  // Terminal
-  "terminal.integrated.defaultProfile.osx": "zsh",
-
-  // Search
-  "search.exclude": {
-    "**/node_modules": true,
-    "**/dist": true,
-    "**/.eslintcache": true,
-    "**/logs": true
-  },
-
-  // Git and Version Control
-  "git.autofetch": true,
-  "git.confirmSync": false,
-  "git.enableSmartCommit": false, // Better to pick files to stage manually
-
-  // Performance and UI
-  "extensions.ignoreRecommendations": false,
-  "workbench.editor.enablePreview": true,
-  "workbench.editor.closeEmptyGroups": false,
-
-  // IntelliSense and Suggestions
-  "editor.suggest.insertMode": "replace",
-  "editor.acceptSuggestionOnCommitCharacter": false,
-  "editor.quickSuggestions": {
-    "other": true,
-    "comments": false,
-    "strings": false
-  },
-
-  // Language-specific settings
-  "[jsonc]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  "[markdown]": {
+    // Prettier Settings
+    "editor.formatOnSave": true,
     "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "files.trimTrailingWhitespace": false
-  },
-  "github-actions.use-enterprise": false,
+    "prettier.requireConfig": true,
+    "prettier.useEditorConfig": true,
 
-  // Vitest configuration
-  "vitest.shellType": "terminal",
+    // ESLint Settings
+    "eslint.validate": ["typescript", "javascript"],
+    "eslint.run": "onType",
+    "eslint.format.enable": false,
+    "eslint.lintTask.enable": true,
+    "eslint.codeActionsOnSave.mode": "all",
 
-  // Markdownlint configuration
-  "markdownlint.config": {
-    "MD033": false,
-    "MD013": false,
-    "MD041": false,
-    "MD024": false
-  }
+    // EditorConfig Support
+    "editorconfig.generateAuto": false,
+
+    // TypeScript Settings
+    "typescript.preferences.importModuleSpecifier": "relative",
+    "typescript.suggest.autoImports": true,
+    "typescript.updateImportsOnFileMove.enabled": "prompt",
+
+    // File Explorer
+    "files.exclude": {
+        "**/node_modules": true,
+        // "**/dist": true,
+        "**/.eslintcache": true
+        // "**/logs": true
+    },
+
+    // Terminal
+    "terminal.integrated.defaultProfile.osx": "zsh",
+
+    // Search
+    "search.exclude": {
+        "**/node_modules": true,
+        "**/dist": true,
+        "**/.eslintcache": true,
+        "**/logs": true
+    },
+
+    // Git and Version Control
+    "git.autofetch": true,
+    "git.confirmSync": false,
+    "git.enableSmartCommit": false, // Better to pick files to stage manually
+
+    // Performance and UI
+    "extensions.ignoreRecommendations": false,
+    "workbench.editor.enablePreview": true,
+    "workbench.editor.closeEmptyGroups": false,
+
+    // IntelliSense and Suggestions
+    "editor.suggest.insertMode": "replace",
+    "editor.acceptSuggestionOnCommitCharacter": false,
+    "editor.quickSuggestions": {
+        "other": true,
+        "comments": false,
+        "strings": false
+    },
+
+    // Language-specific settings
+    "[jsonc]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[markdown]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "files.trimTrailingWhitespace": false
+    },
+    "github-actions.use-enterprise": false,
+
+    // Vitest configuration
+    "vitest.shellType": "terminal",
+
+    // Markdownlint configuration
+    "markdownlint.config": {
+        "MD033": false,
+        "MD013": false,
+        "MD041": false,
+        "MD024": false
+    }
 }
