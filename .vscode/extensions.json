@@ -1,27 +1,27 @@
 {
-  "recommendations": [
-    // Essential formatting and linting
-    "esbenp.prettier-vscode",
-    "dbaeumer.vscode-eslint",
-    "editorconfig.editorconfig",
-    "DavidAnson.vscode-markdownlint",
+    "recommendations": [
+        // Essential formatting and linting
+        "esbenp.prettier-vscode",
+        "dbaeumer.vscode-eslint",
+        "editorconfig.editorconfig",
+        "DavidAnson.vscode-markdownlint",
 
-    // TypeScript/JavaScript development
-    "christian-kohler.path-intellisense",
-    "christian-kohler.npm-intellisense",
-    "yoavbls.pretty-ts-errors",
+        // TypeScript/JavaScript development
+        "christian-kohler.path-intellisense",
+        "christian-kohler.npm-intellisense",
+        "yoavbls.pretty-ts-errors",
 
-    // Git and AI assistance
-    "eamodio.gitlens",
-    "github.copilot",
-    "github.copilot-chat",
-    "github.vscode-github-actions",
-    "github.vscode-pull-request-github",
+        // Git and AI assistance
+        "eamodio.gitlens",
+        "github.copilot",
+        "github.copilot-chat",
+        "github.vscode-github-actions",
+        "github.vscode-pull-request-github",
 
-    // Project-specific tools
-    "mikestead.dotenv",
+        // Project-specific tools
+        "mikestead.dotenv",
 
-    // Testing
-    "vitest.explorer"
-  ]
+        // Testing
+        "vitest.explorer"
+    ]
 }

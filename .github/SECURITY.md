@@ -6,7 +6,7 @@ If you find a security vulnerability in Envapt, please help me fix it responsibl
 
 **Please do NOT open a public GitHub issue for security vulnerabilities.**
 
-Instead, send me a message on Discord `@materwelon` OR email me at: **materwelonDhruv@gmail.com**
+Instead, send me a message on Discord `@materwelon` OR email me at: **<materwelonDhruv@gmail.com>**
 
 I'll do my best to respond to security reports within a week.
 

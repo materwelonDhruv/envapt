@@ -1,0 +1,11 @@
+# Default owner for everything
+* @materwelonDhruv
+
+# Workflows and GitHub metadata
+.github/** @materwelonDhruv
+
+# Library code
+src/** @materwelonDhruv
+
+# Tests
+test/** @materwelonDhruv

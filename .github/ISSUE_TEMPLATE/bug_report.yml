@@ -1,0 +1,82 @@
+name: Bug report
+description: Report a problem with Envapt
+title: 'Bug: '
+labels:
+    - bug
+    - needs triage
+
+body:
+    - type: markdown
+      attributes:
+          value: |
+              Thanks for taking the time to report a bug in Envapt.
+              Please give enough detail that the issue can be reproduced and fixed.
+
+    - type: checkboxes
+      id: checklist
+      attributes:
+          label: Quick checks
+          options:
+              - label: I searched existing issues and did not find a report for this bug
+                required: true
+              - label: I am on the latest Envapt release, or I included the version I am using
+                required: true
+
+    - type: input
+      id: envapt_version
+      attributes:
+          label: Envapt version
+          description: From package.json or the output of `pnpm list envapt` or `npm list envapt`
+          placeholder: '4.0.1'
+      validations:
+          required: true
+
+    - type: input
+      id: runtime
+      attributes:
+          label: Runtime
+          description: Node version and package manager
+          placeholder: 'Node 24.11.1, pnpm 10.19'
+      validations:
+          required: true
+
+    - type: input
+      id: platform
+      attributes:
+          label: Platform
+          description: Operating system and whether this is inside a container
+          placeholder: 'macOS Sequoia, bare metal'
+      validations:
+          required: true
+
+    - type: textarea
+      id: description
+      attributes:
+          label: What happened
+          description: Clear description of the bug and what you expected instead
+          placeholder: |
+              When I call Envapter.get(...) with this config, I get X.
+              I expected Y.
+      validations:
+          required: true
+
+    - type: textarea
+      id: repro
+      attributes:
+          label: Minimal reproduction
+          description: Small code sample and configuration that reproduces the bug
+          render: text
+          placeholder: |
+              1. Use this env file or config
+              2. Use this usage snippet
+              3. Run this command
+              4. See this output
+      validations:
+          required: true
+
+    - type: textarea
+      id: extra
+      attributes:
+          label: Extra context
+          description: Anything else that might be relevant such as logs, stack traces, or related issues
+          render: text

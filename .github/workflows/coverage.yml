@@ -1,29 +1,29 @@
 name: codecov
 
 on:
-  pull_request:
-  push:
+    pull_request:
+    push:
 
 env:
-  CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+    CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
 jobs:
-  coverage:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm tc
-      - run: pnpm coverage
-      - uses: codecov/codecov-action@v5
-        with:
-          files: coverage/lcov.info
-          fail_ci_if_error: true
-      - run: pnpm audit --audit-level=high
+    coverage:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+            - uses: pnpm/action-setup@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: 24
+                  cache: pnpm
+            - run: pnpm install --frozen-lockfile
+            - run: pnpm tc
+            - run: pnpm coverage
+            - uses: codecov/codecov-action@v5
+              with:
+                  files: coverage/lcov.info
+                  fail_ci_if_error: true
+            - run: pnpm audit --audit-level=high

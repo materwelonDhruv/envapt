@@ -53,21 +53,21 @@ You're ready to start working when all these succeed!
 
 1. **One thing at a time** - Keep PRs focused on a single change or changes in the same relative scope
 2. **Write good commit messages** - Follow conventional commit format and check the rules in `commitlint.config.mjs`
-   - Also check out [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
-   - Check out [How to Write a Good Commit Message](https://chris.beams.io/posts/git-commit/)
+    - Also check out [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
+    - Check out [How to Write a Good Commit Message](https://chris.beams.io/posts/git-commit/)
 
 3. **Add a changeset** - For any changes made to the project, add a changeset file per commit:
 
-   ```bash
-   pnpm cs add
-   ```
+    ```bash
+    pnpm cs add
+    ```
 
-   - Choose the appropriate version bump (patch/minor/major)
-   - Write a clear, user/developer-focused description of the change
-     - Look at `CHANGELOG.md` for examples of good changeset descriptions
-   - **Patch**: Bug fixes, performance improvements, internal changes
-   - **Minor**: New features, new API methods, backwards-compatible changes
-   - **Major**: Breaking changes, API removals, behavior changes
+    - Choose the appropriate version bump (patch/minor/major)
+    - Write a clear, user/developer-focused description of the change
+        - Look at `CHANGELOG.md` for examples of good changeset descriptions
+    - **Patch**: Bug fixes, performance improvements, internal changes
+    - **Minor**: New features, new API methods, backwards-compatible changes
+    - **Major**: Breaking changes, API removals, behavior changes
 
 4. **Add tests** - New features need tests, bug fixes should include regression tests
 5. **Update docs** - If you change how something works, update the README
@@ -79,7 +79,7 @@ You're ready to start working when all these succeed!
 I use a very strict ESLint config accompanied by Prettier to keep code consistent. Run `pnpm lint` to check your code style.
 
 - This is a TypeScript first codebase. New runtime code **must** be TypeScript and **must** live under the existing envapt/src tree. If you believe plain JavaScript is necessary, please open an issue and get agreement first
-  - Do not introduce the `any` type just to keep the compiler quiet. Unsafe casts such as `value as any` are not acceptable unless there is a very strong, documented reason. If the type system is fighting you, please talk through the design in an issue instead. There is almost always a way to infer the correct type. The project uses TypeScript for a reason 😄
+    - Do not introduce the `any` type just to keep the compiler quiet. Unsafe casts such as `value as any` are not acceptable unless there is a very strong, documented reason. If the type system is fighting you, please talk through the design in an issue instead. There is almost always a way to infer the correct type. The project uses TypeScript for a reason 😄
 - Write clear, descriptive variable and function names
 - Add comments for complex logic
 - Keep functions small and focused
