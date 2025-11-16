@@ -1,5 +1,11 @@
 # envapt
 
+## 4.1.0
+
+### Minor Changes
+
+- a87c8e5: allow passing a list of env as the first arg to Envapt or Envapter methods. envapt will look for the env left-to-right and pick the first available one. passing a string still works and everything that worked before will work the same right now
+
 ## 4.0.2
 
 ### Patch Changes
