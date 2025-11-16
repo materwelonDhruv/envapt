@@ -6,11 +6,15 @@ on:
             - opened
             - synchronize
             - reopened
+        branches:
+            - main
+    workflow_dispatch:
 
 jobs:
     sync:
         name: Sync deno.json with package.json
         runs-on: ubuntu-latest
+        if: startsWith(github.head_ref, 'changeset-release/')
         permissions:
             contents: write
         steps:
