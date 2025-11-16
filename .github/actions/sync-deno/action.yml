@@ -1,0 +1,52 @@
+name: Trigger sync-deno-version workflow
+description: Dispatches the sync-deno-version workflow for a given release branch
+
+inputs:
+    release_branch:
+        description: Branch to target, for example changeset-release/main
+        required: true
+    workflow_file:
+        description: Workflow file path or name to dispatch
+        required: false
+        default: .github/workflows/sync-deno.yml
+
+runs:
+    using: composite
+    steps:
+      - name: Install gh CLI if needed
+        shell: bash
+        run: |
+            set -euo pipefail
+
+            if ! command -v gh >/dev/null 2>&1; then
+              echo "Installing gh CLI"
+              sudo apt-get update -y
+              sudo apt-get install -y gh
+            fi
+
+      - name: Dispatch sync-deno-version workflow
+        shell: bash
+        env:
+            GH_TOKEN: ${{ env.GH_TOKEN }}
+        run: |
+            set -euo pipefail
+
+            RELEASE_BRANCH="${{ inputs.release_branch }}"
+            WORKFLOW_FILE="${{ inputs.workflow_file }}"
+
+            echo "Target release branch is ${RELEASE_BRANCH}"
+            echo "Target workflow is ${WORKFLOW_FILE}"
+
+            if ! git ls-remote --heads origin "$RELEASE_BRANCH" > /dev/null 2>&1; then
+              echo "Release branch $RELEASE_BRANCH not found, skipping sync"
+              exit 0
+            fi
+
+            if [ -z "${GH_TOKEN:-}" ]; then
+              echo "GH_TOKEN is required to authenticate gh CLI" >&2
+              exit 1
+            fi
+
+            printf '%s' "$GH_TOKEN" | gh auth login --with-token
+
+            gh workflow run "$WORKFLOW_FILE" --ref "$RELEASE_BRANCH"
