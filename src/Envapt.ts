@@ -56,6 +56,20 @@ function createPropertyDecorator<TFallback>(
  * @param key - Environment variable name to load
  * @param options - Configuration options with custom converter and required fallback
  * @public
+ * @example
+ * ```ts
+ * // Custom converter that validates a non-empty API key
+ * class Config extends Envapter {
+ *   \@Envapt('API_KEY', {
+ *     fallback: 'default-key',
+ *     converter(raw, _fallback) {
+ *       if (!raw || raw.trim() === '') throw new Error('API_KEY required');
+ *       return raw.trim();
+ *     }
+ *   })
+ *   static readonly apiKey: string;
+ * }
+ * ```
  */
 export function Envapt<TFallback>(
   key: string,
@@ -68,6 +82,17 @@ export function Envapt<TFallback>(
  * @param key - Environment variable name to load
  * @param options - Configuration options with custom converter only
  * @public
+ * @example
+ * ```ts
+ * // Custom converter without providing a fallback
+ * class Config extends Envapter {
+ *   \@Envapt('FEATURE_FLAGS', { converter(raw) {
+ *     // raw may be undefined — handle that here
+ *     return raw ? raw.split('|').map(s => s.trim()) : [];
+ *   } })
+ *   static readonly featureFlags: string[];
+ * }
+ * ```
  */
 export function Envapt<TReturnType>(
   key: string,
@@ -80,6 +105,20 @@ export function Envapt<TReturnType>(
  * @param key - Environment variable name to load
  * @param options - Configuration options with built-in converter
  * @public
+ * @example
+ * ```ts
+ * import { Converters } from 'envapt';
+ *
+ * class Config extends Envapter {
+ *   // Use built-in Number converter with a numeric fallback
+ *   \@Envapt('APP_PORT', { converter: Converters.Number, fallback: 3000 })
+ *   static readonly port: number;
+ *
+ *   // Use Url converter with a string fallback (must match converter type)
+ *   \@Envapt('APP_URL', { converter: Converters.Url, fallback: 'http://localhost:3000' })
+ *   static readonly url: URL;
+ * }
+ * ```
  */
 export function Envapt<TConverter extends BuiltInConverter>(
   key: string,
@@ -92,6 +131,26 @@ export function Envapt<TConverter extends BuiltInConverter>(
  * @param key - Environment variable name to load
  * @param options - Configuration options with array converter
  * @public
+ * @example
+ * ```ts
+ * import { Converters } from 'envapt';
+ *
+ * class Config extends Envapter {
+ *   // Comma-separated list of origins -> string[]
+ *   \@Envapt('ALLOWED_ORIGINS', {
+ *     converter: { delimiter: ',', type: Converters.String },
+ *     fallback: ['https://example.com']
+ *   })
+ *   static readonly allowedOrigins: string[];
+ *
+ *   // Pipe-separated ports -> number[]
+ *   \@Envapt('PORTS', {
+ *     converter: { delimiter: '|', type: Converters.Number },
+ *     fallback: [3000]
+ *   })
+ *   static readonly ports: number[];
+ * }
+ * ```
  */
 export function Envapt<TConverter extends ArrayConverter>(
   key: string,
@@ -104,6 +163,17 @@ export function Envapt<TConverter extends ArrayConverter>(
  * @param key - Environment variable name to load
  * @param options - Configuration options with primitive constructor
  * @public
+ * @example
+ * ```ts
+ * // Use primitive constructors to coerce values
+ * class Config extends Envapter {
+ *   \@Envapt('MAX_CONNECTIONS', { converter: Number, fallback: 100 })
+ *   static readonly maxConnections: number;
+ *
+ *   \@Envapt('FEATURE_ENABLED', { converter: Boolean, fallback: false })
+ *   static readonly featureEnabled: boolean;
+ * }
+ * ```
  */
 export function Envapt<TConstructor extends PrimitiveConstructor>(
   key: string,
@@ -119,6 +189,17 @@ export function Envapt<TConstructor extends PrimitiveConstructor>(
  * @param key - Environment variable name to load
  * @param options - Configuration options with fallback only
  * @public
+ * @example
+ * ```ts
+ * // Fallback-only usage (no converter)
+ * class Config extends Envapter {
+ *   \@Envapt('LOG_FILE', { fallback: '/var/log/app.log' })
+ *   static readonly logFile: string;
+ *
+ *   \@Envapt('RETRY_POLICY', { fallback: { retries: 3, backoff: 'exponential' } })
+ *   static readonly retryPolicy: unknown;
+ * }
+ * ```
  */
 export function Envapt<TFallback>(
   key: string,
@@ -130,6 +211,14 @@ export function Envapt<TFallback>(
  * Classic API: No fallback
  *
  * @param key - Environment variable name to load
+ * @example
+ * ```ts
+ * // Classic API: no fallback — property will resolve from env or be null
+ * class Config extends Envapter {
+ *   \@Envapt('SIMPLE_VALUE')
+ *   static readonly simple?: string | null;
+ * }
+ * ```
  */
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export function Envapt<_TReturnType = string | null>(key: string): PropertyDecorator;
@@ -141,6 +230,19 @@ export function Envapt<_TReturnType = string | null>(key: string): PropertyDecor
  * @param fallback - Default primitive value
  * @param converter - Optional primitive constructor (String, Number, etc.)
  * @public
+ * @example
+ * ```ts
+ * // Classic API with primitive fallback and optional primitive converter
+ * class Config extends Envapter {
+ *   // Provide fallback only
+ *   \@Envapt('HOST', 'localhost')
+ *   static readonly host: string;
+ *
+ *   // Provide fallback and converter
+ *   \@Envapt('PORT', 8080, Number)
+ *   static readonly port: number;
+ * }
+ * ```
  */
 export function Envapt<TFallback extends string | number | boolean | bigint | symbol | undefined>(
   key: string,
