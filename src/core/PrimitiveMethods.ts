@@ -1,4 +1,3 @@
-/* eslint-disable tsdoc/syntax */
 import { BuiltInConverters } from '../BuiltInConverters';
 import { Parser, type EnvapterService } from '../Parser';
 import { EnvironmentMethods } from './EnvironmentMethods';
@@ -49,7 +48,7 @@ export class PrimitiveMethods extends EnvironmentMethods implements EnvapterServ
 
     /**
      * Get a string environment variable with optional fallback.
-     * Supports template variable resolution using \${VAR} syntax.
+     * Supports template variable resolution using `${VAR}` syntax.
      * Accepts a single key or an ordered array of keys (first match wins).
      */
     static get<Default extends string | undefined = undefined>(
