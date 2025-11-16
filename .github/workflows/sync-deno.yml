@@ -1,0 +1,30 @@
+name: sync-deno-version
+
+on:
+    push:
+        branches:
+            - '**'
+
+jobs:
+    sync:
+        name: Sync deno.json with package.json
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+        steps:
+            - uses: actions/checkout@v5
+              with:
+                  fetch-depth: 0
+            - uses: pnpm/action-setup@v4
+            - uses: actions/setup-node@v6
+              with:
+                  node-version: 24
+                  cache: pnpm
+            - run: pnpm install --frozen-lockfile
+            - name: Align deno.json version
+              run: pnpm tsx scripts/bump-jsr.ts
+            - name: Commit synchronized deno.json (if needed)
+              uses: stefanzweifel/git-auto-commit-action@v7
+              with:
+                  commit_message: 'chore: sync deno.json version'
+                  file_pattern: deno.json
