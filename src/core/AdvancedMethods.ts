@@ -17,6 +17,7 @@ export class AdvancedMethods extends PrimitiveMethods {
     /**
      * Get an environment variable using a built-in converter.
      * Supports both Converter enum values and array converter configurations.
+     * The key can be a single name or an ordered list; the first defined value wins.
      */
     static getUsing<TConverter extends BuiltInConverter | ArrayConverter, TFallback = undefined>(
         key: EnvKeyInput,
@@ -62,6 +63,7 @@ export class AdvancedMethods extends PrimitiveMethods {
 
     /**
      * Get an environment variable using a custom converter function.
+     * Accepts a single key or an ordered list for automatic fallback.
      */
     static getWith<TReturnType, TFallback extends TReturnType | undefined = undefined>(
         key: EnvKeyInput,

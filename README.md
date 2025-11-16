@@ -34,7 +34,8 @@
 - 🔖 **Tagged Template Resolver** - Tagged template literals with environment variable resolution
 - 🌍 **Environment Detection** - Built-in development/staging/production handling
 - 💪 **Edge Case Handling** - Robust validation and parsing for all scenarios
-- 🛡️ **Type Safety** - Full TypeScript support with proper type inference _(TypeScript optional)_
+- � **Multi-Key Lookups** - Provide ordered lists of env keys and Envapt will use the first value it finds
+- �🛡️ **Type Safety** - Full TypeScript support with proper type inference _(TypeScript optional)_
 - 📂 **Multiple .env Files** - Load from multiple sources
 - ⚡ **Lightweight** - Minimal overhead with [`dotenv`](https://www.npmjs.com/package/dotenv) bundled
 
@@ -163,6 +164,10 @@ console.log(`URL: ${url}`); // "http://localhost:8443"
 const corsOrigins = Envapter.getUsing('ALLOWED_ORIGINS', Converters.Array, []);
 const dbConfig = Envapter.getUsing('DATABASE_CONFIG', Converters.Json, {});
 
+// Multi-key lookup: try primary, then replica, then fall back
+const dbUrl = Envapter.get(['PRIMARY_DB_URL', 'REPLICA_DB_URL'], 'sqlite://memory');
+const httpPort = Envapter.getNumber(['APP_PORT', 'PORT'], 3000);
+
 // Tagged template literals
 const message = Envapter.resolve`Server ${'APP_URL'} is ready!`;
 console.log(message); // "Server http://localhost:8443 is ready!"
@@ -181,6 +186,10 @@ class AppConfig extends Envapter {
     // The Classic Syntax only works for Primitive Converters. Converters.Url is a Built-in Converter.
     @Envapt('APP_URL', { fallback: new URL('http://localhost:3000'), converter: Converters.Url })
     static readonly url: URL;
+
+    // Prefer CLOUD_REDIS_URL but fall back to classic REDIS_URL when missing
+    @Envapt(['CLOUD_REDIS_URL', 'REDIS_URL'], 'redis://localhost:6379')
+    static readonly redisUrl: string;
 
     @Envapt('ALLOWED_ORIGINS', {
         fallback: ['http://localhost:3000'],
@@ -241,6 +250,11 @@ The `@Envapt` decorator can be used on both **static** and **instance** class pr
 @Envapt('ENV_VAR', { fallback?: T, converter?: EnvConverter<T> })
 ```
 
+> [!NOTE]
+> The first argument can be a string **or** an ordered array of strings:
+> `@Envapt(['PRIMARY_URL', 'SECONDARY_URL'], { fallback: 'https://example.com' })`.
+> Envapt will resolve the first key that exists.
+>
 > [!TIP]
 > **Generic Typing for Better IntelliSense**
 >
@@ -259,6 +273,13 @@ The `@Envapt` decorator can be used on both **static** and **instance** class pr
 
 ```ts
 @Envapt('ENV_VAR', fallback?, converter?)
+```
+
+Need to chain multiple keys with the classic API? Pass an array instead of a string:
+
+```ts
+@Envapt(['HOST_PRIMARY', 'HOST_SECONDARY'], 'localhost')
+static readonly host: string;
 ```
 
 #### Automatic Runtime Type Detection
@@ -557,6 +578,9 @@ const jsonData = Envapter.getUsing('CONFIG_JSON', Converters.Json);
 const urlArray = Envapter.getUsing('API_URLS', { delimiter: ',', type: Converters.Url });
 const customData = Envapter.getWith('RAW_DATA', (raw) => raw?.split('|').map((s) => s.trim()));
 
+// Multi-key inputs work everywhere: Envapt will read left-to-right
+const secretsHost = Envapter.get(['SECRETS_HOST', 'DEFAULT_HOST'], 'localhost');
+
 // Instance methods (same API available)
 const envapter = new Envapter();
 const value = envapter.get('VAR', 'default');
@@ -571,6 +595,7 @@ import { Envapter, Converters } from 'envapt';
 // Use built-in converters directly
 const config = Envapter.getUsing('API_CONFIG', Converters.Json, { default: 'value' });
 const urls = Envapter.getUsing('SERVICE_URLS', { delimiter: '|', type: Converters.Url });
+const pgUrl = Envapter.getUsing(['PRIMARY_PG_URL', 'SECONDARY_PG_URL'], Converters.Url);
 
 // TypeScript: Use type override for better type inference
 const typedConfig = Envapter.getUsing<{ host: string; port: number; ssl: boolean }>('DATABASE_CONFIG', Converters.Json);

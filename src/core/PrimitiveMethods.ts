@@ -1,3 +1,4 @@
+/* eslint-disable tsdoc/syntax */
 import { BuiltInConverters } from '../BuiltInConverters';
 import { Parser, type EnvapterService } from '../Parser';
 import { EnvironmentMethods } from './EnvironmentMethods';
@@ -48,7 +49,8 @@ export class PrimitiveMethods extends EnvironmentMethods implements EnvapterServ
 
     /**
      * Get a string environment variable with optional fallback.
-     * Supports template variable resolution using $\{VAR\} syntax.
+     * Supports template variable resolution using \${VAR} syntax.
+     * Accepts a single key or an ordered array of keys (first match wins).
      */
     static get<Default extends string | undefined = undefined>(
         key: EnvKeyInput,
@@ -61,7 +63,6 @@ export class PrimitiveMethods extends EnvironmentMethods implements EnvapterServ
      * @see {@link PrimitiveMethods.get}
      */
     get(key: EnvKeyInput, def?: string): string | undefined;
-
     get<Default extends string | undefined = undefined>(
         key: EnvKeyInput,
         def?: Default
@@ -72,6 +73,7 @@ export class PrimitiveMethods extends EnvironmentMethods implements EnvapterServ
     /**
      * Get a number environment variable with optional fallback.
      * Automatically converts string values to numbers.
+     * Accepts a single key or an ordered array of keys (first match wins).
      */
     static getNumber<Default extends number | undefined = undefined>(
         key: EnvKeyInput,
@@ -93,6 +95,7 @@ export class PrimitiveMethods extends EnvironmentMethods implements EnvapterServ
     /**
      * Get a boolean environment variable with optional fallback.
      * Recognizes: `1`, `yes`, `true`, 'on' as **true**; `0`, `no`, `false`, 'off' as **false** (case-insensitive).
+     * Accepts a single key or an ordered array of keys (first match wins).
      */
     static getBoolean<Default extends boolean | undefined = undefined>(
         key: EnvKeyInput,
@@ -114,6 +117,7 @@ export class PrimitiveMethods extends EnvironmentMethods implements EnvapterServ
     /**
      * Get a bigint environment variable with optional fallback.
      * Automatically converts string values to bigint.
+     * Accepts a single key or an ordered array of keys (first match wins).
      */
     static getBigInt<Default extends bigint | undefined = undefined>(
         key: EnvKeyInput,
@@ -135,6 +139,7 @@ export class PrimitiveMethods extends EnvironmentMethods implements EnvapterServ
     /**
      * Get a symbol environment variable with optional fallback.
      * Creates a symbol from the string value.
+     * Accepts a single key or an ordered array of keys (first match wins).
      */
     static getSymbol<Default extends symbol | undefined = undefined>(
         key: EnvKeyInput,
