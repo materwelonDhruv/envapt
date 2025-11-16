@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 import { expect } from 'chai';
 import { afterEach, beforeAll, describe, it } from 'vitest';
 
-import { Envapt, Envapter, Environment } from '../src';
+import { Converters, Envapt, Envapter, Environment } from '../src';
 
 describe('Envapter', () => {
     beforeAll(() => {
@@ -84,6 +84,35 @@ describe('Envapter', () => {
             expect(instance.getBoolean('GETTER_BOOLEAN')).to.equal(true);
             expect(instance.getBigInt('GETTER_BIGINT')).to.equal(123456789012345678901234567890n);
             expect(instance.getSymbol('GETTER_SYMBOL')).to.be.a('symbol');
+        });
+    });
+
+    describe('multi-key getters and converters', () => {
+        const envInstance = new Envapter();
+
+        it('should resolve the first available key for static getters', () => {
+            expect(Envapter.get(['MISSING_STRING', 'GETTER_STRING'])).to.equal('primitiveString');
+        });
+
+        it('should resolve the first available key for instance getters', () => {
+            expect(envInstance.getNumber(['UNKNOWN_NUMBER', 'GETTER_NUMBER'])).to.equal(12345);
+        });
+
+        it('should fall back to provided default when all keys are missing', () => {
+            expect(Envapter.get(['UNKNOWN_A', 'UNKNOWN_B'], 'default-value')).to.equal('default-value');
+        });
+
+        it('should work with advanced converters for arrays of keys', () => {
+            expect(Envapter.getUsing(['UNKNOWN_BOOL', 'GETTER_BOOLEAN'], Converters.Boolean)).to.be.true;
+        });
+
+        it('should work with custom converters via getWith', () => {
+            const value = Envapter.getWith(
+                ['UNKNOWN_JSON', 'GETTER_STRING'],
+                (raw) => (raw ? raw.toUpperCase() : 'none'),
+                undefined
+            );
+            expect(value).to.equal('PRIMITIVESTRING');
         });
     });
 

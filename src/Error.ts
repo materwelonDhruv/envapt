@@ -29,7 +29,9 @@ export enum EnvaptErrorCodes {
     /** Thrown when invalid user-defined configuration is provided */
     InvalidUserDefinedConfig = 302,
     /** Thrown when specified environment files don't exist */
-    EnvFilesNotFound = 303
+    EnvFilesNotFound = 303,
+    /** Thrown when no valid environment key is provided */
+    InvalidKeyInput = 304
 }
 
 /**
