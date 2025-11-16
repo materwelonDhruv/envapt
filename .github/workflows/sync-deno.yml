@@ -1,9 +1,11 @@
 name: sync-deno-version
 
 on:
-    push:
-        branches:
-            - '**'
+    pull_request:
+        types:
+            - opened
+            - synchronize
+            - reopened
 
 jobs:
     sync:
