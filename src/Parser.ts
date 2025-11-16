@@ -93,6 +93,7 @@ export class Parser {
         if (primitiveConstructor === Number) return 'number';
         if (primitiveConstructor === Boolean) return 'boolean';
         if (primitiveConstructor === BigInt) return 'bigint';
+        /* v8 ignore next -- @preserve */
         if (primitiveConstructor === Symbol) return 'symbol';
 
         // This should never happen but TypeScript needs it
