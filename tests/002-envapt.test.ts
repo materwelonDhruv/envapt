@@ -327,6 +327,38 @@ describe('Envapt', () => {
         });
     });
 
+    describe('multi-key lookups', () => {
+        class MultiKeyEnv extends Envapter {
+            @Envapt(['PRIMARY_DB_URL', 'REPLICA_DB_URL'])
+            public static readonly databaseUrl: string | null;
+
+            @Envapt(['PRIMARY_SERVICE_PORT', 'LEGACY_SERVICE_PORT'], { converter: Converters.Number })
+            public static readonly preferredPort: number | null;
+
+            @Envapt(['MISSING_SERVICE_PORT', 'LEGACY_SERVICE_PORT'], { converter: Converters.Number })
+            public static readonly legacyFallbackPort: number | null;
+
+            @Envapt(['NOT_DEFINED_ONE', 'NOT_DEFINED_TWO'], { fallback: 'decorator-fallback' })
+            public static readonly fallbackValue: string;
+        }
+
+        it('should pick the first defined value among provided keys', () => {
+            expect(MultiKeyEnv.databaseUrl).to.equal('postgres://replica.local/app');
+        });
+
+        it('should respect ordering when multiple keys exist', () => {
+            expect(MultiKeyEnv.preferredPort).to.equal(6060);
+        });
+
+        it('should fall through to later keys when earlier ones are missing', () => {
+            expect(MultiKeyEnv.legacyFallbackPort).to.equal(9090);
+        });
+
+        it('should use fallback when no keys resolve', () => {
+            expect(MultiKeyEnv.fallbackValue).to.equal('decorator-fallback');
+        });
+    });
+
     describe('calling Envapt on the same variable multiple times with different options', () => {
         class MultiEnv {
             @Envapt('TEST_VAR_MULTI_CALL', { fallback: 'default' })

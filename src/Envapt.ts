@@ -6,6 +6,7 @@ import type {
     ArrayConverter,
     BuiltInConverter,
     ConverterFunction,
+    EnvKeyInput,
     EnvaptConverter,
     EnvaptOptions,
     InferConverterReturnType,
@@ -15,7 +16,7 @@ import type {
 } from './Types';
 
 function createPropertyDecorator<TFallback>(
-    key: string,
+    key: EnvKeyInput,
     fallback: TFallback | undefined,
     converter: EnvaptConverter<TFallback> | undefined,
     hasFallback: boolean
@@ -72,7 +73,7 @@ function createPropertyDecorator<TFallback>(
  * ```
  */
 export function Envapt<TFallback>(
-    key: string,
+    key: EnvKeyInput,
     options: { converter: (raw: string | undefined, fallback: TFallback) => TFallback; fallback: TFallback }
 ): PropertyDecorator;
 
@@ -95,7 +96,7 @@ export function Envapt<TFallback>(
  * ```
  */
 export function Envapt<TReturnType>(
-    key: string,
+    key: EnvKeyInput,
     options: { converter: ConverterFunction<TReturnType> }
 ): PropertyDecorator;
 
@@ -121,7 +122,7 @@ export function Envapt<TReturnType>(
  * ```
  */
 export function Envapt<TConverter extends BuiltInConverter>(
-    key: string,
+    key: EnvKeyInput,
     options: { converter: TConverter; fallback?: InferConverterReturnType<TConverter> | undefined }
 ): PropertyDecorator;
 
@@ -153,7 +154,7 @@ export function Envapt<TConverter extends BuiltInConverter>(
  * ```
  */
 export function Envapt<TConverter extends ArrayConverter>(
-    key: string,
+    key: EnvKeyInput,
     options: { converter: TConverter; fallback?: InferConverterReturnType<TConverter> | undefined }
 ): PropertyDecorator;
 
@@ -176,7 +177,7 @@ export function Envapt<TConverter extends ArrayConverter>(
  * ```
  */
 export function Envapt<TConstructor extends PrimitiveConstructor>(
-    key: string,
+    key: EnvKeyInput,
     options: {
         converter: TConstructor;
         fallback?: InferPrimitiveReturnType<TConstructor>;
@@ -202,7 +203,7 @@ export function Envapt<TConstructor extends PrimitiveConstructor>(
  * ```
  */
 export function Envapt<TFallback>(
-    key: string,
+    key: EnvKeyInput,
     // eslint-disable-next-line @typescript-eslint/unified-signatures
     options: { fallback: TFallback; converter?: undefined }
 ): PropertyDecorator;
@@ -221,7 +222,7 @@ export function Envapt<TFallback>(
  * ```
  */
 // eslint-disable-next-line @typescript-eslint/naming-convention
-export function Envapt<_TReturnType = string | null>(key: string): PropertyDecorator;
+export function Envapt<_TReturnType = string | null>(key: EnvKeyInput): PropertyDecorator;
 
 /**
  * Classic API: Primitive fallback only
@@ -245,7 +246,7 @@ export function Envapt<_TReturnType = string | null>(key: string): PropertyDecor
  * ```
  */
 export function Envapt<TFallback extends string | number | boolean | bigint | symbol | undefined>(
-    key: string,
+    key: EnvKeyInput,
     fallback: InferPrimitiveFallbackType<TFallback>,
     converter?: PrimitiveConstructor
 ): PropertyDecorator;
@@ -254,7 +255,7 @@ export function Envapt<TFallback extends string | number | boolean | bigint | sy
  * Instance/Static Property decorator that automatically loads and converts environment variables.
  */
 export function Envapt<TFallback = unknown>(
-    key: string,
+    key: EnvKeyInput,
     fallbackOrOptions?: TFallback | EnvaptOptions<TFallback>,
     converter?: EnvaptConverter<TFallback>
 ): PropertyDecorator {

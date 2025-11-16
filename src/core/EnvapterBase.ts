@@ -2,9 +2,10 @@ import process from 'node:process';
 
 import { config } from 'dotenv';
 
+import { EnvaptError, EnvaptErrorCodes } from '../Error';
 import { Validator } from '../Validators';
 
-import type { PermittedDotenvConfig } from '../Types';
+import type { EnvKeyInput, PermittedDotenvConfig } from '../Types';
 
 /**
  * Base cache for environment variables and computed values
@@ -61,6 +62,32 @@ export abstract class EnvapterBase {
         void this.config; // reload config to repopulate cache
     }
 
+    protected static resolveKeyInput(keyInput: EnvKeyInput): { key: string; value: string | undefined } {
+        const keys = Array.isArray(keyInput) ? keyInput : [keyInput];
+        const normalizedKeys = keys as readonly string[];
+
+        if (normalizedKeys.length === 0) {
+            throw new EnvaptError(EnvaptErrorCodes.InvalidKeyInput, 'At least one environment key must be provided.');
+        }
+
+        if (normalizedKeys.some((k) => typeof k !== 'string')) {
+            throw new EnvaptError(EnvaptErrorCodes.InvalidKeyInput, 'Environment keys must be strings.');
+        }
+
+        if (normalizedKeys.some((k) => k.trim() === '')) {
+            throw new EnvaptError(EnvaptErrorCodes.InvalidKeyInput, 'Environment keys cannot be empty strings.');
+        }
+
+        for (const candidate of normalizedKeys) {
+            const value = this.config.get(candidate) as string | undefined;
+            if (value !== undefined) {
+                return { key: candidate, value };
+            }
+        }
+
+        return { key: normalizedKeys[0] as string, value: undefined };
+    }
+
     protected static get config(): Map<string, unknown> {
         if (EnvaptCache.size === 0) {
             // create isolated environment object to avoid mutating process.env
@@ -80,7 +107,7 @@ export abstract class EnvapterBase {
     /**
      * Get raw environment variable value without parsing or conversion.
      */
-    getRaw(key: string): string | undefined {
-        return EnvapterBase.config.get(key) as string | undefined;
+    getRaw(key: EnvKeyInput): string | undefined {
+        return EnvapterBase.resolveKeyInput(key).value;
     }
 }

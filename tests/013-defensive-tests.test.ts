@@ -2,11 +2,13 @@ import { expect } from 'chai';
 import { describe, it, vi } from 'vitest';
 
 import { BuiltInConverters } from '../src/BuiltInConverters';
+import { Envapter } from '../src/Envapter';
+import { EnvaptError, EnvaptErrorCodes } from '../src/Error';
 import { Parser } from '../src/Parser';
 import { Validator } from '../src/Validators';
 
 import type { EnvapterService } from '../src/Parser';
-import type { BuiltInConverter, PrimitiveConstructor } from '../src/Types';
+import type { BuiltInConverter, EnvKeyInput, PrimitiveConstructor } from '../src/Types';
 
 class StubEnvService implements EnvapterService {
     constructor(private readonly values: Record<string, string | undefined>) {}
@@ -165,7 +167,7 @@ describe('Defensive tests', () => {
         it('coerces mismatched values into symbols', () => {
             const validatorInternals = Validator as unknown as {
                 performPrimitiveCoercion: <CoercedType>(
-                    converter: typeof String | typeof Number | typeof Boolean | typeof BigInt | typeof Symbol,
+                    converter: PrimitiveConstructor,
                     fallback: unknown
                 ) => CoercedType;
             };
@@ -181,13 +183,43 @@ describe('Defensive tests', () => {
         it('performs low-level symbol coercion through the private helper', () => {
             const unsafeValidator = Validator as unknown as {
                 performPrimitiveCoercion: <CoercedType>(
-                    converter: typeof String | typeof Number | typeof Boolean | typeof BigInt | typeof Symbol,
+                    converter: PrimitiveConstructor,
                     fallback: unknown
                 ) => CoercedType;
             };
 
             const coerced = unsafeValidator.performPrimitiveCoercion<symbol>(Symbol, 'another-runtime-value');
             expect(Symbol.keyFor(coerced)).to.equal('another-runtime-value');
+        });
+    });
+
+    describe('EnvapterBase.resolveKeyInput validation', () => {
+        class ResolveHarness extends Envapter {
+            public static callResolve(key: EnvKeyInput): unknown {
+                return this.resolveKeyInput(key);
+            }
+        }
+
+        it('throws when no keys are provided', () => {
+            // @ts-expect-error Runtime guard ensures empty arrays are rejected
+            expect(() => ResolveHarness.callResolve([]))
+                .to.throw(EnvaptError, 'At least one environment key must be provided.')
+                .and.to.have.property('code', EnvaptErrorCodes.InvalidKeyInput);
+        });
+
+        it('throws when keys include a non-string entry', () => {
+            // @ts-expect-error Passing non-string key to trigger runtime guard
+            expect(() => ResolveHarness.callResolve(['VALID_KEY', 42])).to.throw(
+                EnvaptError,
+                'Environment keys must be strings.'
+            );
+        });
+
+        it('throws when keys include an empty string', () => {
+            expect(() => ResolveHarness.callResolve(['   '])).to.throw(
+                EnvaptError,
+                'Environment keys cannot be empty strings.'
+            );
         });
     });
 });
