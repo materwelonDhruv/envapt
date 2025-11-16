@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/banner.png" alt="Envapt – The apt way to handle environment variables" width="100%" />
+  <img src="/.github/assets/banner.png" alt="Envapt – The apt way to handle environment variables" width="100%" />
 </p>
 
 <p align="center">
