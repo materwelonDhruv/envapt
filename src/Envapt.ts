@@ -54,7 +54,7 @@ function createPropertyDecorator<TFallback>(
 /**
  * Usage 1: Custom converter function with fallback provided
  *
- * @param key - Environment variable name to load
+ * @param key - Environment variable name to load (string or ordered array of strings)
  * @param options - Configuration options with custom converter and required fallback
  * @public
  * @example
@@ -80,7 +80,7 @@ export function Envapt<TFallback>(
 /**
  * Usage 2: Custom converter function without fallback
  *
- * @param key - Environment variable name to load
+ * @param key - Environment variable name(s) to load
  * @param options - Configuration options with custom converter only
  * @public
  * @example
@@ -103,7 +103,7 @@ export function Envapt<TReturnType>(
 /**
  * Usage 3: Built-in converter with optional fallback
  *
- * @param key - Environment variable name to load
+ * @param key - Environment variable name(s) to load
  * @param options - Configuration options with built-in converter
  * @public
  * @example
@@ -118,6 +118,10 @@ export function Envapt<TReturnType>(
  *   // Use Url converter with a string fallback (must match converter type)
  *   \@Envapt('APP_URL', { converter: Converters.Url, fallback: 'http://localhost:3000' })
  *   static readonly url: URL;
+ *
+ *   // Prefer CANARY_URL when present, otherwise fall back to APP_URL
+ *   \@Envapt(['CANARY_URL', 'APP_URL'], { converter: Converters.Url })
+ *   static readonly canaryUrl: URL | null;
  * }
  * ```
  */
@@ -129,7 +133,7 @@ export function Envapt<TConverter extends BuiltInConverter>(
 /**
  * Usage 4: Array converter with optional fallback
  *
- * @param key - Environment variable name to load
+ * @param key - Environment variable name(s) to load
  * @param options - Configuration options with array converter
  * @public
  * @example
@@ -161,7 +165,7 @@ export function Envapt<TConverter extends ArrayConverter>(
 /**
  * Usage 5: Primitive constructor with optional fallback
  *
- * @param key - Environment variable name to load
+ * @param key - Environment variable name(s) to load
  * @param options - Configuration options with primitive constructor
  * @public
  * @example
@@ -187,7 +191,7 @@ export function Envapt<TConstructor extends PrimitiveConstructor>(
 /**
  * Usage 6: Fallback only (no converter)
  *
- * @param key - Environment variable name to load
+ * @param key - Environment variable name(s) to load
  * @param options - Configuration options with fallback only
  * @public
  * @example
@@ -211,7 +215,7 @@ export function Envapt<TFallback>(
 /**
  * Classic API: No fallback
  *
- * @param key - Environment variable name to load
+ * @param key - Environment variable name(s) to load
  * @example
  * ```ts
  * // Classic API: no fallback — property will resolve from env or be null
@@ -227,7 +231,7 @@ export function Envapt<_TReturnType = string | null>(key: EnvKeyInput): Property
 /**
  * Classic API: Primitive fallback only
  *
- * @param key - Environment variable name to load
+ * @param key - Environment variable name(s) to load
  * @param fallback - Default primitive value
  * @param converter - Optional primitive constructor (String, Number, etc.)
  * @public

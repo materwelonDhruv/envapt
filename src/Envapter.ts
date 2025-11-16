@@ -16,10 +16,12 @@ export { Environment } from './core/EnvironmentMethods';
  * // Static usage
  * const port = Envapter.getNumber('PORT', 3000);
  * const url = Envapter.get('API_URL', 'http://localhost');
+ * const replica = Envapter.get(['READONLY_URL', 'DATABASE_URL'], 'sqlite://memory');
  *
  * // Instance usage
  * const env = new Envapter();
  * const dbUrl = env.get('DATABASE_URL', 'sqlite://memory');
+ * const primaryHost = env.get(['PRIMARY_HOST', 'SECONDARY_HOST']);
  * ```
  *
  * @public
