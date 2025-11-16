@@ -47,25 +47,34 @@ jobs:
             contents: write
             id-token: write
             pull-requests: write
+            actions: write
         steps:
             - uses: actions/checkout@v4
               with:
                   fetch-depth: 0
+
             - uses: pnpm/action-setup@v4
+
             - uses: actions/setup-node@v4
               with:
                   node-version: 24
                   cache: pnpm
                   registry-url: https://registry.npmjs.org
+
             - run: npm i -g npm@latest
             - run: node -v && npm -v
             - run: npm config get registry && npm ping
             - run: pnpm install --frozen-lockfile
+
             - name: Determine release metadata
               id: release_meta
               uses: ./.github/actions/release-metadata
+
             - run: pnpm run prepublishOnly
-            - uses: changesets/action@v1
+
+            - name: Run changesets
+              id: changesets
+              uses: changesets/action@v1
               with:
                   publish: pnpm run release
                   commit: 'chore: merge changesets'
@@ -73,6 +82,15 @@ jobs:
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                   HUSKY: 0
+
+            - name: Trigger sync-deno-version workflow on release branch
+              if: ${{ steps.changesets.outputs.hasChangesets == 'true' }}
+              uses: ./.github/actions/sync-deno
+              with:
+                  release_branch: changeset-release/${{ github.event.workflow_run.head_branch }}
+                  workflow_file: sync-deno.yml
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     jsr-publish:
         needs: [dry-run-jsr]
