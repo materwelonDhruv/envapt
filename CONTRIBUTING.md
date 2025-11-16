@@ -18,11 +18,12 @@ Thanks for your interest in making Envapt better! I appreciate any help, whether
 - **Documentation improvements** - Better docs help everyone
 - **Performance improvements** - Faster code is always welcome
 - **Tests** - More test coverage is great. Especially for edge-cases
+- **Large features**: For any non trivial feature or architectural change, open an issue first and wait for my response before starting work. Large unsolicited pull requests may be closed without detailed review.
 
 ## Before You Start
 
-- Check if there's already an issue for what you want to work on
-- For big changes, please open an issue first to discuss your idea
+- Check if there's already an issue (or PR) for what you want to work on
+- For big changes, open an issue and discuss the design first. Do not start on a large refactor or new feature until there is agreement on the general approach please
 - Make sure your code follows the existing style
 - Write tests for new features or bug fixes
 
@@ -71,15 +72,28 @@ You're ready to start working when all these succeed!
 4. **Add tests** - New features need tests, bug fixes should include regression tests
 5. **Update docs** - If you change how something works, update the README
 6. **Keep it simple** - Prefer simple, readable code over clever tricks
+7. **Unreviewed large changes**: If a pull request is very large, changes architecture or public API, or does not follow these guidelines, it may be closed without detailed review. I need to do this so it's manageable for everyone involved and so that any changes that could be problematic don't fall through.
 
 ## Code Style
 
 I use a very strict ESLint config accompanied by Prettier to keep code consistent. Run `pnpm lint` to check your code style.
 
-- Use TypeScript for new code
+- This is a TypeScript first codebase. New runtime code **must** be TypeScript and **must** live under the existing envapt/src tree. If you believe plain JavaScript is necessary, please open an issue and get agreement first
+  - Do not introduce the `any` type just to keep the compiler quiet. Unsafe casts such as `value as any` are not acceptable unless there is a very strong, documented reason. If the type system is fighting you, please talk through the design in an issue instead. There is almost always a way to infer the correct type. The project uses TypeScript for a reason 😄
 - Write clear, descriptive variable and function names
 - Add comments for complex logic
 - Keep functions small and focused
+
+## CI and checks
+
+All pull requests must have
+
+- Passing tests (`pnpm test` and `pnpm coverage`)
+- Passing lint and type checks (`pnpm lint`)
+- Passing commit lint (see `commitlint.config.mjs`)
+- A valid changeset (`pnpm cs add`) (or multiple even)
+
+Pull requests that do not pass CI will not be reviewed in detail.
 
 ## Testing
 
