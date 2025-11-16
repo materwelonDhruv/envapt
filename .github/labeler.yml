@@ -1,0 +1,18 @@
+release:
+  - 'CHANGELOG.md'
+
+tests:
+  - 'tests/**'
+
+ci:
+  - '.github/actions/**'
+  - '.github/workflows/**'
+
+docs:
+  - 'README.md'
+
+chore:
+  - 'package.json'
+  - 'pnpm-lock.yaml'
+  - 'scripts/**'
+  - 'renovate.json'
