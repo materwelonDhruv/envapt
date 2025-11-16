@@ -1,0 +1,51 @@
+- name: bug
+  color: d73a4a
+  description: "Something isn't working as expected"
+
+- name: feature
+  color: 0e8a16
+  description: "New feature or request"
+
+- name: enhancement
+  color: a2eeef
+  description: "Improvement or enhancement to existing behavior"
+
+- name: docs
+  color: 0366d6
+  description: "Documentation only changes"
+
+- name: tests
+  color: fbca04
+  description: "Changes to tests or test infrastructure"
+
+- name: ci
+  color: 1d76db
+  description: "CI / workflow related changes"
+
+- name: chore
+  color: cfd3d7
+  description: "Maintenance tasks, dependency updates, tooling"
+
+- name: good first issue
+  color: 7057ff
+  description: "Good for new contributors"
+
+- name: help wanted
+  color: ffefc6
+  description: "Extra attention requested from maintainers or contributors"
+
+- name: refactor
+  color: 6f42c1
+  description: "Refactoring that does not add a feature or fix a bug"
+
+- name: perf
+  color: 3a3c37
+  description: "Performance improvements or benchmarks"
+
+- name: release
+  color: 0052cc
+  description: "Release / publishing related PRs"
+
+- name: needs triage
+  color: eb6420
+  description: "Indicates that a new issue or PR needs to be reviewed and triaged"
