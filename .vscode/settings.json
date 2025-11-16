@@ -86,6 +86,7 @@
         "MD033": false,
         "MD013": false,
         "MD041": false,
-        "MD024": false
+        "MD024": false,
+        "MD007": { "indent": 4 }
     }
 }
