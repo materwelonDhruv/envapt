@@ -68,7 +68,7 @@ jobs:
             - uses: changesets/action@v1
               with:
                   publish: pnpm run release
-                  commit: 'chore(release): merge changesets'
+                  commit: 'chore: merge changesets'
                   title: ${{ steps.release_meta.outputs.title }}
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

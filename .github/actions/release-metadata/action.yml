@@ -24,4 +24,4 @@ runs:
             TITLE=$(printf '%s\n' "$OUTPUT" | grep '^title=' | head -n1 | cut -d'=' -f2-)
 
             echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-            echo "title=$TITLE" >> "$GITHUB_OUTPUT"
+            echo "title=chore(release): $TITLE" >> "$GITHUB_OUTPUT"
