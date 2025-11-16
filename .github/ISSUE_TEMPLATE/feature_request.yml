@@ -1,0 +1,68 @@
+name: Feature request
+description: Suggest a feature or change for Envapt
+title: "Feature: "
+labels:
+  - enhancement
+  - needs triage
+
+body:
+  - type: markdown
+    attributes:
+        value: |
+            Thanks for your interest in improving Envapt.
+            This form is for focused feature requests that fit the core library.
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+        label: Quick checks
+        options:
+          - label: I searched existing issues and did not find this feature suggested already
+            required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+        label: Problem
+        description: What problem does this feature solve for you
+        placeholder: |
+            Explain the real world problem or friction you hit while using Envapt.
+            Example:
+            I need to read the same key from multiple env blocks (local, staging, production) in a single call.
+    validations:
+        required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+        label: Proposed behavior
+        description: How you would like Envapt to behave
+        placeholder: |
+            High level description of the change.
+
+            Example API
+
+            const value = Envapter.get(["KEY", "KEY_FALLBACK"]);
+
+            or
+
+            const cfg = Envapter.group("SERVICE", { ...options });
+    validations:
+        required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+        label: Alternatives you considered
+        description: Other approaches or workarounds you tried
+        render: text
+        placeholder: |
+            I tried doing X with a wrapper function.
+            This works, but Y is painful because...
+
+  - type: textarea
+    id: extra
+    attributes:
+        label: Extra context
+        description: Links, references, or anything else that helps understand the request
+        render: text
