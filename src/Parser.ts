@@ -95,7 +95,8 @@ export class Parser {
         if (primitiveConstructor === BigInt) return 'bigint';
         if (primitiveConstructor === Symbol) return 'symbol';
 
-        /* v8 ignore next */
+        // This should never happen but TypeScript needs it
+        /* v8 ignore next -- @preserve */
         throw new EnvaptError(EnvaptErrorCodes.InvalidConverterType, `Unknown primitive constructor`);
     }
 

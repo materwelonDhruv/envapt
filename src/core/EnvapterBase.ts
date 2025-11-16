@@ -69,7 +69,6 @@ export abstract class EnvapterBase {
             try {
                 // load _envPath file from custom path into isolated environment object
                 config({ path: this._envPaths, processEnv: isolatedEnv, ...this._userDefinedDotenvConfig });
-                /* v8 ignore next */
             } catch {}
             // populate the Map with global environment variables
             for (const [key, value] of Object.entries(isolatedEnv)) EnvaptCache.set(key, value);

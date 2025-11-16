@@ -14,8 +14,8 @@ import type {
  * @internal
  */
 export class BuiltInConverters {
-    static string(raw: string, fallback?: string): string | undefined {
-        return String(raw) || fallback;
+    static string(raw: string, _fallback?: string): string | undefined {
+        return String(raw);
     }
 
     static number(raw: string, fallback?: number): number | undefined {
@@ -45,7 +45,6 @@ export class BuiltInConverters {
     static symbol(raw: string, fallback?: symbol): symbol | undefined {
         try {
             return raw ? Symbol.for(raw) : fallback;
-            /* v8 ignore next 3 */
         } catch {
             return fallback;
         }
