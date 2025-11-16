@@ -49,6 +49,12 @@ interface ArrayConverter {
 type BaseInput = string | undefined;
 
 /**
+ * Accepted shape for environment variable lookups. Either a single key or an ordered list of keys.
+ * @public
+ */
+type EnvKeyInput = string | readonly [string, ...string[]];
+
+/**
  * Custom parser function type for environment variables
  * @param raw - Raw string value from environment
  * @param fallback - Fallback value if parsing fails
@@ -231,5 +237,6 @@ export type {
     InferConverterReturnType,
     AdvancedConverterReturn,
     InferPrimitiveReturnType,
-    InferPrimitiveFallbackType
+    InferPrimitiveFallbackType,
+    EnvKeyInput
 };

@@ -2,14 +2,14 @@ import { BuiltInConverters } from './BuiltInConverters';
 import { EnvaptError, EnvaptErrorCodes } from './Error';
 import { Validator } from './Validators';
 
-import type { EnvaptConverter, PrimitiveConstructor, ArrayConverter, BuiltInConverter } from './Types';
+import type { EnvaptConverter, PrimitiveConstructor, ArrayConverter, BuiltInConverter, EnvKeyInput } from './Types';
 
 /**
  * @internal
  */
 export interface EnvapterService {
-    getRaw(key: string): string | undefined;
-    get(key: string, def?: string): string | undefined;
+    getRaw(key: EnvKeyInput): string | undefined;
+    get(key: EnvKeyInput, def?: string): string | undefined;
 }
 
 /**
@@ -52,7 +52,7 @@ export class Parser {
     }
 
     convertValue<TFallback>(
-        key: string,
+        key: EnvKeyInput,
         fallback: TFallback | undefined,
         converter: EnvaptConverter<TFallback> | undefined,
         hasFallback: boolean
@@ -102,7 +102,7 @@ export class Parser {
     }
 
     private processBuiltInConverter<TFallback>(
-        key: string,
+        key: EnvKeyInput,
         fallback: TFallback | undefined,
         resolvedConverter: BuiltInConverter,
         hasFallback: boolean,
@@ -136,7 +136,7 @@ export class Parser {
     }
 
     private processArrayConverter<TFallback>(
-        key: string,
+        key: EnvKeyInput,
         fallback: TFallback | undefined,
         resolvedConverter: ArrayConverter,
         hasFallback: boolean
@@ -176,7 +176,7 @@ export class Parser {
     }
 
     private processCustomConverter<TFallback>(
-        key: string,
+        key: EnvKeyInput,
         fallback: TFallback | undefined,
         resolvedConverter: EnvaptConverter<TFallback>,
         _hasFallback: boolean // hasFallback is not needed because customConverter is called even if the raw value is undefined

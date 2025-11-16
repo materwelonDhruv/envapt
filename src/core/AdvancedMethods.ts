@@ -5,7 +5,8 @@ import type {
     ArrayConverter,
     BuiltInConverter,
     ConditionalReturn,
-    ConverterFunction
+    ConverterFunction,
+    EnvKeyInput
 } from '../Types';
 
 /**
@@ -16,24 +17,29 @@ export class AdvancedMethods extends PrimitiveMethods {
     /**
      * Get an environment variable using a built-in converter.
      * Supports both Converter enum values and array converter configurations.
+     * The key can be a single name or an ordered list; the first defined value wins.
      */
     static getUsing<TConverter extends BuiltInConverter | ArrayConverter, TFallback = undefined>(
-        key: string,
+        key: EnvKeyInput,
         converter: TConverter,
         fallback?: TFallback
     ): AdvancedConverterReturn<TConverter, TFallback>;
-    static getUsing<TReturn>(key: string, converter: BuiltInConverter | ArrayConverter, fallback?: TReturn): TReturn;
+    static getUsing<TReturn>(
+        key: EnvKeyInput,
+        converter: BuiltInConverter | ArrayConverter,
+        fallback?: TReturn
+    ): TReturn;
     static getUsing<TConverter extends BuiltInConverter | ArrayConverter, TFallback = undefined>(
-        key: string,
+        key: EnvKeyInput,
         converter: TConverter,
         fallback?: TFallback
     ): AdvancedConverterReturn<TConverter, TFallback> {
         // Check if variable exists first, for consistency with primitive methods
-        const rawVal = this.config.get(key);
-        if (!rawVal) return fallback as AdvancedConverterReturn<TConverter, TFallback>;
+        const { key: resolvedKey, value } = this.resolveKeyInput(key);
+        if (!value) return fallback as AdvancedConverterReturn<TConverter, TFallback>;
 
         const hasFallback = fallback !== undefined;
-        const result = this.parser.convertValue(key, fallback, converter, hasFallback);
+        const result = this.parser.convertValue(resolvedKey, fallback, converter, hasFallback);
 
         return result as AdvancedConverterReturn<TConverter, TFallback>;
     }
@@ -42,13 +48,13 @@ export class AdvancedMethods extends PrimitiveMethods {
      * @see {@link AdvancedMethods.getUsing}
      */
     getUsing<TConverter extends BuiltInConverter | ArrayConverter, TFallback = undefined>(
-        key: string,
+        key: EnvKeyInput,
         converter: TConverter,
         fallback?: TFallback
     ): AdvancedConverterReturn<TConverter, TFallback>;
-    getUsing<TReturn>(key: string, converter: BuiltInConverter | ArrayConverter, fallback?: TReturn): TReturn;
+    getUsing<TReturn>(key: EnvKeyInput, converter: BuiltInConverter | ArrayConverter, fallback?: TReturn): TReturn;
     getUsing<TConverter extends BuiltInConverter | ArrayConverter, TFallback = undefined>(
-        key: string,
+        key: EnvKeyInput,
         converter: TConverter,
         fallback?: TFallback
     ): AdvancedConverterReturn<TConverter, TFallback> {
@@ -57,20 +63,21 @@ export class AdvancedMethods extends PrimitiveMethods {
 
     /**
      * Get an environment variable using a custom converter function.
+     * Accepts a single key or an ordered list for automatic fallback.
      */
     static getWith<TReturnType, TFallback extends TReturnType | undefined = undefined>(
-        key: string,
+        key: EnvKeyInput,
         converter: ConverterFunction<TReturnType>,
         fallback?: TFallback
     ): ConditionalReturn<TReturnType, TFallback> {
         // Check if variable exists first, for consistency with primitive methods
-        const rawVal = this.config.get(key);
-        if (!rawVal) return fallback as ConditionalReturn<TReturnType, TFallback>;
+        const { key: resolvedKey, value } = this.resolveKeyInput(key);
+        if (!value) return fallback as ConditionalReturn<TReturnType, TFallback>;
 
         const hasFallback = fallback !== undefined;
         // Convert the converter to match the expected signature via unknown
         const result = this.parser.convertValue(
-            key,
+            resolvedKey,
             fallback,
             converter as unknown as ConverterFunction<TFallback>,
             hasFallback
@@ -83,7 +90,7 @@ export class AdvancedMethods extends PrimitiveMethods {
      * @see {@link AdvancedMethods.getWith}
      */
     getWith<TReturnType, TFallback extends TReturnType | undefined = undefined>(
-        key: string,
+        key: EnvKeyInput,
         converter: ConverterFunction<TReturnType>,
         fallback?: TFallback
     ): ConditionalReturn<TReturnType, TFallback> {
