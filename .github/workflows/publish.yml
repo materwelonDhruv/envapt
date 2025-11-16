@@ -61,12 +61,15 @@ jobs:
             - run: node -v && npm -v
             - run: npm config get registry && npm ping
             - run: pnpm install --frozen-lockfile
+            - name: Determine release metadata
+              id: release_meta
+              uses: ./.github/actions/release-metadata
             - run: pnpm run prepublishOnly
             - uses: changesets/action@v1
               with:
                   publish: pnpm run release
-                  commit: 'chore(release): version packages'
-                  title: 'chore(release): version packages'
+                  commit: 'chore(release): merge changesets'
+                  title: ${{ steps.release_meta.outputs.title }}
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                   HUSKY: 0

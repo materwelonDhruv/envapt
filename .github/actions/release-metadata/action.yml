@@ -1,0 +1,27 @@
+name: Release metadata
+
+description: Derives release title and version based on package.json
+
+outputs:
+    version:
+        description: Next version to be released. Empty if none.
+        value: ${{ steps.metadata.outputs.version }}
+    title:
+        description: PR title.
+        value: ${{ steps.metadata.outputs.title }}
+
+runs:
+    using: composite
+    steps:
+      - id: metadata
+        name: Compute release metadata
+        shell: bash
+        run: |
+            set -euo pipefail
+
+            OUTPUT=$(pnpm tsx scripts/release-metadata.ts)
+            VERSION=$(printf '%s\n' "$OUTPUT" | grep '^version=' | head -n1 | cut -d'=' -f2-)
+            TITLE=$(printf '%s\n' "$OUTPUT" | grep '^title=' | head -n1 | cut -d'=' -f2-)
+
+            echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+            echo "title=$TITLE" >> "$GITHUB_OUTPUT"
