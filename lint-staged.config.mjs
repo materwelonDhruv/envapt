@@ -82,18 +82,32 @@ const runEslint = (files) => {
         const configPath = findNearestEslintConfig(file);
         const key = configPath ?? 'DEFAULT';
 
-        if (!byConfig.has(key)) byConfig.set(key, []);
-        byConfig.get(key).push(file);
+        if (!byConfig.has(key)) {
+            byConfig.set(key, { files: [], configPath: configPath ?? null });
+        }
+        byConfig.get(key).files.push(file);
     }
 
     const commands = [];
 
-    for (const [configPath, groupedFiles] of byConfig.entries()) {
-        const fileList = quoteFiles(groupedFiles);
+    for (const [, info] of byConfig.entries()) {
+        const fileList = quoteFiles(info.files);
         if (!fileList) continue;
 
-        const configFlag = configPath === 'DEFAULT' ? '' : `--config ${JSON.stringify(configPath)}`;
-        const command = ['eslint --max-warnings=0 --fix --cache', configFlag, fileList].filter(Boolean).join(' ');
+        const base = ['pnpm exec eslint --max-warnings=0 --fix --cache'];
+        if (info.configPath) {
+            base.push('--config', JSON.stringify(info.configPath));
+        }
+        base.push(fileList);
+
+        let command = base.join(' ');
+
+        if (info.configPath) {
+            const configDir = path.dirname(info.configPath);
+            const inner = `cd ${JSON.stringify(configDir)} && ${command}`;
+            command = `sh -c ${JSON.stringify(inner)}`;
+        }
+
         commands.push(command);
     }
 
