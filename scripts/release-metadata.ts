@@ -4,7 +4,6 @@ import path from 'node:path';
 import { promisify } from 'node:util';
 
 const root = path.resolve(import.meta.dirname, '..');
-const packageJsonPath = path.join(root, 'package.json');
 const execFileAsync = promisify(execFile);
 const HEX_RADIX = 16;
 const DEBUG_ENV_VAR = 'RELEASE_METADATA_DEBUG';
@@ -15,26 +14,30 @@ const debug = (message: string): void => {
     }
 };
 
-interface ChangesetStatus {
-    releases?: ({ newVersion?: string | null } | null)[];
+interface ChangesetRelease {
+    name?: string | null;
 }
 
-const extractVersionFromStatus = (raw: string | undefined): string | null => {
+interface ChangesetStatus {
+    releases?: (ChangesetRelease | null)[];
+}
+
+const extractReleaseCountFromStatus = (raw: string | undefined): number | null => {
     if (!raw) {
         return null;
     }
 
     try {
         const parsed = JSON.parse(raw) as ChangesetStatus;
-        const firstRelease = parsed.releases?.find((release) => release?.newVersion);
-        const version = firstRelease?.newVersion;
-        return typeof version === 'string' && version.trim().length > 0 ? version : null;
+        const releases = parsed.releases ?? [];
+        const count = releases.filter((release) => typeof release?.name === 'string').length;
+        return Number.isFinite(count) ? count : null;
     } catch {
         return null;
     }
 };
 
-const readChangesetVersion = async (): Promise<string | null> => {
+const readChangesetReleaseCount = async (): Promise<number | null> => {
     const statusFileRelative = path.join(
         '.changeset',
         `status-${Date.now()}-${Math.random().toString(HEX_RADIX).slice(2)}.json`
@@ -53,31 +56,23 @@ const readChangesetVersion = async (): Promise<string | null> => {
         );
         const raw = await fs.readFile(statusFileAbsolute, 'utf8');
         debug(`Raw changeset status payload: ${raw}`);
-        return extractVersionFromStatus(raw);
+        return extractReleaseCountFromStatus(raw);
     } catch {
-        debug('Failed to read or parse changeset status payload. Falling back to package version.');
+        debug('Failed to read or parse changeset status payload.');
         return null;
     } finally {
         await fs.rm(statusFileAbsolute, { force: true }).catch(() => undefined);
     }
 };
 
-const readPackageVersion = async (): Promise<string | null> => {
-    try {
-        const raw = await fs.readFile(packageJsonPath, 'utf8');
-        const pkg = JSON.parse(raw) as { version?: string };
-        return typeof pkg.version === 'string' && pkg.version.trim().length > 0 ? pkg.version : null;
-    } catch (error) {
-        throw new Error(`Failed to read package.json: ${(error as Error).message}`);
-    }
-};
-
 const main = async (): Promise<void> => {
-    const version = (await readChangesetVersion()) ?? (await readPackageVersion());
+    const releaseCount = await readChangesetReleaseCount();
+    const hasValidCount = typeof releaseCount === 'number' && releaseCount >= 0;
+    const noun = releaseCount === 1 ? 'package' : 'packages';
+    const title = hasValidCount
+        ? `chore(release): publish ${releaseCount} ${noun}`
+        : 'chore(release): publish packages';
 
-    const title = version ? `v${version}` : 'release latest version';
-
-    process.stdout.write(`version=${version ?? ''}\n`);
     process.stdout.write(`title=${title}\n`);
 };
 
