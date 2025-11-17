@@ -33,7 +33,8 @@
     // File Explorer
     "files.exclude": {
         "**/node_modules": true,
-        // "**/dist": true,
+        "**/dist": true,
+        "**/coverage": true,
         "**/.eslintcache": true
         // "**/logs": true
     },

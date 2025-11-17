@@ -1,0 +1,50 @@
+{
+    "$schema": "https://turbo.build/schema.json",
+    "ui": "tui",
+    "tasks": {
+        "build": {
+            "dependsOn": ["^build"],
+            "inputs": ["$TURBO_DEFAULT$", ".env*"],
+            "outputs": ["dist/**", ".next/**", "!.next/cache/**"]
+        },
+        "dev": {
+            "cache": false,
+            "persistent": true
+        },
+        "lint": {
+            "dependsOn": ["^build"],
+            "inputs": ["$TURBO_DEFAULT$", ".eslintrc*", "eslint.config.*"]
+        },
+        "lint:fix": {
+            "inputs": ["$TURBO_DEFAULT$", ".eslintrc*", "eslint.config.*"],
+            "cache": false
+        },
+        "tc": {
+            "dependsOn": ["^build"],
+            "inputs": ["$TURBO_DEFAULT$", "tsconfig*.json"]
+        },
+        "test": {
+            "inputs": ["$TURBO_DEFAULT$", "jest.config.*", "vitest.config.*", "src/**", "tests/**"]
+        },
+        "test:watch": {
+            "cache": false,
+            "persistent": true
+        },
+        "coverage": {
+            "inputs": ["$TURBO_DEFAULT$", "jest.config.*", "vitest.config.*", "src/**", "tests/**"],
+            "outputs": ["coverage/**"]
+        },
+        "fmt": {
+            "inputs": ["$TURBO_DEFAULT$", ".prettierrc*", "prettier.config.*"],
+            "cache": false
+        },
+        "fmt:check": {
+            "inputs": ["$TURBO_DEFAULT$", ".prettierrc*", "prettier.config.*"]
+        },
+        "clean": {
+            "cache": false
+        }
+    },
+    "globalDependencies": ["package.json", "pnpm-workspace.yaml", "turbo.json", ".env*"],
+    "globalEnv": ["NODE_ENV", "ENVIRONMENT", "ENV"]
+}

@@ -1,0 +1,16 @@
+packages:
+  - packages/*
+  - apps/*
+
+catalogs:
+    dev:
+        prettier: 3.6.2
+        eslint: 9.39.1
+        typescript: 5.9.3
+
+onlyBuiltDependencies:
+  - '@swc/core'
+  - '@tailwindcss/oxide'
+  - esbuild
+  - sharp
+  - unrs-resolver
