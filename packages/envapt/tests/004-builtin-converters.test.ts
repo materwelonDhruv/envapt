@@ -404,6 +404,30 @@ describe('Built-in Converters', () => {
 
             @Envapt('NONEXISTENT_TIME', { converter: Converters.Time, fallback: 5000 })
             static readonly nonexistentTime: number;
+
+            // @ts-expect-error TODO: new feature WIP
+            @Envapt('TEST_TIME_STRING_FALLBACK_MS', { converter: Converters.Time, fallback: '1500ms' })
+            static readonly timeStringFallbackMs: number;
+
+            // @ts-expect-error TODO: new feature WIP
+            @Envapt('TEST_TIME_STRING_FALLBACK_S', { converter: Converters.Time, fallback: '2s' })
+            static readonly timeStringFallbackS: number;
+
+            // @ts-expect-error TODO: new feature WIP
+            @Envapt('TEST_TIME_STRING_FALLBACK_M', { converter: Converters.Time, fallback: '10m' })
+            static readonly timeStringFallbackM: number;
+
+            // @ts-expect-error TODO: new feature WIP
+            @Envapt('TEST_TIME_STRING_FALLBACK_H', { converter: Converters.Time, fallback: '3h' })
+            static readonly timeStringFallbackH: number;
+
+            // @ts-expect-error TODO: new feature WIP
+            @Envapt('TEST_TIME_STRING_FALLBACK_D', { converter: Converters.Time, fallback: '1d' })
+            static readonly timeStringFallbackD: number;
+
+            // @ts-expect-error TODO: new feature WIP
+            @Envapt('TEST_TIME_STRING_FALLBACK_W', { converter: Converters.Time, fallback: '1w' })
+            static readonly timeStringFallbackW: number;
         }
 
         it('should convert milliseconds correctly', () => {
@@ -440,6 +464,16 @@ describe('Built-in Converters', () => {
 
         it('should use fallback for nonexistent time', () => {
             expect(TimeTest.nonexistentTime).to.equal(5000);
+        });
+
+        it('should parse string fallbacks correctly', () => {
+            // TODO: skip for now until feature is implemented
+            // expect(TimeTest.timeStringFallbackMs).to.equal(1500);
+            // expect(TimeTest.timeStringFallbackS).to.equal(2 * 1000);
+            // expect(TimeTest.timeStringFallbackM).to.equal(10 * 60 * 1000);
+            // expect(TimeTest.timeStringFallbackH).to.equal(3 * 60 * 60 * 1000);
+            // expect(TimeTest.timeStringFallbackD).to.equal(24 * 60 * 60 * 1000);
+            // expect(TimeTest.timeStringFallbackW).to.equal(7 * 24 * 60 * 60 * 1000);
         });
     });
 

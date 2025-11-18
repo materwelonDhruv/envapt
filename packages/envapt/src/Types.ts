@@ -99,9 +99,10 @@ type JsonArray = JsonValue[];
 interface JsonObject {
     [key: string]: JsonValue;
 }
+
 /**
  * JSON value types for custom converters
- * @internal
+ * @public
  */
 type JsonValue = JsonPrimitive | JsonArray | JsonObject;
 
@@ -155,7 +156,13 @@ type MapOfConverterFunctions = Record<BuiltInConverter, BuiltInConverterFunction
  * Time unit types for duration conversions
  * @internal
  */
-type TimeUnit = 'ms' | 's' | 'm' | 'h';
+type TimeUnit = 'ms' | 's' | 'm' | 'h' | 'd' | 'w';
+
+/**
+ * Fallback type for time duration conversions
+ * @public
+ */
+type TimeFallback = number | `${number}${TimeUnit}`;
 
 /**
  * Helper type for getter methods that conditionally return undefined based on whether a fallback is provided
@@ -233,6 +240,7 @@ export type {
     BuiltInConverterFunction,
     MapOfConverterFunctions,
     TimeUnit,
+    TimeFallback,
     ConditionalReturn,
     InferConverterReturnType,
     AdvancedConverterReturn,

@@ -114,7 +114,7 @@ export class BuiltInConverters {
     }
 
     static time(raw: string, fallback?: number): number | undefined {
-        const match = raw.match(new RegExp(String.raw`^(\d+(?:\.\d+)?)(ms|s|m|h)?$`, 'u'));
+        const match = raw.match(new RegExp(String.raw`^(\d+(?:\.\d+)?)(ms|s|m|h|d|w)?$`, 'u'));
         if (!match) return fallback;
 
         const [, numStr, capturedUnit] = match;
@@ -128,13 +128,19 @@ export class BuiltInConverters {
         const SECONDS_TO_MS = 1000;
         const SECONDS_PER_MINUTE = 60;
         const MINUTES_PER_HOUR = 60;
+        const HOURS_PER_DAY = 24;
+        const DAYS_PER_WEEK = 7;
         const MINUTES_TO_MS = SECONDS_PER_MINUTE * SECONDS_TO_MS;
         const HOURS_TO_MS = MINUTES_PER_HOUR * MINUTES_TO_MS;
+        const DAYS_TO_MS = HOURS_PER_DAY * HOURS_TO_MS;
+        const WEEKS_TO_MS = DAYS_PER_WEEK * DAYS_TO_MS;
 
         if (unit === 'ms') return value;
         if (unit === 's') return value * SECONDS_TO_MS;
         if (unit === 'm') return value * MINUTES_TO_MS;
-        return value * HOURS_TO_MS;
+        if (unit === 'h') return value * HOURS_TO_MS;
+        if (unit === 'd') return value * DAYS_TO_MS;
+        return value * WEEKS_TO_MS;
     }
 
     /**
