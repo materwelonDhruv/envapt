@@ -1,0 +1,66 @@
+name: Publish Deno packages
+
+description: Runs `deno publish` in every package that contains a Deno/JSR config file.
+
+inputs:
+    search-root:
+        description: Directory (relative to the repo root) to search for Deno configs.
+        required: false
+        default: packages
+    dry-run:
+        description: Whether to append `--dry-run` to the publish command.
+        required: false
+        default: 'false'
+
+runs:
+    using: composite
+    steps:
+      - name: Publish Deno packages
+        shell: bash
+        run: |
+            set -euo pipefail
+
+            SEARCH_ROOT="${{ inputs.search-root }}"
+            DRY_RUN="${{ inputs.dry-run }}"
+
+            if [ -z "$SEARCH_ROOT" ]; then
+                echo "search-root input cannot be empty" >&2
+                exit 1
+            fi
+
+            ABS_SEARCH_ROOT="$GITHUB_WORKSPACE/$SEARCH_ROOT"
+
+            if [ ! -d "$ABS_SEARCH_ROOT" ]; then
+                echo "Search root '$SEARCH_ROOT' does not exist relative to the workspace." >&2
+                exit 1
+            fi
+
+            mapfile -d '' -t CONFIG_FILES < <(
+                find "$ABS_SEARCH_ROOT" \
+                    -type f \
+                    \( -name 'deno.json' -o -name 'deno.jsonc' -o -name 'jsr.json' -o -name 'jsr.jsonc' \) \
+                    -print0
+            )
+
+            if [ ${#CONFIG_FILES[@]} -eq 0 ]; then
+                echo "No Deno configuration files found under '$SEARCH_ROOT'." >&2
+                exit 1
+            fi
+
+            publish_args=("--no-check")
+            if [ "$DRY_RUN" = "true" ]; then
+                publish_args+=("--dry-run")
+            fi
+
+            for config_path in "${CONFIG_FILES[@]}"; do
+                pkg_dir=$(dirname "$config_path")
+                rel_dir=${pkg_dir#"$GITHUB_WORKSPACE/"}
+                rel_dir=${rel_dir:-.}
+
+                echo "::group::Running deno publish in $rel_dir"
+                (
+                    cd "$pkg_dir"
+                    deno publish "${publish_args[@]}"
+                )
+                echo "::endgroup::"
+            done

@@ -41,7 +41,11 @@ jobs:
             - uses: denoland/setup-deno@v2
               with:
                   deno-version: v2.x
-            - run: deno publish --no-check --dry-run
+            - name: Deno publish dry run
+              uses: ./.github/actions/deno-publish-all
+              with:
+                  search-root: packages
+                  dry-run: 'true'
 
     npm-publish:
         needs: [dry-run-npm]
@@ -132,5 +136,7 @@ jobs:
               with:
                   deno-version: v2.x
                   cache: true
-            - name: Publish to Deno
-              run: deno publish --no-check
+            - name: Publish to JSR
+              uses: ./.github/actions/deno-publish-all
+              with:
+                  search-root: packages
