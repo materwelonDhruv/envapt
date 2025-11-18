@@ -1,0 +1,93 @@
+name: Cleanup caches
+
+on:
+    pull_request:
+        types: [closed]
+    schedule:
+        - cron: '0 5 * * 0'
+    workflow_dispatch:
+        inputs:
+            ref:
+                description: 'Specific ref (e.g., refs/heads/main) to clean. Leave blank to use defaults.'
+                required: false
+
+permissions:
+    actions: write
+    contents: read
+
+jobs:
+    cleanup_pr:
+        if: github.event_name == 'pull_request'
+        name: Cleanup caches for closed PR
+        runs-on: ubuntu-latest
+        steps:
+            - name: Configure GitHub CLI
+              run: gh extension install actions/gh-actions-cache
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Remove caches linked to PR
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: |
+                  REPO="${{ github.repository }}"
+                  PR_NUMBER="${{ github.event.pull_request.number }}"
+                  BRANCH="refs/pull/${PR_NUMBER}/merge"
+
+                  echo "Fetching cache entries for ${BRANCH}"
+                  cacheKeys=$(gh actions-cache list -R "$REPO" -B "$BRANCH" --limit 100 | cut -f 1)
+
+                  if [ -z "$cacheKeys" ]; then
+                    echo "No caches found for ${BRANCH}"
+                    exit 0
+                  fi
+
+                  echo "Deleting caches for ${BRANCH}"
+                  set +e
+                  for cacheKey in $cacheKeys; do
+                    echo "Deleting $cacheKey"
+                    gh actions-cache delete "$cacheKey" -R "$REPO" -B "$BRANCH" --confirm
+                  done
+                  echo "Cache cleanup complete."
+
+    cleanup_branches:
+        if: github.event_name != 'pull_request'
+        name: Cleanup default branch caches
+        runs-on: ubuntu-latest
+        steps:
+            - name: Configure GitHub CLI
+              run: gh extension install actions/gh-actions-cache
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Remove caches for tracked refs
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  INPUT_REF: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.ref || '' }}
+              run: |
+                  REPO="${{ github.repository }}"
+                  if [ -n "$INPUT_REF" ]; then
+                    REFS="$INPUT_REF"
+                  else
+                    REFS="refs/heads/main refs/heads/next"
+                  fi
+
+                  echo "Cleaning caches for refs: $REFS"
+                  for branchRef in $REFS; do
+                    echo "Fetching cache entries for $branchRef"
+                    cacheKeys=$(gh actions-cache list -R "$REPO" -B "$branchRef" --limit 200 | cut -f 1)
+
+                    if [ -z "$cacheKeys" ]; then
+                      echo "No caches found for $branchRef"
+                      continue
+                    fi
+
+                    echo "Deleting caches for $branchRef"
+                    set +e
+                    for cacheKey in $cacheKeys; do
+                      echo "Deleting $cacheKey"
+                      gh actions-cache delete "$cacheKey" -R "$REPO" -B "$branchRef" --confirm
+                    done
+                    set -e
+                  done
+                  echo "Cache cleanup complete."
