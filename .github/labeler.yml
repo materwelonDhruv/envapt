@@ -1,0 +1,115 @@
+# Packages
+pkg:envapt:
+  - changed-files:
+      - any-glob-to-any-file: 'packages/envapt/**'
+      - any-glob-to-any-file: 'envapt/**'
+  - issues:
+      - title: '/pkg:envapt/i'
+      - body: '/pkg:envapt/i'
+
+# Area labels
+area:docs:
+  - changed-files:
+      - any-glob-to-any-file: 'docs/**'
+      - any-glob-to-any-file: '**/*.md'
+  - issues:
+      - title: '/docs?/i'
+      - body: '/docs?/i'
+area:tests:
+  - changed-files:
+      - any-glob-to-any-file: '**/*.test.ts'
+      - any-glob-to-any-file: '**/*.spec.ts'
+      - any-glob-to-any-file: '**/__tests__/**/*'
+  - issues:
+      - title: '/tests?/i'
+      - body: '/tests?/i'
+area:ci:
+  - changed-files:
+      - any-glob-to-any-file: '.github/**'
+      - any-glob-to-any-file: turbo.json
+      - any-glob-to-any-file: turbo.jsonc
+      - any-glob-to-any-file: pnpm-workspace.yaml
+      - any-glob-to-any-file: pnpm-lock.yaml
+  - issues:
+      - title: '/ci/i'
+      - body: '/ci/i'
+area:config:
+  - changed-files:
+      - any-glob-to-any-file: '**/*.mjs'
+      - any-glob-to-any-file: '**/*.cjs'
+      - any-glob-to-any-file: '**/*.json'
+      - any-glob-to-any-file: tsconfig.json
+      - any-glob-to-any-file: 'tsconfig/**'
+      - any-glob-to-any-file: eslint.config.mjs
+      - any-glob-to-any-file: vitest.config.ts
+      - any-glob-to-any-file: tsup.config.ts
+  - issues:
+      - title: '/config/i'
+      - body: '/config/i'
+
+# Type labels
+type:bug:
+  - issues:
+      - title: '/type:bug/i'
+      - body: '/type:bug/i'
+type:feature:
+  - issues:
+      - title: '/type:feature/i'
+      - body: '/type:feature/i'
+type:chore:
+  - issues:
+      - title: '/type:chore/i'
+      - body: '/type:chore/i'
+type:refactor:
+  - issues:
+      - title: '/type:refactor/i'
+      - body: '/type:refactor/i'
+type:docs:
+  - changed-files:
+      - any-glob-to-any-file: 'docs/**'
+      - any-glob-to-any-file: '**/*.md'
+  - issues:
+      - title: '/type:docs|docs?/i'
+      - body: '/type:docs|docs?/i'
+
+# Priority labels
+priority:high:
+  - issues:
+      - title: '/priority:high/i'
+      - body: '/priority:high/i'
+priority:medium:
+  - issues:
+      - title: '/priority:medium/i'
+      - body: '/priority:medium/i'
+priority:low:
+  - issues:
+      - title: '/priority:low/i'
+      - body: '/priority:low/i'
+
+# Status labels
+status:needs-triage:
+  - issues:
+      - title: '/status:needs-triage/i'
+      - body: '/status:needs-triage/i'
+status:blocked:
+  - issues:
+      - title: '/status:blocked/i'
+      - body: '/status:blocked/i'
+
+# Other labels
+good first issue:
+  - issues:
+      - title: '/good first issue/i'
+      - body: '/good first issue/i'
+help wanted:
+  - issues:
+      - title: '/help wanted/i'
+      - body: '/help wanted/i'
+discussion:
+  - issues:
+      - title: '/discussion/i'
+      - body: '/discussion/i'
+wontfix:
+  - issues:
+      - title: '/wontfix/i'
+      - body: '/wontfix/i'
