@@ -1,4 +1,4 @@
-name: tests
+name: checks
 
 on:
     pull_request:
@@ -9,7 +9,7 @@ concurrency:
     cancel-in-progress: true
 
 jobs:
-    verify:
+    run-checks:
         runs-on: ubuntu-latest
         steps:
             - name: Checkout repository

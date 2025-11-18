@@ -2,7 +2,7 @@ name: publish-n-release
 
 on:
     workflow_run:
-        workflows: ['tests']
+        workflows: ['checks']
         types: [completed]
         branches:
             - main
