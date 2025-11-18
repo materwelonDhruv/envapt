@@ -12,17 +12,32 @@ jobs:
     verify:
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v4
+            - name: Checkout repository
+              uses: actions/checkout@v5
               with:
                   fetch-depth: 0
-            - uses: pnpm/action-setup@v4
-            - uses: actions/setup-node@v4
+            - name: Turbo cache
+              uses: ./.github/actions/turbo-cache
+              with:
+                  turbo_token: ${{ secrets.TURBO_TOKEN }}
+                  turbo_team: ${{ vars.TURBO_TEAM }}
+                  enable_fallback_cache: 'true'
+            - name: Setup pnpm
+              uses: pnpm/action-setup@v4
+            - name: Setup Node.js
+              uses: actions/setup-node@v6
               with:
                   node-version: 24
                   cache: pnpm
-            - run: pnpm install --frozen-lockfile
-            - run: pnpm lint
-            - run: pnpm tc
-            - run: pnpm test
-            - run: pnpm audit --audit-level=high
-            - run: pnpm build
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+            - name: Run lint
+              run: pnpm lint
+            - name: Run type check
+              run: pnpm tc
+            - name: Run tests
+              run: pnpm test
+            - name: Run audit
+              run: pnpm audit --audit-level=high
+            - name: Build project
+              run: pnpm build

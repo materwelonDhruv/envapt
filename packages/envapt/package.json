@@ -1,0 +1,73 @@
+{
+    "name": "envapt",
+    "type": "module",
+    "version": "4.1.0",
+    "description": "The apt way to handle env",
+    "main": "./dist/index.cjs",
+    "module": "./dist/index.mjs",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.mjs",
+            "require": "./dist/index.cjs",
+            "default": "./dist/index.mjs"
+        }
+    },
+    "files": [
+        "dist",
+        "NOTICE.md",
+        "LICENSE",
+        "README.md"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/materwelonDhruv/envapt.git"
+    },
+    "homepage": "https://github.com/materwelonDhruv/envapt/blob/main/README.md",
+    "scripts": {
+        "clean": "rm -rf dist",
+        "build": "tsup",
+        "dev": "tsc --watch",
+        "lint": "eslint '{src,tests,scripts}/**/*.{ts,tsx}' --cache",
+        "lint:fix": "eslint '{src,tests,scripts}/**/*.{ts,tsx}' --fix --cache",
+        "fmt": "prettier --write '{src,tests,scripts}/**/*.{ts,tsx,json,md}' --cache",
+        "fmt:check": "prettier --check '{src,tests,scripts}/**/*.{ts,tsx,json,md}' --cache",
+        "fmt:all": "prettier --write .",
+        "tc": "tsc --noEmit",
+        "test": "vitest run",
+        "test:watch": "vitest dev",
+        "coverage": "pnpm run test --coverage",
+        "cs": "changeset",
+        "cs:publish": "changeset publish",
+        "cs:status": "changeset status",
+        "bump": "pnpm cs version && pnpm tsx scripts/bump-jsr.ts",
+        "release": "pnpm run cs:publish",
+        "prepare": "husky",
+        "prepublishOnly": "pnpm run clean && pnpm run build"
+    },
+    "keywords": [
+        "env",
+        ".env",
+        "dotenv",
+        "environment",
+        "variables",
+        "config",
+        "configuration",
+        "settings"
+    ],
+    "author": "Dhruv <materwelondhruv@gmail.com>",
+    "license": "Apache-2.0",
+    "dependencies": {
+        "dotenv": "^17.2.3"
+    },
+    "engines": {
+        "node": ">=24.0.0",
+        "bun": ">=1.3.0",
+        "deno": ">=2.5.0"
+    },
+    "publishConfig": {
+        "access": "public",
+        "provenance": true
+    }
+}

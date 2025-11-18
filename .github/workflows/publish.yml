@@ -17,18 +17,22 @@ jobs:
         if: ${{ github.event.workflow_run.conclusion == 'success' }}
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v4
+            - name: Checkout repository
+              uses: actions/checkout@v5
               with:
                   fetch-depth: 0
-            - uses: pnpm/action-setup@v4
-            - run: pnpm install --frozen-lockfile
-            - run: pnpm publish --dry-run
+            - name: Setup pnpm
+              uses: pnpm/action-setup@v4
+            - name: Setup Node.js
+              run: pnpm install --frozen-lockfile
+            - name: Publish package (dry run)
+              run: pnpm publish --dry-run --no-git-checks
 
     dry-run-jsr:
         if: ${{ github.event.workflow_run.conclusion == 'success' }}
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@v5
               with:
                   fetch-depth: 0
 
@@ -49,28 +53,42 @@ jobs:
             pull-requests: write
             actions: write
         steps:
-            - uses: actions/checkout@v4
+            - name: Checkout repository
+              uses: actions/checkout@v5
               with:
                   fetch-depth: 0
+            - name: Turbo cache
+              uses: ./.github/actions/turbo-cache
+              with:
+                  turbo_token: ${{ secrets.TURBO_TOKEN }}
+                  turbo_team: ${{ vars.TURBO_TEAM }}
+                  enable_fallback_cache: 'true'
 
-            - uses: pnpm/action-setup@v4
+            - name: Setup pnpm
+              uses: pnpm/action-setup@v4
 
-            - uses: actions/setup-node@v4
+            - name: Setup Node.js
+              uses: actions/setup-node@v6
               with:
                   node-version: 24
                   cache: pnpm
                   registry-url: https://registry.npmjs.org
 
-            - run: npm i -g npm@latest
-            - run: node -v && npm -v
-            - run: npm config get registry && npm ping
-            - run: pnpm install --frozen-lockfile
+            - name: Update npm to latest
+              run: npm i -g npm@latest
+            - name: Check Node.js and npm versions
+              run: node -v && npm -v
+            - name: Check npm registry and ping
+              run: npm config get registry && npm ping
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
 
             - name: Determine release metadata
               id: release_meta
               uses: ./.github/actions/release-metadata
 
-            - run: pnpm run prepublishOnly
+            - name: Run prepublishOnly script
+              run: pnpm run prepublishOnly
 
             - name: Run changesets
               id: changesets
@@ -101,13 +119,18 @@ jobs:
             contents: read
             id-token: write
         steps:
-            - uses: actions/checkout@v4
+            - name: Checkout repository
+              uses: actions/checkout@v5
               with:
                   fetch-depth: 0
-            - uses: pnpm/action-setup@v4
-            - run: pnpm install --frozen-lockfile
-            - uses: denoland/setup-deno@v2
+            - name: Setup pnpm
+              uses: pnpm/action-setup@v4
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+            - name: Setup Deno
+              uses: denoland/setup-deno@v2
               with:
                   deno-version: v2.x
                   cache: true
-            - run: deno publish --no-check
+            - name: Publish to Deno
+              run: deno publish --no-check

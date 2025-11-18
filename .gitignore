@@ -69,3 +69,6 @@ Thumbs.db
 **/*.*proj.user
 **/*.dbmdl
 **/*.jfm
+
+# Turborepo
+.turbo
