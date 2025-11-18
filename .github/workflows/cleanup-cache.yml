@@ -1,4 +1,4 @@
-name: Cleanup caches
+name: cleanup-cache
 
 on:
     pull_request:

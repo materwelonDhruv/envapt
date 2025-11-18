@@ -1,4 +1,4 @@
-name: Repository labeler
+name: repo-labeler
 
 on:
     pull_request_target:

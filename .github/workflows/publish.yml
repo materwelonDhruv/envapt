@@ -110,7 +110,7 @@ jobs:
               uses: ./.github/actions/sync-deno
               with:
                   release_branch: changeset-release/${{ github.event.workflow_run.head_branch }}
-                  workflow_file: sync-deno.yml
+                  workflow_file: sync-deno-version.yml
               env:
                   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

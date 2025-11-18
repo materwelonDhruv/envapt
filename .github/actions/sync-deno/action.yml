@@ -8,7 +8,7 @@ inputs:
     workflow_file:
         description: Workflow file name or name to dispatch
         required: false
-        default: sync-deno.yml
+        default: sync-deno-version.yml
 
 runs:
     using: composite
