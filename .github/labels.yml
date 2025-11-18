@@ -66,3 +66,9 @@
 - name: wontfix
   color: 6c757d
   description: Issue will not be addressed
+- name: invalid
+  color: dc3545
+  description: Issue is not valid
+- name: duplicate
+  color: ffc107
+  description: Issue is a duplicate of another
