@@ -9,10 +9,11 @@
         "dev": "turbo dev",
         "lint": "turbo lint",
         "lint:fix": "turbo lint:fix",
-        "format": "turbo format",
-        "format:check": "turbo format:check",
+        "fmt": "turbo fmt",
+        "fmt:check": "turbo fmt:check",
         "tc": "turbo tc",
         "test": "turbo test",
+        "coverage": "turbo coverage",
         "lint-staged": "lint-staged",
         "clean": "turbo clean",
         "clean:node": "find . -name node_modules -type d -prune -exec rm -rf '{}' +",
@@ -52,6 +53,11 @@
         "turbo": "^2.6.1",
         "typescript": "^5.9.3",
         "vitest": "^4.0.9"
+    },
+    "pnpm": {
+        "overrides": {
+            "glob": "11.1.0"
+        }
     },
     "packageManager": "pnpm@10.22.0"
 }
