@@ -1,0 +1,68 @@
+# Packages
+- name: pkg:envapt
+  color: ff6b6b
+  description: Changes related to the envapt package
+
+# Area labels
+- name: area:docs
+  color: 28a745
+  description: Documentation updates
+- name: area:tests
+  color: ffc107
+  description: Test updates
+- name: area:ci
+  color: 007bff
+  description: Continuous integration and automation changes
+- name: area:config
+  color: 6c757d
+  description: Repository configuration updates
+
+# Type labels
+- name: type:bug
+  color: dc3545
+  description: Bug fix
+- name: type:feature
+  color: 17a2b8
+  description: New feature or enhancement
+- name: type:chore
+  color: ffc107
+  description: Maintenance tasks
+- name: type:refactor
+  color: 6c757d
+  description: Refactoring work
+- name: type:docs
+  color: 28a745
+  description: Documentation only changes
+
+# Priority labels
+- name: priority:high
+  color: dc3545
+  description: Needs urgent attention
+- name: priority:medium
+  color: fd7e14
+  description: Address in the near future
+- name: priority:low
+  color: ffc107
+  description: Nice to have changes
+
+# Status labels
+- name: status:needs-triage
+  color: 6f42c1
+  description: Awaiting triage
+- name: status:blocked
+  color: dc3545
+  description: Blocked by another task or dependency
+
+# Other labels
+- name: good first issue
+  color: 28a745
+  description: Great for newcomers to the project
+- name: help wanted
+  color: 17a2b8
+  description: Additional help is needed
+- name: discussion
+  color: 6f42c1
+  description: Requires further discussion
+- name: wontfix
+  color: 6c757d
+  description: Issue will not be addressed
