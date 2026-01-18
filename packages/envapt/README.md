@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="/.github/assets/banner.png" alt="Envapt – The apt way to handle environment variables" width="100%" />
+    <img src="https://raw.githubusercontent.com/materwelonDhruv/envapt/main/.github/assets/banner.png" alt="Envapt – The apt way to handle environment variables" width="100%" />
 </p>
 
 <p align="center">
@@ -10,7 +10,7 @@
 <div align="center">
   <a href="https://www.npmjs.com/package/envapt"><img alt="npm" src="https://img.shields.io/npm/v/envapt?logo=npm&logoColor=cb3838&label=%20&labelColor=103544&color=cb3838"></a>
   <a href="https://jsr.io/@materwelon/envapt"><img alt="jsr" src="https://jsr.io/badges/@materwelon/envapt"></a>
-  <img alt="CI" src="https://img.shields.io/github/actions/workflow/status/materwelonDhruv/envapt/check.yml?branch=main&label=tests&style=flat&logo=github&color=3fb950&labelColor=103544"></a>
+  <img alt="CI" src="https://img.shields.io/github/actions/workflow/status/materwelonDhruv/envapt/checks.yml?branch=main&label=tests&style=flat&logo=github&color=3fb950&labelColor=103544"></a>
   <a href="https://codecov.io/github/materwelonDhruv/envapt"><img alt="codecov" src="https://img.shields.io/codecov/c/github/materwelonDhruv/envapt/main?token=IQ4GC645LO&logo=codecov&color=f01f7a&labelColor=103544"/></a>
   <br>
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/npm/l/envapt?style=flat&color=e97826&logo=apache&label="></a>
@@ -19,7 +19,7 @@
   <a href="https://nodejs.org/api/modules.html"><img alt="CJS" src="https://img.shields.io/badge/CJS-ff6b35?style=flat"></a>
   <a href="https://nodejs.org/"><img alt="Node" src="https://img.shields.io/badge/node-%3E=22.0.0-339933?style=flat&logo=node.js&logoColor=white"></a>
   <a href="https://bundlephobia.com/package/envapt"><img alt="Bundle Size" src="https://img.shields.io/bundlephobia/minzip/envapt?style=flat&color=212121"></a>
-  <a href="https://www.npmjs.com/package/envapt"><img alt="Downloads" src="https://img.shields.io/npm/dm/envapt?style=flat&color=f7f6e8"></a>
+    <a href="https://www.npmjs.com/package/envapt"><img alt="Downloads (total)" src="https://img.shields.io/npm/dt/envapt?style=flat&color=f7f6e8"></a>
   <a href="https://github.com/materwelonDhruv/envapt/stargazers"><img alt="GitHub Stars" src="https://img.shields.io/github/stars/materwelondhruv/envapt?style=flat&color=e3b341"></a>
 </div>
 
