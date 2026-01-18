@@ -30,34 +30,30 @@
         "prepublishOnly": "pnpm run clean && pnpm run build",
         "bump:deps:pkgs": "for dir in packages/*/; do echo \"Updating $dir...\"; (cd \"$dir\" && pnpm update --latest); done",
         "bump:deps:apps": "for dir in apps/*/; do echo \"Updating $dir...\"; (cd \"$dir\" && pnpm update --latest); done",
-        "bump:deps": "pnpm run bump:deps:pkgs && pnpm run bump:deps:apps"
+        "bump:deps:root": "pnpm update --latest",
+        "bump:deps": "pnpm run bump:deps:pkgs && pnpm run bump:deps:apps && pnpm run bump:deps:root"
     },
     "devDependencies": {
-        "@changesets/cli": "^2.29.7",
-        "@commitlint/cli": "^20.1.0",
-        "@commitlint/config-conventional": "^20.0.0",
-        "@seedcord/eslint-config": "^1.3.1",
-        "@seedcord/tsconfig": "^1.1.0",
-        "@seedcord/tsup-config": "^1.1.0",
-        "@swc/core": "^1.15.2",
+        "@changesets/cli": "^2.29.8",
+        "@commitlint/cli": "^20.3.1",
+        "@commitlint/config-conventional": "^20.3.1",
+        "@seedcord/eslint-config": "^1.3.3",
+        "@seedcord/tsconfig": "^1.1.2",
+        "@seedcord/tsup-config": "^1.1.2",
+        "@swc/core": "^1.15.8",
         "@types/chai": "^5.2.3",
-        "@types/node": "^24.10.1",
-        "@vitest/coverage-v8": "^4.0.9",
-        "chai": "^6.2.1",
-        "eslint": "^9.39.1",
+        "@types/node": "^25.0.9",
+        "@vitest/coverage-v8": "^4.0.17",
+        "chai": "^6.2.2",
+        "eslint": "^9.39.2",
         "husky": "^9.1.7",
-        "lint-staged": "^16.2.6",
-        "prettier": "^3.6.2",
+        "lint-staged": "^16.2.7",
+        "prettier": "^3.8.0",
         "tsup": "^8.5.1",
-        "tsx": "^4.20.6",
-        "turbo": "^2.6.1",
+        "tsx": "^4.21.0",
+        "turbo": "^2.7.5",
         "typescript": "^5.9.3",
-        "vitest": "^4.0.9"
+        "vitest": "^4.0.17"
     },
-    "pnpm": {
-        "overrides": {
-            "glob": "11.1.0"
-        }
-    },
-    "packageManager": "pnpm@10.22.0"
+    "packageManager": "pnpm@10.28.0"
 }
