@@ -1,0 +1,65 @@
+name: Publish Deno packages (manual)
+
+on:
+    workflow_dispatch:
+        inputs:
+            package:
+                description: 'Single package folder name under `packages/` to publish (optional)'
+                required: false
+                default: ''
+            dry-run:
+                description: 'Perform a dry run (true/false)'
+                required: false
+                default: 'false'
+
+permissions:
+    contents: read
+    id-token: write
+
+jobs:
+    publish-jsr-only:
+        name: Publish to JSR (Deno) only
+        needs: determine_search_root
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v5
+              with:
+                  fetch-depth: 0
+
+            - name: Setup pnpm
+              uses: pnpm/action-setup@v4
+
+            - name: Install dependencies (hoisted node_modules for Deno)
+              run: pnpm install --frozen-lockfile --shamefully-hoist
+
+            - name: Setup Deno
+              uses: denoland/setup-deno@v2
+              with:
+                  deno-version: v2.x
+                  cache: true
+
+            - name: Run Deno publish action
+              uses: ./.github/actions/deno-publish-all
+              with:
+                  search-root: ${{ needs.determine_search_root.outputs.search_root }}
+                  dry-run: ${{ github.event.inputs.dry-run }}
+
+            - name: Done
+              run: echo "Deno publish job finished"
+
+    determine_search_root:
+        name: Determine search root
+        runs-on: ubuntu-latest
+        steps:
+            - name: Set search root
+              id: set_root
+              run: |
+                  pkg="${{ github.event.inputs.package }}"
+                  if [ -n "$pkg" ]; then
+                    echo "search_root=packages/$pkg" >> $GITHUB_OUTPUT
+                  else
+                    echo "search_root=packages" >> $GITHUB_OUTPUT
+                  fi
+        outputs:
+            search_root: ${{ steps.set_root.outputs.search_root }}

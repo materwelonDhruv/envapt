@@ -42,7 +42,7 @@
         "cs": "changeset",
         "cs:publish": "changeset publish",
         "cs:status": "changeset status",
-        "bump": "pnpm cs version && pnpm tsx scripts/bump-jsr.ts",
+        "bump": "pnpm tsx ../../scripts/bump-jsr.ts",
         "release": "pnpm run cs:publish",
         "prepare": "husky",
         "prepublishOnly": "pnpm run clean && pnpm run build"
