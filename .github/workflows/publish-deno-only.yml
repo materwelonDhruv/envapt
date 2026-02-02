@@ -36,7 +36,7 @@ jobs:
             - name: Setup Deno
               uses: denoland/setup-deno@v2
               with:
-                  deno-version: 2.6.5
+                  deno-version: 2.6.8
                   cache: true
 
             - name: Run Deno publish action

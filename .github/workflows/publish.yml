@@ -40,7 +40,7 @@ jobs:
             - run: pnpm install --frozen-lockfile
             - uses: denoland/setup-deno@v2
               with:
-                  deno-version: 2.6.5
+                  deno-version: 2.6.8
             - name: Deno publish dry run
               uses: ./.github/actions/deno-publish-all
               with:
@@ -134,7 +134,7 @@ jobs:
             - name: Setup Deno
               uses: denoland/setup-deno@v2
               with:
-                  deno-version: 2.6.5
+                  deno-version: 2.6.8
                   cache: true
             - name: Publish to JSR
               uses: ./.github/actions/deno-publish-all
