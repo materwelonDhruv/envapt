@@ -5,7 +5,7 @@ packages:
 catalogs:
     dev:
         prettier: 3.6.2
-        eslint: 9.39.1
+        eslint: 10.4.0
         typescript: 5.9.3
 
 onlyBuiltDependencies:
