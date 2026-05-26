@@ -234,7 +234,7 @@ export class Validator {
     }
 
     /**
-     * Check if each provided path resolves to an env file by trying to access it
+     * Check if each provided path points to an accessible env file
      */
     static validateEnvFilesExist(paths: string[]): void {
         const missing = paths.filter((p) => {

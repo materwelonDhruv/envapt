@@ -54,7 +54,7 @@ function createPropertyDecorator<TFallback>(
 /**
  * Usage 1: Custom converter function with fallback provided
  *
- * @param key - Environment variable name to load (string or ordered array of strings)
+ * @param key - Environment variable name(s) to load
  * @param options - Configuration options with custom converter and required fallback
  * @public
  * @example
@@ -206,6 +206,7 @@ export function Envapt<TFallback>(
  * Classic API: No fallback
  *
  * @param key - Environment variable name(s) to load
+ * @public
  * @example
  * ```ts
  * // Classic API: no fallback — property will resolve from env or be null

@@ -41,7 +41,7 @@ export enum EnvaptErrorCodes {
  *
  * @example
  * ```ts
- * throw new EnvaptError(EnvaptErrorCode.InvalidFallback, "Invalid fallback value provided for environment variable.");
+ * throw new EnvaptError(EnvaptErrorCodes.InvalidFallback, "Invalid fallback value provided for environment variable.");
  * ```
  */
 export class EnvaptError extends Error {

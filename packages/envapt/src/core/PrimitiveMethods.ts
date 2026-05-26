@@ -93,7 +93,7 @@ export class PrimitiveMethods extends EnvironmentMethods implements EnvapterServ
 
     /**
      * Get a boolean environment variable with optional fallback.
-     * Recognizes: `1`, `yes`, `true`, 'on' as **true**; `0`, `no`, `false`, 'off' as **false** (case-insensitive).
+     * Recognizes: `1`, `yes`, `true`, `on` as **true**; `0`, `no`, `false`, `off` as **false** (case-insensitive).
      * Accepts a single key or an ordered array of keys (first match wins).
      */
     static getBoolean<Default extends boolean | undefined = undefined>(
