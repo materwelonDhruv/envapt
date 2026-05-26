@@ -124,7 +124,17 @@ export class Parser {
 
         const parsed = this.envService.get(key, undefined);
 
-        if (parsed === undefined) return hasFallback ? fallback : null;
+        if (parsed === undefined) {
+            if (!hasFallback) return null;
+            // For converters with asymmetric fallback / return types — currently only `time`,
+            // whose fallback may be a string while the return type is `number` — route the
+            // fallback through the converter so it gets coerced to the return type.
+            if (resolvedConverter === 'time' && typeof fallback === 'string') {
+                const timeFn = BuiltInConverters.getConverter(resolvedConverter);
+                return timeFn('', fallback) as TFallback;
+            }
+            return fallback;
+        }
 
         const converterFn = BuiltInConverters.getConverter(resolvedConverter);
         const result = converterFn(parsed, fallback);

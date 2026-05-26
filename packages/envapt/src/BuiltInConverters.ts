@@ -1,13 +1,61 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 
+import { EnvaptError, EnvaptErrorCodes } from './Error';
+
 import type {
     ArrayConverter,
     BuiltInConverter,
     BuiltInConverterFunction,
     JsonValue,
     MapOfConverterFunctions,
+    TimeFallback,
     TimeUnit
 } from './Types';
+
+const MS_PER_SECOND = 1000;
+const SECONDS_PER_MINUTE = 60;
+const MINUTES_PER_HOUR = 60;
+const HOURS_PER_DAY = 24;
+const DAYS_PER_WEEK = 7;
+const MS_PER_MINUTE = SECONDS_PER_MINUTE * MS_PER_SECOND;
+const MS_PER_HOUR = MINUTES_PER_HOUR * MS_PER_MINUTE;
+const MS_PER_DAY = HOURS_PER_DAY * MS_PER_HOUR;
+const MS_PER_WEEK = DAYS_PER_WEEK * MS_PER_DAY;
+
+const TIME_UNIT_MS: Record<TimeUnit, number> = {
+    ms: 1,
+    s: MS_PER_SECOND,
+    m: MS_PER_MINUTE,
+    h: MS_PER_HOUR,
+    d: MS_PER_DAY,
+    w: MS_PER_WEEK
+};
+
+const TIME_LOOSE_RE = new RegExp(String.raw`^(\d+(?:\.\d+)?)(ms|s|m|h|d|w)?$`, 'u');
+const TIME_STRICT_RE = new RegExp(String.raw`^(\d+)(ms|s|m|h|d|w)$`, 'u');
+
+/**
+ * Parse a time string (e.g. `"30s"`, `"1.5h"`) into milliseconds.
+ *
+ * @param input - The string to parse.
+ * @param strict - When `true`, require an explicit unit and disallow decimals (used for fallback strings).
+ *                 When `false` (default), allow decimals and treat missing unit as `ms` (used for raw env values).
+ * @returns The duration in milliseconds, or `undefined` if the input does not match the expected format.
+ * @internal
+ */
+function parseTimeString(input: string, strict = false): number | undefined {
+    const match = input.match(strict ? TIME_STRICT_RE : TIME_LOOSE_RE);
+    if (!match) return undefined;
+
+    const [, numStr, capturedUnit] = match;
+    if (!numStr) return undefined;
+
+    const value = Number.parseFloat(numStr);
+    if (Number.isNaN(value)) return undefined;
+
+    const unit = (capturedUnit ?? 'ms') as TimeUnit;
+    return value * TIME_UNIT_MS[unit];
+}
 
 /**
  * Built-in converter implementations
@@ -113,28 +161,24 @@ export class BuiltInConverters {
         return Number.isNaN(parsed.getTime()) ? fallback : parsed;
     }
 
-    static time(raw: string, fallback?: number): number | undefined {
-        const match = raw.match(new RegExp(String.raw`^(\d+(?:\.\d+)?)(ms|s|m|h)?$`, 'u'));
-        if (!match) return fallback;
+    static time(raw: string, fallback?: TimeFallback): number | undefined {
+        const parsedRaw = parseTimeString(raw);
+        if (parsedRaw !== undefined) return parsedRaw;
 
-        const [, numStr, capturedUnit] = match;
-        if (!numStr) return fallback;
-
-        const value = Number.parseFloat(numStr);
-        if (Number.isNaN(value)) return fallback;
-
-        const unit: TimeUnit = (capturedUnit ?? 'ms') as TimeUnit;
-
-        const SECONDS_TO_MS = 1000;
-        const SECONDS_PER_MINUTE = 60;
-        const MINUTES_PER_HOUR = 60;
-        const MINUTES_TO_MS = SECONDS_PER_MINUTE * SECONDS_TO_MS;
-        const HOURS_TO_MS = MINUTES_PER_HOUR * MINUTES_TO_MS;
-
-        if (unit === 'ms') return value;
-        if (unit === 's') return value * SECONDS_TO_MS;
-        if (unit === 'm') return value * MINUTES_TO_MS;
-        return value * HOURS_TO_MS;
+        // Raw didn't parse so apply fallback
+        if (typeof fallback === 'number') return fallback;
+        if (typeof fallback === 'string') {
+            // String fallback is held to the stricter format: explicit unit, integer value.
+            const parsedFallback = parseTimeString(fallback, true);
+            if (parsedFallback === undefined) {
+                throw new EnvaptError(
+                    EnvaptErrorCodes.MalformedTimeFallback,
+                    `Time-string fallback "${fallback}" is not a valid format. Expected <integer><unit> where unit is one of: ms, s, m, h, d, w.`
+                );
+            }
+            return parsedFallback;
+        }
+        return undefined;
     }
 
     /**

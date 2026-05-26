@@ -45,5 +45,5 @@ export const BuiltInConverterTypeCheckers: Record<ConverterValue, (value: unknow
     url: (value: unknown): value is URL => value instanceof URL,
     regexp: (value: unknown): value is RegExp => value instanceof RegExp,
     date: (value: unknown): value is Date => value instanceof Date,
-    time: (value: unknown): value is number => typeof value === 'number'
+    time: (value: unknown): value is number | string => typeof value === 'number' || typeof value === 'string'
 };
