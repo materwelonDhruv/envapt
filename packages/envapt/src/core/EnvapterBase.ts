@@ -20,17 +20,22 @@ export const EnvaptCache = new Map<string, unknown>();
  */
 export abstract class EnvapterBase {
     protected static _envPaths: string[] = ['.env']; // default path
+    protected static _envPathsExplicitlySet = false;
     protected static _userDefinedDotenvConfig: PermittedDotenvConfig = { quiet: true };
 
     /**
      * Set custom .env file paths. Accepts either a single path or array of paths.
      * Setting new paths clears the cache and reloads environment variables.
+     *
+     * When set, this takes absolute precedence. The dotenv-flow auto-cascade and any
+     * {@link configureProfiles} configuration are ignored.
      */
     static set envPaths(paths: string[] | string) {
         const newPaths = Array.isArray(paths) ? paths : [paths];
         Validator.validateEnvFilesExist(newPaths);
 
         this._envPaths = newPaths;
+        this._envPathsExplicitlySet = true;
         this.refreshCache();
     }
 
@@ -60,6 +65,18 @@ export abstract class EnvapterBase {
     protected static refreshCache(): void {
         EnvaptCache.clear();
         void this.config; // reload config to repopulate cache
+    }
+
+    /**
+     * Resolve the effective `.env` paths to load. Default implementation just returns the
+     * explicit `_envPaths` array; subclasses (`EnvironmentMethods`) override to layer in the
+     * dotenv-flow cascade and any {@link configureProfiles} overrides when `envPaths` was
+     * never explicitly set.
+     * @internal
+     */
+    protected static resolveEffectivePaths(): string[] {
+        /* v8 ignore next -- @preserve */
+        return this._envPaths;
     }
 
     protected static resolveKeyInput(keyInput: EnvKeyInput): { key: string; value: string | undefined } {
@@ -93,9 +110,16 @@ export abstract class EnvapterBase {
             // create isolated environment object to avoid mutating process.env
             const isolatedEnv: Record<string, string> = { ...(process.env as Record<string, string>) };
 
+            // Path resolution (outside the try below). Surfaces EnvaptError early when an
+            // explicitly configured profile path is missing. dotenv parse errors stay caught.
+            const effectivePaths = this.resolveEffectivePaths();
+
             try {
-                // load _envPath file from custom path into isolated environment object
-                config({ path: this._envPaths, processEnv: isolatedEnv, ...this._userDefinedDotenvConfig });
+                config({
+                    path: effectivePaths,
+                    processEnv: isolatedEnv,
+                    ...this._userDefinedDotenvConfig
+                });
             } catch {}
             // populate the Map with global environment variables
             for (const [key, value] of Object.entries(isolatedEnv)) EnvaptCache.set(key, value);
