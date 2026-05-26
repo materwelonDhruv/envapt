@@ -1,12 +1,14 @@
 import { PrimitiveMethods } from './PrimitiveMethods';
 
+import type { Converters } from '../Converters';
 import type {
     AdvancedConverterReturn,
     ArrayConverter,
     BuiltInConverter,
     ConditionalReturn,
     ConverterFunction,
-    EnvKeyInput
+    EnvKeyInput,
+    TimeFallback
 } from '../Types';
 
 /**
@@ -16,9 +18,16 @@ import type {
 export class AdvancedMethods extends PrimitiveMethods {
     /**
      * Get an environment variable using a built-in converter.
-     * Supports both Converter enum values and array converter configurations.
+     * Supports both `Converters` enum values and array converter configurations.
      * The key can be a single name or an ordered list; the first defined value wins.
      */
+    // Time-specific overload — constrains the fallback to TimeFallback (number | time-string).
+    // Must precede the generic BuiltInConverter overload so it wins overload resolution.
+    static getUsing<TFallback extends TimeFallback | undefined = undefined>(
+        key: EnvKeyInput,
+        converter: Converters.Time | 'time',
+        fallback?: TFallback
+    ): ConditionalReturn<number, TFallback>;
     static getUsing<TConverter extends BuiltInConverter | ArrayConverter, TFallback = undefined>(
         key: EnvKeyInput,
         converter: TConverter,
@@ -47,6 +56,11 @@ export class AdvancedMethods extends PrimitiveMethods {
     /**
      * @see {@link AdvancedMethods.getUsing}
      */
+    getUsing<TFallback extends TimeFallback | undefined = undefined>(
+        key: EnvKeyInput,
+        converter: Converters.Time | 'time',
+        fallback?: TFallback
+    ): ConditionalReturn<number, TFallback>;
     getUsing<TConverter extends BuiltInConverter | ArrayConverter, TFallback = undefined>(
         key: EnvKeyInput,
         converter: TConverter,

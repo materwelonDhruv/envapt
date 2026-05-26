@@ -9,6 +9,8 @@ export enum EnvaptErrorCodes {
     ArrayFallbackElementTypeMismatch = 103,
     /** Thrown when fallback type doesn't match the specified converter */
     FallbackConverterTypeMismatch = 104,
+    /** Thrown when a time-string fallback is malformed (does not match the required `<integer><unit>` format) */
+    MalformedTimeFallback = 105,
 
     // Converter related errors
     /** Thrown when invalid array converter configuration is provided */

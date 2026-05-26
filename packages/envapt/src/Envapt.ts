@@ -9,7 +9,7 @@ import type {
     EnvKeyInput,
     EnvaptConverter,
     EnvaptOptions,
-    InferConverterReturnType,
+    InferConverterFallbackType,
     InferPrimitiveFallbackType,
     InferPrimitiveReturnType,
     PrimitiveConstructor
@@ -101,10 +101,10 @@ export function Envapt<TReturnType>(
 ): PropertyDecorator;
 
 /**
- * Usage 3: Built-in converter with optional fallback
+ * Usage 3: Built-in or array converter with optional fallback
  *
  * @param key - Environment variable name(s) to load
- * @param options - Configuration options with built-in converter
+ * @param options - Configuration options with built-in or array converter
  * @public
  * @example
  * ```ts
@@ -122,33 +122,19 @@ export function Envapt<TReturnType>(
  *   // Prefer CANARY_URL when present, otherwise fall back to APP_URL
  *   \@Envapt(['CANARY_URL', 'APP_URL'], { converter: Converters.Url })
  *   static readonly canaryUrl: URL | null;
- * }
- * ```
- */
-export function Envapt<TConverter extends BuiltInConverter>(
-    key: EnvKeyInput,
-    options: { converter: TConverter; fallback?: InferConverterReturnType<TConverter> | undefined }
-): PropertyDecorator;
-
-/**
- * Usage 4: Array converter with optional fallback
  *
- * @param key - Environment variable name(s) to load
- * @param options - Configuration options with array converter
- * @public
- * @example
- * ```ts
- * import { Converters } from 'envapt';
+ *   // `Converters.Time` accepts either a number (milliseconds) or a time-string fallback (`<integer><unit>`).
+ *   \@Envapt('REQUEST_TIMEOUT', { converter: Converters.Time, fallback: '10s' })
+ *   static readonly requestTimeout: number;
  *
- * class Config extends Envapter {
- *   // Comma-separated list of origins -> string[]
+ *   // Array converter: comma-separated list of origins -> string[]
  *   \@Envapt('ALLOWED_ORIGINS', {
  *     converter: { delimiter: ',', type: Converters.String },
  *     fallback: ['https://example.com']
  *   })
  *   static readonly allowedOrigins: string[];
  *
- *   // Pipe-separated ports -> number[]
+ *   // Array converter: pipe-separated ports -> number[]
  *   \@Envapt('PORTS', {
  *     converter: { delimiter: '|', type: Converters.Number },
  *     fallback: [3000]
@@ -157,9 +143,13 @@ export function Envapt<TConverter extends BuiltInConverter>(
  * }
  * ```
  */
-export function Envapt<TConverter extends ArrayConverter>(
+// `InferConverterFallbackType` handles the asymmetric `Converters.Time` case
+// (fallback may be a number OR a time-string); for every other converter it
+// reduces to `InferConverterReturnType`, so array-converter fallbacks behave
+// unchanged.
+export function Envapt<TConverter extends BuiltInConverter | ArrayConverter>(
     key: EnvKeyInput,
-    options: { converter: TConverter; fallback?: InferConverterReturnType<TConverter> | undefined }
+    options: { converter: TConverter; fallback?: InferConverterFallbackType<TConverter> | undefined }
 ): PropertyDecorator;
 
 /**

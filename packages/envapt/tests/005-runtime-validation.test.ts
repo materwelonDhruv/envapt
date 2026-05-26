@@ -278,10 +278,10 @@ describe('Runtime Validation', () => {
                 .with.property('code', EnvaptErrorCodes.FallbackConverterTypeMismatch);
         });
 
-        it('should throw when time converter has non-number fallback', () => {
+        it('should throw MalformedTimeFallback when time converter has a malformed string fallback', () => {
             expect(() => FallbackTypeValidationTests.timeWithStringFallback)
                 .to.throw(EnvaptError)
-                .with.property('code', EnvaptErrorCodes.FallbackConverterTypeMismatch);
+                .with.property('code', EnvaptErrorCodes.MalformedTimeFallback);
         });
 
         it('should throw when JSON converter has non-JSON fallback', () => {

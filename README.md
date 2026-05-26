@@ -434,7 +434,7 @@ class Config extends Envapter {
 | `Converters.Url`     | `'url'`     | URL objects                                                          |
 | `Converters.Regexp`  | `'regexp'`  | Regular expressions (supports `/pattern/flags` syntax)               |
 | `Converters.Date`    | `'date'`    | Date objects (supports ISO strings and timestamps)                   |
-| `Converters.Time`    | `'time'`    | Time values (e.g. `"5s"`, `"30m"`, `"2h"` converted to milliseconds) |
+| `Converters.Time`    | `'time'`    | Time values (e.g. `"5s"`, `"30m"`, `"2h"`, `"1d"`, `"1w"` → milliseconds). The fallback also accepts a time-string in addition to a number — `fallback: '10s'` is equivalent to `fallback: 10000`. |
 
 #### Custom Array Converters
 
@@ -853,6 +853,7 @@ try {
 | `InvalidFallbackType` (102)              | Fallback value type doesn't match expected converter type |
 | `ArrayFallbackElementTypeMismatch` (103) | Array fallback contains elements of wrong type            |
 | `FallbackConverterTypeMismatch` (104)    | Fallback type doesn't match the specified converter       |
+| `MalformedTimeFallback` (105)            | Time-string fallback doesn't match the required `<integer><unit>` format (e.g. `'10s'`, `'5m'`) |
 
 #### 🧪 Converter Errors (2xx)
 
