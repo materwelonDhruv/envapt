@@ -1,4 +1,5 @@
 import type { Converters, ArrayElementConverter, ConverterValue, ArrayElementConverterValue } from './Converters';
+import type { Environment } from './core/EnvironmentMethods';
 import type { DotenvConfigOptions } from 'dotenv';
 
 /**
@@ -186,7 +187,7 @@ type InferConverterReturnType<TConverter extends BuiltInConverter | ArrayConvert
           : unknown[];
 
 /**
- * Type inference for the *fallback* slot of a converter — usually the same as the return type, but
+ * Type inference for the *fallback* slot of a converter. Usually the same as the return type, but
  * `Converters.Time` allows a time-string fallback ({@link TimeFallback}) in addition to `number`.
  * Add future converters with asymmetric fallback/return types to this conditional.
  * @internal
@@ -239,6 +240,30 @@ type InferPrimitiveFallbackType<TFallback extends string | number | boolean | bi
                 ? symbol
                 : undefined;
 
+/**
+ * Per-environment profile entry passed to {@link configureProfiles}.
+ * @public
+ */
+interface EnvProfile {
+    /** One or more `.env` paths to load for this environment. Order matters: earlier paths take precedence. */
+    paths: string | string[];
+}
+
+/**
+ * Configuration object for {@link configureProfiles}. Maps each `Environment` to an optional
+ * profile override. Unspecified environments fall through to the default cascade behavior
+ * (`.env.${env}.local`, `.env.local`, `.env.${env}`, `.env`).
+ * @public
+ */
+type ProfilesConfig = Partial<Record<Environment, EnvProfile>> & {
+    /**
+     * When `false`, disables the default dotenv-flow cascade entirely. Only the explicitly
+     * configured paths are loaded. Defaults to `true` (cascade still runs, configured paths
+     * are layered on top with higher precedence).
+     */
+    useDefaults?: boolean;
+};
+
 export type {
     PermittedDotenvConfig,
     BuiltInConverter,
@@ -248,6 +273,8 @@ export type {
     ConverterFunction,
     EnvaptConverter,
     EnvaptOptions,
+    EnvProfile,
+    ProfilesConfig,
     JsonValue,
     BuiltInConverterFunction,
     MapOfConverterFunctions,
