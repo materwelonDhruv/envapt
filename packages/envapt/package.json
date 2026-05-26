@@ -3,14 +3,11 @@
     "type": "module",
     "version": "4.1.1",
     "description": "The apt way to handle env",
-    "main": "./dist/index.cjs",
-    "module": "./dist/index.mjs",
-    "types": "./dist/index.d.ts",
+    "types": "./dist/index.d.mts",
     "exports": {
         ".": {
-            "types": "./dist/index.d.ts",
+            "types": "./dist/index.d.mts",
             "import": "./dist/index.mjs",
-            "require": "./dist/index.cjs",
             "default": "./dist/index.mjs"
         }
     },
@@ -28,7 +25,7 @@
     "homepage": "https://github.com/materwelonDhruv/envapt/blob/main/README.md",
     "scripts": {
         "clean": "rm -rf dist",
-        "build": "tsup",
+        "build": "tsdown",
         "dev": "tsc --watch",
         "lint": "eslint '{src,tests,scripts}/**/*.{ts,tsx}' --cache",
         "lint:fix": "eslint '{src,tests,scripts}/**/*.{ts,tsx}' --fix --cache",
@@ -60,7 +57,7 @@
     "author": "Dhruv <materwelondhruv@gmail.com>",
     "license": "Apache-2.0",
     "dependencies": {
-        "dotenv": "^17.2.3"
+        "dotenv": "^17.4.2"
     },
     "engines": {
         "node": ">=24.0.0",
