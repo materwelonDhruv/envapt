@@ -13,13 +13,16 @@
 
         // Git and AI assistance
         "eamodio.gitlens",
-        "github.copilot",
         "github.copilot-chat",
         "github.vscode-github-actions",
         "github.vscode-pull-request-github",
+        "Upstash.context7-mcp",
 
         // Project-specific tools
         "mikestead.dotenv",
+
+        // Development productivity
+        "gruntfuggly.todo-tree",
 
         // Testing
         "vitest.explorer"

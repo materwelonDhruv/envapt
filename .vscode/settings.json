@@ -6,6 +6,7 @@
     "files.insertFinalNewline": true,
     "files.trimFinalNewlines": true,
     "editor.codeActionsOnSave": {
+        "source.fixAll": "explicit",
         "source.fixAll.eslint": "explicit"
     },
 
@@ -16,19 +17,20 @@
     "prettier.useEditorConfig": true,
 
     // ESLint Settings
-    "eslint.validate": ["typescript", "javascript"],
+    "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
     "eslint.run": "onType",
     "eslint.format.enable": false,
     "eslint.lintTask.enable": true,
     "eslint.codeActionsOnSave.mode": "all",
+    "eslint.workingDirectories": [{ "mode": "auto" }],
 
     // EditorConfig Support
     "editorconfig.generateAuto": false,
 
-    // TypeScript Settings
-    "typescript.preferences.importModuleSpecifier": "relative",
-    "typescript.suggest.autoImports": true,
-    "typescript.updateImportsOnFileMove.enabled": "prompt",
+    // TypeScript Settings (namespaced — TS 5+ form)
+    "js/ts.preferences.importModuleSpecifier": "relative",
+    "js/ts.suggest.autoImports": true,
+    "js/ts.updateImportsOnFileMove.enabled": "prompt",
 
     // File Explorer
     "files.exclude": {
@@ -82,13 +84,23 @@
 
     // Vitest configuration
     "vitest.shellType": "terminal",
+    "vitest.disableWorkspaceWarning": true,
 
-    // Markdownlint configuration
+    // Copilot / Claude auto-approve pnpm in chat-tool terminal
+    "chat.tools.terminal.autoApprove": {
+        "pnpm": true
+    },
+
+    // Markdownlint configuration (mirrors .markdownlint.json for IDE squiggle parity)
     "markdownlint.config": {
-        "MD033": false,
+        "MD007": { "indent": 4 },
         "MD013": false,
-        "MD041": false,
         "MD024": false,
-        "MD007": { "indent": 4 }
+        "MD030": false,
+        "MD033": false,
+        "MD040": false,
+        "MD041": false,
+        "MD036": false,
+        "MD060": false
     }
 }

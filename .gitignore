@@ -25,6 +25,20 @@ build/
 **/.idea
 **/.vs
 
+# .vscode/ is whitelisted: only the standard shared editor config files are tracked;
+# everything else (planning docs, audits, scratch, personal notes) stays local in a private inner git repo.
+# Add to the !.vscode/<file> list as new project-wide editor configs appear.
+/.vscode/*
+!/.vscode/extensions.json
+!/.vscode/launch.json
+!/.vscode/settings.json
+!/.vscode/tasks.json
+
+# Standard agent-output names at repo root (kept local)
+TASKS.md
+STATUS.json
+PROGRESS.md
+
 # Turborepo
 .turbo/
 
