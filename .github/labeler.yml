@@ -42,7 +42,7 @@ area:config:
       - any-glob-to-any-file: 'tsconfig/**'
       - any-glob-to-any-file: eslint.config.mjs
       - any-glob-to-any-file: vitest.config.ts
-      - any-glob-to-any-file: tsup.config.ts
+      - any-glob-to-any-file: tsdown.config.ts
   - issues:
       - title: '/config/i'
       - body: '/config/i'

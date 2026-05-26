@@ -5,6 +5,6 @@
         "lib": ["ESNext", "esnext.disposable", "Decorators", "Decorators.Legacy"],
         "rootDir": "."
     },
-    "include": ["src/**/*", "tests/**/*", "tsup.config.ts"],
+    "include": ["src/**/*", "tests/**/*", "tsdown.config.ts"],
     "exclude": ["node_modules", "dist"]
 }
