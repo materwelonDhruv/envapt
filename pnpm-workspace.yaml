@@ -12,12 +12,6 @@ catalogs:
     eslint: 9.39.1
     typescript: 5.9.3
 
-onlyBuiltDependencies:
-  - '@tailwindcss/oxide'
-  - esbuild
-  - sharp
-  - unrs-resolver
-
 # Security overrides: force-patch transitive deps with known high-severity CVEs.
 # Revisit when `@seedcord/eslint-config` publishes a newer version that pulls these
 # transitively, then drop the overrides that are no longer needed.
