@@ -28,7 +28,7 @@ jobs:
                   fetch-depth: 0
 
             - name: Setup pnpm
-              uses: pnpm/action-setup@v4
+              uses: pnpm/action-setup@v6
 
             - name: Install dependencies (hoisted node_modules for Deno)
               run: pnpm install --frozen-lockfile --shamefully-hoist
