@@ -1,9 +1,8 @@
 import { defineConfig } from 'tsdown';
 
-// envapt is ESM-only as of v5. Single dist/index.mjs + dist/index.d.ts.
 export default defineConfig({
     entry: ['src/index.ts'],
-    format: 'esm',
+    format: ['esm', 'cjs'],
     dts: true,
     clean: true,
     treeshake: true,
