@@ -22,7 +22,7 @@ jobs:
               with:
                   fetch-depth: 0
             - name: Setup pnpm
-              uses: pnpm/action-setup@v4
+              uses: pnpm/action-setup@v6
             - name: Setup Node.js
               run: pnpm install --frozen-lockfile
             - name: Publish package (dry run)
@@ -36,7 +36,7 @@ jobs:
               with:
                   fetch-depth: 0
 
-            - uses: pnpm/action-setup@v4
+            - uses: pnpm/action-setup@v6
             - run: pnpm install --frozen-lockfile
             - uses: denoland/setup-deno@v2
               with:
@@ -69,7 +69,7 @@ jobs:
                   enable_fallback_cache: 'true'
 
             - name: Setup pnpm
-              uses: pnpm/action-setup@v4
+              uses: pnpm/action-setup@v6
 
             - name: Setup Node.js
               uses: actions/setup-node@v6
@@ -128,7 +128,7 @@ jobs:
               with:
                   fetch-depth: 0
             - name: Setup pnpm
-              uses: pnpm/action-setup@v4
+              uses: pnpm/action-setup@v6
             - name: Install dependencies
               run: pnpm install --frozen-lockfile
             - name: Setup Deno
