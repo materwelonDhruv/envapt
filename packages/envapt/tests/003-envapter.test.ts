@@ -122,11 +122,11 @@ describe('Envapter', () => {
 
             it('should get default dotenvConfig', () => {
                 const config = Envapter.dotenvConfig;
-                expect(config).to.deep.equal({ quiet: true });
+                expect(config).to.deep.equal({});
             });
 
             it('should set and get valid dotenvConfig', () => {
-                const newConfig = { quiet: false, debug: true, override: true };
+                const newConfig = { debug: true, override: true };
                 Envapter.dotenvConfig = newConfig;
                 expect(Envapter.dotenvConfig).to.deep.equal(newConfig);
             });
@@ -135,12 +135,6 @@ describe('Envapter', () => {
                 const configWithEncoding = { encoding: 'latin1' as const };
                 Envapter.dotenvConfig = configWithEncoding;
                 expect(Envapter.dotenvConfig).to.deep.equal(configWithEncoding);
-            });
-
-            it('should set DOTENV_KEY option', () => {
-                const configWithKey = { DOTENV_KEY: 'test-key-123' };
-                Envapter.dotenvConfig = configWithKey;
-                expect(Envapter.dotenvConfig).to.deep.equal(configWithKey);
             });
 
             afterEach(() => {

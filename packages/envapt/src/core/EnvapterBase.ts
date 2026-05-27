@@ -1,11 +1,11 @@
 import process from 'node:process';
 
-import { config } from 'dotenv';
-
+import { loadDotenv } from '../Dotenv';
 import { EnvaptError, EnvaptErrorCodes } from '../Error';
 import { Validator } from '../Validators';
 
-import type { EnvKeyInput, PermittedDotenvConfig } from '../Types';
+import type { DotenvConfigOptions } from '../Dotenv';
+import type { EnvKeyInput } from '../Types';
 
 /**
  * Base cache for environment variables and computed values
@@ -21,7 +21,7 @@ export const EnvaptCache = new Map<string, unknown>();
 export abstract class EnvapterBase {
     protected static _envPaths: string[] = ['.env']; // default path
     protected static _envPathsExplicitlySet = false;
-    protected static _userDefinedDotenvConfig: PermittedDotenvConfig = { quiet: true };
+    protected static _userDefinedDotenvConfig: DotenvConfigOptions = {};
 
     /**
      * Set custom .env file paths. Accepts either a single path or array of paths.
@@ -49,7 +49,7 @@ export abstract class EnvapterBase {
     /**
      * Set custom dotenv configuration options.
      */
-    static set dotenvConfig(config: PermittedDotenvConfig) {
+    static set dotenvConfig(config: DotenvConfigOptions) {
         Validator.validateDotenvConfig(config);
         this._userDefinedDotenvConfig = config;
         this.refreshCache();
@@ -58,7 +58,7 @@ export abstract class EnvapterBase {
     /**
      * Get current dotenv configuration options
      */
-    static get dotenvConfig(): PermittedDotenvConfig {
+    static get dotenvConfig(): DotenvConfigOptions {
         return this._userDefinedDotenvConfig;
     }
 
@@ -115,7 +115,7 @@ export abstract class EnvapterBase {
             const effectivePaths = this.resolveEffectivePaths();
 
             try {
-                config({
+                loadDotenv({
                     path: effectivePaths,
                     processEnv: isolatedEnv,
                     ...this._userDefinedDotenvConfig

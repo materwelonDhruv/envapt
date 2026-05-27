@@ -432,16 +432,25 @@ describe('Runtime Validation', () => {
     describe('dotenv config validation', () => {
         it('should accept valid dotenv config options', () => {
             const validConfigs = [
-                { quiet: true },
                 { debug: false },
                 { override: true },
                 { encoding: 'utf8' },
-                { DOTENV_KEY: 'test-key' },
-                { quiet: true, debug: false, override: true }
+                { debug: false, override: true },
+                { encoding: 'utf8', debug: false, override: true }
             ];
 
             for (const config of validConfigs) {
                 expect(() => Validator.validateDotenvConfig(config)).to.not.throw();
+            }
+        });
+
+        it('should reject removed dotenv config options (quiet, DOTENV_KEY)', () => {
+            const removedConfigs = [{ quiet: true }, { DOTENV_KEY: 'test-key' }];
+
+            for (const config of removedConfigs) {
+                expect(() => Validator.validateDotenvConfig(config))
+                    .to.throw(EnvaptError)
+                    .with.property('code', EnvaptErrorCodes.InvalidUserDefinedConfig);
             }
         });
 

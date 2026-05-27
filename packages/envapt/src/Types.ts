@@ -1,14 +1,5 @@
 import type { ArrayOf, ConverterToken, CustomElementConverter } from './Converters';
 import type { Environment } from './core/EnvironmentMethods';
-import type { DotenvConfigOptions } from 'dotenv';
-
-/**
- * User defined options for dotenv configuration
- *
- * "processEnv" and "path" are managed by Envapter and should not be included in user-defined config.
- * @public
- */
-type PermittedDotenvConfig = Omit<DotenvConfigOptions, 'processEnv' | 'path'>;
 
 /**
  * Scalar built-in converter tokens (e.g. `'number'`, `'time'`).
@@ -240,7 +231,6 @@ type ProfilesConfig = Partial<Record<Environment, EnvProfile>> & {
 };
 
 export type {
-    PermittedDotenvConfig,
     BuiltInConverter,
     PrimitiveConstructor,
     ConverterFunction,

@@ -5,7 +5,8 @@ import { EnvaptError, EnvaptErrorCodes } from './Error';
 import { ListOfBuiltInConverters, BuiltInConverterTypeCheckers } from './ListOfBuiltInConverters';
 
 import type { ArrayOf, ConverterToken } from './Converters';
-import type { BuiltInConverter, ConverterFunction, EnvaptConverter, PermittedDotenvConfig } from './Types';
+import type { DotenvConfigOptions } from './Dotenv';
+import type { BuiltInConverter, ConverterFunction, EnvaptConverter } from './Types';
 
 export class Validator {
     /**
@@ -210,7 +211,7 @@ export class Validator {
     /**
      * Make sure the user hasn't provided prohibited options in their dotenv config
      */
-    static validateDotenvConfig(config: Record<string, unknown>): config is PermittedDotenvConfig {
+    static validateDotenvConfig(config: object): config is DotenvConfigOptions {
         if ('path' in config || 'processEnv' in config) {
             throw new EnvaptError(
                 EnvaptErrorCodes.InvalidUserDefinedConfig,
@@ -218,7 +219,7 @@ export class Validator {
             );
         }
 
-        const validKeys = new Set(['encoding', 'quiet', 'debug', 'override', 'DOTENV_KEY']);
+        const validKeys = new Set(['encoding', 'debug', 'override']);
         const invalidKeys = Object.keys(config).filter((key) => !validKeys.has(key));
 
         if (invalidKeys.length > 0) {
