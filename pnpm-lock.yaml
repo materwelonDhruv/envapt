@@ -85,6 +85,10 @@ importers:
       dotenv:
         specifier: ^17.4.2
         version: 17.4.2
+    devDependencies:
+      expect-type:
+        specifier: ^1.3.0
+        version: 1.3.0
 
 packages:
 

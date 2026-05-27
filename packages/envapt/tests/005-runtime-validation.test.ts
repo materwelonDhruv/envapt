@@ -14,18 +14,7 @@ describe('Runtime Validation', () => {
 
     describe('Built-in converter validation', () => {
         it('should validate correct built-in converter types', () => {
-            const validTypes = [
-                'string',
-                'number',
-                'boolean',
-                'bigint',
-                'symbol',
-                'array',
-                'json',
-                'url',
-                'regexp',
-                'date'
-            ];
+            const validTypes = ['string', 'number', 'boolean', 'bigint', 'symbol', 'json', 'url', 'regexp', 'date'];
 
             for (const type of validTypes) {
                 const testFunction = (): void => Validator.builtInConverter(type);
@@ -34,7 +23,8 @@ describe('Runtime Validation', () => {
         });
 
         it('should throw for invalid built-in converter types', () => {
-            const invalidTypes = ['invalid', 'str', 'num'];
+            // Note: 'array' is no longer a scalar token in v5 (use Converters.array() instead).
+            const invalidTypes = ['invalid', 'str', 'num', 'array'];
 
             const testFunction = (type: string) => () => Validator.builtInConverter(type);
 
@@ -60,59 +50,49 @@ describe('Runtime Validation', () => {
         });
     });
 
-    describe('ArrayConverter validation', () => {
-        it('should validate correct ArrayConverter configurations', () => {
-            const validConfigs = [
-                { delimiter: ',' },
-                { delimiter: ';', type: 'string' },
-                { delimiter: '|', type: 'number' },
-                { delimiter: ' ', type: 'boolean' }
+    describe('ArrayOf validation (brand-based)', () => {
+        it('should validate well-formed ArrayOf tokens from Converters.array(...)', () => {
+            const validTokens = [
+                Converters.array(),
+                Converters.array({ of: Converters.String }),
+                Converters.array({ of: Converters.Number, delimiter: '|' }),
+                Converters.array({ of: Converters.Boolean, delimiter: ' ' }),
+                Converters.array({ of: (raw: string) => raw.toUpperCase() })
             ];
 
-            for (const config of validConfigs) {
-                const testFunction = (): void => Validator.arrayConverter(config);
+            for (const token of validTokens) {
+                const testFunction = (): void => Validator.arrayConverter(token);
                 expect(testFunction).to.not.throw();
             }
         });
 
-        it('should throw for invalid ArrayConverter configurations', () => {
-            const invalidConfigs = [{}, 'string', null];
+        it('should throw for values missing the ArrayOf brand', () => {
+            const invalidConfigs = [{}, 'string', null, { delimiter: ',' }, { of: 'string', delimiter: ',' }];
 
             const testFunction = (config: unknown) => () => Validator.arrayConverter(config);
 
             invalidConfigs.forEach((config) => {
                 expect(testFunction(config))
                     .to.throw(EnvaptError)
-                    .with.property('code', EnvaptErrorCodes.MissingDelimiter);
-            });
-        });
-
-        it('should throw for invalid ArrayConverter types', () => {
-            const invalidTypes = ['array', 'json', 'regexp', 'invalid'];
-
-            const testFunction = (type: string) => () => Validator.arrayConverter({ delimiter: ',', type });
-
-            invalidTypes.forEach((type) => {
-                expect(testFunction(type))
-                    .to.throw(EnvaptError)
                     .with.property('code', EnvaptErrorCodes.InvalidArrayConverterType);
             });
         });
 
-        it('should validate correct ArrayConverter element types', () => {
-            const validTypes = ['string', 'number', 'boolean', 'integer', 'bigint', 'symbol', 'float', 'url', 'date'];
-
-            for (const type of validTypes) {
-                expect(Validator.isValidArrayConverterType(type)).to.be.true;
-            }
+        it('should throw when a hand-rolled ArrayOf has an unknown `of` token', () => {
+            // Bypass TS to feed a malformed token through runtime validation.
+            // intentionally malformed for runtime validation -- justified
+            const malformed = { __envaptKind: 'array', of: 'not-a-real-token', delimiter: ',' };
+            expect(() => Validator.arrayConverter(malformed))
+                .to.throw(EnvaptError)
+                .with.property('code', EnvaptErrorCodes.InvalidArrayConverterType);
         });
 
-        it('should reject invalid ArrayConverter element types', () => {
-            const invalidTypes = ['array', 'json', 'regexp', 'invalid', 123, {}, null];
-
-            for (const type of invalidTypes) {
-                expect(Validator.isValidArrayConverterType(type)).to.be.false;
-            }
+        it('should throw when a hand-rolled ArrayOf has a missing or empty delimiter', () => {
+            // intentionally malformed for runtime validation -- justified
+            const missingDelimiter = { __envaptKind: 'array', of: 'string', delimiter: '' };
+            expect(() => Validator.arrayConverter(missingDelimiter))
+                .to.throw(EnvaptError)
+                .with.property('code', EnvaptErrorCodes.MissingDelimiter);
         });
     });
 
@@ -120,37 +100,24 @@ describe('Runtime Validation', () => {
         class FallbackTests {
             // @ts-expect-error Inconsistent fallback type
             @Envapt('NONEXISTENT_ARRAY_VAR', {
-                converter: { delimiter: ',' },
+                converter: Converters.array(),
                 fallback: 'not-an-array'
             })
             static readonly invalidArrayFallback: string[];
 
-            // @ts-expect-error Inconsistent fallback type
-            @Envapt('INVALID_ARRAY_CONVERTER_TYPE', {
-                converter: { delimiter: ',', type: 'invalid' },
-                fallback: []
-            })
-            static readonly invalidArrayConverterType: string[];
-
             @Envapt('NONEXISTENT_ARRAY_VAR', {
-                converter: { delimiter: ',' }
+                converter: Converters.array()
             })
             static readonly noFallbackArray: string[] | null;
         }
 
-        it('should throw error when ArrayConverter is used with non-array fallback for missing env var', () => {
+        it('should throw error when ArrayOf is used with non-array fallback for missing env var', () => {
             expect(() => FallbackTests.invalidArrayFallback)
                 .to.throw(EnvaptError)
                 .with.property('code', EnvaptErrorCodes.InvalidFallback);
         });
 
-        it('should throw error when ArrayConverter is used with invalid type in converter', () => {
-            expect(() => FallbackTests.invalidArrayConverterType)
-                .to.throw(EnvaptError)
-                .with.property('code', EnvaptErrorCodes.InvalidArrayConverterType);
-        });
-
-        it('should return null when ArrayConverter is used without fallback for missing env var', () => {
+        it('should return null when ArrayOf is used without fallback for missing env var', () => {
             expect(FallbackTests.noFallbackArray).to.be.null;
         });
     });
@@ -298,45 +265,41 @@ describe('Runtime Validation', () => {
 
     describe('Array converter fallback element type validation', () => {
         class ArrayConverterValidationTests {
-            // Array converter with mixed-type fallback elements
-            // @ts-expect-error Inconsistent fallback type
+            // @ts-expect-error Inconsistent fallback element types
             @Envapt('NONEXISTENT_ARRAY_VAR', {
-                converter: { delimiter: ',', type: Converters.String },
+                converter: Converters.array({ of: Converters.String }),
                 fallback: ['string', 42, 'another-string']
             })
             static readonly arrayWithMixedTypeElements: string[];
 
-            // Array converter where type doesn't match fallback element type
-            // @ts-expect-error Inconsistent fallback type
+            // @ts-expect-error Fallback elements don't match the declared `of` token
             @Envapt('NONEXISTENT_ARRAY_VAR', {
-                converter: { delimiter: ',', type: Converters.Number },
+                converter: Converters.array({ of: Converters.Number }),
                 fallback: ['not-a-number', 'also-not-a-number']
             })
             static readonly arrayWithWrongElementType: number[];
 
-            // Default 'array' converter with mixed-type fallback elements
-            // @ts-expect-error Inconsistent fallback type
+            // @ts-expect-error Default Converters.array() returns string[]; mixed-type fallback rejected
             @Envapt('NONEXISTENT_ARRAY_VAR', {
-                converter: Converters.Array,
+                converter: Converters.array(),
                 fallback: ['string', 42, true]
             })
             static readonly defaultArrayWithMixedTypes: string[];
 
-            // Valid array converters for comparison
             @Envapt('NONEXISTENT_ARRAY_VAR', {
-                converter: { delimiter: ',', type: Converters.String },
+                converter: Converters.array({ of: Converters.String }),
                 fallback: ['all', 'strings', 'here']
             })
             static readonly validStringArray: string[];
 
             @Envapt('NONEXISTENT_ARRAY_VAR', {
-                converter: { delimiter: ',', type: Converters.Number },
+                converter: Converters.array({ of: Converters.Number }),
                 fallback: [1, 2, 3]
             })
             static readonly validNumberArray: number[];
 
             @Envapt('NONEXISTENT_ARRAY_VAR', {
-                converter: Converters.Array,
+                converter: Converters.array(),
                 fallback: ['all', 'strings']
             })
             static readonly validDefaultArray: string[];
@@ -414,7 +377,6 @@ describe('Runtime Validation', () => {
         });
 
         it('should throw PrimitiveCoercionFailed when Symbol coercion fails', () => {
-            // Use an object with a toString that throws to cause Symbol constructor to fail
             const problematicObject = {
                 toString() {
                     throw new Error('Cannot convert to string');
@@ -448,6 +410,22 @@ describe('Runtime Validation', () => {
             expect(() => Validator.validateArrayConverterElementTypeMatch('string', [123]))
                 .to.throw(EnvaptError)
                 .with.property('code', EnvaptErrorCodes.ArrayFallbackElementTypeMismatch);
+        });
+
+        it('should accept TimeFallback[] (string[]) when element token is "time"', () => {
+            expect(() => Validator.validateArrayConverterElementTypeMatch('time', ['5s', '10m'])).to.not.throw();
+            expect(() => Validator.validateArrayConverterElementTypeMatch('time', [5000, 600000])).to.not.throw();
+        });
+
+        it('should throw for a time-array fallback that is neither all numbers nor all strings', () => {
+            expect(() => Validator.validateArrayConverterElementTypeMatch('time', [{}, {}]))
+                .to.throw(EnvaptError)
+                .with.property('code', EnvaptErrorCodes.ArrayFallbackElementTypeMismatch);
+        });
+
+        it('should skip element-type validation when `of` is a custom function', () => {
+            const customOf = (raw: string): number => Number(raw);
+            expect(() => Validator.validateArrayConverterElementTypeMatch(customOf, [1, 2, 3])).to.not.throw();
         });
     });
 

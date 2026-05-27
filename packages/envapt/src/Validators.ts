@@ -1,20 +1,15 @@
 import fs from 'node:fs';
 
+import { isArrayOf } from './Converters';
 import { EnvaptError, EnvaptErrorCodes } from './Error';
 import { ListOfBuiltInConverters, BuiltInConverterTypeCheckers } from './ListOfBuiltInConverters';
 
-import type {
-    ArrayConverter,
-    BuiltInConverter,
-    ConverterFunction,
-    EnvaptConverter,
-    PermittedDotenvConfig,
-    ValidArrayConverterBuiltInType
-} from './Types';
+import type { ArrayOf, ConverterToken } from './Converters';
+import type { BuiltInConverter, ConverterFunction, EnvaptConverter, PermittedDotenvConfig } from './Types';
 
 export class Validator {
     /**
-     * Check if a value is a built-in converter type
+     * Check if a value is a built-in scalar converter token
      */
     static isBuiltInConverter<TFallback>(value: EnvaptConverter<TFallback>): value is BuiltInConverter {
         if (typeof value === 'string') return ListOfBuiltInConverters.includes(value);
@@ -22,31 +17,10 @@ export class Validator {
     }
 
     /**
-     * Check if a value is an ArrayConverter configuration object
+     * Check if a value is an `ArrayOf<...>` token produced by {@link Converters.array}.
      */
-    static isArrayConverter(value: unknown): value is ArrayConverter {
-        return (
-            typeof value === 'object' &&
-            value !== null &&
-            'delimiter' in value &&
-            typeof (value as ArrayConverter).delimiter === 'string'
-        );
-    }
-
-    /**
-     * Check if a value is a valid ArrayConverter type
-     */
-    static isValidArrayConverterType(value: unknown): value is ValidArrayConverterBuiltInType {
-        if (typeof value !== 'string') return false;
-
-        const invalidTypes = ['array', 'json', 'regexp'];
-
-        if (invalidTypes.includes(value)) return false;
-        const validTypes: ValidArrayConverterBuiltInType[] = ListOfBuiltInConverters.filter(
-            (type): type is ValidArrayConverterBuiltInType => !invalidTypes.includes(type)
-        );
-
-        return validTypes.includes(value as ValidArrayConverterBuiltInType);
+    static isArrayConverter(value: unknown): value is ArrayOf {
+        return isArrayOf(value);
     }
 
     static customConvertor<TFallback>(
@@ -61,30 +35,43 @@ export class Validator {
     }
 
     /**
-     * Validate ArrayConverter configuration with runtime checks
+     * Runtime validation that the `ArrayOf<...>` configuration is well-formed.
      */
-    static arrayConverter(value: unknown): asserts value is ArrayConverter {
-        if (!this.isArrayConverter(value)) {
-            throw new EnvaptError(EnvaptErrorCodes.MissingDelimiter, 'Must have delimiter property');
-        }
-
-        if (value.type !== undefined && !this.isValidArrayConverterType(value.type)) {
+    static arrayConverter(value: unknown): asserts value is ArrayOf {
+        if (!isArrayOf(value)) {
             throw new EnvaptError(
                 EnvaptErrorCodes.InvalidArrayConverterType,
-                `"${value.type as string}" is not a valid converter type`
+                'Expected an ArrayOf<...> token produced by Converters.array(...)'
+            );
+        }
+
+        if (typeof value.delimiter !== 'string' || value.delimiter.length === 0) {
+            throw new EnvaptError(
+                EnvaptErrorCodes.MissingDelimiter,
+                `ArrayOf<...> requires a non-empty string delimiter, got ${typeof value.delimiter}`
+            );
+        }
+
+        const elementOf = value.of;
+        const isScalar = typeof elementOf === 'string' && ListOfBuiltInConverters.includes(elementOf as ConverterToken);
+        const isCustomFn = typeof elementOf === 'function';
+        if (!isScalar && !isCustomFn) {
+            throw new EnvaptError(
+                EnvaptErrorCodes.InvalidArrayConverterType,
+                `ArrayOf<...> element ("of") must be a built-in scalar token or a function, got ${typeof elementOf}`
             );
         }
     }
 
     /**
-     * Validate that a string is a valid built-in converter type
+     * Validate that a string is a valid built-in scalar converter token
      */
     static builtInConverter(value: unknown): asserts value is BuiltInConverter {
         if (typeof value !== 'string') {
             throw new EnvaptError(EnvaptErrorCodes.InvalidConverterType, `Expected string, got ${typeof value}`);
         }
 
-        if (!ListOfBuiltInConverters.includes(value as BuiltInConverter)) {
+        if (!ListOfBuiltInConverters.includes(value as ConverterToken)) {
             throw new EnvaptError(
                 EnvaptErrorCodes.InvalidBuiltInConverter,
                 `"${value}" is not a valid converter type. Valid types are: ${ListOfBuiltInConverters.join(',')}`
@@ -109,11 +96,11 @@ export class Validator {
      * Validate that all elements in an array fallback have consistent types
      */
     static validateArrayFallbackElementTypes(fallback: unknown[]): void {
-        if (fallback.length === 0) return; // Empty array is valid
+        if (fallback.length === 0) return;
 
         const firstElementType = typeof fallback[0];
         const hasInconsistentTypes = fallback.some((element, index) => {
-            if (index === 0) return false; // Skip first element
+            if (index === 0) return false;
             return typeof element !== firstElementType;
         });
 
@@ -126,18 +113,39 @@ export class Validator {
     }
 
     /**
-     * Validate that array converter type matches fallback element types
+     * Validate that an `ArrayOf<...>` element converter matches the runtime types of its
+     * fallback elements. For `Converters.Time` arrays the element-time-string format is also
+     * checked here.
      */
-    static validateArrayConverterElementTypeMatch(converterType: string, fallback: unknown[]): void {
-        if (fallback.length === 0) return; // Empty array is valid
+    static validateArrayConverterElementTypeMatch(elementOf: ArrayOf['of'], fallback: unknown[]): void {
+        if (fallback.length === 0) return;
 
+        if (typeof elementOf === 'function') {
+            // Custom element converters can return anything; we can't statically validate the fallback shape.
+            return;
+        }
+
+        const elementToken = elementOf;
+
+        // Time array fallbacks may be number[] OR string[] (TimeFallback[]).
+        if (elementToken === 'time') {
+            const everyNumber = fallback.every((v) => typeof v === 'number');
+            const everyString = fallback.every((v) => typeof v === 'string');
+            if (!everyNumber && !everyString) {
+                throw new EnvaptError(
+                    EnvaptErrorCodes.ArrayFallbackElementTypeMismatch,
+                    'Time array fallback must be all numbers or all time-string entries.'
+                );
+            }
+            return;
+        }
+
+        const typeChecker = BuiltInConverterTypeCheckers[elementToken];
         const firstElement = fallback[0];
-        const typeChecker = BuiltInConverterTypeCheckers[converterType as keyof typeof BuiltInConverterTypeCheckers];
-
         if (!typeChecker(firstElement)) {
             throw new EnvaptError(
                 EnvaptErrorCodes.ArrayFallbackElementTypeMismatch,
-                `Array converter type "${converterType}" does not match fallback element type. Expected ${converterType} compatible elements.`
+                `Array converter type "${elementToken}" does not match fallback element type. Expected ${elementToken} compatible elements.`
             );
         }
     }
@@ -158,16 +166,10 @@ export class Validator {
         converter: typeof String | typeof Number | typeof Boolean | typeof BigInt | typeof Symbol,
         fallback: unknown
     ): CoercedType {
-        // Check if fallback is already the correct type and return as-is
         if (this.isCorrectPrimitiveType(converter, fallback)) return fallback as CoercedType;
-
-        // Otherwise, coerce the value
         return this.performPrimitiveCoercion<CoercedType>(converter, fallback);
     }
 
-    /**
-     * Check if fallback is already the correct primitive type
-     */
     private static isCorrectPrimitiveType(
         converter: typeof String | typeof Number | typeof Boolean | typeof BigInt | typeof Symbol,
         fallback: unknown
@@ -180,9 +182,6 @@ export class Validator {
         return false;
     }
 
-    /**
-     * Perform the actual primitive coercion
-     */
     private static performPrimitiveCoercion<CoercedType>(
         converter: typeof String | typeof Number | typeof Boolean | typeof BigInt | typeof Symbol,
         fallback: unknown
@@ -201,7 +200,6 @@ export class Validator {
             );
         }
 
-        // This should never happen but TypeScript needs it
         /* v8 ignore next -- @preserve */
         throw new EnvaptError(
             EnvaptErrorCodes.PrimitiveCoercionFailed,

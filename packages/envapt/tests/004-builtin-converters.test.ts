@@ -64,34 +64,43 @@ describe('Built-in Converters', () => {
 
     describe('array converters', () => {
         class ArrayTest {
-            @Envapt('TEST_ARRAY_COMMA', { converter: Converters.Array, fallback: [] })
+            @Envapt('TEST_ARRAY_COMMA', { converter: Converters.array(), fallback: [] })
             static readonly arrayDefault: string[];
 
-            @Envapt('TEST_ARRAY_COMMA', { converter: { delimiter: ',' }, fallback: [] })
+            @Envapt('TEST_ARRAY_COMMA', { converter: Converters.array({ delimiter: ',' }), fallback: [] })
             static readonly arrayComma: string[];
 
-            @Envapt('TEST_ARRAY_SPACE', { converter: { delimiter: ' ' }, fallback: [] })
+            @Envapt('TEST_ARRAY_SPACE', { converter: Converters.array({ delimiter: ' ' }), fallback: [] })
             static readonly arraySpace: string[];
 
-            @Envapt('TEST_ARRAY_EMPTY', { converter: Converters.Array, fallback: ['default'] })
+            @Envapt('TEST_ARRAY_EMPTY', { converter: Converters.array(), fallback: ['default'] })
             static readonly arrayEmpty: string[];
 
-            @Envapt('TEST_ARRAY_WHITESPACE_ONLY', { converter: Converters.Array, fallback: [] })
+            @Envapt('TEST_ARRAY_WHITESPACE_ONLY', { converter: Converters.array(), fallback: [] })
             static readonly arrayWhitespaceOnly: string[];
 
-            @Envapt('TEST_ARRAY_COMMA_SPACE', { converter: { delimiter: ', ' }, fallback: [] })
+            @Envapt('TEST_ARRAY_COMMA_SPACE', { converter: Converters.array({ delimiter: ', ' }), fallback: [] })
             static readonly arrayCommaSpace: string[];
 
-            @Envapt('NONEXISTENT_ARRAY', { converter: Converters.Array, fallback: ['fallback1', 'fallback2'] })
+            @Envapt('NONEXISTENT_ARRAY', { converter: Converters.array(), fallback: ['fallback1', 'fallback2'] })
             static readonly nonexistentArray: string[];
 
-            @Envapt('TEST_ARRAY_NUMBERS', { converter: { delimiter: ',', type: Converters.Number }, fallback: [] })
+            @Envapt('TEST_ARRAY_NUMBERS', {
+                converter: Converters.array({ of: Converters.Number, delimiter: ',' }),
+                fallback: []
+            })
             static readonly arrayNumbers: number[];
 
-            @Envapt('TEST_ARRAY_BOOLEANS', { converter: { delimiter: ',', type: Converters.Boolean }, fallback: [] })
+            @Envapt('TEST_ARRAY_BOOLEANS', {
+                converter: Converters.array({ of: Converters.Boolean, delimiter: ',' }),
+                fallback: []
+            })
             static readonly arrayBooleans: boolean[];
 
-            @Envapt('TEST_ARRAY_TIME', { converter: { delimiter: ',', type: Converters.Time }, fallback: [] })
+            @Envapt('TEST_ARRAY_TIME', {
+                converter: Converters.array({ of: Converters.Time, delimiter: ',' }),
+                fallback: []
+            })
             static readonly arrayTime: number[];
         }
 

@@ -29,18 +29,21 @@ describe('Advanced Converter Methods', () => {
             expect(result).to.deep.equal({ name: 'test', version: 1, enabled: true });
         });
 
-        it('should convert using Converters enum - Array', () => {
-            const result = Envapter.getUsing('TEST_ARRAY_COMMA', Converters.Array);
+        it('should convert using Converters.array() default', () => {
+            const result = Envapter.getUsing('TEST_ARRAY_COMMA', Converters.array());
             expect(result).to.deep.equal(['item1', 'item2', 'item3']);
         });
 
         it('should convert using array converter with custom delimiter', () => {
-            const result = Envapter.getUsing('TEST_ARRAY_SPACE', { delimiter: ' ' });
+            const result = Envapter.getUsing('TEST_ARRAY_SPACE', Converters.array({ delimiter: ' ' }));
             expect(result).to.deep.equal(['one', 'two', 'three']);
         });
 
         it('should convert using array converter with type conversion', () => {
-            const result = Envapter.getUsing('TEST_ARRAY_NUMBERS', { delimiter: ',', type: Converters.Number });
+            const result = Envapter.getUsing(
+                'TEST_ARRAY_NUMBERS',
+                Converters.array({ of: Converters.Number, delimiter: ',' })
+            );
             expect(result).to.deep.equal([1, 2, 3]);
         });
 
@@ -196,14 +199,19 @@ describe('Advanced Converter Methods', () => {
             }).to.throw();
         });
 
-        it('should throw error for invalid array converter', () => {
+        it('should accept Converters.array() and reject malformed ArrayOf tokens at runtime', () => {
             expect(() => {
-                Envapter.getUsing('TEST_STRING', { delimiter: ',' });
+                Envapter.getUsing('TEST_STRING', Converters.array());
             }).to.not.throw();
 
             expect(() => {
-                //@ts-expect-error We're passing an invalid type here for testing
-                Envapter.getUsing('TEST_STRING', { delimiter: ',', type: 'invalid' });
+                // Bypass TS to simulate a hand-rolled ArrayOf with an invalid `of`.
+                // intentionally malformed for runtime validation -- justified
+                Envapter.getUsing('TEST_STRING', {
+                    __envaptKind: 'array',
+                    of: 'invalid',
+                    delimiter: ','
+                } as unknown as ReturnType<typeof Converters.array>);
             }).to.throw();
         });
 
@@ -220,7 +228,7 @@ describe('Advanced Converter Methods', () => {
             const str = Envapter.getUsing('TEST_STRING', Converters.String);
             const num = Envapter.getUsing('TEST_NUMBER', Converters.Number);
             const bool = Envapter.getUsing('TEST_BOOLEAN', Converters.Boolean);
-            const arr = Envapter.getUsing('TEST_ARRAY_COMMA', Converters.Array);
+            const arr = Envapter.getUsing('TEST_ARRAY_COMMA', Converters.array());
 
             // With fallbacks should not be undefined
             const strWithFallback = Envapter.getUsing('TEST_STRING', Converters.String, 'default');

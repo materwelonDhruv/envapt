@@ -59,7 +59,7 @@
         - [Automatic Runtime Type Detection](#automatic-runtime-type-detection)
         - [Primitive Converters](#primitive-converters)
         - [Built-in Converters](#built-in-converters)
-        - [Custom Array Converters](#custom-array-converters)
+        - [Array Converters via `Converters.array(...)`](#array-converters-via-convertersarray)
         - [Custom Converters](#custom-converters)
         - [Handling Missing Values](#handling-missing-values)
     - [Functional API](#functional-api)
@@ -161,7 +161,7 @@ console.log(`Server running on port ${port}`); // 8443
 console.log(`URL: ${url}`); // "http://localhost:8443"
 
 // Advanced converters
-const corsOrigins = Envapter.getUsing('ALLOWED_ORIGINS', Converters.Array, []);
+const corsOrigins = Envapter.getUsing('ALLOWED_ORIGINS', Converters.array(), []);
 const dbConfig = Envapter.getUsing('DATABASE_CONFIG', Converters.Json, {});
 
 // Multi-key lookup: try primary, then replica, then fall back
@@ -193,7 +193,7 @@ class AppConfig extends Envapter {
 
     @Envapt('ALLOWED_ORIGINS', {
         fallback: ['http://localhost:3000'],
-        converter: Converters.Array
+        converter: Converters.array()
     })
     static readonly allowedOrigins: string[];
 }
@@ -386,7 +386,7 @@ class Config extends Envapter {
     static readonly productionMode: boolean;
 
     // Advanced types
-    @Envapt('CORS_ORIGINS', { converter: Converters.Array, fallback: [] })
+    @Envapt('CORS_ORIGINS', { converter: Converters.array(), fallback: [] })
     static readonly corsOrigins: string[];
 
     @Envapt('CONFIG_JSON', { converter: Converters.Json, fallback: {} })
@@ -430,60 +430,78 @@ class Config extends Envapter {
 | `Converters.Bigint`  | `'bigint'`  | BigInt values for large integers                                     |
 | `Converters.Symbol`  | `'symbol'`  | Symbol values (creates symbols from string descriptions)             |
 | `Converters.Json`    | `'json'`    | JSON objects/arrays (safe parsing with fallback)                     |
-| `Converters.Array`   | `'array'`   | Comma-separated string arrays                                        |
 | `Converters.Url`     | `'url'`     | URL objects                                                          |
 | `Converters.Regexp`  | `'regexp'`  | Regular expressions (supports `/pattern/flags` syntax)               |
 | `Converters.Date`    | `'date'`    | Date objects (supports ISO strings and timestamps)                   |
 | `Converters.Time`    | `'time'`    | Time values (e.g. `"5s"`, `"30m"`, `"2h"` converted to milliseconds) |
 
-#### Custom Array Converters
+#### Array Converters via `Converters.array(...)`
 
-For more control over array parsing:
+Use the `Converters.array({ of?, delimiter? })` builder for delimited lists. It returns a phantom-branded `ArrayOf<T>` token whose element type survives any variable indirection.
 
 > [!IMPORTANT]
 > Array converters validate that:
 >
 > 1. **Fallback must be an array** (if provided)
 > 2. **All fallback elements have consistent types** (no mixed types like `['string', 42, true]`)
-> 3. **Array converter `type` matches fallback element types** (if `type` is specified)
+> 3. **Fallback element types match the configured `of` token** (when `of` is specified)
+> 4. **Element conversion failures throw `EnvaptError` (`ArrayElementConversionFailed`, code 206)** — no silent type lies.
 
 ```ts
 class Config extends Envapter {
-    // Basic array (comma-separated strings)
-    @Envapt('TAGS', { converter: Converters.Array, fallback: [] })
+    // Basic array (comma-separated strings — defaults: of=String, delimiter=',')
+    @Envapt('TAGS', { converter: Converters.array(), fallback: [] })
     static readonly tags: string[];
 
     // Custom delimiter
-    @Envapt('ALLOWED_METHODS', { converter: { delimiter: '|' }, fallback: ['GET'] })
+    @Envapt('ALLOWED_METHODS', { converter: Converters.array({ delimiter: '|' }), fallback: ['GET'] })
     declare readonly allowedMethods: string[];
 
-    // Custom delimiter with type conversion
-    @Envapt('RATE_LIMITS', { converter: { delimiter: ',', type: Converters.Number }, fallback: [100] })
+    // Element-typed array
+    @Envapt('RATE_LIMITS', {
+        converter: Converters.array({ of: Converters.Number, delimiter: ',' }),
+        fallback: [100]
+    })
     declare readonly rateLimits: number[];
 
-    @Envapt('FEATURE_FLAGS', { converter: { delimiter: ';', type: 'boolean' }, fallback: [false] })
-    declare readonly featureFlags: boolean[];
+    // Time-string fallback (TimeFallback[]) symmetry
+    @Envapt('TIMEOUTS', {
+        converter: Converters.array({ of: Converters.Time }),
+        fallback: ['5s', '10m']
+    })
+    declare readonly timeouts: number[];
+
+    // Custom function as element converter — element type inferred from return
+    @Envapt('USERS', {
+        converter: Converters.array({ of: (raw) => User.parse(raw) }),
+        fallback: []
+    })
+    declare readonly users: User[];
 }
 ```
 
 > [!WARNING]
-> These will throw runtime validation errors:
+> These will throw at runtime:
 >
 > ```ts
 > // ❌ Mixed types in fallback array
-> @Envapt('MIXED', { converter: Converters.Array, fallback: ['string', 42, true] })
+> @Envapt('MIXED', { converter: Converters.array(), fallback: ['string', 42, true] })
 >
-> // ❌ Array converter type doesn't match fallback elements
-> @Envapt('NUMS', { converter: { delimiter: ',', type: Converters.Number }, fallback: ['not', 'numbers'] })
+> // ❌ Fallback element type doesn't match `of`
+> @Envapt('NUMS', { converter: Converters.array({ of: Converters.Number }), fallback: ['not', 'numbers'] })
 >
 > // ❌ Non-array fallback with array converter
-> @Envapt('INVALID', { converter: Converters.Array, fallback: 'not-an-array' })
+> @Envapt('INVALID', { converter: Converters.array(), fallback: 'not-an-array' })
+>
+> // ❌ A bad element in the raw env value (e.g. PORTS=80,abc,443) now throws
+> //    ArrayElementConversionFailed instead of producing [80, 'abc', 443].
 > ```
 
-**ArrayConverter Interface:**
+**`Converters.array(opts?)` signature:**
 
-- `delimiter: string` - The string used to split array elements
-- `type?: BuiltInConverter` - Optional type to convert each element to (excludes `Converters.Array`, `Converters.Json`, and `Converters.Regexp`)
+- `of?: ConverterToken | (raw: string) => T` — element converter; defaults to `Converters.String`. Excludes `'json'` and `'regexp'`.
+- `delimiter?: string` — splitter; defaults to `','`.
+- Returns: `ArrayOf<T>`, a phantom-branded token. The `T` carries through variable assignment so inference holds even when you hoist the builder to a `const`.
 
 #### Custom Converters
 
@@ -575,7 +593,7 @@ const symbol = Envapter.getSymbol('SYMBOL_VAR', Symbol('default'));
 
 // Advanced converter methods
 const jsonData = Envapter.getUsing('CONFIG_JSON', Converters.Json);
-const urlArray = Envapter.getUsing('API_URLS', { delimiter: ',', type: Converters.Url });
+const urlArray = Envapter.getUsing('API_URLS', Converters.array({ of: Converters.Url }));
 const customData = Envapter.getWith('RAW_DATA', (raw) => raw?.split('|').map((s) => s.trim()));
 
 // Multi-key inputs work everywhere: Envapt will read left-to-right
@@ -584,7 +602,7 @@ const secretsHost = Envapter.get(['SECRETS_HOST', 'DEFAULT_HOST'], 'localhost');
 // Instance methods (same API available)
 const envapter = new Envapter();
 const value = envapter.get('VAR', 'default');
-const processed = envapter.getUsing('DATA', Converters.Array);
+const processed = envapter.getUsing('DATA', Converters.array());
 ```
 
 For functional-style environment variable access with converters:
@@ -594,7 +612,7 @@ import { Envapter, Converters } from 'envapt';
 
 // Use built-in converters directly
 const config = Envapter.getUsing('API_CONFIG', Converters.Json, { default: 'value' });
-const urls = Envapter.getUsing('SERVICE_URLS', { delimiter: '|', type: Converters.Url });
+const urls = Envapter.getUsing('SERVICE_URLS', Converters.array({ of: Converters.Url, delimiter: '|' }));
 const pgUrl = Envapter.getUsing(['PRIMARY_PG_URL', 'SECONDARY_PG_URL'], Converters.Url);
 
 // TypeScript: Use type override for better type inference

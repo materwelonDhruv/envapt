@@ -1,11 +1,12 @@
-import type { ConverterValue } from './Converters';
+import type { ConverterToken } from './Converters';
 import type { JsonValue } from './Types';
 
 /**
- * List of built-in converters for Envapt.
+ * List of built-in scalar converters for Envapt. Arrays are handled separately via
+ * the {@link Converters.array} builder and the `ArrayOf<...>` brand.
  * @internal
  */
-export const ListOfBuiltInConverters: ConverterValue[] = [
+export const ListOfBuiltInConverters: ConverterToken[] = [
     'string',
     'number',
     'boolean',
@@ -14,7 +15,6 @@ export const ListOfBuiltInConverters: ConverterValue[] = [
     'integer',
     'float',
     'json',
-    'array',
     'url',
     'regexp',
     'date',
@@ -22,10 +22,10 @@ export const ListOfBuiltInConverters: ConverterValue[] = [
 ] as const;
 
 /**
- * Type checking functions for built-in converter return types.
+ * Type checking functions for built-in scalar converter return types.
  * @internal
  */
-export const BuiltInConverterTypeCheckers: Record<ConverterValue, (value: unknown) => boolean> = {
+export const BuiltInConverterTypeCheckers: Record<ConverterToken, (value: unknown) => boolean> = {
     string: (value: unknown): value is string => typeof value === 'string',
     number: (value: unknown): value is number => typeof value === 'number',
     boolean: (value: unknown): value is boolean => typeof value === 'boolean',
@@ -41,7 +41,6 @@ export const BuiltInConverterTypeCheckers: Record<ConverterValue, (value: unknow
             return false;
         }
     },
-    array: (value: unknown): value is unknown[] => Array.isArray(value),
     url: (value: unknown): value is URL => value instanceof URL,
     regexp: (value: unknown): value is RegExp => value instanceof RegExp,
     date: (value: unknown): value is Date => value instanceof Date,

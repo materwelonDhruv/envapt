@@ -2,8 +2,8 @@ import { EnvaptCache } from './core/EnvapterBase';
 import { Envapter } from './Envapter';
 import { Parser } from './Parser';
 
+import type { ArrayOf } from './Converters';
 import type {
-    ArrayConverter,
     BuiltInConverter,
     ConverterFunction,
     EnvKeyInput,
@@ -129,31 +129,30 @@ export function Envapt<TReturnType>(
  *
  *   // Array converter: comma-separated list of origins -> string[]
  *   \@Envapt('ALLOWED_ORIGINS', {
- *     converter: { delimiter: ',', type: Converters.String },
+ *     converter: Converters.array({ of: Converters.String }),
  *     fallback: ['https://example.com']
  *   })
  *   static readonly allowedOrigins: string[];
  *
  *   // Array converter: pipe-separated ports -> number[]
  *   \@Envapt('PORTS', {
- *     converter: { delimiter: '|', type: Converters.Number },
+ *     converter: Converters.array({ of: Converters.Number, delimiter: '|' }),
  *     fallback: [3000]
  *   })
  *   static readonly ports: number[];
  * }
  * ```
  */
-// `InferConverterFallbackType` handles the asymmetric `Converters.Time` case
-// (fallback may be a number OR a time-string); for every other converter it
-// reduces to `InferConverterReturnType`, so array-converter fallbacks behave
-// unchanged.
-export function Envapt<TConverter extends BuiltInConverter | ArrayConverter>(
+// `InferConverterFallbackType` handles asymmetric cases: scalar `Converters.Time`
+// accepts `TimeFallback`, and `ArrayOf<'time'>` accepts `TimeFallback[]`. Every
+// other converter reduces to `InferConverterReturnType`.
+export function Envapt<TConverter extends BuiltInConverter | ArrayOf>(
     key: EnvKeyInput,
     options: { converter: TConverter; fallback?: InferConverterFallbackType<TConverter> | undefined }
 ): PropertyDecorator;
 
 /**
- * Usage 5: Primitive constructor with optional fallback
+ * Usage 4: Primitive constructor with optional fallback
  *
  * @param key - Environment variable name(s) to load
  * @param options - Configuration options with primitive constructor
@@ -179,7 +178,7 @@ export function Envapt<TConstructor extends PrimitiveConstructor>(
 ): PropertyDecorator;
 
 /**
- * Usage 6: Fallback only (no converter)
+ * Usage 5: Fallback only (no converter)
  *
  * @param key - Environment variable name(s) to load
  * @param options - Configuration options with fallback only

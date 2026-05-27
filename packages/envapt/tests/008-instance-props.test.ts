@@ -87,7 +87,7 @@ describe('Instance Properties with @Envapt', () => {
 
     describe('advanced converters on instance properties', () => {
         class AdvancedConvertersInstance {
-            @Envapt('INSTANCE_ARRAY', { converter: Converters.Array, fallback: [] })
+            @Envapt('INSTANCE_ARRAY', { converter: Converters.array(), fallback: [] })
             declare readonly arrayProp: string[];
 
             @Envapt('INSTANCE_JSON', { converter: Converters.Json, fallback: {} })
@@ -156,7 +156,7 @@ describe('Instance Properties with @Envapt', () => {
             @Envapt('INSTANCE_MISSING_BOOLEAN', { converter: Converters.Boolean, fallback: true })
             declare readonly missingBoolean: boolean;
 
-            @Envapt('INSTANCE_MISSING_ARRAY', { converter: Converters.Array, fallback: ['default1', 'default2'] })
+            @Envapt('INSTANCE_MISSING_ARRAY', { converter: Converters.array(), fallback: ['default1', 'default2'] })
             declare readonly missingArray: string[];
         }
 
@@ -273,7 +273,7 @@ describe('Instance Properties with @Envapt', () => {
             @Envapt('INSTANCE_BOOLEAN_TRUE', { converter: Converters.Boolean, fallback: false })
             declare readonly instanceBoolean: boolean;
 
-            @Envapt('INSTANCE_ARRAY', { converter: Converters.Array, fallback: [] })
+            @Envapt('INSTANCE_ARRAY', { converter: Converters.array(), fallback: [] })
             static readonly staticArray: string[];
         }
 
