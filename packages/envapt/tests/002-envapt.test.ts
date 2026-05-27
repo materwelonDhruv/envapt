@@ -120,7 +120,7 @@ describe('Envapt', () => {
 
             @Envapt('TEST_VAR_UNDEFINED_FALLBACK_WITH_CONVERTER', {
                 fallback: undefined,
-                converter: { delimiter: ',', type: Converters.Time }
+                converter: Converters.array({ of: Converters.Time, delimiter: ',' })
             })
             public static readonly undefinedFallbackWithArrayConverter: string;
         }
@@ -239,13 +239,13 @@ describe('Envapt', () => {
             @Envapt('DATABASE_CONFIG', { converter: Converters.Json })
             static readonly databaseConfig: object;
 
-            @Envapt('API_ENDPOINTS', { converter: { delimiter: ';' } })
+            @Envapt('API_ENDPOINTS', { converter: Converters.array({ delimiter: ';' }) })
             static readonly apiEndpoints: string[];
 
-            @Envapt('CORS_ORIGINS', { converter: { delimiter: '|', type: Converters.Url } })
+            @Envapt('CORS_ORIGINS', { converter: Converters.array({ of: Converters.Url, delimiter: '|' }) })
             static readonly corsOrigins: URL[];
 
-            @Envapt('SERVICE_TAGS', { converter: { delimiter: ' ' } })
+            @Envapt('SERVICE_TAGS', { converter: Converters.array({ delimiter: ' ' }) })
             static readonly serviceTags: string[];
 
             @Envapt('ENABLED_FEATURES', { converter: Converters.Boolean })

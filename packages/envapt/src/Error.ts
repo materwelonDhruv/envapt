@@ -23,6 +23,8 @@ export enum EnvaptErrorCodes {
     InvalidConverterType = 204,
     /** Thrown when primitive type coercion on fallback value fails */
     PrimitiveCoercionFailed = 205,
+    /** Thrown when an array element fails to convert to the configured element type */
+    ArrayElementConversionFailed = 206,
 
     // Other errors
     /** Thrown when delimiter is missing in array converter configuration */

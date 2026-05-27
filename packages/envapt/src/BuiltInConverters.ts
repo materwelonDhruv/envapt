@@ -2,8 +2,8 @@
 
 import { EnvaptError, EnvaptErrorCodes } from './Error';
 
+import type { ArrayOf, CustomElementConverter } from './Converters';
 import type {
-    ArrayConverter,
     BuiltInConverter,
     BuiltInConverterFunction,
     JsonValue,
@@ -116,15 +116,6 @@ export class BuiltInConverters {
         }
     }
 
-    static array(raw: string, fallback?: string[], delimiter = ','): string[] | undefined {
-        if (raw.trim() === '') return [];
-        const arr = raw
-            .split(delimiter)
-            .map((item) => item.trim())
-            .filter(Boolean);
-        return arr.length ? arr : fallback;
-    }
-
     static url(raw: string, fallback?: URL): URL | undefined {
         try {
             return new URL(raw);
@@ -182,9 +173,17 @@ export class BuiltInConverters {
     }
 
     /**
-     * Process array with custom converter config
+     * Process the raw env value for an {@link ArrayOf} configuration.
+     *
+     * Behaviour:
+     * - Splits on `config.delimiter`, trims each item, and filters out empty entries.
+     * - With a scalar element token: runs each item through the matching built-in converter.
+     *   If any element returns `undefined`, throws `ArrayElementConversionFailed` with positional info.
+     * - With a custom function element: runs each item through the function. Propagates user
+     *   exceptions; treats `undefined` returns as conversion failures (same throw as scalar path).
+     * - Returns `[]` when the raw value is empty/whitespace.
      */
-    static processArrayConverter(raw: string, fallback: unknown, config: ArrayConverter): unknown[] | undefined {
+    static processArrayConverter(raw: string, config: ArrayOf): unknown[] {
         if (raw.trim() === '') return [];
 
         const items = raw
@@ -192,18 +191,34 @@ export class BuiltInConverters {
             .map((item) => String(item).trim())
             .filter(Boolean);
 
-        // If no items after split, return fallback if provided
-        if (!items.length) return fallback ? (fallback as unknown[]) : undefined;
+        if (!items.length) return [];
 
-        // If no type specified, return as string array
-        const type = config.type;
-        if (!type) return items;
+        const elementOf = config.of;
 
-        // Convert each item using the specified type
-        const converter = BuiltInConverters.getConverter(type);
-        return items.map((item) => {
+        if (typeof elementOf === 'function') {
+            return items.map((item, index) => {
+                const converter = elementOf as CustomElementConverter;
+                const result = converter(item);
+                if (result === undefined) {
+                    throw new EnvaptError(
+                        EnvaptErrorCodes.ArrayElementConversionFailed,
+                        `Custom element converter returned undefined for item "${item}" at index ${index}.`
+                    );
+                }
+                return result;
+            });
+        }
+
+        const converter = BuiltInConverters.getConverter(elementOf);
+        return items.map((item, index) => {
             const converted = converter(item, undefined);
-            return converted ?? item;
+            if (converted === undefined) {
+                throw new EnvaptError(
+                    EnvaptErrorCodes.ArrayElementConversionFailed,
+                    `Element "${item}" at index ${index} could not be converted to ${elementOf}.`
+                );
+            }
+            return converted;
         });
     }
 
@@ -220,7 +235,6 @@ export class BuiltInConverters {
             symbol: BuiltInConverters.symbol,
             float: BuiltInConverters.float,
             json: BuiltInConverters.json,
-            array: BuiltInConverters.array,
             url: BuiltInConverters.url,
             regexp: BuiltInConverters.regexp,
             date: BuiltInConverters.date,

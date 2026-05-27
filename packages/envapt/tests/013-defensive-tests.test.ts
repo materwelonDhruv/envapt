@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import { describe, it, vi } from 'vitest';
 
 import { BuiltInConverters } from '../src/BuiltInConverters';
+import { Converters } from '../src/Converters';
 import { Envapter } from '../src/Envapter';
 import { EnvaptError, EnvaptErrorCodes } from '../src/Error';
 import { Parser } from '../src/Parser';
@@ -62,11 +63,6 @@ describe('Defensive tests', () => {
             expect(BuiltInConverters.symbol('', fallback)).to.equal(fallback);
         });
 
-        it('returns fallback when array items collapse to nothing', () => {
-            const fallback = ['fallback'];
-            expect(BuiltInConverters.array(' , , ', fallback)).to.equal(fallback);
-        });
-
         it('returns fallback when integer parsing fails', () => {
             const fallback = 321;
             expect(BuiltInConverters.integer('not-an-integer', fallback)).to.equal(fallback);
@@ -77,23 +73,25 @@ describe('Defensive tests', () => {
             expect(BuiltInConverters.float('not-a-float', fallback)).to.equal(fallback);
         });
 
-        it('returns an empty array when raw input is blank for custom array converters', () => {
-            const result = BuiltInConverters.processArrayConverter('   ', undefined, { delimiter: ',' });
+        it('returns an empty array when raw input is blank for array converters', () => {
+            const result = BuiltInConverters.processArrayConverter('   ', Converters.array({ delimiter: ',' }));
             expect(result).to.deep.equal([]);
         });
 
-        it('returns fallback when custom array converter produces no items', () => {
-            const fallback = ['keep-me'];
-            const result = BuiltInConverters.processArrayConverter(' , , ', fallback, { delimiter: ',' });
-            expect(result).to.equal(fallback);
+        it('returns [] when items all collapse to empty after filtering', () => {
+            const result = BuiltInConverters.processArrayConverter(' , , ', Converters.array({ delimiter: ',' }));
+            expect(result).to.deep.equal([]);
         });
 
-        it('preserves original value when typed conversion fails inside array converter', () => {
-            const result = BuiltInConverters.processArrayConverter('1,abc', undefined, {
-                delimiter: ',',
-                type: 'number'
-            });
-            expect(result).to.deep.equal([1, 'abc']);
+        it('throws when a typed element conversion fails inside array converter', () => {
+            expect(() =>
+                BuiltInConverters.processArrayConverter(
+                    '1,abc',
+                    Converters.array({ of: Converters.Number, delimiter: ',' })
+                )
+            )
+                .to.throw(EnvaptError)
+                .with.property('code', EnvaptErrorCodes.ArrayElementConversionFailed);
         });
 
         it('returns fallback for invalid numeric timestamp strings', () => {
@@ -148,10 +146,10 @@ describe('Defensive tests', () => {
             spy.mockRestore();
         });
 
-        it('returns null when array converter yields no items and no fallback exists', () => {
+        it('returns [] when array converter yields no items after filtering empty entries', () => {
             const parser = new Parser(new StubEnvService({ EMPTY_LIST: ' , , ' }));
-            const result = parser.convertValue('EMPTY_LIST', undefined, { delimiter: ',' }, false);
-            expect(result).to.be.null;
+            const result = parser.convertValue('EMPTY_LIST', undefined, Converters.array({ delimiter: ',' }), false);
+            expect(result).to.deep.equal([]);
         });
 
         it('maps primitive Symbol constructors directly via internal converter', () => {

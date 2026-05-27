@@ -1,4 +1,4 @@
-import type { Converters, ArrayElementConverter, ConverterValue, ArrayElementConverterValue } from './Converters';
+import type { ArrayOf, ConverterToken, CustomElementConverter } from './Converters';
 import type { Environment } from './core/EnvironmentMethods';
 import type { DotenvConfigOptions } from 'dotenv';
 
@@ -11,37 +11,17 @@ import type { DotenvConfigOptions } from 'dotenv';
 type PermittedDotenvConfig = Omit<DotenvConfigOptions, 'processEnv' | 'path'>;
 
 /**
- * Built-in converter types for common environment variable patterns
+ * Scalar built-in converter tokens (e.g. `'number'`, `'time'`).
+ * Excludes the array builder (see {@link ArrayOf}).
  * @public
  */
-type BuiltInConverter = ConverterValue | Converters;
+type BuiltInConverter = ConverterToken;
 
 /**
  * Primitive types supported by Envapter
  * @public
  */
 type PrimitiveConstructor = typeof String | typeof Number | typeof Boolean | typeof BigInt | typeof Symbol;
-
-/**
- * Valid array converter element types (excludes array, json, regexp)
- * @public
- */
-type ValidArrayConverterBuiltInType = ArrayElementConverterValue | ArrayElementConverter;
-
-/**
- * Array converter configuration for custom delimiters and element types
- * @public
- */
-interface ArrayConverter {
-    /**
-     * Delimiter to split the string by
-     */
-    delimiter: string;
-    /**
-     * Type to convert each array element to (excludes array, json, and regexp types)
-     */
-    type?: ArrayElementConverter | ArrayElementConverterValue;
-}
 
 /**
  * String value from a .env file or environment variable
@@ -65,19 +45,11 @@ type EnvKeyInput = string | readonly [string, ...string[]];
 type ConverterFunction<TFallback = unknown> = (raw: BaseInput, fallback?: TFallback) => TFallback;
 
 /**
- * Environment variable converter - can be a primitive constructor, built-in converter string, array converter object, or custom parser function
- * @see {@link PrimitiveConstructor} for primitive types
- * @see {@link Converters} for built-in types
- * @see {@link ArrayConverter} for array converter configuration
- * @see {@link ConverterFunction} for custom parser functions
+ * Environment variable converter: a primitive constructor, a built-in scalar token, an `ArrayOf<...>`
+ * produced by {@link Converters.array}, or a custom parser function.
  * @public
  */
-type EnvaptConverter<TFallback> =
-    | PrimitiveConstructor
-    | Converters
-    | ConverterValue
-    | ArrayConverter
-    | ConverterFunction<TFallback>;
+type EnvaptConverter<TFallback> = PrimitiveConstructor | BuiltInConverter | ArrayOf | ConverterFunction<TFallback>;
 
 /**
  * Options for the \@Envapt decorator (modern API)
@@ -116,7 +88,6 @@ interface ConverterMap {
     integer: number;
     float: number;
     json: JsonValue;
-    array: string[];
     url: URL;
     regexp: RegExp;
     date: Date;
@@ -124,14 +95,10 @@ interface ConverterMap {
 }
 
 /**
- * Type mapping for built-in converters to their return types
+ * Type mapping for built-in scalar converters to their return types
  * @internal
  */
-type BuiltInConverterReturnType<ConverterKey extends BuiltInConverter> = ConverterKey extends Converters
-    ? ConverterMap[`${ConverterKey}`]
-    : ConverterKey extends keyof ConverterMap
-      ? ConverterMap[ConverterKey]
-      : never;
+type BuiltInConverterReturnType<ConverterKey extends BuiltInConverter> = ConverterMap[ConverterKey];
 
 /**
  * Return type for built-in converter functions
@@ -173,39 +140,47 @@ type TimeFallback = number | `${number}${TimeUnit}`;
 type ConditionalReturn<ReturnType, TFallback> = TFallback extends undefined ? ReturnType | undefined : ReturnType;
 
 /**
- * Advanced type inference for built-in and array converters
- * Maps converter types to their expected return types
+ * Inferred return type for a converter.
+ *
+ * - `ArrayOf<E>` resolves to the element type's return as an array. When `E` is a custom
+ *   function, the function's return type drives the array element. When `E` is a scalar
+ *   token, `ConverterMap` provides the element type.
+ * - Bare scalar tokens resolve through `ConverterMap`.
  * @internal
  */
-type InferConverterReturnType<TConverter extends BuiltInConverter | ArrayConverter> =
-    TConverter extends BuiltInConverter
-        ? BuiltInConverterReturnType<TConverter>
-        : TConverter extends ArrayConverter
-          ? TConverter['type'] extends BuiltInConverter
-              ? BuiltInConverterReturnType<TConverter['type']>[]
-              : string[]
-          : unknown[];
+type InferConverterReturnType<TConverter> =
+    TConverter extends ArrayOf<infer Element>
+        ? Element extends BuiltInConverter
+            ? ConverterMap[Element][]
+            : Element extends CustomElementConverter<infer Returned>
+              ? Returned[]
+              : never
+        : TConverter extends BuiltInConverter
+          ? BuiltInConverterReturnType<TConverter>
+          : never;
 
 /**
- * Type inference for the *fallback* slot of a converter. Usually the same as the return type, but
- * `Converters.Time` allows a time-string fallback ({@link TimeFallback}) in addition to `number`.
- * Add future converters with asymmetric fallback/return types to this conditional.
+ * Type inference for the *fallback* slot of a converter. `Converters.Time` (scalar or array
+ * element) accepts {@link TimeFallback} / `TimeFallback[]`; everything else mirrors the
+ * return type. Add future asymmetric fallback/return converters to this conditional.
  * @internal
  */
-type InferConverterFallbackType<TConverter extends BuiltInConverter | ArrayConverter> = TConverter extends
-    | Converters.Time
-    | 'time'
+type InferConverterFallbackType<TConverter> = TConverter extends 'time'
     ? TimeFallback
-    : InferConverterReturnType<TConverter>;
+    : TConverter extends ArrayOf<infer Element>
+      ? Element extends 'time'
+          ? TimeFallback[]
+          : InferConverterReturnType<TConverter>
+      : InferConverterReturnType<TConverter>;
 
 /**
  * Complete type inference for advanced converter methods
  * @internal
  */
-type AdvancedConverterReturn<
-    TConverter extends BuiltInConverter | ArrayConverter,
-    TFallback = undefined
-> = ConditionalReturn<InferConverterReturnType<TConverter>, TFallback>;
+type AdvancedConverterReturn<TConverter, TFallback = undefined> = ConditionalReturn<
+    InferConverterReturnType<TConverter>,
+    TFallback
+>;
 
 /**
  * Type inference for primitive constructor return types
@@ -268,8 +243,6 @@ export type {
     PermittedDotenvConfig,
     BuiltInConverter,
     PrimitiveConstructor,
-    ValidArrayConverterBuiltInType,
-    ArrayConverter,
     ConverterFunction,
     EnvaptConverter,
     EnvaptOptions,

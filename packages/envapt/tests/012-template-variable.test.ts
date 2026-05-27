@@ -38,13 +38,13 @@ describe('template variable resolution', () => {
         static readonly symbolTemplate: symbol;
 
         // Array converters with templates
-        @Envapt('TEST_ARRAY_COMMA_TEMPLATE', { converter: Converters.Array, fallback: [] })
+        @Envapt('TEST_ARRAY_COMMA_TEMPLATE', { converter: Converters.array(), fallback: [] })
         static readonly arrayCommaTemplate: string[];
 
-        @Envapt('TEST_ARRAY_SPACE_TEMPLATE', { converter: { delimiter: ' ' }, fallback: [] })
+        @Envapt('TEST_ARRAY_SPACE_TEMPLATE', { converter: Converters.array({ delimiter: ' ' }), fallback: [] })
         static readonly arraySpaceTemplate: string[];
 
-        @Envapt('TEST_ARRAY_COMMA_SPACE_TEMPLATE', { converter: { delimiter: ', ' }, fallback: [] })
+        @Envapt('TEST_ARRAY_COMMA_SPACE_TEMPLATE', { converter: Converters.array({ delimiter: ', ' }), fallback: [] })
         static readonly arrayCommaSpaceTemplate: string[];
 
         // JSON converter with templates
