@@ -1,4 +1,6 @@
 /* eslint-disable no-magic-numbers */
+import type { StandardSchemaV1 } from './StandardSchema';
+
 export enum EnvaptErrorCodes {
     // Fallback related errors
     /** Thrown when an invalid fallback value is provided */
@@ -27,6 +29,10 @@ export enum EnvaptErrorCodes {
     ArrayElementConversionFailed = 206,
     /** Thrown under strict mode when an array element is empty or whitespace only */
     EmptyArrayElement = 207,
+    /** Thrown when a Standard Schema returns issues for a non-empty env value */
+    SchemaValidationFailed = 208,
+    /** Thrown when a Standard Schema's `validate` itself throws (e.g. a refinement that crashes) */
+    SchemaThrew = 209,
 
     // Other errors
     /** Thrown when delimiter is missing in array converter configuration */
@@ -42,6 +48,11 @@ export enum EnvaptErrorCodes {
     MissingEnvValue = 305
 }
 
+interface EnvaptErrorOptions {
+    issues?: readonly StandardSchemaV1.Issue[];
+    cause?: unknown;
+}
+
 /**
  * Custom error for better DX and debugging when using Envapt.
  *
@@ -52,10 +63,17 @@ export enum EnvaptErrorCodes {
  */
 export class EnvaptError extends Error {
     public readonly code: EnvaptErrorCodes;
+    /**
+     * Populated only for {@link EnvaptErrorCodes.SchemaValidationFailed} (208). For every other
+     * code this is `undefined`. Lets callers do `if (err.code === 208) err.issues?.forEach(...)`
+     * without a type cast.
+     */
+    public readonly issues: readonly StandardSchemaV1.Issue[] | undefined;
 
-    constructor(code: EnvaptErrorCodes, message: string) {
-        super(message);
+    constructor(code: EnvaptErrorCodes, message: string, options?: EnvaptErrorOptions) {
+        super(message, options?.cause !== undefined ? { cause: options.cause } : undefined);
         this.name = `EnvaptError [${code}]`;
         this.code = code;
+        this.issues = options?.issues;
     }
 }

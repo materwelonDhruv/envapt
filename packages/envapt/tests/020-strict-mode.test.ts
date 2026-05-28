@@ -179,8 +179,9 @@ describe('Strict mode + required (v5)', () => {
         it('rejects required + fallback at runtime with InvalidUserDefinedConfig', () => {
             const buildBadDecorator = (): void => {
                 class Bad {
-                    // The compile-time Err<msg> guards against this at the type level; the runtime
-                    // check is defense-in-depth for dynamic objects that bypass the types.
+                    // The overload tower has no branch that accepts `required: true` alongside
+                    // `fallback`, so the type system rejects this at the call site. The runtime
+                    // check is defense for dynamic objects that bypass the types.
                     @Envapt('NEVER_SET_KEY', {
                         required: true,
                         // intentionally bad combo, runtime should reject -- justified

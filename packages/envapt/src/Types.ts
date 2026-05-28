@@ -1,5 +1,6 @@
 import type { ArrayOf, ConverterToken, CustomElementConverter } from './Converters';
 import type { Environment } from './core/EnvironmentMethods';
+import type { StandardSchemaV1 } from './StandardSchema';
 
 /**
  * Scalar built-in converter tokens (e.g. `'number'`, `'time'`).
@@ -48,8 +49,13 @@ type EnvaptConverter<TFallback> = PrimitiveConstructor | BuiltInConverter | Arra
 declare const _envaptErrBrand: unique symbol;
 type Err<Msg extends string> = Msg & { readonly [_envaptErrBrand]: never };
 
-type RequiredAndFallbackMutex =
-    Err<'`required: true` and `fallback` are mutually exclusive. Use `Envapter.require()` for explicit fail-fast checks instead.'>;
+type SchemaMustBeSync =
+    Err<'Schema must be synchronous. envapt is boot-time config loading; async refinements (validate returning `Promise<Result>`) belong outside the env layer.'>;
+
+// Standalone slot guard: async-returning `validate` resolves to the brand and fails to
+// assign.
+type SchemaConstraint<Schema extends StandardSchemaV1> =
+    ReturnType<Schema['~standard']['validate']> extends Promise<unknown> ? SchemaMustBeSync : Schema;
 
 /**
  * Options for the \@Envapt decorator (modern API). `required: true` is mutually exclusive
@@ -236,7 +242,8 @@ type ProfilesConfig = Partial<Record<Environment, EnvProfile>> & {
 
 export type {
     Err,
-    RequiredAndFallbackMutex,
+    SchemaMustBeSync,
+    SchemaConstraint,
     BuiltInConverter,
     PrimitiveConstructor,
     ConverterFunction,

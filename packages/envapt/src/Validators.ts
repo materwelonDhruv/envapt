@@ -6,6 +6,7 @@ import { ListOfBuiltInConverters, BuiltInConverterTypeCheckers } from './ListOfB
 
 import type { ArrayOf, ConverterToken } from './Converters';
 import type { DotenvConfigOptions } from './Dotenv';
+import type { StandardSchemaV1 } from './StandardSchema';
 import type { BuiltInConverter, ConverterFunction, EnvaptConverter } from './Types';
 
 export class Validator {
@@ -22,6 +23,17 @@ export class Validator {
      */
     static isArrayConverter(value: unknown): value is ArrayOf {
         return isArrayOf(value);
+    }
+
+    // Structural check: `version === 1` + callable `validate` is the minimum dispatchable
+    // shape per the Standard Schema spec.
+    static isStandardSchema(value: unknown): value is StandardSchemaV1 {
+        if (typeof value !== 'object' || value === null) return false;
+        if (!('~standard' in value)) return false;
+        const slot = (value as { '~standard': unknown })['~standard'];
+        if (typeof slot !== 'object' || slot === null) return false;
+        const props = slot as { version?: unknown; validate?: unknown };
+        return props.version === 1 && typeof props.validate === 'function';
     }
 
     static customConvertor<TFallback>(
