@@ -41,6 +41,7 @@
         "tsd": "tsd",
         "test": "vitest run",
         "test:watch": "vitest dev",
+        "test:integration": "node tests/integration/run.mjs",
         "coverage": "pnpm run test --coverage",
         "cs": "changeset",
         "cs:publish": "changeset publish",
