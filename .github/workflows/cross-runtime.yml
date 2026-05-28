@@ -1,0 +1,126 @@
+name: cross-runtime
+
+on:
+    pull_request:
+        paths-ignore:
+            - '**/*.md'
+            - '.vscode/**'
+            - '.changeset/**'
+            - '.github/ISSUE_TEMPLATE/**'
+            - '.github/PULL_REQUEST_TEMPLATE.md'
+    push:
+        branches: [main, next]
+        paths-ignore:
+            - '**/*.md'
+            - '.vscode/**'
+            - '.changeset/**'
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    build:
+        name: Build dist artifact
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v6
+              with:
+                  fetch-depth: 1
+            - uses: pnpm/action-setup@v6
+            - uses: actions/setup-node@v6
+              with:
+                  node-version: 24.16.0
+                  cache: pnpm
+            - run: pnpm install --frozen-lockfile
+            - run: pnpm --filter envapt build
+            - uses: actions/upload-artifact@v4
+              with:
+                  name: envapt-dist-and-suites
+                  # Already-minified ESM compresses poorly; level 0 saves CPU on both ends.
+                  compression-level: 0
+                  path: |
+                      packages/envapt/dist/
+                      packages/envapt/tests/integration/
+                  if-no-files-found: error
+
+    test-node:
+        # Multi-OS only at the LTS cell. Path-separator and CRLF risks live at the OS
+        # boundary; doubling the OS triplet across every Node version adds zero new
+        # bug-class coverage for a pure-JS lib with no native deps.
+        name: node ${{ matrix.node }} / ${{ matrix.os }}
+        needs: build
+        runs-on: ${{ matrix.os }}
+        strategy:
+            fail-fast: false
+            matrix:
+                include:
+                    - { node: '20', os: ubuntu-latest }
+                    - { node: '22', os: ubuntu-latest }
+                    - { node: '24', os: ubuntu-latest }
+                    - { node: '22', os: macos-latest }
+                    - { node: '22', os: windows-latest }
+        steps:
+            - uses: actions/setup-node@v6
+              with:
+                  node-version: ${{ matrix.node }}
+            - uses: actions/download-artifact@v4
+              with:
+                  name: envapt-dist-and-suites
+                  path: packages/envapt/
+            - run: node packages/envapt/tests/integration/run.mjs
+
+    test-bun:
+        # Ubuntu-only: Bun's Windows/macOS variance catches Bun engine bugs (e.g.
+        # bun#16907, bun#23831), not envapt bugs. Engine flakes would just gate PRs
+        # on something we can't fix.
+        name: bun / ubuntu
+        needs: build
+        runs-on: ubuntu-latest
+        steps:
+            - uses: oven-sh/setup-bun@v2
+              with:
+                  bun-version: 1.3.x
+            - uses: actions/download-artifact@v4
+              with:
+                  name: envapt-dist-and-suites
+                  path: packages/envapt/
+            - run: bun packages/envapt/tests/integration/run.mjs
+
+    test-deno:
+        # Ubuntu-only for the same reason as Bun. `--config` forces the local deno.json
+        # so `experimentalDecorators: true` actually applies: Deno historically ignored
+        # this flag silently (denoland/deno#15968 fixed 2024-07), so without an explicit
+        # config the .ts decorator suite would not exercise the legacy transpile path.
+        name: deno / ubuntu
+        needs: build
+        runs-on: ubuntu-latest
+        steps:
+            - uses: denoland/setup-deno@v2
+              with:
+                  deno-version: v2.7.x
+            - uses: actions/download-artifact@v4
+              with:
+                  name: envapt-dist-and-suites
+                  path: packages/envapt/
+            - run: deno run -A --config packages/envapt/tests/integration/deno.json packages/envapt/tests/integration/run.mjs
+
+    cross-runtime-ok:
+        # Single aggregator. Set this as the required check in branch protection so
+        # renaming matrix variables (e.g. node 24 -> 26) does not break gating.
+        name: cross-runtime ok
+        needs: [test-node, test-bun, test-deno]
+        if: always()
+        runs-on: ubuntu-latest
+        steps:
+            - name: Verify every runtime job succeeded
+              run: |
+                  results='${{ toJSON(needs) }}'
+                  echo "$results"
+                  failed=$(echo "$results" | jq -r 'to_entries[] | select(.value.result != "success") | .key')
+                  if [ -n "$failed" ]; then
+                      echo "Failed jobs:"
+                      echo "$failed"
+                      exit 1
+                  fi
+                  echo "All cross-runtime jobs succeeded."

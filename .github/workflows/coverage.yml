@@ -20,6 +20,7 @@ jobs:
                   node-version: 24.16.0
                   cache: pnpm
             - run: pnpm install --frozen-lockfile
+            - run: pnpm build
             - run: pnpm tc
             - run: pnpm coverage
             - uses: codecov/codecov-action@v6
