@@ -1,8 +1,15 @@
 import fs from 'node:fs';
 
+import type { Err } from './Types';
+
+type PathManagedByEnvapter =
+    Err<'`path` is managed by Envapter. Use `Envapter.envPaths` to configure which .env files load.'>;
+type ProcessEnvManagedByEnvapter = Err<'`processEnv` is managed internally by Envapter and cannot be overridden.'>;
+
 /**
  * Public options for the internal `.env` loader. Mirrors the subset of dotenv's
  * `config()` options that envapt actually supports (no DOTENV_KEY, no quiet).
+ *
  * @public
  */
 export interface DotenvConfigOptions {
@@ -12,6 +19,8 @@ export interface DotenvConfigOptions {
     override?: boolean;
     /** When true, prints `[dotenv]` messages to stderr while parsing. Default false. */
     debug?: boolean;
+    path?: PathManagedByEnvapter;
+    processEnv?: ProcessEnvManagedByEnvapter;
 }
 
 /**
@@ -19,7 +28,7 @@ export interface DotenvConfigOptions {
  * fields are managed by envapt and never user-supplied.
  * @internal
  */
-export interface LoadDotenvInput extends DotenvConfigOptions {
+export interface LoadDotenvInput extends Omit<DotenvConfigOptions, 'path' | 'processEnv'> {
     /** One or more `.env` paths to load, in declaration order. */
     path: string | string[];
     /** Target env map. Mutated in place with parsed values. */

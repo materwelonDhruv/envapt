@@ -38,6 +38,7 @@
         "fmt:check": "prettier --check '{src,tests,scripts}/**/*.{ts,tsx,json,md}' --cache",
         "fmt:all": "prettier --write .",
         "tc": "tsc --noEmit",
+        "tsd": "tsd",
         "test": "vitest run",
         "test:watch": "vitest dev",
         "coverage": "pnpm run test --coverage",

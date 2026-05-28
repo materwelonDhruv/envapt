@@ -1,4 +1,5 @@
 import { AdvancedMethods } from './core/AdvancedMethods';
+import { EnvaptError, EnvaptErrorCodes } from './Error';
 
 export { EnvaptCache } from './core/EnvapterBase';
 export { Environment } from './core/EnvironmentMethods';
@@ -43,10 +44,18 @@ export class Envapter extends AdvancedMethods {
      * ```
      */
     static resolve(strings: TemplateStringsArray, ...keys: string[]): string {
+        const strict = Envapter.strict;
         return strings.reduce((result, string, i) => {
             const envKey = keys[i];
-            const envValue = envKey ? super.get(envKey, '') : '';
-            return result + string + envValue;
+            if (!envKey) return result + string;
+            const raw = super.get(envKey, '');
+            if (strict && raw.trim() === '') {
+                throw new EnvaptError(
+                    EnvaptErrorCodes.MissingEnvValue,
+                    `Cannot resolve template variable "\${${envKey}}": value is missing or empty.`
+                );
+            }
+            return result + string + raw;
         }, '');
     }
 
@@ -55,5 +64,46 @@ export class Envapter extends AdvancedMethods {
      */
     resolve(strings: TemplateStringsArray, ...keys: string[]): string {
         return Envapter.resolve(strings, ...keys);
+    }
+
+    /**
+     * Assert that one or more environment variables are present and non-empty (post-trim,
+     * after template resolution). Throws `MissingEnvValue` listing every missing key.
+     *
+     * For typed fail-fast in functional code, use `Envapter.getUsing(key, { converter, required: true })`.
+     *
+     * @example
+     * ```ts
+     * Envapter.require('DATABASE_URL');
+     * Envapter.require('DATABASE_URL', 'API_KEY', 'SENTRY_DSN');
+     * ```
+     */
+    static require(...keys: [string, ...string[]]): void {
+        const missing: string[] = [];
+        for (const k of keys) {
+            if (Envapter.resolveAndValidate(k) === undefined) missing.push(k);
+        }
+
+        if (missing.length > 0) {
+            throw new EnvaptError(
+                EnvaptErrorCodes.MissingEnvValue,
+                `Missing required environment variables: ${missing.join(', ')}.`
+            );
+        }
+    }
+
+    private static resolveAndValidate(key: string): string | undefined {
+        const { value } = this.resolveKeyInput(key);
+        if (value === undefined) return undefined;
+        const resolved = this.parser.resolveTemplate(key, value);
+        if (resolved.trim() === '') return undefined;
+        return resolved;
+    }
+
+    /**
+     * @see {@link Envapter.require}
+     */
+    require(...keys: [string, ...string[]]): void {
+        Envapter.require(...keys);
     }
 }

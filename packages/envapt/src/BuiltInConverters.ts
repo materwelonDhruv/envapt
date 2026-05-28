@@ -182,14 +182,25 @@ export class BuiltInConverters {
      * - With a custom function element: runs each item through the function. Propagates user
      *   exceptions; treats `undefined` returns as conversion failures (same throw as scalar path).
      * - Returns `[]` when the raw value is empty/whitespace.
+     * - When `strict` is true, throws `EmptyArrayElement` on any empty/whitespace item instead
+     *   of silently filtering it out.
      */
-    static processArrayConverter(raw: string, config: ArrayOf): unknown[] {
+    static processArrayConverter(raw: string, config: ArrayOf, strict = false): unknown[] {
         if (raw.trim() === '') return [];
 
-        const items = raw
-            .split(config.delimiter)
-            .map((item) => String(item).trim())
-            .filter(Boolean);
+        const trimmedItems = raw.split(config.delimiter).map((item) => String(item).trim());
+
+        if (strict) {
+            const emptyIdx = trimmedItems.findIndex((item) => item === '');
+            if (emptyIdx !== -1) {
+                throw new EnvaptError(
+                    EnvaptErrorCodes.EmptyArrayElement,
+                    `Array element at index ${emptyIdx} is empty or whitespace only (strict mode).`
+                );
+            }
+        }
+
+        const items = trimmedItems.filter(Boolean);
 
         if (!items.length) return [];
 

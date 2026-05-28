@@ -1,5 +1,6 @@
 import { EnvaptCache } from './core/EnvapterBase';
 import { Envapter } from './Envapter';
+import { EnvaptError, EnvaptErrorCodes } from './Error';
 import { Parser } from './Parser';
 
 import type { ArrayOf } from './Converters';
@@ -12,14 +13,20 @@ import type {
     InferConverterFallbackType,
     InferPrimitiveFallbackType,
     InferPrimitiveReturnType,
-    PrimitiveConstructor
+    PrimitiveConstructor,
+    RequiredAndFallbackMutex
 } from './Types';
+
+function formatKeyForError(key: EnvKeyInput): string {
+    return Array.isArray(key) ? `[${key.join(', ')}]` : String(key);
+}
 
 function createPropertyDecorator<TFallback>(
     key: EnvKeyInput,
     fallback: TFallback | undefined,
     converter: EnvaptConverter<TFallback> | undefined,
-    hasFallback: boolean
+    hasFallback: boolean,
+    required: boolean
 ): PropertyDecorator {
     return function (target: object, prop: string | symbol): void {
         const propKey = String(prop);
@@ -36,9 +43,20 @@ function createPropertyDecorator<TFallback>(
                 // If so, we need to re-evaluate our cached value
                 let value = EnvaptCache.get(cacheKey) as TFallback | null | undefined;
 
-                // Re-evaluate if we don't have a cached value
                 if (value === undefined) {
-                    const parser = new Parser(new Envapter());
+                    const envapter = new Envapter();
+
+                    if (required) {
+                        const rawValue = envapter.getRaw(key);
+                        if (rawValue === undefined || rawValue.trim() === '') {
+                            throw new EnvaptError(
+                                EnvaptErrorCodes.MissingEnvValue,
+                                `Required environment variable "${formatKeyForError(key)}" is missing or empty.`
+                            );
+                        }
+                    }
+
+                    const parser = new Parser(envapter);
                     value = parser.convertValue(key, fallback, converter, hasFallback);
                     EnvaptCache.set(cacheKey, value);
                 }
@@ -52,15 +70,16 @@ function createPropertyDecorator<TFallback>(
 }
 
 /**
- * Usage 1: Custom converter function with fallback provided
+ * Usage 1: Either a custom converter function + fallback (both required), OR a fallback
+ * only (no converter).
  *
  * @param key - Environment variable name(s) to load
- * @param options - Configuration options with custom converter and required fallback
+ * @param options - Configuration options
  * @public
  * @example
  * ```ts
- * // Custom converter that validates a non-empty API key
  * class Config extends Envapter {
+ *   // Custom converter that validates a non-empty API key
  *   \@Envapt('API_KEY', {
  *     fallback: 'default-key',
  *     converter(raw, _fallback) {
@@ -69,42 +88,66 @@ function createPropertyDecorator<TFallback>(
  *     }
  *   })
  *   static readonly apiKey: string;
+ *
+ *   // Fallback-only (no converter): string fallback
+ *   \@Envapt('LOG_FILE', { fallback: '/var/log/app.log' })
+ *   static readonly logFile: string;
+ *
+ *   // Fallback-only: arbitrary object fallback
+ *   \@Envapt('RETRY_POLICY', { fallback: { retries: 3, backoff: 'exponential' } })
+ *   static readonly retryPolicy: unknown;
  * }
  * ```
  */
 export function Envapt<TFallback>(
     key: EnvKeyInput,
-    options: { converter: (raw: string | undefined, fallback: TFallback) => TFallback; fallback: TFallback }
+    options:
+        | { converter: (raw: string | undefined, fallback: TFallback) => TFallback; fallback: TFallback }
+        | { fallback: TFallback; converter?: undefined }
 ): PropertyDecorator;
 
 /**
- * Usage 2: Custom converter function without fallback
+ * Usage 2: Custom converter function without fallback. Either omit `required` (returns the
+ * converter's output, possibly `undefined`) or pass `required: true` to throw `MissingEnvValue`
+ * on missing/empty values.
  *
  * @param key - Environment variable name(s) to load
- * @param options - Configuration options with custom converter only
+ * @param options - Configuration options with custom converter only, with optional `required: true`
  * @public
  * @example
  * ```ts
- * // Custom converter without providing a fallback
  * class Config extends Envapter {
  *   \@Envapt('FEATURE_FLAGS', { converter(raw) {
- *     // raw may be undefined — handle that here
  *     return raw ? raw.split('|').map(s => s.trim()) : [];
  *   } })
  *   static readonly featureFlags: string[];
+ *
+ *   \@Envapt('JWT_SECRET', {
+ *     converter: (raw) => Buffer.from(raw ?? '', 'base64'),
+ *     required: true
+ *   })
+ *   declare static readonly jwtSecret: Buffer;
  * }
  * ```
  */
 export function Envapt<TReturnType>(
     key: EnvKeyInput,
-    options: { converter: ConverterFunction<TReturnType> }
+    options:
+        | { converter: ConverterFunction<TReturnType>; required?: false }
+        | { converter: ConverterFunction<TReturnType>; required: true; fallback?: RequiredAndFallbackMutex }
 ): PropertyDecorator;
 
 /**
- * Usage 3: Built-in or array converter with optional fallback
+ * Usage 3: Built-in or array converter with optional fallback OR `required: true`.
+ *
+ * `InferConverterFallbackType` handles asymmetric cases: scalar `Converters.Time` accepts
+ * `TimeFallback`, and `ArrayOf<'time'>` accepts `TimeFallback[]`. Every other converter
+ * reduces to `InferConverterReturnType`. The two object-shape branches are mutually
+ * exclusive: either provide a `fallback`, or pass `required: true` to throw
+ * `MissingEnvValue` on missing/empty values.
  *
  * @param key - Environment variable name(s) to load
- * @param options - Configuration options with built-in or array converter
+ * @param options - Configuration options
  * @public
  * @example
  * ```ts
@@ -134,21 +177,16 @@ export function Envapt<TReturnType>(
  *   })
  *   static readonly allowedOrigins: string[];
  *
- *   // Array converter: pipe-separated ports -> number[]
- *   \@Envapt('PORTS', {
- *     converter: Converters.array({ of: Converters.Number, delimiter: '|' }),
- *     fallback: [3000]
- *   })
- *   static readonly ports: number[];
+ *   \@Envapt('DATABASE_URL', { converter: Converters.Url, required: true })
+ *   declare static readonly databaseUrl: URL;
  * }
  * ```
  */
-// `InferConverterFallbackType` handles asymmetric cases: scalar `Converters.Time`
-// accepts `TimeFallback`, and `ArrayOf<'time'>` accepts `TimeFallback[]`. Every
-// other converter reduces to `InferConverterReturnType`.
 export function Envapt<TConverter extends BuiltInConverter | ArrayOf>(
     key: EnvKeyInput,
-    options: { converter: TConverter; fallback?: InferConverterFallbackType<TConverter> | undefined }
+    options:
+        | { converter: TConverter; fallback?: InferConverterFallbackType<TConverter> | undefined; required?: false }
+        | { converter: TConverter; required: true; fallback?: RequiredAndFallbackMutex }
 ): PropertyDecorator;
 
 /**
@@ -171,34 +209,31 @@ export function Envapt<TConverter extends BuiltInConverter | ArrayOf>(
  */
 export function Envapt<TConstructor extends PrimitiveConstructor>(
     key: EnvKeyInput,
-    options: {
-        converter: TConstructor;
-        fallback?: InferPrimitiveReturnType<TConstructor>;
-    }
+    options:
+        | { converter: TConstructor; fallback?: InferPrimitiveReturnType<TConstructor>; required?: false }
+        | { converter: TConstructor; required: true; fallback?: RequiredAndFallbackMutex }
 ): PropertyDecorator;
 
 /**
- * Usage 5: Fallback only (no converter)
+ * Usage 5: Required, no converter (raw string). Throws `MissingEnvValue` on first access if
+ * the env value is missing or empty (post-trim). Independent of global `Envapter.strict`.
+ * Mutually exclusive with `fallback`: combining them fails to match any overload at compile
+ * time. The runtime Validator catches dynamic objects that bypass the types.
  *
  * @param key - Environment variable name(s) to load
- * @param options - Configuration options with fallback only
+ * @param options - `{ required: true }`
  * @public
  * @example
  * ```ts
- * // Fallback-only usage (no converter)
  * class Config extends Envapter {
- *   \@Envapt('LOG_FILE', { fallback: '/var/log/app.log' })
- *   static readonly logFile: string;
- *
- *   \@Envapt('RETRY_POLICY', { fallback: { retries: 3, backoff: 'exponential' } })
- *   static readonly retryPolicy: unknown;
+ *   \@Envapt('API_KEY', { required: true })
+ *   declare static readonly apiKey: string;
  * }
  * ```
  */
-export function Envapt<TFallback>(
+export function Envapt(
     key: EnvKeyInput,
-    // eslint-disable-next-line @typescript-eslint/unified-signatures
-    options: { fallback: TFallback; converter?: undefined }
+    options: { required: true; fallback?: RequiredAndFallbackMutex }
 ): PropertyDecorator;
 
 /**
@@ -245,6 +280,17 @@ export function Envapt<TFallback extends string | number | boolean | bigint | sy
     converter?: PrimitiveConstructor
 ): PropertyDecorator;
 
+// Repeat of Usage 3 as the LAST non-impl overload. TS's "no overload matches" diagnostic
+// reports against the last declared candidate; this placement makes that diagnostic
+// surface the `RequiredAndFallbackMutex` branded literal in the chain (otherwise TS
+// reports against the classic positional API above and the explanation is masked).
+export function Envapt<TConverter extends BuiltInConverter | ArrayOf>(
+    key: EnvKeyInput,
+    options:
+        | { converter: TConverter; fallback?: InferConverterFallbackType<TConverter> | undefined; required?: false }
+        | { converter: TConverter; required: true; fallback?: RequiredAndFallbackMutex }
+): PropertyDecorator;
+
 /**
  * Instance/Static Property decorator that automatically loads and converts environment variables.
  */
@@ -257,17 +303,29 @@ export function Envapt<TFallback = unknown>(
     let fallback: TFallback | undefined;
     let actualConverter: EnvaptConverter<TFallback> | undefined;
     let hasFallback = true;
+    let required = false;
 
     if (
         fallbackOrOptions &&
         typeof fallbackOrOptions === 'object' &&
-        ('fallback' in fallbackOrOptions || 'converter' in fallbackOrOptions)
+        ('fallback' in fallbackOrOptions || 'converter' in fallbackOrOptions || 'required' in fallbackOrOptions)
     ) {
-        // Modern API
-        const options = fallbackOrOptions;
+        const options = fallbackOrOptions as {
+            fallback?: TFallback;
+            converter?: EnvaptConverter<TFallback>;
+            required?: boolean;
+        };
         fallback = options.fallback;
         actualConverter = options.converter;
         hasFallback = 'fallback' in options;
+        required = options.required === true;
+
+        if (required && hasFallback && fallback !== undefined) {
+            throw new EnvaptError(
+                EnvaptErrorCodes.InvalidUserDefinedConfig,
+                '`required: true` and `fallback` are mutually exclusive on @Envapt options. Drop the fallback or call `Envapter.require()` separately.'
+            );
+        }
     } else {
         // Classic API
         fallback = fallbackOrOptions as TFallback;
@@ -275,5 +333,5 @@ export function Envapt<TFallback = unknown>(
         hasFallback = arguments.length > 1;
     }
 
-    return createPropertyDecorator(key, fallback, actualConverter, hasFallback);
+    return createPropertyDecorator(key, fallback, actualConverter, hasFallback, required);
 }

@@ -42,20 +42,24 @@ type ConverterFunction<TFallback = unknown> = (raw: BaseInput, fallback?: TFallb
  */
 type EnvaptConverter<TFallback> = PrimitiveConstructor | BuiltInConverter | ArrayOf | ConverterFunction<TFallback>;
 
+// The brand makes `Err<>` unsatisfiable from user code: a `unique symbol` key cannot be
+// produced externally, so the literal message string can't be copy-pasted to bypass the type.
+// `Msg` stays in the alias name so TS errors surface the human-readable explanation.
+declare const _envaptErrBrand: unique symbol;
+type Err<Msg extends string> = Msg & { readonly [_envaptErrBrand]: never };
+
+type RequiredAndFallbackMutex =
+    Err<'`required: true` and `fallback` are mutually exclusive. Use `Envapter.require()` for explicit fail-fast checks instead.'>;
+
 /**
- * Options for the \@Envapt decorator (modern API)
+ * Options for the \@Envapt decorator (modern API). `required: true` is mutually exclusive
+ * with `fallback`; see the per-converter overloads in `Envapt.ts` for the type-level mutex.
  * @public
  */
 interface EnvaptOptions<TFallback = string> {
-    /**
-     * Default value to use if environment variable is not found
-     */
     fallback?: TFallback;
-    /**
-     * Built-in converter, custom converter function, or boxed-primitives (String, Number, Boolean, Symbol, BigInt)
-     * @see {@link EnvaptConverter} for details
-     */
     converter?: EnvaptConverter<TFallback>;
+    required?: boolean;
 }
 
 type JsonPrimitive = string | number | boolean | null;
@@ -231,6 +235,8 @@ type ProfilesConfig = Partial<Record<Environment, EnvProfile>> & {
 };
 
 export type {
+    Err,
+    RequiredAndFallbackMutex,
     BuiltInConverter,
     PrimitiveConstructor,
     ConverterFunction,

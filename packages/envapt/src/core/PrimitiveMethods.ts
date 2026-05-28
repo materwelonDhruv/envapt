@@ -1,5 +1,6 @@
 import { BuiltInConverters } from '../BuiltInConverters';
 import { Parser, type EnvapterService } from '../Parser';
+import { EnvapterBase } from './EnvapterBase';
 import { EnvironmentMethods } from './EnvironmentMethods';
 
 import type { ConditionalReturn, EnvKeyInput } from '../Types';
@@ -22,14 +23,21 @@ enum Primitive {
 export class PrimitiveMethods extends EnvironmentMethods implements EnvapterService {
     protected static readonly parser: Parser = new Parser(new PrimitiveMethods());
 
+    // Read `EnvapterBase.strict` directly: `PrimitiveMethods._strict` would resolve to the
+    // BaseClass default because a `Envapter.strict = true` write lands as an own-property
+    // on `Envapter`, which is a descendant of `PrimitiveMethods`, not an ancestor.
+    isStrict(): boolean {
+        return EnvapterBase.strict;
+    }
+
     private static _get<EnvVarReturnType, DefaultType extends EnvVarReturnType | undefined = undefined>(
         key: EnvKeyInput,
         type: Primitive,
         def?: DefaultType
     ): ConditionalReturn<EnvVarReturnType, DefaultType> {
         const { key: resolvedKey, value } = this.resolveKeyInput(key);
+        if (this.treatAsMissing(value)) return def as ConditionalReturn<EnvVarReturnType, DefaultType>;
         const rawVal = value as string | number | boolean | undefined;
-        if (!rawVal) return def as ConditionalReturn<EnvVarReturnType, DefaultType>;
 
         const parsed = this.parser.resolveTemplate(resolvedKey, String(rawVal));
 

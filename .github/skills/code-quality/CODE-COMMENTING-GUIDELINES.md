@@ -123,3 +123,65 @@ Before adding a comment, ask:
 4. Does the comment avoid repeating what the code already says?
 
 If the answer to the first two questions is no, do not add the comment.
+
+## Failure Patterns To Avoid
+
+The fastest way to slip past the checklist is to write a comment that LOOKS like a "why" but actually narrates the code first and then tacks the why on the end. Catch these:
+
+### Narrate-then-justify
+
+```ts
+// Anti: lead-in restates the next line; only the second sentence is load-bearing.
+// We anchor the write to BaseClass rather than `this`: subclass calls would otherwise
+// create an own property on the subclass while readers walk up to the base and miss it.
+BaseClass._strict = value;
+```
+
+```ts
+// Drop the lead-in. Lead with the why.
+// Anchored to BaseClass: `this._strict = value` creates an own-property on the subclass
+// that callers reading via the base won't see.
+BaseClass._strict = value;
+```
+
+### Type-system paraphrase
+
+If a comment explains a TYPE definition that's two lines above, the comment is redundant. Either the type is sufficient on its own, or the type needs a better name. Rewriting the type is almost always the right fix.
+
+```ts
+// Anti: re-states the type structure in prose right next to the type.
+// `EnvaptOptions` is a discriminated union over `required` so the compile-time check
+// rejects `required: true` paired with `fallback`. The runtime Validator catches the
+// dynamic case that bypasses the types.
+type EnvaptOptions =
+    | { required: false; fallback?: T }
+    | { required: true; fallback?: Err<'...'> };
+
+// Good: the brand-name and Err<> explanation belong on the brand type itself, once.
+// Consumers don't need a paragraph re-explaining the union.
+```
+
+### Overload narration
+
+Multiple overload signatures next to short `//` comments labeling each one ("Time-specific overload", "Required form, time-specific", "Required form, built-in/array") are noise — the signature already conveys this. If users need a map of overloads, write ONE TSDoc block on the implementation signature describing the family, not a per-overload caption.
+
+### Stale-after-refactor
+
+Every refactor invalidates some "why" comments. When you delete an overload, change a return type, or revert a design, **grep for the names you removed and clean up every comment that references them**. A stale comment is worse than a missing one: it actively misleads.
+
+### JSDoc on `@internal` helpers
+
+Internal helpers don't need IDE-hover documentation. Use a single `//` line when a why exists, and zero comments when the function's name + body are self-explanatory. The four-line `/** ... */` block on a one-line accessor is signal that the function name is too thin or the block is decoration.
+
+### "I'm doing X" wrapper
+
+Comments that lead `// We do X here because...` always contain redundancy: the next line shows you doing X. Drop the wrapper, keep the because.
+
+```ts
+// Anti: `// Resolve key, then check missing under strict, then throw.` narrates 3 lines below.
+// Good: NO comment. The three function calls below are self-evident.
+```
+
+## Why "Drop the comment" is usually right
+
+When in doubt: delete the comment, re-read the code without it, and ask "would a careful reader misunderstand this?" If the answer is no, the comment was decoration. The bar is "would mislead without it," not "would be slightly faster to read with it." Speed gains from prose-restating-code are smaller than the maintenance cost of keeping the comment honest across refactors.
