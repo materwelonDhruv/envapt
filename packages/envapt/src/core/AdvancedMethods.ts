@@ -2,6 +2,7 @@ import { EnvaptError, EnvaptErrorCodes } from '../Error';
 import { PrimitiveMethods } from './PrimitiveMethods';
 
 import type { ArrayOf } from '../Converters';
+import type { InferSchemaOutput, StandardSchemaV1 } from '../StandardSchema';
 import type {
     AdvancedConverterReturn,
     BuiltInConverter,
@@ -9,6 +10,7 @@ import type {
     ConverterFunction,
     EnvKeyInput,
     InferConverterReturnType,
+    SchemaConstraint,
     TimeFallback
 } from '../Types';
 
@@ -194,5 +196,50 @@ export class AdvancedMethods extends PrimitiveMethods {
         fallback?: TFallback
     ): ConditionalReturn<TReturnType, TFallback> {
         return AdvancedMethods.getWith(key, converterOrOptions as ConverterFunction<TReturnType>, fallback);
+    }
+
+    /**
+     * Validate an environment variable through a {@link StandardSchemaV1}-conformant schema
+     * (zod, valibot, arktype, etc). Throws `MissingEnvValue` if the env value is absent and
+     * no fallback is provided. The fallback, when provided, is returned as-is on missing;
+     * it does NOT pass through the schema (mirrors custom-converter behavior).
+     *
+     * Synchronous schemas only. A Promise-returning `validate` triggers an
+     * `InvalidUserDefinedConfig` throw at the call site.
+     *
+     * @example
+     * ```ts
+     * import { z } from 'zod';
+     * const port = Envapter.parse('PORT', z.coerce.number().min(1024).max(65535), 3000);
+     * ```
+     */
+    static parse<Schema extends StandardSchemaV1>(
+        key: EnvKeyInput,
+        schema: SchemaConstraint<Schema>,
+        fallback?: InferSchemaOutput<Schema>
+    ): InferSchemaOutput<Schema> {
+        const hasFallback = arguments.length > 2;
+        // SchemaConstraint resolves to the unsatisfiable SchemaMustBeSync brand for async
+        // schemas, so reaching this body means the input is structurally a sync Schema.
+        const result = this.parser.convertWithSchema(key, schema as unknown as StandardSchemaV1, fallback, hasFallback);
+        return result as InferSchemaOutput<Schema>;
+    }
+
+    /**
+     * @see {@link AdvancedMethods.parse}
+     */
+    parse<Schema extends StandardSchemaV1>(
+        key: EnvKeyInput,
+        schema: SchemaConstraint<Schema>,
+        fallback?: InferSchemaOutput<Schema>
+    ): InferSchemaOutput<Schema> {
+        const hasFallback = arguments.length > 2;
+        const result = AdvancedMethods.parser.convertWithSchema(
+            key,
+            schema as unknown as StandardSchemaV1,
+            fallback,
+            hasFallback
+        );
+        return result as InferSchemaOutput<Schema>;
     }
 }

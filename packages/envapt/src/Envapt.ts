@@ -2,8 +2,10 @@ import { EnvaptCache } from './core/EnvapterBase';
 import { Envapter } from './Envapter';
 import { EnvaptError, EnvaptErrorCodes } from './Error';
 import { Parser } from './Parser';
+import { Validator } from './Validators';
 
 import type { ArrayOf } from './Converters';
+import type { InferSchemaOutput, StandardSchemaV1 } from './StandardSchema';
 import type {
     BuiltInConverter,
     ConverterFunction,
@@ -14,39 +16,38 @@ import type {
     InferPrimitiveFallbackType,
     InferPrimitiveReturnType,
     PrimitiveConstructor,
-    RequiredAndFallbackMutex
+    SchemaConstraint
 } from './Types';
 
 function formatKeyForError(key: EnvKeyInput): string {
     return Array.isArray(key) ? `[${key.join(', ')}]` : String(key);
 }
 
-function createPropertyDecorator<TFallback>(
-    key: EnvKeyInput,
-    fallback: TFallback | undefined,
-    converter: EnvaptConverter<TFallback> | undefined,
-    hasFallback: boolean,
-    required: boolean
-): PropertyDecorator {
+interface DecoratorConfig<TFallback> {
+    fallback: TFallback | undefined;
+    converter: EnvaptConverter<TFallback> | undefined;
+    hasFallback: boolean;
+    required: boolean;
+    schema: StandardSchemaV1 | undefined;
+}
+
+function createPropertyDecorator<TFallback>(key: EnvKeyInput, config: DecoratorConfig<TFallback>): PropertyDecorator {
+    const { fallback, converter, hasFallback, required, schema } = config;
     return function (target: object, prop: string | symbol): void {
         const propKey = String(prop);
-        // For static properties, target is the constructor function itself
-        // For instance properties, target is the prototype and we need target.constructor
-        // This prevents cache collisions between static and instance properties with the same name
+        // Static: target IS the constructor; instance: target is the prototype.
+        // Splitting these prevents cache collisions between same-named static + instance properties.
         const className = typeof target === 'function' ? target.name : target.constructor.name;
         const cacheKey = `${className}.${propKey}`;
 
-        // Create a property with a getter that handles environment changes
         Object.defineProperty(target, propKey, {
             get: function () {
-                // Check if the environment cache has been cleared (indicating config change)
-                // If so, we need to re-evaluate our cached value
                 let value = EnvaptCache.get(cacheKey) as TFallback | null | undefined;
 
                 if (value === undefined) {
                     const envapter = new Envapter();
 
-                    if (required) {
+                    if (required && schema === undefined) {
                         const rawValue = envapter.getRaw(key);
                         if (rawValue === undefined || rawValue.trim() === '') {
                             throw new EnvaptError(
@@ -57,7 +58,11 @@ function createPropertyDecorator<TFallback>(
                     }
 
                     const parser = new Parser(envapter);
-                    value = parser.convertValue(key, fallback, converter, hasFallback);
+                    if (schema !== undefined) {
+                        value = parser.convertWithSchema(key, schema, fallback, hasFallback) as TFallback;
+                    } else {
+                        value = parser.convertValue(key, fallback, converter, hasFallback);
+                    }
                     EnvaptCache.set(cacheKey, value);
                 }
 
@@ -134,7 +139,7 @@ export function Envapt<TReturnType>(
     key: EnvKeyInput,
     options:
         | { converter: ConverterFunction<TReturnType>; required?: false }
-        | { converter: ConverterFunction<TReturnType>; required: true; fallback?: RequiredAndFallbackMutex }
+        | { converter: ConverterFunction<TReturnType>; required: true }
 ): PropertyDecorator;
 
 /**
@@ -186,7 +191,7 @@ export function Envapt<TConverter extends BuiltInConverter | ArrayOf>(
     key: EnvKeyInput,
     options:
         | { converter: TConverter; fallback?: InferConverterFallbackType<TConverter> | undefined; required?: false }
-        | { converter: TConverter; required: true; fallback?: RequiredAndFallbackMutex }
+        | { converter: TConverter; required: true }
 ): PropertyDecorator;
 
 /**
@@ -211,14 +216,14 @@ export function Envapt<TConstructor extends PrimitiveConstructor>(
     key: EnvKeyInput,
     options:
         | { converter: TConstructor; fallback?: InferPrimitiveReturnType<TConstructor>; required?: false }
-        | { converter: TConstructor; required: true; fallback?: RequiredAndFallbackMutex }
+        | { converter: TConstructor; required: true }
 ): PropertyDecorator;
 
 /**
  * Usage 5: Required, no converter (raw string). Throws `MissingEnvValue` on first access if
  * the env value is missing or empty (post-trim). Independent of global `Envapter.strict`.
- * Mutually exclusive with `fallback`: combining them fails to match any overload at compile
- * time. The runtime Validator catches dynamic objects that bypass the types.
+ * Combining `required: true` with `fallback` fails to match any overload at compile time;
+ * the runtime Validator catches dynamic objects that bypass the types.
  *
  * @param key - Environment variable name(s) to load
  * @param options - `{ required: true }`
@@ -231,10 +236,7 @@ export function Envapt<TConstructor extends PrimitiveConstructor>(
  * }
  * ```
  */
-export function Envapt(
-    key: EnvKeyInput,
-    options: { required: true; fallback?: RequiredAndFallbackMutex }
-): PropertyDecorator;
+export function Envapt(key: EnvKeyInput, options: { required: true }): PropertyDecorator;
 
 /**
  * Classic API: No fallback
@@ -280,15 +282,19 @@ export function Envapt<TFallback extends string | number | boolean | bigint | sy
     converter?: PrimitiveConstructor
 ): PropertyDecorator;
 
-// Repeat of Usage 3 as the LAST non-impl overload. TS's "no overload matches" diagnostic
-// reports against the last declared candidate; this placement makes that diagnostic
-// surface the `RequiredAndFallbackMutex` branded literal in the chain (otherwise TS
-// reports against the classic positional API above and the explanation is masked).
-export function Envapt<TConverter extends BuiltInConverter | ArrayOf>(
+/**
+ * Usage 6: Standard Schema v1 adapter (zod, valibot, arktype, hand-rolled). Synchronous
+ * schemas only; a Promise-returning `validate` triggers a runtime
+ * `InvalidUserDefinedConfig` throw. Combining `schema` with `converter` fails to match any
+ * overload at compile time; the runtime Validator catches dynamic objects that bypass the
+ * types.
+ * @public
+ */
+export function Envapt<Schema extends StandardSchemaV1>(
     key: EnvKeyInput,
     options:
-        | { converter: TConverter; fallback?: InferConverterFallbackType<TConverter> | undefined; required?: false }
-        | { converter: TConverter; required: true; fallback?: RequiredAndFallbackMutex }
+        | { schema: SchemaConstraint<Schema>; fallback?: InferSchemaOutput<Schema>; required?: false }
+        | { schema: SchemaConstraint<Schema>; required: true }
 ): PropertyDecorator;
 
 /**
@@ -302,18 +308,23 @@ export function Envapt<TFallback = unknown>(
     // Determine if using new options API or classic API
     let fallback: TFallback | undefined;
     let actualConverter: EnvaptConverter<TFallback> | undefined;
+    let actualSchema: StandardSchemaV1 | undefined;
     let hasFallback = true;
     let required = false;
 
     if (
         fallbackOrOptions &&
         typeof fallbackOrOptions === 'object' &&
-        ('fallback' in fallbackOrOptions || 'converter' in fallbackOrOptions || 'required' in fallbackOrOptions)
+        ('fallback' in fallbackOrOptions ||
+            'converter' in fallbackOrOptions ||
+            'required' in fallbackOrOptions ||
+            'schema' in fallbackOrOptions)
     ) {
         const options = fallbackOrOptions as {
             fallback?: TFallback;
             converter?: EnvaptConverter<TFallback>;
             required?: boolean;
+            schema?: unknown;
         };
         fallback = options.fallback;
         actualConverter = options.converter;
@@ -326,6 +337,22 @@ export function Envapt<TFallback = unknown>(
                 '`required: true` and `fallback` are mutually exclusive on @Envapt options. Drop the fallback or call `Envapter.require()` separately.'
             );
         }
+
+        if ('schema' in options && options.schema !== undefined) {
+            if (!Validator.isStandardSchema(options.schema)) {
+                throw new EnvaptError(
+                    EnvaptErrorCodes.InvalidUserDefinedConfig,
+                    '`schema` must be a Standard Schema v1 object (zod, valibot, arktype, or any `~standard`-conformant value).'
+                );
+            }
+            if (actualConverter !== undefined) {
+                throw new EnvaptError(
+                    EnvaptErrorCodes.InvalidUserDefinedConfig,
+                    '`schema` and `converter` are mutually exclusive on @Envapt options. Drop one as they both turn a raw env string into a typed value.'
+                );
+            }
+            actualSchema = options.schema;
+        }
     } else {
         // Classic API
         fallback = fallbackOrOptions as TFallback;
@@ -333,5 +360,11 @@ export function Envapt<TFallback = unknown>(
         hasFallback = arguments.length > 1;
     }
 
-    return createPropertyDecorator(key, fallback, actualConverter, hasFallback, required);
+    return createPropertyDecorator(key, {
+        fallback,
+        converter: actualConverter,
+        hasFallback,
+        required,
+        schema: actualSchema
+    });
 }

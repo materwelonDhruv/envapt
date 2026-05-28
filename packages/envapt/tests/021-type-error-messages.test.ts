@@ -9,8 +9,9 @@ import { describe, it } from 'vitest';
 /**
  * Compile-time TS error verification via the TypeScript compiler API. Neither `expect-type`
  * nor `tsd` checks the TEXT of a diagnostic message, only that an error is produced. The
- * branded `Err<...>` pattern relies on a specific literal appearing in TS's "no overload
- * matches" chain, so we run `tsc` directly against fixtures and assert message fragments.
+ * dotenvConfig `path` / `processEnv` brands rely on a specific literal appearing in the
+ * type-assignment error, so we run `tsc` directly against fixtures and assert message
+ * fragments.
  *
  * Fixtures live in `tests/type-error-fixtures/` and are excluded from both the package's
  * tsconfig and eslint. A dedicated tsconfig inside that directory exists so the IDE shows
@@ -107,24 +108,20 @@ describe('TS error message verification (compiler API)', () => {
         );
     });
 
-    describe('decorator `required: true` + `fallback` mutex produces the branded compile error', () => {
-        // Asserting the specific code (TS2769) means a misconfigured compiler that emits
-        // a different code (e.g. TS1206 from missing experimentalDecorators) fails the test
-        // instead of silently passing on "any error was produced."
+    describe('async-validating schema produces the SchemaMustBeSync branded compile error', () => {
         it(
-            'produces exactly one TS2769 diagnostic carrying the branded mutex literal',
+            'produces a TS2769 diagnostic carrying the SchemaMustBeSync literal',
             { timeout: FIXTURE_TIMEOUT_MS },
             () => {
-                const diagnostics = compileFixture('required-fallback-mutex.ts');
+                const diagnostics = compileFixture('schema-must-be-sync.ts');
                 expect(diagnostics).to.have.lengthOf(1);
 
                 const [diagnostic] = diagnostics;
                 if (!diagnostic) throw new Error('expected exactly one diagnostic');
                 expect(diagnostic.code, 'expected TS2769 (no-overload-matches)').to.equal(2769);
                 expect(diagnostic.message).to.include('No overload matches this call');
-                expect(diagnostic.message).to.include('RequiredAndFallbackMutex');
-                expect(diagnostic.message).to.include('`required: true` and `fallback` are mutually exclusive');
-                expect(diagnostic.message).to.include('Envapter.require()');
+                expect(diagnostic.message).to.include('SchemaMustBeSync');
+                expect(diagnostic.message).to.include('Schema must be synchronous');
             }
         );
     });

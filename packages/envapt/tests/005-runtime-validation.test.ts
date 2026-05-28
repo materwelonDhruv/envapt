@@ -99,8 +99,8 @@ describe('Runtime Validation', () => {
     describe('Converter fallback validation', () => {
         class FallbackTests {
             @Envapt('NONEXISTENT_ARRAY_VAR', {
-                converter: Converters.array(),
                 // @ts-expect-error fallback must be string[] (matches `of: Converters.String`), not a bare string
+                converter: Converters.array(),
                 fallback: 'not-an-array'
             })
             static readonly invalidArrayFallback: string[];
@@ -266,22 +266,22 @@ describe('Runtime Validation', () => {
     describe('Array converter fallback element type validation', () => {
         class ArrayConverterValidationTests {
             @Envapt('NONEXISTENT_ARRAY_VAR', {
-                converter: Converters.array({ of: Converters.String }),
                 // @ts-expect-error mixed-type fallback array; `42` doesn't fit `of: Converters.String`
+                converter: Converters.array({ of: Converters.String }),
                 fallback: ['string', 42, 'another-string']
             })
             static readonly arrayWithMixedTypeElements: string[];
 
             @Envapt('NONEXISTENT_ARRAY_VAR', {
-                converter: Converters.array({ of: Converters.Number }),
                 // @ts-expect-error fallback element types don't match the declared `of` token
+                converter: Converters.array({ of: Converters.Number }),
                 fallback: ['not-a-number', 'also-not-a-number']
             })
             static readonly arrayWithWrongElementType: number[];
 
             @Envapt('NONEXISTENT_ARRAY_VAR', {
-                converter: Converters.array(),
                 // @ts-expect-error default `Converters.array()` returns string[]; `42` and `true` are not strings
+                converter: Converters.array(),
                 fallback: ['string', 42, true]
             })
             static readonly defaultArrayWithMixedTypes: string[];

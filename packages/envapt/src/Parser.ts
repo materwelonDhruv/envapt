@@ -3,7 +3,12 @@ import { EnvaptError, EnvaptErrorCodes } from './Error';
 import { Validator } from './Validators';
 
 import type { ArrayOf } from './Converters';
+import type { StandardSchemaV1 } from './StandardSchema';
 import type { BuiltInConverter, EnvKeyInput, EnvaptConverter, PrimitiveConstructor } from './Types';
+
+function formatKeyForError(key: EnvKeyInput): string {
+    return Array.isArray(key) ? `[${key.join(', ')}]` : String(key);
+}
 
 /**
  * @internal
@@ -212,5 +217,49 @@ export class Parser {
         if (fallbackType === 'bigint') return 'bigint';
         if (fallbackType === 'symbol') return 'symbol';
         return 'string';
+    }
+
+    // Single dispatch site for decorator + `Envapter.parse()` so error codes (208 / 209 / 305)
+    // stay consistent. Missing+no-fallback throws here so callers don't duplicate the check.
+    convertWithSchema(key: EnvKeyInput, schema: StandardSchemaV1, fallback: unknown, hasFallback: boolean): unknown {
+        const raw = this.envService.get(key, undefined);
+
+        if (raw === undefined) {
+            if (hasFallback) return fallback;
+            throw new EnvaptError(
+                EnvaptErrorCodes.MissingEnvValue,
+                `Required environment variable "${formatKeyForError(key)}" is missing or empty.`
+            );
+        }
+
+        let outcome: StandardSchemaV1.Result<unknown> | Promise<StandardSchemaV1.Result<unknown>>;
+        try {
+            outcome = schema['~standard'].validate(raw);
+        } catch (cause) {
+            throw new EnvaptError(
+                EnvaptErrorCodes.SchemaThrew,
+                `Schema for "${formatKeyForError(key)}" threw during validation: ${(cause as Error).message}`,
+                { cause }
+            );
+        }
+
+        if (outcome instanceof Promise) {
+            throw new EnvaptError(
+                EnvaptErrorCodes.InvalidUserDefinedConfig,
+                `Schema for "${formatKeyForError(key)}" returned a Promise. envapt requires synchronous schemas; use a sync validator or perform async checks outside the env layer.`
+            );
+        }
+
+        if (outcome.issues !== undefined) {
+            const first = outcome.issues[0];
+            const firstMessage = first?.message ?? 'no issue message';
+            throw new EnvaptError(
+                EnvaptErrorCodes.SchemaValidationFailed,
+                `Schema validation failed for "${formatKeyForError(key)}": ${firstMessage}`,
+                { issues: outcome.issues }
+            );
+        }
+
+        return outcome.value;
     }
 }
