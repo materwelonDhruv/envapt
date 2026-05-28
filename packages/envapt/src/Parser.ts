@@ -1,4 +1,5 @@
 import { BuiltInConverters } from './BuiltInConverters';
+import { debugWarn } from './Debug';
 import { EnvaptError, EnvaptErrorCodes } from './Error';
 import { Validator } from './Validators';
 
@@ -50,6 +51,7 @@ export class Parser {
                         `Cannot resolve template variable "\${${variable}}": value is missing or empty.`
                     );
                 }
+                debugWarn(`unresolved template \${${variable}} preserved as literal`);
                 return template; // missing or empty, preserve
             }
 

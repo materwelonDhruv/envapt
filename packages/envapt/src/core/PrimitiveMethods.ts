@@ -1,4 +1,5 @@
 import { BuiltInConverters } from '../BuiltInConverters';
+import { debugWarn } from '../Debug';
 import { Parser, type EnvapterService } from '../Parser';
 import { EnvapterBase } from './EnvapterBase';
 import { EnvironmentMethods } from './EnvironmentMethods';
@@ -36,7 +37,10 @@ export class PrimitiveMethods extends EnvironmentMethods implements EnvapterServ
         def?: DefaultType
     ): ConditionalReturn<EnvVarReturnType, DefaultType> {
         const { key: resolvedKey, value } = this.resolveKeyInput(key);
-        if (this.treatAsMissing(value)) return def as ConditionalReturn<EnvVarReturnType, DefaultType>;
+        if (this.treatAsMissing(value)) {
+            if (def !== undefined) debugWarn(`${resolvedKey} not found, using fallback ${String(def)}`);
+            return def as ConditionalReturn<EnvVarReturnType, DefaultType>;
+        }
         const rawVal = value as string | number | boolean | undefined;
 
         const parsed = this.parser.resolveTemplate(resolvedKey, String(rawVal));

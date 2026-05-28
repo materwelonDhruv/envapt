@@ -126,7 +126,7 @@ describe('Envapter', () => {
             });
 
             it('should set and get valid dotenvConfig', () => {
-                const newConfig = { debug: true, override: true };
+                const newConfig = { override: true };
                 Envapter.dotenvConfig = newConfig;
                 expect(Envapter.dotenvConfig).to.deep.equal(newConfig);
             });

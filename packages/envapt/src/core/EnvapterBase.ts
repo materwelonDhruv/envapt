@@ -1,9 +1,11 @@
 import process from 'node:process';
 
+import { debugVerbose, getDebugLevel, setDebugLevel } from '../Debug';
 import { loadDotenv } from '../Dotenv';
 import { EnvaptError, EnvaptErrorCodes } from '../Error';
 import { Validator } from '../Validators';
 
+import type { DebugLevel } from '../Debug';
 import type { DotenvConfigOptions } from '../Dotenv';
 import type { EnvKeyInput } from '../Types';
 
@@ -40,6 +42,19 @@ export abstract class EnvapterBase {
 
     static get strict(): boolean {
         return EnvapterBase._strict;
+    }
+
+    /**
+     * Set the debug log level. Defaults to `silent`. When unset, reads `ENVAPT_DEBUG` from
+     * `process.env` on first access; the setter overrides any env-var value. Output goes
+     * to stderr prefixed with `[envapt]`.
+     */
+    static set debug(level: DebugLevel) {
+        setDebugLevel(level);
+    }
+
+    static get debug(): DebugLevel {
+        return getDebugLevel();
     }
 
     protected static treatAsMissing(value: string | undefined): boolean {
@@ -89,6 +104,7 @@ export abstract class EnvapterBase {
 
     protected static refreshCache(): void {
         EnvaptCache.clear();
+        debugVerbose('cache cleared, reloading config');
         void this.config; // reload config to repopulate cache
     }
 
@@ -138,6 +154,7 @@ export abstract class EnvapterBase {
             // Path resolution (outside the try below). Surfaces EnvaptError early when an
             // explicitly configured profile path is missing. dotenv parse errors stay caught.
             const effectivePaths = this.resolveEffectivePaths();
+            debugVerbose(`effective .env paths: ${effectivePaths.length === 0 ? '(none)' : effectivePaths.join(', ')}`);
 
             try {
                 loadDotenv({
@@ -148,6 +165,7 @@ export abstract class EnvapterBase {
             } catch {}
             // populate the Map with global environment variables
             for (const [key, value] of Object.entries(isolatedEnv)) EnvaptCache.set(key, value);
+            debugVerbose(`cache populated: ${EnvaptCache.size} keys total`);
         }
 
         return EnvaptCache;

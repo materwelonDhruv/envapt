@@ -231,13 +231,13 @@ export class Validator {
             );
         }
 
-        const validKeys = new Set(['encoding', 'debug', 'override']);
+        const validKeys = new Set(['encoding', 'override']);
         const invalidKeys = Object.keys(config).filter((key) => !validKeys.has(key));
 
         if (invalidKeys.length > 0) {
             throw new EnvaptError(
                 EnvaptErrorCodes.InvalidUserDefinedConfig,
-                `Invalid dotenvConfig options: ${invalidKeys.join(', ')}. Allowed options: ${Array.from(validKeys).join(', ')}`
+                `Invalid dotenvConfig options: ${invalidKeys.join(', ')}. Allowed options: ${Array.from(validKeys).join(', ')}. For debug output, use Envapter.debug or the ENVAPT_DEBUG env var.`
             );
         }
 
