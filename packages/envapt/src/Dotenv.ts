@@ -198,12 +198,16 @@ function unescapeDouble(raw: string): string {
  * subset of dotenv's `config()` semantics that envapt depends on: first-wins
  * across multiple paths by default, optional `override: true`, optional
  * non-UTF8 encoding, missing files are skipped silently.
+ *
+ * Returns the set of keys actually written into `input.processEnv`. Skipped
+ * collisions (under default `override: false`) are NOT included.
  * @internal
  */
-export function loadDotenv(input: LoadDotenvInput): void {
+export function loadDotenv(input: LoadDotenvInput): Set<string> {
     const paths = Array.isArray(input.path) ? input.path : [input.path];
     const encoding: BufferEncoding = input.encoding ?? 'utf8';
     const override = input.override ?? false;
+    const written = new Set<string>();
 
     for (const filePath of paths) {
         let src: string;
@@ -220,8 +224,11 @@ export function loadDotenv(input: LoadDotenvInput): void {
             const exists = Object.prototype.hasOwnProperty.call(input.processEnv, key);
             if (!exists || override) {
                 input.processEnv[key] = value;
+                written.add(key);
                 debugVerbose(`${filePath} -> ${key}`);
             }
         }
     }
+
+    return written;
 }

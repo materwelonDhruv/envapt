@@ -221,6 +221,19 @@ export class Validator {
     }
 
     /**
+     * Reject non-boolean inputs to `Envapter.syncProcessEnv` so a truthy typo
+     * (`'true'`, `1`, etc.) does not silently enable the mirror.
+     */
+    static validateSyncProcessEnv(value: unknown): asserts value is boolean {
+        if (typeof value !== 'boolean') {
+            throw new EnvaptError(
+                EnvaptErrorCodes.InvalidUserDefinedConfig,
+                `Envapter.syncProcessEnv must be a boolean, got ${typeof value}.`
+            );
+        }
+    }
+
+    /**
      * Make sure the user hasn't provided prohibited options in their dotenv config
      */
     static validateDotenvConfig(config: object): config is DotenvConfigOptions {
