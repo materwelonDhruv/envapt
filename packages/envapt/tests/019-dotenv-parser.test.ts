@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { expect } from 'chai';
-import { afterAll, afterEach, beforeAll, describe, it, vi } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, it } from 'vitest';
 
 import { loadDotenv, parseDotenv } from '../src/Dotenv';
 
@@ -196,22 +196,6 @@ describe('Dotenv parser', () => {
             const target: Record<string, string> = {};
             loadDotenv({ path, processEnv: target, encoding: 'latin1' });
             expect(target.GREETING).to.equal('hello');
-        });
-
-        it('emits debug lines to stderr when debug is on', () => {
-            const path = writeEnv('debug.env', 'FOO=bar');
-            const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
-            loadDotenv({ path, processEnv: {}, debug: true });
-            expect(spy.mock.calls.flat().some((arg) => String(arg).includes('FOO'))).to.be.true;
-            spy.mockRestore();
-        });
-
-        it('logs the missing file path under debug when a file cannot be read', () => {
-            const ghost = join(tmpDir, 'still-missing.env');
-            const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
-            loadDotenv({ path: ghost, processEnv: {}, debug: true });
-            expect(spy.mock.calls.flat().some((arg) => String(arg).includes(ghost))).to.be.true;
-            spy.mockRestore();
         });
 
         afterEach(() => {

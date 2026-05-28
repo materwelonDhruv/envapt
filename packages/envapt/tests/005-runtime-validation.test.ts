@@ -431,13 +431,7 @@ describe('Runtime Validation', () => {
 
     describe('dotenv config validation', () => {
         it('should accept valid dotenv config options', () => {
-            const validConfigs = [
-                { debug: false },
-                { override: true },
-                { encoding: 'utf8' },
-                { debug: false, override: true },
-                { encoding: 'utf8', debug: false, override: true }
-            ];
+            const validConfigs = [{ override: true }, { encoding: 'utf8' }, { encoding: 'utf8', override: true }];
 
             for (const config of validConfigs) {
                 expect(() => Validator.validateDotenvConfig(config)).to.not.throw();

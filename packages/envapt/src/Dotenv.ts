@@ -1,5 +1,7 @@
 import fs from 'node:fs';
 
+import { debugVerbose, debugWarn } from './Debug';
+
 import type { Err } from './Types';
 
 type PathManagedByEnvapter =
@@ -9,6 +11,7 @@ type ProcessEnvManagedByEnvapter = Err<'`processEnv` is managed internally by En
 /**
  * Public options for the internal `.env` loader. Mirrors the subset of dotenv's
  * `config()` options that envapt actually supports (no DOTENV_KEY, no quiet).
+ * For debug output, use `Envapter.debug` (or the `ENVAPT_DEBUG` env var).
  *
  * @public
  */
@@ -17,8 +20,6 @@ export interface DotenvConfigOptions {
     encoding?: BufferEncoding;
     /** When true, later files override earlier ones (and existing processEnv values). Default false (first-wins). */
     override?: boolean;
-    /** When true, prints `[dotenv]` messages to stderr while parsing. Default false. */
-    debug?: boolean;
     path?: PathManagedByEnvapter;
     processEnv?: ProcessEnvManagedByEnvapter;
 }
@@ -29,9 +30,7 @@ export interface DotenvConfigOptions {
  * @internal
  */
 export interface LoadDotenvInput extends Omit<DotenvConfigOptions, 'path' | 'processEnv'> {
-    /** One or more `.env` paths to load, in declaration order. */
     path: string | string[];
-    /** Target env map. Mutated in place with parsed values. */
     processEnv: Record<string, string>;
 }
 
@@ -211,19 +210,18 @@ export function loadDotenv(input: LoadDotenvInput): void {
         try {
             src = fs.readFileSync(filePath, encoding);
         } catch {
-            // Debug logging intentionally goes to stderr to mirror dotenv's behavior -- justified
-            // eslint-disable-next-line no-console
-            if (input.debug) console.error(`[dotenv] could not read ${filePath}`);
+            debugWarn(`could not read ${filePath}`);
             continue;
         }
 
         const parsed = parseDotenv(src);
+        debugVerbose(`loaded ${filePath}: ${parsed.size} ${parsed.size === 1 ? 'key' : 'keys'}`);
         for (const [key, value] of parsed) {
             const exists = Object.prototype.hasOwnProperty.call(input.processEnv, key);
-            if (!exists || override) input.processEnv[key] = value;
-            // Debug logging intentionally goes to stderr to mirror dotenv's behavior -- justified
-            // eslint-disable-next-line no-console
-            if (input.debug) console.error(`[dotenv] ${filePath} -> ${key}`);
+            if (!exists || override) {
+                input.processEnv[key] = value;
+                debugVerbose(`${filePath} -> ${key}`);
+            }
         }
     }
 }
