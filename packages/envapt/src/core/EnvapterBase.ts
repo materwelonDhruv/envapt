@@ -25,6 +25,9 @@ export abstract class EnvapterBase {
     protected static _envPathsExplicitlySet = false;
     protected static _userDefinedDotenvConfig: DotenvConfigOptions = {};
     protected static _strict = false;
+    protected static _syncProcessEnv = false;
+    // Loader-written keys only (collisions skipped). Refilled on every cache rebuild.
+    protected static _dotenvAddedKeys: Set<string> = new Set<string>();
 
     /**
      * Enable or disable strict mode. Default `false`. Setting refreshes the cache so
@@ -55,6 +58,30 @@ export abstract class EnvapterBase {
 
     static get debug(): DebugLevel {
         return getDebugLevel();
+    }
+
+    /**
+     * Opt-in mirror of dotenv-loaded keys back to `process.env`. Default `false`.
+     *
+     * Only keys the loader actually wrote are mirrored, so collision behavior follows
+     * `dotenvConfig.override`: with the default `false`, pre-existing `process.env` values
+     * are preserved; with `true`, the file value wins in both the cache and the mirror.
+     *
+     * Flipping `false → true` mirrors the existing tracked delta immediately (no cache
+     * refresh). Flipping `true → false` is one-way: previously mirrored keys remain in
+     * `process.env` until the process exits.
+     */
+    static set syncProcessEnv(value: boolean) {
+        Validator.validateSyncProcessEnv(value);
+        const previous = EnvapterBase._syncProcessEnv;
+        // Anchored to EnvapterBase: `this._syncProcessEnv = value` creates an own-property
+        // on the subclass that readers walking up to the base would miss.
+        EnvapterBase._syncProcessEnv = value;
+        if (!previous && value && EnvaptCache.size > 0) this.mirrorToProcessEnv();
+    }
+
+    static get syncProcessEnv(): boolean {
+        return EnvapterBase._syncProcessEnv;
     }
 
     protected static treatAsMissing(value: string | undefined): boolean {
@@ -104,8 +131,22 @@ export abstract class EnvapterBase {
 
     protected static refreshCache(): void {
         EnvaptCache.clear();
+        EnvapterBase._dotenvAddedKeys = new Set();
         debugVerbose('cache cleared, reloading config');
         void this.config; // reload config to repopulate cache
+    }
+
+    // Early-return on an empty delta so the verbose summary line is not emitted on a no-op.
+    protected static mirrorToProcessEnv(): void {
+        if (EnvapterBase._dotenvAddedKeys.size === 0) return;
+        for (const key of EnvapterBase._dotenvAddedKeys) {
+            const value = EnvaptCache.get(key);
+            /* v8 ignore next -- @preserve loader only writes strings; defensive against future cache contents */
+            if (typeof value !== 'string') continue;
+            process.env[key] = value;
+            debugVerbose(`mirrored ${key} to process.env`);
+        }
+        debugVerbose(`mirrored ${EnvapterBase._dotenvAddedKeys.size} keys to process.env`);
     }
 
     /**
@@ -156,16 +197,19 @@ export abstract class EnvapterBase {
             const effectivePaths = this.resolveEffectivePaths();
             debugVerbose(`effective .env paths: ${effectivePaths.length === 0 ? '(none)' : effectivePaths.join(', ')}`);
 
+            let added = new Set<string>();
             try {
-                loadDotenv({
+                added = loadDotenv({
                     ...this._userDefinedDotenvConfig,
                     path: effectivePaths,
                     processEnv: isolatedEnv
                 });
             } catch {}
+            EnvapterBase._dotenvAddedKeys = added;
             // populate the Map with global environment variables
             for (const [key, value] of Object.entries(isolatedEnv)) EnvaptCache.set(key, value);
             debugVerbose(`cache populated: ${EnvaptCache.size} keys total`);
+            if (EnvapterBase._syncProcessEnv) this.mirrorToProcessEnv();
         }
 
         return EnvaptCache;

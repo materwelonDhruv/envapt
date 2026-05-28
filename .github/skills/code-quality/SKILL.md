@@ -7,14 +7,14 @@ description: Use this when asked to write code, or audit, sweep, or fix code qua
 
 envapt is a single-package pnpm + turbo monorepo (`packages/envapt`). Pure-TypeScript runtime library, no frontend. Quality is enforced through layered checks:
 
-| Layer                                  | What it catches                                                                              | How to run                                                                                                |
-| -------------------------------------- | -------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| **ESLint + TypeScript** (tool)         | Type errors, lint violations, import order, formatting, rule violations                      | `pnpm lint:fix && pnpm tc` from repo root (turbo runs across the workspace).                              |
-| **Vitest** (tool)                      | Behavior regressions                                                                         | `pnpm test` (only after lint + tc pass).                                                                  |
-| **Prettier** (tool)                    | Formatting                                                                                   | `pnpm fmt` / `fmt:check`.                                                                                 |
-| **markdownlint-cli2** (tool)           | Markdown style/syntax issues                                                                 | `pnpm lint:md` (configured via `.markdownlint.json` + `.markdownlint-cli2.jsonc`).                        |
-| **changesets** (tool)                  | Missing version bump on the published package                                                | `pnpm cs` when touching `packages/envapt`; `pnpm cs:status` to check.                                     |
-| **Coverage** (tool)                    | Test coverage gaps                                                                           | `pnpm coverage` — v8 reporter, gated in CI.                                                               |
+| Layer                          | What it catches                                                         | How to run                                                                         |
+| ------------------------------ | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| **ESLint + TypeScript** (tool) | Type errors, lint violations, import order, formatting, rule violations | `pnpm lint:fix && pnpm tc` from repo root (turbo runs across the workspace).       |
+| **Vitest** (tool)              | Behavior regressions                                                    | `pnpm test` (only after lint + tc pass).                                           |
+| **Prettier** (tool)            | Formatting                                                              | `pnpm fmt` / `fmt:check`.                                                          |
+| **markdownlint-cli2** (tool)   | Markdown style/syntax issues                                            | `pnpm lint:md` (configured via `.markdownlint.json` + `.markdownlint-cli2.jsonc`). |
+| **changesets** (tool)          | Missing version bump on the published package                           | `pnpm cs` when touching `packages/envapt`; `pnpm cs:status` to check.              |
+| **Coverage** (tool)            | Test coverage gaps                                                      | `pnpm coverage` — v8 reporter, gated in CI.                                        |
 
 The only acceptable end state for a PR is: **`pnpm prePush` exits clean** — which means `build && tc && lint && lint:md && test` all pass.
 
@@ -61,7 +61,7 @@ These apply to all code in `packages/envapt/src`. They're not auto-detected — 
 - **Block-bodied exported arrow functions** — convert to function declarations. Arrows are for inline callbacks and short utilities only.
 - **Static-only classes used as namespaces** — replace with named exports. The exception: classes that exist for `instanceof` checks or that genuinely model OOP behavior.
 - **Three similar lines** — that's fine. **Four** is the threshold to consider extracting. Don't extract too early.
-- **`?.` and `??` as error suppression** — only use for genuinely optional branches. If a value is *supposed* to exist and doesn't, fail fast (see `FAIL-FAST-RULES.md`).
+- **`?.` and `??` as error suppression** — only use for genuinely optional branches. If a value is _supposed_ to exist and doesn't, fail fast (see `FAIL-FAST-RULES.md`).
 - **Comments that say WHAT** — delete. Comments are for WHY only.
 - **Decorator on field with initializer + `useDefineForClassFields: true`** — known footgun (see `experimental-decorators.md`). envapt's pattern uses `declare static readonly` to dodge it; preserve that.
 
@@ -126,5 +126,4 @@ envapt has one package today (`packages/envapt`). Rule still applies for the fut
 - **`OOP.md`** — class vs function rules, inheritance, composition, no-static-only-classes.
 - **`TYPESCRIPT.md`** — strict-mode rules, `any`/`unknown`/casts, type narrowing, utility types.
 - **`FAIL-FAST-RULES.md`** — when NOT to reach for `?.` / `??`; when to throw instead.
-- **`CODE-COMMENTING-GUIDELINES.md`** — what to comment, what not to.
 - **`PREVENT-REINVENTION.md`** — check existing code before writing new abstractions.
