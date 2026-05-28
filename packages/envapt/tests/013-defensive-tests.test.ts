@@ -12,7 +12,10 @@ import type { EnvapterService } from '../src/Parser';
 import type { BuiltInConverter, EnvKeyInput, PrimitiveConstructor } from '../src/Types';
 
 class StubEnvService implements EnvapterService {
-    constructor(private readonly values: Record<string, string | undefined>) {}
+    constructor(
+        private readonly values: Record<string, string | undefined>,
+        private readonly strict = false
+    ) {}
 
     getRaw(key: string): string | undefined {
         return this.values[key];
@@ -20,6 +23,10 @@ class StubEnvService implements EnvapterService {
 
     get(key: string): string | undefined {
         return this.values[key];
+    }
+
+    isStrict(): boolean {
+        return this.strict;
     }
 }
 

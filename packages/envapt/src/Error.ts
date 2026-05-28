@@ -25,6 +25,8 @@ export enum EnvaptErrorCodes {
     PrimitiveCoercionFailed = 205,
     /** Thrown when an array element fails to convert to the configured element type */
     ArrayElementConversionFailed = 206,
+    /** Thrown under strict mode when an array element is empty or whitespace only */
+    EmptyArrayElement = 207,
 
     // Other errors
     /** Thrown when delimiter is missing in array converter configuration */
@@ -35,7 +37,9 @@ export enum EnvaptErrorCodes {
     /** Thrown when specified environment files don't exist */
     EnvFilesNotFound = 303,
     /** Thrown when no valid environment key is provided */
-    InvalidKeyInput = 304
+    InvalidKeyInput = 304,
+    /** Thrown when a required environment value is missing or empty (post-trim) */
+    MissingEnvValue = 305
 }
 
 /**

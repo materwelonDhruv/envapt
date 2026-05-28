@@ -6,5 +6,5 @@
         "rootDir": "."
     },
     "include": ["src/**/*", "tests/**/*", "tsdown.config.ts"],
-    "exclude": ["node_modules", "dist"]
+    "exclude": ["node_modules", "dist", "tests/type-error-fixtures/**"]
 }

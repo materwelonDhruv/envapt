@@ -22,6 +22,31 @@ export abstract class EnvapterBase {
     protected static _envPaths: string[] = ['.env']; // default path
     protected static _envPathsExplicitlySet = false;
     protected static _userDefinedDotenvConfig: DotenvConfigOptions = {};
+    protected static _strict = false;
+
+    /**
+     * Enable or disable strict mode. Default `false`. Setting refreshes the cache so
+     * previously-cached converted values get re-evaluated under the new rule.
+     */
+    static set strict(value: boolean) {
+        // `this._strict = value` would create an own property on the subclass that invoked the
+        // setter; readers walking up from `PrimitiveMethods` would still see the base default.
+        // Pin the write to the base class so the flag is canonical across the chain.
+        EnvapterBase._strict = value;
+        // `this.refreshCache()` so subclass overrides of `resolveEffectivePaths` (the
+        // dotenv-flow cascade on `EnvironmentMethods`) are honored on the rebuild.
+        this.refreshCache();
+    }
+
+    static get strict(): boolean {
+        return EnvapterBase._strict;
+    }
+
+    protected static treatAsMissing(value: string | undefined): boolean {
+        if (value === undefined || value === '') return true;
+        if (EnvapterBase._strict && value.trim() === '') return true;
+        return false;
+    }
 
     /**
      * Set custom .env file paths. Accepts either a single path or array of paths.
@@ -116,9 +141,9 @@ export abstract class EnvapterBase {
 
             try {
                 loadDotenv({
+                    ...this._userDefinedDotenvConfig,
                     path: effectivePaths,
-                    processEnv: isolatedEnv,
-                    ...this._userDefinedDotenvConfig
+                    processEnv: isolatedEnv
                 });
             } catch {}
             // populate the Map with global environment variables

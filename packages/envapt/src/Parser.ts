@@ -11,6 +11,7 @@ import type { BuiltInConverter, EnvKeyInput, EnvaptConverter, PrimitiveConstruct
 export interface EnvapterService {
     getRaw(key: EnvKeyInput): string | undefined;
     get(key: EnvKeyInput, def?: string): string | undefined;
+    isStrict(): boolean;
 }
 
 /**
@@ -28,6 +29,7 @@ export class Parser {
      */
     resolveTemplate(key: string, value: string, stack: Set<string> = new Set<string>()): string {
         stack.add(key);
+        const strict = this.envService.isStrict();
 
         const out = value.replace(this.TEMPLATE_REGEX, (template) => {
             const variable = template.slice(2, -1);
@@ -35,7 +37,16 @@ export class Parser {
             if (stack.has(variable)) return template; // cycle, preserve
 
             const raw = this.envService.getRaw(variable);
-            if (!raw || raw === '') return template; // missing or empty, preserve
+            const isMissing = raw === undefined || raw === '' || (strict && raw.trim() === '');
+            if (isMissing) {
+                if (strict) {
+                    throw new EnvaptError(
+                        EnvaptErrorCodes.MissingEnvValue,
+                        `Cannot resolve template variable "\${${variable}}": value is missing or empty.`
+                    );
+                }
+                return template; // missing or empty, preserve
+            }
 
             const resolved = this.resolveTemplate(variable, raw, new Set(stack));
 
@@ -172,7 +183,7 @@ export class Parser {
             return fallback;
         }
 
-        const result = BuiltInConverters.processArrayConverter(parsed, resolvedConverter);
+        const result = BuiltInConverters.processArrayConverter(parsed, resolvedConverter, this.envService.isStrict());
         return result as TFallback;
     }
 
