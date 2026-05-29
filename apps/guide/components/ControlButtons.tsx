@@ -19,7 +19,9 @@ export function SearchTrigger({ className }: { className?: string }): ReactNode 
                 <path d="m20 20-3.5-3.5" />
             </svg>
             Search
-            <span className="ml-auto font-sans text-xs text-fd-muted-foreground">⌘K</span>
+            <span className="ml-auto flex items-center self-stretch font-sans text-xs text-fd-muted-foreground">
+                ⌘K
+            </span>
         </BaseButton>
     );
 }
