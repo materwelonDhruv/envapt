@@ -1,0 +1,150 @@
+---
+title: Envapter
+description: Read environment variables as typed values with Envapter's static and instance methods, ordered fallbacks, and fail-fast checks.
+---
+
+`Envapter` is the functional entry point to envapt. Every reader comes two ways: a **static** method for one-off reads, and an **instance** method for when you hold a `new Envapter()` or extend it. Both read from the same parsed cache.
+
+```ts twoslash
+import { Envapter } from 'envapt';
+
+// static, for a one-off read
+const port = Envapter.getNumber('PORT', 3000);
+//    ^?
+
+// instance, when you hold a reference
+const env = new Envapter();
+const apiUrl = env.get('API_URL', 'http://localhost');
+//    ^?
+```
+
+## Primitives
+
+Five readers cover the primitive types. Each parses the raw string and returns the matching type.
+
+```ts twoslash
+import { Envapter } from 'envapt';
+// ---cut---
+const name = Envapter.get('APP_NAME', 'envapt'); // string
+const port = Envapter.getNumber('PORT', 3000); // number
+const debug = Envapter.getBoolean('DEBUG', false); // boolean
+const max = Envapter.getBigInt('MAX_SAFE', 0n); // bigint
+const tag = Envapter.getSymbol('BUILD_TAG'); // symbol | undefined
+```
+
+`getBoolean` reads `1`, `yes`, `true`, `on` as **true** and `0`, `no`, `false`, `off` as **false**, case-insensitively. Anything else uses the fallback.
+
+## Fallbacks shape the return type
+
+A fallback supplies the default value and removes `undefined` from the return type. With a fallback the return is `T`; without one it's `T | undefined`, so the type makes you handle the missing case.
+
+```ts twoslash
+import { Envapter } from 'envapt';
+// ---cut---
+const withFallback = Envapter.get('API_URL', 'http://localhost');
+//    ^?
+
+const noFallback = Envapter.get('API_URL');
+//    ^?
+```
+
+## Ordered keys
+
+Any reader accepts an ordered list of keys instead of a single name. The first key with a defined value wins, which turns aliases and renames into a one-liner.
+
+```ts twoslash
+import { Envapter } from 'envapt';
+// ---cut---
+// READONLY_URL if set, else DATABASE_URL, else the fallback
+const db = Envapter.get(['READONLY_URL', 'DATABASE_URL'], 'sqlite://memory');
+//    ^?
+```
+
+<Callout type="warn">
+    Pass the array inline. A pre-declared `const keys = [...]` widens to `string[]`, which does not satisfy the
+    ordered-key tuple type.
+</Callout>
+
+## Raw values
+
+`getRaw` returns the string exactly as loaded, with no type conversion. It exists only as an **instance** method:
+
+```ts twoslash
+import { Envapter } from 'envapt';
+// ---cut---
+const raw = new Envapter().getRaw('DATABASE_URL');
+//    ^?
+```
+
+## Converters
+
+For shapes beyond primitives, two readers take a converter:
+
+- `getUsing(key, token, fallback?)` for built-in converter tokens (arrays, URLs, dates, durations, and more).
+- `getWith(key, fn, fallback?)` for your own `(raw, fallback) => T` function.
+
+```ts twoslash
+import { Envapter, Converters } from 'envapt';
+// ---cut---
+const origins = Envapter.getUsing('CORS', Converters.array({ of: Converters.String }));
+//    ^?
+
+const retries = Envapter.getWith('RETRIES', (raw) => Number(raw), 3);
+//    ^?
+```
+
+Fallbacks behave like the primitives, removing `undefined` from the return type. The [Converters](/docs/converters) page covers every built-in token.
+
+## Template strings
+
+`resolve` is a tagged template that inlines env values by key, and expands any `${VAR}` references inside the resolved values.
+
+```ts twoslash
+import { Envapter } from 'envapt';
+// ---cut---
+// API_HOST=api.example.com, API_PORT=8080
+const endpoint = Envapter.resolve`https://${'API_HOST'}:${'API_PORT'}`;
+//    ^?
+```
+
+See [Templates](/docs/templates) for `${VAR}` interpolation and cycle protection.
+
+## Fail-fast on missing values
+
+`require` asserts that one or more keys are present and non-empty (after trimming and template resolution), throwing an `EnvaptError` that names every missing key.
+
+```ts twoslash
+import { Envapter } from 'envapt';
+// ---cut---
+Envapter.require('DATABASE_URL', 'API_KEY', 'SENTRY_DSN');
+```
+
+For a typed fail-fast that returns the parsed value, use the `{ required: true }` form on `getUsing` or `getWith`:
+
+```ts twoslash
+import { Envapter, Converters } from 'envapt';
+// ---cut---
+const url = Envapter.getUsing('DATABASE_URL', { converter: Converters.Url, required: true });
+//    ^?
+```
+
+Both throw on a missing value instead of returning a fallback. See [Strict mode](/docs/strict-mode) for the global switch and how `required` relates to it.
+
+## Static vs instance
+
+Statics suit scattered, one-off reads. Create an instance to carry an env reader as a dependency, or extend `Envapter` to group related config on one class.
+
+```ts twoslash
+import { Envapter } from 'envapt';
+// ---cut---
+class Config extends Envapter {
+    readonly port = this.getNumber('PORT', 3000);
+    readonly debug = this.getBoolean('DEBUG', false);
+}
+```
+
+Static and instance reads hit the same cache.
+
+## Environment detection
+
+`Envapter` also detects the current runtime environment and auto-loads the matching `.env` files for it. The `isProduction` / `isStaging` / `isDevelopment` helpers, the `Environment` enum, and per-environment file selection all live on [Environment](/docs/environment).
