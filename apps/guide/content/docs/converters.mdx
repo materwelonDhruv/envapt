@@ -45,6 +45,12 @@ const apiUrl = Envapter.getUsing('API_URL', Converters.Url);
 
 A fallback removes `undefined` from the return type, the same way it does for the [primitive readers](/docs/functional-api#fallbacks-shape-the-return-type). Without one, the return is `T | undefined`.
 
+<Callout type="info">
+    A failed conversion never throws. `Url`, `Json`, `Date`, `Regexp`, and the number tokens swallow the parse error
+    and return the fallback, or `undefined` when you gave none. Use the `{ required: true }` form to throw on a
+    malformed value instead.
+</Callout>
+
 ## Numbers: Number, Integer, Float
 
 `Number` accepts anything JavaScript's `Number()` does, including floats, hex, and scientific notation. `Integer` stops at the first non-digit, so `42px` reads as `42` and `3.9` reads as `3`. `Float` parses a leading decimal and tolerates trailing text.
@@ -144,6 +150,12 @@ const points = Envapter.getUsing('COORDS', Converters.array({ of: toPoint }));
 ```
 
 Empty elements are dropped in normal mode. Under [strict mode](/docs/strict-mode) an empty element (a trailing comma, say) throws `EnvaptError` with code `EmptyArrayElement` instead of being filtered out.
+
+<Callout type="danger">
+    Under strict mode these throws come from env data, not your code. A trailing comma in a deployed `.env` throws
+    `EmptyArrayElement` at read time, and an element your converter maps to `undefined` throws
+    `ArrayElementConversionFailed`. A stray comma can stop startup.
+</Callout>
 
 ## Custom converters
 

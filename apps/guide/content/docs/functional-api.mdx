@@ -50,7 +50,7 @@ const noFallback = Envapter.get('API_URL');
 
 ## Ordered keys
 
-Any reader accepts an ordered list of keys instead of a single name. The first key with a defined value wins, which turns aliases and renames into a one-liner.
+Any reader accepts an ordered list of keys instead of a single name. The first key with a defined value wins, so an aliased or renamed variable falls back to its old name in one read.
 
 ```ts twoslash
 import { Envapter } from 'envapt';
@@ -75,6 +75,11 @@ import { Envapter } from 'envapt';
 const raw = new Envapter().getRaw('DATABASE_URL');
 //    ^?
 ```
+
+<Callout type="info">
+    There is no `Envapter.getRaw` static. Every other reader has a static form, but the raw string is reachable only
+    through an instance.
+</Callout>
 
 ## Converters
 
@@ -129,6 +134,11 @@ const url = Envapter.getUsing('DATABASE_URL', { converter: Converters.Url, requi
 ```
 
 Both throw on a missing value instead of returning a fallback. See [Strict mode](/docs/strict-mode) for the global switch and how `required` relates to it.
+
+<Callout type="danger">
+    `require` and the `{ required: true }` form throw `EnvaptError` the moment a key is missing or empty. Call them at
+    startup, not lazily inside a request path, so a missing value fails the boot rather than a live request.
+</Callout>
 
 ## Static vs instance
 

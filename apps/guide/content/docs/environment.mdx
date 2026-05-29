@@ -56,6 +56,11 @@ Envapter.environment = 'production'; // strings work too
 
 An explicit assignment also selects which `.env` files load on the next read, so set it before reading environment-specific values.
 
+<Callout type="tip">
+    Pin `Envapter.environment` once, early in your entry file, before any config reads. Setting it after a read means
+    that read already used the previously detected environment's files.
+</Callout>
+
 ## Per-environment `.env` files
 
 For the detected (or overridden) environment, envapt layers a dotenv-flow cascade, loading the first file that exists at each level, highest precedence first:
@@ -85,6 +90,11 @@ Envapter.configureProfiles({
     [Environment.Staging]: { paths: 'config/staging.env' }
 });
 ```
+
+<Callout type="danger">
+    A path you name in `configureProfiles` must exist. A missing configured path throws `EnvaptError` with code
+    `EnvFilesNotFound` on the next read. The auto-cascade files are skipped when missing, but configured paths are not.
+</Callout>
 
 Set `useDefaults: false` to load **only** the configured paths and skip the auto-cascade entirely.
 
