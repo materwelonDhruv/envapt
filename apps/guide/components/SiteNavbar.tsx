@@ -25,14 +25,11 @@ export function SiteNavbar(props: ComponentProps<'header'>): ReactNode {
     const isDocs = pathname.startsWith('/docs');
 
     return (
-        <header
-            {...props}
-            className="sticky top-0 z-40 col-span-full row-start-1 grid grid-cols-subgrid border-b border-fd-border bg-fd-background/80 backdrop-blur-sm layout:[--fd-header-height:var(--fd-nav-height)]"
-        >
-            {/* Full-width bar, but its content shares the page grid: spans the sidebar..ToC columns
-                (col 2-4) with px-4 so the links/controls line up with the sidebar and ToC content. */}
+        <header {...props} className="sticky top-0 z-40 border-b border-fd-border bg-fd-background/80 backdrop-blur-sm">
+            {/* Full-width sticky bar; content centered to the hero's width (max-w-295 px-6) so the
+                branding and controls line up with the page content, not the viewport edge. */}
             <div
-                className="col-start-2 col-end-5 flex w-full items-center gap-6 px-4"
+                className="mx-auto flex w-full max-w-295 items-center gap-6 px-6"
                 style={{ height: 'var(--fd-nav-height)' }}
             >
                 {!isDocs && (
