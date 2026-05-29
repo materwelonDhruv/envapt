@@ -137,15 +137,18 @@ import type { Foo } from 'pkg'; // not import('pkg').Foo
     - `index.ts` — public surface
     - `Envapt.ts` — the `@Envapt` decorator + overload tower
     - `Envapter.ts` — public class, adds `resolve` tagged template
-    - `Converters.ts` — `Converters` enum + `ConverterValue` type
+    - `Converters.ts` — `Converters` object (scalar tokens + `array` builder) + `ConverterToken` type
     - `ListOfBuiltInConverters.ts` — converter list + runtime typeof checkers
     - `BuiltInConverters.ts` — every built-in converter (string/number/bool/bigint/symbol/json/array/url/regexp/date/time)
     - `Parser.ts` — template `${VAR}` resolution + converter dispatch
-    - `Validators.ts` — runtime guards for converters/fallbacks/dotenv config
+    - `Validators.ts` — runtime guards for converters/fallbacks/env-file options
+    - `Dotenv.ts` — internal `.env` loader + `EnvFileOptions` type
+    - `Debug.ts` — debug logging helpers (`debugWarn`/`debugVerbose`) keyed off `Envapter.debug`
+    - `StandardSchema.ts` — inlined Standard Schema V1 interface (sync-only)
     - `Types.ts` — all public + internal types
     - `Error.ts` — `EnvaptError` + `EnvaptErrorCodes` enum
     - `core/` — the mixin chain (`EnvapterBase` → `EnvironmentMethods` → `PrimitiveMethods` → `AdvancedMethods`)
-- `packages/envapt/tests/` — vitest tests, numbered `001-`–`013-`, each paired with a fixture `.env.*` file.
+- `packages/envapt/tests/` — vitest tests, numbered `001-`–`025-`, each paired with a fixture `.env.*` file.
 - `scripts/` — `bump-jsr.ts`, `release-metadata.ts` (the JSR sync + release-metadata helpers used by the publish workflow).
 - `.changeset/` — pending changesets. Don't edit by hand.
 - `.github/workflows/` — CI. `checks.yml` (lint + tc + test + coverage), `publish.yml` (npm + JSR on push to main), `commitlint.yml`, `cleanup-cache.yml`, etc.
@@ -171,7 +174,7 @@ import type { Foo } from 'pkg'; // not import('pkg').Foo
 envapt uses `experimentalDecorators: true` (see `.vscode/experimental-decorators.md` for the ecosystem audit). The `@Envapt` decorator pattern mutates the prototype via `Object.defineProperty(target, propKey, { get })`. Constraints:
 
 - **Users declare with `declare public/static readonly`** — no field initializer. This dodges the `useDefineForClassFields: true` footgun. Document this prominently in any new decorator example.
-- **The classic 3-arg API (`@Envapt('KEY', fb, Converter)`) is deprecated as of v5** and will be removed before v5 stable. New code uses the modern options-object form: `@Envapt('KEY', { converter, fallback })`.
+- **The classic 3-arg API (`@Envapt('KEY', fb, Converter)`) is deprecated as of v5** and will be removed in v6. New code uses the modern options-object form: `@Envapt('KEY', { converter, fallback })`.
 - **Sugar decorators** (`@EnvNum`, `@EnvUrl`, `@EnvTime`, etc.) added in v5 are thin factories that delegate to `createPropertyDecorator`. Keep them minimal — don't add per-type validation logic; that belongs in the converter.
 
 ---
