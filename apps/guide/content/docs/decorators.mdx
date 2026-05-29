@@ -85,8 +85,8 @@ class Config {
 The throw happens on first access to the property, independent of global strict mode. See [Strict mode](/docs/strict-mode) for the global switch and how `required` relates to it.
 
 <Callout type="warn">
-    First access can be deep in a request, not at boot. A missing required value then surfaces as a runtime error mid-request.
-    Read the property once during startup to fail early.
+    First access can be deep in a request, not at boot. A missing required value then surfaces as a runtime error
+    mid-request. Read the property once during startup to fail early.
 </Callout>
 
 ## Validation with a schema
@@ -140,12 +140,5 @@ const config = new Config();
 config.port;
 //     ^?
 ```
-
-## Classic API
-
-<Callout type="warn">
-    The positional form `@Envapt('KEY', fallback, Converter)` is deprecated as of v5 and will be removed before the
-    stable release. Use the options object: `@Envapt('KEY', { converter, fallback })`.
-</Callout>
 
 A misconfigured options object throws `EnvaptError` as the decorator is applied, before any property access: `required` together with a `fallback`, or a non-`StandardSchemaV1` value passed as `schema`. See [Errors](/docs/errors) for the codes.

@@ -1,13 +1,37 @@
 ---
 title: Introduction
-description: Read environment variables as real types, with zero runtime dependencies.
+description: Read environment variables as typed values, with zero runtime dependencies and the same API on Node, Bun, and Deno.
 ---
 
-Placeholder docs index. Content lands in a later phase, this stub exists so the docs route, search, and Twoslash pipeline are wired.
+envapt reads environment variables as typed values. You give it a key and a fallback; it returns a `number`, `boolean`, `URL`, `Date`, an array, or any type you define, instead of the `string | undefined` you get from `process.env`.
 
 ```ts twoslash
 import { Envapter } from 'envapt';
-
+// ---cut---
 const port = Envapter.getNumber('PORT', 3000);
 //    ^?
 ```
+
+## Two ways to read
+
+Read values functionally with [`Envapter`](/docs/functional-api), or bind them to class fields with the [`@Envapt`](/docs/decorators) decorator. Both share the same parsing, converters, and cache.
+
+```ts twoslash
+import { Envapt, Converters } from 'envapt';
+// ---cut---
+class Config {
+    @Envapt('PORT', { converter: Converters.Number, fallback: 3000 })
+    declare static readonly port: number;
+}
+```
+
+## What you get
+
+- **Typed values.** A fallback removes `undefined` from the return type. [Converters](/docs/converters) convert numbers, booleans, bigint, JSON, URLs, dates, durations, and arrays, or pass your own function or a [Standard Schema](/docs/standard-schema) validator (zod, valibot, arktype).
+- **Zero runtime dependencies.** envapt ships its own `.env` parser, so nothing is added to your dependency tree.
+- **The same API on Node, Bun, and Deno.** See [Compatibility](/docs/compatibility).
+- **`.env` loading built in.** A per-environment file [cascade](/docs/environment), `${VAR}` [templates](/docs/templates), and [strict](/docs/strict-mode) / required checks.
+
+## Next
+
+Start with the [Quick Start](/docs/quick-start), then the [Envapter](/docs/functional-api) reader API.

@@ -1,4 +1,4 @@
-import { rehypeCodeDefaultOptions } from 'fumadocs-core/mdx-plugins';
+import { rehypeCodeDefaultOptions, remarkNpm } from 'fumadocs-core/mdx-plugins';
 import { defineConfig, defineDocs } from 'fumadocs-mdx/config';
 import { transformerTwoslash } from 'fumadocs-twoslash';
 
@@ -19,8 +19,17 @@ export const docs = defineDocs({
 // serve stale hovers for the very library these docs describe.
 const twoslashEnabled = process.env.TWOSLASH !== '0';
 
+const PACKAGE_MANAGERS = [
+    { name: 'pnpm', command: (cmd: string) => cmd.replace('npm install', 'pnpm add') },
+    { name: 'npm', command: (cmd: string) => cmd },
+    { name: 'yarn', command: (cmd: string) => cmd.replace('npm install', 'yarn add') },
+    { name: 'bun', command: (cmd: string) => cmd.replace('npm install', 'bun add') },
+    { name: 'deno', command: () => 'deno add jsr:@materwelon/envapt' }
+];
+
 export default defineConfig({
     mdxOptions: {
+        remarkPlugins: [[remarkNpm, { persist: { id: 'package-manager' }, packageManagers: PACKAGE_MANAGERS }]],
         rehypeCodeOptions: {
             themes: { light: 'ayu-light', dark: 'ayu-dark' },
             transformers: [

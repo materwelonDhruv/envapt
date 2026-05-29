@@ -16,6 +16,9 @@
         "errors",
         "---Configuration---",
         "configuration",
-        "env-file-syntax"
+        "env-file-syntax",
+        "---Reference---",
+        "compatibility",
+        "migration"
     ]
 }
