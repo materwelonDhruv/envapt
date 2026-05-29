@@ -6,7 +6,7 @@ import { EnvaptError, EnvaptErrorCodes } from '../Error';
 import { Validator } from '../Validators';
 
 import type { DebugLevel } from '../Debug';
-import type { DotenvConfigOptions } from '../Dotenv';
+import type { EnvFileOptions } from '../Dotenv';
 import type { EnvKeyInput } from '../Types';
 
 /**
@@ -23,7 +23,7 @@ export const EnvaptCache = new Map<string, unknown>();
 export abstract class EnvapterBase {
     protected static _envPaths: string[] = ['.env']; // default path
     protected static _envPathsExplicitlySet = false;
-    protected static _userDefinedDotenvConfig: DotenvConfigOptions = {};
+    protected static _userDefinedEnvFileOptions: EnvFileOptions = {};
     protected static _strict = false;
     protected static _syncProcessEnv = false;
     // Loader-written keys only (collisions skipped). Refilled on every cache rebuild.
@@ -64,7 +64,7 @@ export abstract class EnvapterBase {
      * Opt-in mirror of dotenv-loaded keys back to `process.env`. Default `false`.
      *
      * Only keys the loader actually wrote are mirrored, so collision behavior follows
-     * `dotenvConfig.override`: with the default `false`, pre-existing `process.env` values
+     * `envFileOptions.override`: with the default `false`, pre-existing `process.env` values
      * are preserved; with `true`, the file value wins in both the cache and the mirror.
      *
      * Flipping `false → true` mirrors the existing tracked delta immediately (no cache
@@ -116,17 +116,17 @@ export abstract class EnvapterBase {
     /**
      * Set custom dotenv configuration options.
      */
-    static set dotenvConfig(config: DotenvConfigOptions) {
-        Validator.validateDotenvConfig(config);
-        this._userDefinedDotenvConfig = config;
+    static set envFileOptions(config: EnvFileOptions) {
+        Validator.validateEnvFileOptions(config);
+        this._userDefinedEnvFileOptions = config;
         this.refreshCache();
     }
 
     /**
      * Get current dotenv configuration options
      */
-    static get dotenvConfig(): DotenvConfigOptions {
-        return this._userDefinedDotenvConfig;
+    static get envFileOptions(): EnvFileOptions {
+        return this._userDefinedEnvFileOptions;
     }
 
     protected static refreshCache(): void {
@@ -200,7 +200,7 @@ export abstract class EnvapterBase {
             let added = new Set<string>();
             try {
                 added = loadDotenv({
-                    ...this._userDefinedDotenvConfig,
+                    ...this._userDefinedEnvFileOptions,
                     path: effectivePaths,
                     processEnv: isolatedEnv
                 });

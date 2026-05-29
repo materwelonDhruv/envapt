@@ -780,7 +780,7 @@ Envapt allows you to customize dotenv behavior by setting configuration options:
 import { Envapter } from 'envapt';
 
 // Set dotenv configuration options
-Envapter.dotenvConfig = {
+Envapter.envFileOptions = {
     encoding: 'latin1', // File encoding (default: 'utf8')
     debug: true, // Enable debug logging
     override: true, // Override existing environment variables
@@ -789,11 +789,8 @@ Envapter.dotenvConfig = {
 };
 
 // Get current configuration
-console.log(Envapter.dotenvConfig);
+console.log(Envapter.envFileOptions);
 ```
-
-> [!NOTE]
-> The `path` and `processEnv` options are managed internally by Envapter and cannot be set via `dotenvConfig`.
 
 <div align="right">
 
@@ -839,7 +836,7 @@ import { EnvaptError, EnvaptErrorCodes } from 'envapt';
 
 try {
     // This will throw an error for invalid configuration
-    Envapter.dotenvConfig = { path: '.env.custom' };
+    Envapter.envFileOptions = { unknownOption: true };
 } catch (error) {
     if (error instanceof EnvaptError) {
         console.log('Error code:', error.code);

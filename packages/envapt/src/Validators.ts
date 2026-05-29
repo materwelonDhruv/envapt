@@ -5,7 +5,7 @@ import { EnvaptError, EnvaptErrorCodes } from './Error';
 import { ListOfBuiltInConverters, BuiltInConverterTypeCheckers } from './ListOfBuiltInConverters';
 
 import type { ArrayOf, ConverterToken } from './Converters';
-import type { DotenvConfigOptions } from './Dotenv';
+import type { EnvFileOptions } from './Dotenv';
 import type { StandardSchemaV1 } from './StandardSchema';
 import type { BuiltInConverter, ConverterFunction, EnvaptConverter } from './Types';
 
@@ -236,21 +236,14 @@ export class Validator {
     /**
      * Make sure the user hasn't provided prohibited options in their dotenv config
      */
-    static validateDotenvConfig(config: object): config is DotenvConfigOptions {
-        if ('path' in config || 'processEnv' in config) {
-            throw new EnvaptError(
-                EnvaptErrorCodes.InvalidUserDefinedConfig,
-                'Custom dotenvConfig should not include "path" or "processEnv" options. Those are managed by Envapter.'
-            );
-        }
-
+    static validateEnvFileOptions(config: object): config is EnvFileOptions {
         const validKeys = new Set(['encoding', 'override']);
         const invalidKeys = Object.keys(config).filter((key) => !validKeys.has(key));
 
         if (invalidKeys.length > 0) {
             throw new EnvaptError(
                 EnvaptErrorCodes.InvalidUserDefinedConfig,
-                `Invalid dotenvConfig options: ${invalidKeys.join(', ')}. Allowed options: ${Array.from(validKeys).join(', ')}. For debug output, use Envapter.debug or the ENVAPT_DEBUG env var.`
+                `Invalid envFileOptions: ${invalidKeys.join(', ')}. Allowed options: ${Array.from(validKeys).join(', ')}. For debug output, use Envapter.debug or the ENVAPT_DEBUG env var.`
             );
         }
 
