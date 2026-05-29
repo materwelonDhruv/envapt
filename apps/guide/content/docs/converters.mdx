@@ -1,0 +1,177 @@
+---
+title: Converters
+description: Turn a raw environment string into a typed value with the built-in converter tokens, the array builder, or your own function.
+---
+
+A converter turns the raw environment string into a typed value. Pass a built-in token to `getUsing`, a function to `getWith`, or either as the `converter` option on the [`@Envapt`](/docs/decorators) decorator. Without a converter, a value stays a `string`.
+
+```ts twoslash
+import { Envapter, Converters } from 'envapt';
+// ---cut---
+const timeout = Envapter.getUsing('TIMEOUT', Converters.Time, '30s');
+//    ^?
+
+const retries = Envapter.getWith('RETRIES', (raw) => Number(raw ?? 0), 3);
+//    ^?
+```
+
+## Built-in tokens
+
+`Converters` carries one token per built-in type, plus the `array` builder.
+
+| Token                | Returns     | Parsed from                                               |
+| -------------------- | ----------- | --------------------------------------------------------- |
+| `Converters.String`  | `string`    | the raw value, unchanged                                  |
+| `Converters.Number`  | `number`    | `Number(raw)`; `NaN` uses the fallback                    |
+| `Converters.Integer` | `number`    | `parseInt(raw, 10)`                                       |
+| `Converters.Float`   | `number`    | `parseFloat(raw)`                                         |
+| `Converters.Boolean` | `boolean`   | `1`/`yes`/`true`/`on` and `0`/`no`/`false`/`off`          |
+| `Converters.Bigint`  | `bigint`    | `BigInt(raw)`                                             |
+| `Converters.Symbol`  | `symbol`    | `Symbol.for(raw)`                                         |
+| `Converters.Json`    | `JsonValue` | `JSON.parse(raw)`                                         |
+| `Converters.Url`     | `URL`       | `new URL(raw)`                                            |
+| `Converters.Regexp`  | `RegExp`    | `/pattern/flags` form, or the whole string as the pattern |
+| `Converters.Date`    | `Date`      | a millisecond timestamp or a UTC ISO 8601 string          |
+| `Converters.Time`    | `number`    | a duration string like `30s`, returned as milliseconds    |
+
+```ts twoslash
+import { Envapter, Converters } from 'envapt';
+// ---cut---
+const port = Envapter.getUsing('PORT', Converters.Number, 3000);
+//    ^?
+const apiUrl = Envapter.getUsing('API_URL', Converters.Url);
+//    ^?
+```
+
+A fallback removes `undefined` from the return type, the same way it does for the [primitive readers](/docs/functional-api#fallbacks-shape-the-return-type). Without one, the return is `T | undefined`.
+
+## Numbers: Number, Integer, Float
+
+`Number` accepts anything JavaScript's `Number()` does, including floats, hex, and scientific notation. `Integer` stops at the first non-digit, so `42px` reads as `42` and `3.9` reads as `3`. `Float` parses a leading decimal and tolerates trailing text.
+
+```ts twoslash
+import { Envapter, Converters } from 'envapt';
+// ---cut---
+// COUNT=42px
+const count = Envapter.getUsing('COUNT', Converters.Integer); // 42
+const ratio = Envapter.getUsing('RATIO', Converters.Float, 1.0);
+```
+
+## JSON
+
+`Json` runs `JSON.parse`. Invalid JSON returns the fallback. The return type is `JsonValue`, the recursive union of JSON-representable values, so narrow it before use.
+
+```ts twoslash
+import { Envapter, Converters } from 'envapt';
+// ---cut---
+// FEATURE_FLAGS={"beta":true}
+const flags = Envapter.getUsing('FEATURE_FLAGS', Converters.Json, {});
+//    ^?
+```
+
+## URL, RegExp, Date
+
+`Url` builds a `URL`, so the value must be absolute; a relative path throws inside the constructor and returns the fallback.
+
+`Regexp` reads a `/pattern/flags` literal (flags limited to `g i m s u v y`). A value without the surrounding slashes is treated as the whole pattern with no flags.
+
+`Date` accepts exactly two forms:
+
+```ts twoslash
+import { Envapter, Converters } from 'envapt';
+// ---cut---
+// RELEASED_AT=2024-01-15T10:30:00Z
+const released = Envapter.getUsing('RELEASED_AT', Converters.Date);
+//    ^?
+```
+
+<Callout type="warn">
+    `Date` takes an all-digit millisecond timestamp, or a UTC ISO 8601 string ending in `Z` (`2024-01-15T10:30:00Z`,
+    optionally with `.mmm` milliseconds). A date-only string, a local time, or an offset like `+02:00` returns the
+    fallback. Store dates in UTC.
+</Callout>
+
+## Time and durations
+
+`Time` reads a duration and returns it in **milliseconds**. The raw value takes a number with an optional unit; a bare number is milliseconds.
+
+```ts twoslash
+import { Envapter, Converters } from 'envapt';
+// ---cut---
+// CACHE_TTL=15m
+const ttl = Envapter.getUsing('CACHE_TTL', Converters.Time); // 900000
+const grace = Envapter.getUsing('GRACE', Converters.Time, '1.5h');
+//    ^?
+```
+
+The units are `ms`, `s`, `m`, `h`, `d`, `w`. The fallback may be a number (already milliseconds) or a time-string.
+
+<Callout type="warn">
+    A raw env value is lenient: a unit is optional and decimals are allowed (`1.5h`). A **string fallback** is strict:
+    it needs an integer and an explicit unit (`90m`, not `1.5h` or `5400`). A malformed string fallback throws
+    `EnvaptError` with code `MalformedTimeFallback`.
+</Callout>
+
+## Arrays
+
+`Converters.array` splits the value on a delimiter and converts each element. The delimiter defaults to `,` and the element type defaults to `string`.
+
+```ts twoslash
+import { Envapter, Converters } from 'envapt';
+// ---cut---
+// CORS=https://a.com,https://b.com
+const origins = Envapter.getUsing('CORS', Converters.array({ of: Converters.Url }));
+//    ^?
+
+// PORTS=3000 3001 3002
+const ports = Envapter.getUsing('PORTS', Converters.array({ of: Converters.Number, delimiter: ' ' }));
+//    ^?
+```
+
+The element type can be any scalar token except `Json` and `Regexp`, or your own `(raw: string) => T` function that converts a single element. An array fallback must already be an array of the element type.
+
+```ts twoslash
+import { Envapter, Converters } from 'envapt';
+// ---cut---
+const toPoint = (raw: string) => {
+    const [x, y] = raw.split(':');
+    return { x: Number(x), y: Number(y) };
+};
+
+// COORDS=1:2,3:4
+const points = Envapter.getUsing('COORDS', Converters.array({ of: toPoint }));
+//    ^?
+```
+
+Empty elements are dropped in normal mode. Under [strict mode](/docs/strict-mode) an empty element (a trailing comma, say) throws `EnvaptError` with code `EmptyArrayElement` instead of being filtered out.
+
+## Custom converters
+
+When no built-in fits, pass a function to `getWith`. It receives the raw value (`string`, or `undefined` when the variable is unset) and the fallback, and returns the typed value. The function owns its own parsing and failure handling.
+
+```ts twoslash
+import { Envapter } from 'envapt';
+// ---cut---
+const parsePair = (raw: string | undefined) => {
+    const [host, port] = (raw ?? 'localhost:80').split(':');
+    return { host, port: Number(port) };
+};
+
+const pair = Envapter.getWith('HOST_PORT', parsePair);
+//    ^?
+```
+
+For a single array element you supply a `(raw: string) => T` function to `array({ of })` instead. That element function receives only the trimmed, non-empty element string. Returning `undefined` from it throws `EnvaptError` with code `ArrayElementConversionFailed`.
+
+## Require a converted value
+
+Both readers take an options form that throws on a missing value instead of returning a fallback.
+
+```ts twoslash
+import { Envapter, Converters } from 'envapt';
+// ---cut---
+const dbUrl = Envapter.getUsing('DATABASE_URL', { converter: Converters.Url, required: true });
+//    ^?
+```
+
+See [Fail-fast on missing values](/docs/functional-api#fail-fast-on-missing-values) for `require`, and [Standard Schema](/docs/standard-schema) for validating a value through zod, valibot, or arktype.
