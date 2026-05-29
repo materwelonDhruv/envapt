@@ -1,0 +1,7 @@
+node_modules/
+.next/
+out/
+.source/
+next-env.d.ts
+# twoslash code blocks are line-position sensitive (^? queries); don't let prettier reflow them
+content/

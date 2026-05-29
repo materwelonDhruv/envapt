@@ -1,0 +1,114 @@
+@import 'tailwindcss';
+@import 'fumadocs-ui/css/neutral.css';
+@import 'fumadocs-ui/css/preset.css';
+@import 'fumadocs-twoslash/twoslash.css';
+
+/* Tailwind v4 must scan the fumadocs-ui package for the classes it uses */
+@source '../node_modules/fumadocs-ui/dist/**/*.js';
+
+@theme {
+    /* --font-hanken / --font-jetbrains are injected by next/font in app/layout.tsx */
+    --font-sans: var(--font-hanken), ui-sans-serif, system-ui, sans-serif;
+    --font-mono: var(--font-jetbrains), ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+}
+
+/* Brand tokens are mode-aware, so they live as CSS vars (overridden under .dark) rather than in @theme, which can't switch on theme. */
+:root {
+    --ev-bg: #f8f5f0;
+    --ev-link: #bc4f13;
+    --ev-link-hover: #a83d00;
+    --ev-brand: #de6e39;
+    --ev-on-brand: #1a0f08;
+    --ev-gold: #e3a02a;
+    --ev-teal: #1f857a;
+    --ev-grid: rgba(60, 40, 20, 0.06);
+    --ev-panel: #fffdf9;
+    --ev-gutter: #c3b9a6;
+    --ev-code-string: #1f857a;
+    --ev-code-comment: #a99b82;
+    --ev-code-num: #7b54c4;
+
+    --color-fd-primary: #bc4f13;
+}
+
+.dark {
+    --ev-bg: #13171a;
+    --ev-link: #c76435;
+    --ev-link-hover: #d87345;
+    --ev-brand: #de6e39;
+    --ev-on-brand: #1a0f08;
+    --ev-gold: #f8b632;
+    --ev-teal: #5fd1c4;
+    --ev-grid: rgba(255, 255, 255, 0.05);
+    --ev-panel: #0e1215;
+    --ev-gutter: #3f4750;
+    --ev-code-string: #5fd1c4;
+    --ev-code-comment: #5a636c;
+    --ev-code-num: #9d8bf0;
+
+    --color-fd-primary: #c76435;
+}
+
+/* Custom navbar height; fumadocs layouts read --fd-nav-height to offset sticky content, so it must stay in sync with SiteNavbar. */
+:root {
+    --fd-nav-height: 60px;
+}
+
+.ev-hero-grid {
+    background-image:
+        linear-gradient(var(--ev-grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--ev-grid) 1px, transparent 1px);
+    background-size: 46px 46px;
+    -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 0%, #000 30%, transparent 78%);
+    mask-image: radial-gradient(ellipse 80% 70% at 50% 0%, #000 30%, transparent 78%);
+}
+
+.ev-editor {
+    clip-path: polygon(0 0, calc(100% - 28px) 0, 100% 28px, 100% 100%, 0 100%);
+    filter: drop-shadow(0 22px 34px rgb(0 0 0 / 0.5));
+}
+.ev-editor-fold {
+    background: linear-gradient(135deg, #f7cc88, var(--ev-gold));
+    clip-path: polygon(0 0, 100% 100%, 0 100%);
+    filter: drop-shadow(-1px 1px 1px rgb(0 0 0 / 0.28));
+}
+
+.ev-code .ln::before {
+    content: counter(line);
+    counter-increment: line;
+    display: inline-block;
+    width: 18px;
+    margin-right: 18px;
+    color: var(--ev-gutter);
+    text-align: right;
+}
+.ev-code {
+    counter-reset: line;
+}
+.ev-k {
+    color: var(--ev-gold);
+}
+.ev-f {
+    color: var(--ev-link-hover);
+}
+.ev-s {
+    color: var(--ev-code-string);
+}
+.ev-c {
+    color: var(--ev-code-comment);
+    font-style: italic;
+}
+.ev-num {
+    color: var(--ev-code-num);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}

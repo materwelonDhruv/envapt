@@ -1,0 +1,13 @@
+---
+title: Quick Start
+description: Install envapt and read your first typed environment variable.
+---
+
+Placeholder. Real content lands in a later phase.
+
+```ts twoslash
+import { Envapter, Converters } from 'envapt';
+
+const origins = Envapter.getUsing('CORS', Converters.array({ of: Converters.String }));
+//    ^?
+```
