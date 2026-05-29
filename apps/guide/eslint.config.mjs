@@ -4,6 +4,7 @@ import createConfig from '@seedcord/eslint-config';
 import nextVitals from 'eslint-config-next/core-web-vitals';
 import betterTailwindcss from 'eslint-plugin-better-tailwindcss';
 import jsxA11y from 'eslint-plugin-jsx-a11y';
+import * as mdx from 'eslint-plugin-mdx';
 import reactCompiler from 'eslint-plugin-react-compiler';
 import tailwindCanonical from 'eslint-plugin-tailwind-canonical-classes';
 
@@ -23,7 +24,9 @@ export default createConfig({
         reactCompiler.configs.recommended,
 
         // nextVitals already declares the jsx-a11y plugin; only lift its strict rule set + hardening.
+        // Scoped to ts/tsx so these React rules do not bleed onto *.mdx (where jsx-a11y is not registered).
         {
+            files: ['**/*.{ts,tsx}'],
             rules: {
                 ...jsxA11y.flatConfigs.strict.rules,
                 'jsx-a11y/alt-text': ['error', { elements: ['img'], img: ['Image'] }],
@@ -54,6 +57,14 @@ export default createConfig({
                     { cssPath: TAILWIND_ENTRY, calleeFunctions: TAILWIND_CALLEES }
                 ]
             }
+        },
+
+        // Lint MDX prose/structure. Code blocks are disabled: our ```ts twoslash samples are
+        // intentionally partial (`// ---cut---`, `^?`, `@errors`) and would not lint as standalone TS.
+        {
+            ...mdx.flat,
+            files: ['**/*.mdx'],
+            settings: { 'mdx/code-blocks': false }
         },
 
         { ignores: ['.next/**', 'out/**', 'build/**', '.source/**', 'next-env.d.ts'] }
