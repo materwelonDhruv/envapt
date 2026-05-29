@@ -18,7 +18,6 @@ enum Primitive {
 }
 
 /**
- * Mixin for primitive environment variable getter methods
  * @internal
  */
 export class PrimitiveMethods extends EnvironmentMethods implements EnvapterService {
@@ -73,7 +72,6 @@ export class PrimitiveMethods extends EnvironmentMethods implements EnvapterServ
     /**
      * @see {@link PrimitiveMethods.get}
      */
-    get(key: EnvKeyInput, def?: string): string | undefined;
     get<Default extends string | undefined = undefined>(
         key: EnvKeyInput,
         def?: Default
