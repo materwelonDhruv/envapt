@@ -1,0 +1,151 @@
+---
+title: Decorators
+description: Bind a class property to an environment variable with the @Envapt decorator, the class-based alternative to the Envapter readers.
+---
+
+`@Envapt` binds a class property to an environment variable. It's the class-based counterpart to the [`Envapter`](/docs/functional-api) readers: the same parsing, converters, and cache, declared as typed fields instead of method calls.
+
+```ts twoslash
+import { Envapt, Converters } from 'envapt';
+// ---cut---
+class Config {
+    @Envapt('PORT', { converter: Converters.Number, fallback: 3000 })
+    declare static readonly port: number;
+
+    @Envapt('DEBUG', { converter: Converters.Boolean, fallback: false })
+    declare static readonly debug: boolean;
+}
+
+Config.port;
+//     ^?
+```
+
+The value is read and converted once, on first access, then cached.
+
+## Declare the property, never initialize it
+
+Always declare a decorated property with `declare` and no initializer.
+
+`@Envapt` installs a getter on the class with `Object.defineProperty`. Under `useDefineForClassFields` (on by default for modern targets), a real field declaration emits an assignment in the constructor that overwrites that getter with `undefined`. The `declare` keyword makes the property type-only, so it emits nothing and the getter survives.
+
+<Callout type="danger">
+    A decorated property with an initializer or without `declare` reads back as `undefined` at runtime: the emitted
+    field clobbers envapt's getter. Write `declare readonly x: T`, never `readonly x: T = ...`.
+</Callout>
+
+You also need `experimentalDecorators` enabled.
+
+```json title="tsconfig.json"
+{
+    "compilerOptions": {
+        "experimentalDecorators": true
+    }
+}
+```
+
+Runtime-specific decorator notes (Bun running a `.ts` entry directly, Deno's flag) live on [Compatibility](/docs/compatibility).
+
+## Converters
+
+The `converter` option takes the same values as [`getUsing`/`getWith`](/docs/converters): a built-in token, a primitive constructor, a custom function, or `Converters.array(...)`. A `fallback` removes `undefined` from the value and must match the converter's type.
+
+```ts twoslash
+import { Envapt, Converters } from 'envapt';
+// ---cut---
+class Config {
+    // duration token: a time-string fallback is coerced to milliseconds
+    @Envapt('CACHE_TTL', { converter: Converters.Time, fallback: '15m' })
+    declare static readonly cacheTtl: number;
+
+    // array token
+    @Envapt('ALLOWED_ORIGINS', { converter: Converters.array({ of: Converters.String }), fallback: [] })
+    declare static readonly origins: string[];
+
+    // custom function: receives the raw value (string, or undefined when unset)
+    @Envapt('FEATURE_FLAGS', { converter: (raw) => (raw ? raw.split(',') : []) })
+    declare static readonly flags: string[];
+}
+```
+
+With no `converter` and no `fallback`, the property resolves to the raw string or `null`.
+
+## Required values
+
+Pass `required: true` to throw `EnvaptError` on a missing or empty value instead of returning a fallback. It's mutually exclusive with `fallback`.
+
+```ts twoslash
+import { Envapt, Converters } from 'envapt';
+// ---cut---
+class Config {
+    @Envapt('DATABASE_URL', { converter: Converters.Url, required: true })
+    declare static readonly databaseUrl: URL;
+}
+```
+
+The throw happens on first access to the property, independent of global strict mode. See [Strict mode](/docs/strict-mode) for the global switch and how `required` relates to it.
+
+<Callout type="warn">
+    First access can be deep in a request, not at boot. A missing required value then surfaces as a runtime error mid-request.
+    Read the property once during startup to fail early.
+</Callout>
+
+## Validation with a schema
+
+Pass a `schema` to validate through zod, valibot, arktype, or a hand-rolled `StandardSchemaV1`. The property type is the schema's output.
+
+```ts twoslash
+import { z } from 'zod/v4';
+import { Envapt } from 'envapt';
+// ---cut---
+class Config {
+    @Envapt('PORT', { schema: z.coerce.number().int().min(1024).max(65535) })
+    declare static readonly port: number;
+}
+```
+
+`schema` and `converter` are mutually exclusive. See [Standard Schema](/docs/standard-schema) for the full behavior.
+
+## Ordered keys
+
+Like the functional readers, the key can be an ordered list. The first key with a value wins.
+
+```ts twoslash
+import { Envapt, Converters } from 'envapt';
+// ---cut---
+class Config {
+    // CANARY_URL if set, otherwise APP_URL
+    @Envapt(['CANARY_URL', 'APP_URL'], { converter: Converters.Url })
+    declare static readonly url: URL | null;
+}
+```
+
+## Static and instance properties
+
+`@Envapt` works on both static and instance properties, and the class does not need to extend anything. The cache is keyed per `ClassName.property`, so a static and an instance property of the same name never collide.
+
+Extend `Envapter` when you also want the reader methods on the same class:
+
+```ts twoslash
+import { Envapt, Converters, Envapter } from 'envapt';
+// ---cut---
+class Config extends Envapter {
+    @Envapt('PORT', { converter: Converters.Number, fallback: 3000 })
+    declare readonly port: number;
+
+    // mix decorator fields with reader calls
+    readonly region = this.get('AWS_REGION', 'us-east-1');
+}
+
+const config = new Config();
+config.port;
+//     ^?
+```
+
+## Classic API
+
+<Callout type="warn">
+    The positional form `@Envapt('KEY', fallback, Converter)` is deprecated as of v5 and will be removed before the
+    stable release. Use the options object: `@Envapt('KEY', { converter, fallback })`.
+</Callout>
+
+A misconfigured options object throws `EnvaptError` as the decorator is applied, before any property access: `required` together with a `fallback`, or a non-`StandardSchemaV1` value passed as `schema`. See [Errors](/docs/errors) for the codes.

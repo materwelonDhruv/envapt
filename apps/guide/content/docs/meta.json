@@ -6,6 +6,7 @@
         "---Core---",
         "functional-api",
         "environment",
+        "decorators",
         "---Typing values---",
         "converters",
         "templates",
