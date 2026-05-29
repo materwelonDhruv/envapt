@@ -15,6 +15,7 @@
         "strict-mode",
         "errors",
         "---Configuration---",
-        "configuration"
+        "configuration",
+        "env-file-syntax"
     ]
 }
