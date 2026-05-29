@@ -262,6 +262,9 @@ export function Envapt<_TReturnType = string | null>(key: EnvKeyInput): Property
  * @param fallback - Default primitive value
  * @param converter - Optional primitive constructor (String, Number, etc.)
  * @public
+ * @deprecated - Use the options object: `@Envapt('KEY', { converter, fallback })`. The positional
+ * form only accepts primitive constructors and cannot express built-in tokens, array/custom
+ * converters, `schema`, or `required`. Deprecated in v5, removed in v6.
  * @example
  * ```ts
  * // Classic API with primitive fallback and optional primitive converter
