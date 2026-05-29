@@ -10,6 +10,11 @@
         "---Typing values---",
         "converters",
         "templates",
-        "standard-schema"
+        "standard-schema",
+        "---Validation---",
+        "strict-mode",
+        "errors",
+        "---Configuration---",
+        "configuration"
     ]
 }

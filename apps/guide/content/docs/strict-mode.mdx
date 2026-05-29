@@ -1,0 +1,50 @@
+---
+title: Strict Mode
+description: Turn on strict mode to treat whitespace as missing, throw on unresolved templates, and reject empty array elements.
+---
+
+Strict mode is a global switch that tightens how envapt treats whitespace, unresolved templates, and empty array elements. It's off by default.
+
+```ts twoslash
+import { Envapter } from 'envapt';
+// ---cut---
+Envapter.strict = true;
+```
+
+Setting it refreshes the cache, so values already read are re-evaluated under the new rule.
+
+## What strict mode changes
+
+Three behaviors tighten when strict mode is on:
+
+1. **Whitespace counts as missing.** Normally only an unset variable or an empty string is missing. Under strict mode a value that is only whitespace is missing too, so it falls back the same way an unset variable would.
+2. **Unresolved templates throw.** A `${VAR}` reference that can't be resolved is left as literal text by default. Under strict mode it throws `EnvaptError` with code `MissingEnvValue`. The same applies to a missing key in the [`resolve`](/docs/templates#the-resolve-tagged-template) tagged template.
+3. **Empty array elements throw.** `Converters.array` drops empty elements by default. Under strict mode an empty element (a trailing comma, say) throws `EnvaptError` with code `EmptyArrayElement`.
+
+<Callout type="info">
+    Strict mode is global and retroactive: the setter clears the cache, so the next read of any value re-runs under the
+    new rule. Set it once, early, alongside your other envapt configuration.
+</Callout>
+
+## Strict mode does not make every read throw
+
+A plain reader still returns the fallback (or `undefined`) for a missing value, even under strict mode. Strict mode changes how whitespace, templates, and array elements are treated; it does not turn every missing variable into a throw.
+
+To fail fast on a specific value, use `require` or the `{ required: true }` form. These throw on a missing value regardless of strict mode.
+
+```ts twoslash
+import { Envapter, Converters } from 'envapt';
+// ---cut---
+// throws if unset, independent of Envapter.strict
+const dbUrl = Envapter.getUsing('DATABASE_URL', { converter: Converters.Url, required: true });
+//    ^?
+
+Envapter.require('API_KEY', 'SENTRY_DSN');
+```
+
+<Callout type="tip">
+    Reach for `required` / `require` when one specific value must be present. Reach for strict mode when you want
+    stricter whitespace, template, and array-element rules everywhere.
+</Callout>
+
+See [Fail-fast on missing values](/docs/functional-api#fail-fast-on-missing-values) for the reader API and [Errors](/docs/errors) for the codes.
