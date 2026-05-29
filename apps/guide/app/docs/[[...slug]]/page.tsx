@@ -1,6 +1,7 @@
 import { DocsBody, DocsDescription, DocsPage, DocsTitle } from 'fumadocs-ui/page';
 import { notFound } from 'next/navigation';
 
+import { TocControls } from '@/components/TocControls';
 import { source } from '@/lib/source';
 import { getMDXComponents } from '@/mdx-components';
 
@@ -15,7 +16,7 @@ export default async function Page(props: { params: Promise<{ slug?: string[] }>
     const MDXContent = page.data.body;
 
     return (
-        <DocsPage toc={page.data.toc} full={page.data.full}>
+        <DocsPage toc={page.data.toc} full={page.data.full} tableOfContent={{ header: <TocControls /> }}>
             <DocsTitle>{page.data.title}</DocsTitle>
             <DocsDescription>{page.data.description}</DocsDescription>
             <DocsBody>

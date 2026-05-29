@@ -14,7 +14,7 @@
 
 /* Brand tokens are mode-aware, so they live as CSS vars (overridden under .dark) rather than in @theme, which can't switch on theme. */
 :root {
-    --ev-bg: #f8f5f0;
+    --ev-bg: #ece6db;
     --ev-link: #bc4f13;
     --ev-link-hover: #a83d00;
     --ev-brand: #de6e39;
@@ -28,7 +28,29 @@
     --ev-code-comment: #a99b82;
     --ev-code-num: #7b54c4;
 
+    --ev-info: #2563c9;
+    --ev-tip: var(--ev-teal);
+    --ev-warn: var(--ev-gold);
+    --ev-danger: #c4352c;
+    --ev-info-soft: color-mix(in oklab, var(--ev-info) 10%, transparent);
+    --ev-tip-soft: color-mix(in oklab, var(--ev-teal) 10%, transparent);
+    --ev-warn-soft: color-mix(in oklab, var(--ev-gold) 10%, transparent);
+    --ev-danger-soft: color-mix(in oklab, var(--ev-danger) 12%, transparent);
+
     --color-fd-primary: #bc4f13;
+}
+
+/* Light-only warm surface palette derived from --ev-bg, so the sidebar, cards, code blocks,
+   popovers and borders share the warm tone instead of fumadocs' cool neutral grays. Scoped to
+   :not(.dark) so it never out-specifies fumadocs' dark theme. */
+:root:not(.dark) {
+    --color-fd-background: var(--ev-bg);
+    --color-fd-muted: color-mix(in oklab, var(--ev-bg), #fff 6%);
+    --color-fd-card: color-mix(in oklab, var(--ev-bg), #fff 22%);
+    --color-fd-popover: color-mix(in oklab, var(--ev-bg), #fff 45%);
+    --color-fd-secondary: color-mix(in oklab, var(--ev-bg), #000 4%);
+    --color-fd-accent: color-mix(in oklab, var(--ev-bg), #000 10%);
+    --color-fd-border: color-mix(in oklab, var(--ev-bg), #000 16%);
 }
 
 .dark {
@@ -45,13 +67,22 @@
     --ev-code-string: #5fd1c4;
     --ev-code-comment: #5a636c;
     --ev-code-num: #9d8bf0;
+    --ev-info: #6ea8f5;
+    --ev-danger: #f0726b;
 
     --color-fd-primary: #c76435;
 }
 
-/* Custom navbar height; fumadocs layouts read --fd-nav-height to offset sticky content, so it must stay in sync with SiteNavbar. */
+/* SiteNavbar's height. Mirrored into fumadocs' --fd-header-height via the layout: variant so the docs grid offsets sticky content below the navbar. */
 :root {
     --fd-nav-height: 60px;
+}
+
+/* Smooth in-page scrolling for ToC anchor clicks (reset to auto under reduced-motion below).
+   scroll-padding clears the sticky bars: ~0 on desktop (no top bar), header + toc-popover on mobile. */
+html {
+    scroll-behavior: smooth;
+    scroll-padding-top: calc(var(--fd-docs-row-2, 0px) + var(--fd-toc-popover-height, 0px) + 1rem);
 }
 
 .ev-hero-grid {
@@ -111,4 +142,14 @@
         transition-duration: 0.01ms !important;
         scroll-behavior: auto !important;
     }
+}
+
+/* Twoslash hover popover: wrap long TSDoc @example code instead of forcing a horizontal scroll. */
+.twoslash-popup-container {
+    max-width: min(90vw, 560px);
+}
+.twoslash-popup-docs pre,
+.twoslash-popup-docs code {
+    white-space: pre-wrap;
+    word-break: break-word;
 }

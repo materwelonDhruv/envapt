@@ -20,12 +20,17 @@ interface BaseButtonProps {
 }
 
 const BASE =
-    'inline-flex items-center gap-1.5 font-mono font-semibold leading-none whitespace-nowrap cursor-pointer outline-none transition-[transform,background-color,border-color,color] duration-150 transform-gpu backface-hidden will-change-transform active:scale-[0.985] motion-reduce:transition-none motion-reduce:active:scale-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--ev-link)';
+    'inline-flex items-center gap-1.5 font-mono font-semibold leading-none whitespace-nowrap cursor-pointer outline-none transition-[transform,background-color,border-color,color] duration-150 motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--ev-link)';
+
+// Press-scale for the standalone CTAs only. scaling pulls a segment off the rounded corner and reveals the group edge, so they press with a
+// background change instead.
+const PRESS = 'transform-gpu backface-hidden will-change-transform active:scale-[0.985] motion-reduce:active:scale-100';
 
 const VARIANTS: Record<Variant, string> = {
-    solid: 'px-5 py-3 rounded-[10px] text-[13px] text-(--ev-on-brand) bg-(--ev-brand) hover:bg-(--ev-link-hover)',
-    ghost: 'px-5 py-3 rounded-[10px] text-[13px] border border-fd-border hover:border-(--ev-link) hover:text-(--ev-link)',
-    segment: 'h-[34px] px-3 text-[12.5px] text-fd-muted-foreground hover:text-fd-foreground hover:bg-fd-accent'
+    solid: `px-5 py-3 rounded-[10px] text-[13px] text-(--ev-on-brand) bg-(--ev-brand) hover:bg-(--ev-link-hover) ${PRESS}`,
+    ghost: `px-5 py-3 rounded-[10px] text-[13px] border border-fd-border hover:border-(--ev-link) hover:text-(--ev-link) ${PRESS}`,
+    segment:
+        'h-[34px] px-3 text-[12.5px] text-fd-muted-foreground hover:text-fd-foreground hover:bg-fd-accent active:bg-fd-accent'
 };
 
 export function BaseButton({

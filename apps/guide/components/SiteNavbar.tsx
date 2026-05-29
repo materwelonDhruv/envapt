@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 
+import { Glyph } from '@/components/Glyph';
 import { NavControls } from '@/components/NavControls';
 import { Wordmark } from '@/components/Wordmark';
 import { cn } from '@/lib/cn';
@@ -17,29 +18,29 @@ const NAV_LINKS = [
     { label: 'Reference', href: '/docs' }
 ];
 
-function Glyph(): ReactNode {
-    return (
-        <svg viewBox="0 0 100 110" className="size-6.5" fill="none" aria-hidden="true">
-            <path d="M15 0H68L100 32V95Q100 110 85 110H15Q0 110 0 95V15Q0 0 15 0Z" fill="#e35d28" />
-            <path d="M68 0L100 32L68 32Z" fill="#f7cc88" />
-        </svg>
-    );
-}
-
 export function SiteNavbar(props: ComponentProps<'header'>): ReactNode {
     const pathname = usePathname();
     const [menuOpen, setMenuOpen] = useState(false);
+    // On docs pages the sidebar carries the wordmark, so the navbar drops its own branding.
+    const isDocs = pathname.startsWith('/docs');
 
     return (
-        <header {...props} className="sticky top-0 z-40 border-b border-fd-border bg-fd-background/80 backdrop-blur-sm">
+        <header
+            {...props}
+            className="sticky top-0 z-40 col-span-full row-start-1 grid grid-cols-subgrid border-b border-fd-border bg-fd-background/80 backdrop-blur-sm layout:[--fd-header-height:var(--fd-nav-height)]"
+        >
+            {/* Full-width bar, but its content shares the page grid: spans the sidebar..ToC columns
+                (col 2-4) with px-4 so the links/controls line up with the sidebar and ToC content. */}
             <div
-                className="mx-auto flex w-full max-w-350 items-center gap-6 px-5"
+                className="col-start-2 col-end-5 flex w-full items-center gap-6 px-4"
                 style={{ height: 'var(--fd-nav-height)' }}
             >
-                <Link href="/" className="flex shrink-0 items-center gap-2.5">
-                    <Glyph />
-                    <Wordmark className="h-4.75 w-auto translate-y-px" />
-                </Link>
+                {!isDocs && (
+                    <Link href="/" className="flex shrink-0 items-center gap-2.5">
+                        <Glyph className="size-6.5" />
+                        <Wordmark className="h-4.75 w-auto translate-y-px" />
+                    </Link>
+                )}
 
                 <nav className="hidden items-center gap-6 font-mono text-[13px] md:flex">
                     {NAV_LINKS.map((link) => (
@@ -56,18 +57,20 @@ export function SiteNavbar(props: ComponentProps<'header'>): ReactNode {
                     ))}
                 </nav>
 
-                <NavControls menuOpen={menuOpen} onToggleMenu={() => setMenuOpen((open) => !open)} />
+                <NavControls isDocs={isDocs} menuOpen={menuOpen} onToggleMenu={() => setMenuOpen((open) => !open)} />
             </div>
 
+            {/* Hidden on docs: there the hamburger drives the fumadocs sidebar drawer, not this menu. */}
             {/* always rendered + CSS-toggled so close animates too (conditional mount can't animate exit) */}
             <nav
                 aria-hidden={!menuOpen}
                 className={cn(
                     'absolute inset-x-0 top-full border-b border-fd-border bg-fd-background transition-[opacity,transform] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] md:hidden',
+                    isDocs && 'hidden',
                     menuOpen ? 'translate-y-0 opacity-100' : 'pointer-events-none -translate-y-1 opacity-0'
                 )}
             >
-                <div className="mx-auto flex max-w-350 flex-col px-5 py-2 font-mono text-sm">
+                <div className="mx-auto flex max-w-(--fd-layout-width) flex-col px-5 py-2 font-mono text-sm">
                     {NAV_LINKS.map((link) => (
                         <Link
                             key={link.label}
