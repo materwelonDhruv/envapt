@@ -75,43 +75,28 @@ function safeIsFile(p: string): boolean {
     }
 }
 
-// Parses the `catalogs:` block from `pnpm-workspace.yaml` without a YAML lib.
-// Only handles the two-space indent shape used in this repo; anything else is silently ignored.
-function extractCatalogEntryName(line: string): string | undefined {
-    const match = /^ {4}('[^']+'|"[^"]+"|[^:\s]+)\s*:/.exec(line);
-    const captured = match?.[1];
-    return captured ? captured.replace(/^['"]|['"]$/g, '') : undefined;
-}
-
+// Parses the `catalogs:` block from `pnpm-workspace.yaml` without a YAML lib. Indentation-agnostic
+// (works under either Prettier's 2- or 4-space style): a catalog entry is any indented `name: <value>`
+// line; bucket headers like `dev:` have no value after the colon and are skipped.
 function parseCatalogEntries(): Set<string> {
     const yamlPath = path.join(REPO_ROOT, 'pnpm-workspace.yaml');
     const lines = readFileSync(yamlPath, 'utf8').split('\n');
     const entries = new Set<string>();
 
     let inCatalogs = false;
-    let inCatalogBucket = false;
-
     for (const rawLine of lines) {
         const line = rawLine.replace(/\r$/, '');
         if (/^catalogs:\s*$/.test(line)) {
             inCatalogs = true;
-            inCatalogBucket = false;
             continue;
         }
         if (!inCatalogs) continue;
         if (/^\S/.test(line)) {
             inCatalogs = false;
-            inCatalogBucket = false;
             continue;
         }
-        if (/^  \S.*:\s*$/.test(line)) {
-            inCatalogBucket = true;
-            continue;
-        }
-        if (inCatalogBucket && /^    \S/.test(line)) {
-            const name = extractCatalogEntryName(line);
-            if (name) entries.add(name);
-        }
+        const match = /^\s+('[^']+'|"[^"]+"|[^:\s]+)\s*:\s*\S/.exec(line);
+        if (match?.[1]) entries.add(match[1].replace(/^['"]|['"]$/g, ''));
     }
 
     return entries;
