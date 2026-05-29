@@ -2,6 +2,8 @@ import { rehypeCodeDefaultOptions } from 'fumadocs-core/mdx-plugins';
 import { defineConfig, defineDocs } from 'fumadocs-mdx/config';
 import { transformerTwoslash } from 'fumadocs-twoslash';
 
+import { createSaltedTypesCache } from './lib/twoslash-cache';
+
 export const docs = defineDocs({
     dir: 'content/docs',
     docs: {
@@ -23,7 +25,19 @@ export default defineConfig({
             themes: { light: 'ayu-light', dark: 'ayu-dark' },
             transformers: [
                 ...(rehypeCodeDefaultOptions.transformers ?? []),
-                ...(twoslashEnabled ? [transformerTwoslash()] : [])
+                ...(twoslashEnabled
+                    ? [
+                          transformerTwoslash({
+                              // `@Envapt` is a legacy decorator; type-check samples with the same
+                              // setting as envapt's own tsconfig, or twoslash rejects them (TS 1206).
+                              twoslashOptions: { compilerOptions: { experimentalDecorators: true } },
+                              // Persist computed types to `.next/cache/twoslash` so only the first
+                              // build pays the cold-compile cost (heavy with zod in the graph). The
+                              // cache key is salted with envapt's dist hash so it self-busts on rebuild.
+                              typesCache: createSaltedTypesCache()
+                          })
+                      ]
+                    : [])
             ],
             langs: ['js', 'jsx', 'ts', 'tsx', 'bash', 'json', 'dotenv']
         }

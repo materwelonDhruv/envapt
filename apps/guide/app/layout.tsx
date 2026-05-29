@@ -18,7 +18,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }): ReactNode {
     return (
-        <html lang="en" className={`${sans.variable} ${mono.variable}`} suppressHydrationWarning>
+        <html
+            lang="en"
+            className={`${sans.variable} ${mono.variable}`}
+            data-scroll-behavior="smooth"
+            suppressHydrationWarning
+        >
             <body className="flex min-h-screen flex-col" suppressHydrationWarning>
                 <RootProvider
                     theme={{ defaultTheme: 'dark', enableSystem: false }}
