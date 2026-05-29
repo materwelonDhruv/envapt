@@ -4,8 +4,8 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "dev": "next dev",
-        "build": "fumadocs-mdx && next build",
+        "dev": "NODE_OPTIONS=--max-old-space-size=8192 next dev",
+        "build": "fumadocs-mdx && NODE_OPTIONS=--max-old-space-size=8192 next build",
         "start": "pnpm dlx serve out",
         "postinstall": "fumadocs-mdx",
         "lint": "eslint . --cache",
@@ -46,6 +46,7 @@
         "shiki": "4.1.0",
         "tailwindcss": "4.3.0",
         "twoslash": "0.3.8",
-        "typescript": "catalog:dev"
+        "typescript": "catalog:dev",
+        "zod": "catalog:dev"
     }
 }
