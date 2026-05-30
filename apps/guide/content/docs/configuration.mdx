@@ -64,27 +64,6 @@ Only keys envapt's loader wrote are mirrored, so collisions follow `envFileOptio
     `process.env` until the process exits.
 </Callout>
 
-## Drop-in for dotenv
-
-For the `dotenv/config` workflow, import `envapt/config`. It loads the `.env` cascade and mirrors every loaded key into `process.env` in one step, so `process.env.PORT` works without touching `Envapter`.
-
-```ts
-import 'envapt/config';
-
-const port = process.env.PORT; // the loaded keys are now on process.env
-```
-
-It is the side-effect form of `Envapter.syncProcessEnv = true` plus an eager load, and follows the same collision rules. Unlike `dotenv/config`, it loads the whole per-environment [cascade](/docs/environment), not a single `.env`.
-
-Preload it without editing your entry file:
-
-```bash
-node --import envapt/config app.js   # ESM
-node -r envapt/config app.js         # CommonJS
-```
-
-For typed reads on top, keep using [`Envapter`](/docs/envapter).
-
 ## Debug logging
 
 `debug` controls how much envapt writes to stderr (prefixed `[envapt]`). The levels are `silent` (default), `warn`, and `verbose`.
