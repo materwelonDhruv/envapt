@@ -1,4 +1,6 @@
+import { dirname, isAbsolute, join, resolve } from 'node:path';
 import process from 'node:process';
+import { fileURLToPath } from 'node:url';
 
 import { debugVerbose, getDebugLevel, setDebugLevel } from '../Debug';
 import { loadDotenv } from '../Dotenv';
@@ -23,6 +25,7 @@ export const EnvaptCache = new Map<string, unknown>();
 export abstract class EnvapterBase {
     protected static _envPaths: string[] = ['.env'];
     protected static _envPathsExplicitlySet = false;
+    protected static _baseDir: string | undefined = undefined;
     protected static _userDefinedEnvFileOptions: EnvFileOptions = {};
     protected static _strict = false;
     protected static _syncProcessEnv = false;
@@ -34,9 +37,9 @@ export abstract class EnvapterBase {
      * previously-cached converted values get re-evaluated under the new rule.
      */
     static set strict(value: boolean) {
-        // Anchored to EnvapterBase: `this._strict = value` writes an own-property on the subclass that readers walking up to the base would miss.
+        // Anchored to EnvapterBase: `this._strict` would write an own-property on the subclass that base readers miss.
         EnvapterBase._strict = value;
-        // `this`, not EnvapterBase: rebuild via the subclass so its `resolveEffectivePaths` override (the dotenv-flow cascade) is honored.
+        // `this`, not EnvapterBase: rebuild via the subclass so its `resolveEffectivePaths` override is honored.
         this.refreshCache();
     }
 
@@ -71,7 +74,7 @@ export abstract class EnvapterBase {
     static set syncProcessEnv(value: boolean) {
         Validator.validateSyncProcessEnv(value);
         const previous = EnvapterBase._syncProcessEnv;
-        // Anchored to EnvapterBase: `this._syncProcessEnv = value` writes an own-property on the subclass that readers walking up to the base would miss.
+        // Anchored to EnvapterBase: `this._syncProcessEnv` would write an own-property on the subclass that base readers miss.
         EnvapterBase._syncProcessEnv = value;
         if (!previous && value && EnvaptCache.size > 0) this.mirrorToProcessEnv();
     }
@@ -95,7 +98,7 @@ export abstract class EnvapterBase {
      */
     static set envPaths(paths: string[] | string) {
         const newPaths = Array.isArray(paths) ? paths : [paths];
-        Validator.validateEnvFilesExist(newPaths);
+        Validator.validateEnvFilesExist(newPaths.map((p) => this.resolveAgainstBase(p)));
 
         this._envPaths = newPaths;
         this._envPathsExplicitlySet = true;
@@ -110,8 +113,38 @@ export abstract class EnvapterBase {
     }
 
     /**
-     * Set custom dotenv configuration options.
+     * Set a base directory that relative `.env` paths resolve against instead of
+     * `process.cwd()`: the auto-cascade, {@link configureProfiles} paths, and relative
+     * `envPaths`. Absolute paths always bypass it. Pass a directory, or a module URL
+     * (`import.meta.url`, ESM) / `import.meta.dirname` / `__dirname` (CJS) to anchor
+     * resolution next to the calling file regardless of launch directory.
+     *
+     * Set this before `envPaths` so relative `envPaths` validate against the right directory.
+     * Unset (`undefined`) restores `process.cwd()` resolution.
      */
+    static set baseDir(value: string | URL | undefined) {
+        EnvapterBase._baseDir = value === undefined ? undefined : this.normalizeBaseDir(value);
+        this.refreshCache();
+    }
+
+    static get baseDir(): string | undefined {
+        return EnvapterBase._baseDir;
+    }
+
+    // `file:` URLs resolve to their containing directory; plain paths (`import.meta.dirname`, `__dirname`) are taken as the directory.
+    private static normalizeBaseDir(value: string | URL): string {
+        if (value instanceof URL) return dirname(fileURLToPath(value));
+        if (value.startsWith('file:')) return dirname(fileURLToPath(value));
+        return resolve(value);
+    }
+
+    // No baseDir: path is returned unchanged so Node resolves it against process.cwd() (the historical default).
+    protected static resolveAgainstBase(candidate: string): string {
+        if (EnvapterBase._baseDir === undefined) return candidate;
+        if (isAbsolute(candidate)) return candidate;
+        return join(EnvapterBase._baseDir, candidate);
+    }
+
     static set envFileOptions(config: EnvFileOptions) {
         Validator.validateEnvFileOptions(config);
         this._userDefinedEnvFileOptions = config;
@@ -153,7 +186,7 @@ export abstract class EnvapterBase {
      */
     protected static resolveEffectivePaths(): string[] {
         /* v8 ignore next -- @preserve */
-        return this._envPaths;
+        return this._envPaths.map((p) => this.resolveAgainstBase(p));
     }
 
     protected static resolveKeyInput(keyInput: EnvKeyInput): { key: string; value: string | undefined } {
@@ -218,7 +251,7 @@ export abstract class EnvapterBase {
     }
 
     /**
-     * Get raw environment variable value without parsing or conversion.
+     * Read an environment variable as its raw string, skipping parsing and conversion.
      */
     getRaw(key: EnvKeyInput): string | undefined {
         return EnvapterBase.resolveKeyInput(key).value;

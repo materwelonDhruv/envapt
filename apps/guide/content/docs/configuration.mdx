@@ -34,7 +34,8 @@ Envapter.envPaths = ['config/app.env', '.env'];
 <Callout type="danger">
     Every path you list must exist. Setting `envPaths` validates the paths immediately, and a missing file throws
     `EnvaptError` with code `EnvFilesNotFound`. Setting `envPaths` also takes precedence: it disables the
-    per-environment auto-cascade and any `configureProfiles` paths.
+    per-environment auto-cascade and any `configureProfiles` paths. Relative paths resolve against
+    `process.cwd()` unless you set `Envapter.baseDir` (below).
 </Callout>
 
 `envFileOptions` tunes how files are read. `override` (default `false`) decides whether a later file or a file value can replace an already-set key; `encoding` (default `utf8`) sets the file encoding.
@@ -45,7 +46,21 @@ import { Envapter } from 'envapt';
 Envapter.envFileOptions = { override: true, encoding: 'utf8' };
 ```
 
-Use `envPaths` to choose which files load.
+## Reading from a fixed directory
+
+Relative paths resolve against the working directory (`process.cwd()`) by default. In a monorepo the process often starts at the repository root, not the package directory, so a package-local `.env` is not found. Set `Envapter.baseDir` to the directory that relative paths resolve against: the auto-cascade, `configureProfiles` paths, and relative `envPaths`. Absolute paths are used unchanged.
+
+```ts
+import { Envapter } from 'envapt';
+
+// ESM: resolve .env next to this module, whatever the working directory is
+Envapter.baseDir = import.meta.url;
+
+// CommonJS
+Envapter.baseDir = __dirname;
+```
+
+`baseDir` accepts a directory path, a module URL (`import.meta.url`), or `import.meta.dirname` / `__dirname`. Set it before `envPaths` so relative `envPaths` validate against the same directory. Leave it unset to keep `process.cwd()` resolution.
 
 ## Mirroring to process.env
 

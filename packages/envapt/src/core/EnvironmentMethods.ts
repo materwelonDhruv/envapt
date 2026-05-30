@@ -176,7 +176,6 @@ export class EnvironmentMethods extends EnvapterBase {
      * @internal
      */
     protected static getCascadeEnvironment(): Environment {
-        // Honor an explicit user assignment first (e.g. `Envapter.environment = X`).
         if (this._environment !== undefined) return this._environment;
 
         const raw = process.env.ENVIRONMENT ?? process.env.ENV ?? process.env.NODE_ENV ?? 'development';
@@ -201,13 +200,11 @@ export class EnvironmentMethods extends EnvapterBase {
      */
     protected static buildCascadePaths(env: Environment): string[] {
         const envName = Environment[env].toLowerCase();
-        return [`.env.${envName}.local`, `.env.${envName}`, '.env.local', '.env'].filter((p) => fs.existsSync(p));
+        return [`.env.${envName}.local`, `.env.${envName}`, '.env.local', '.env']
+            .map((name) => this.resolveAgainstBase(name))
+            .filter((p) => fs.existsSync(p));
     }
 
-    /**
-     * Normalize a profile's `paths` (string or string[]) into a string[].
-     * @internal
-     */
     private static normalizeProfilePaths(profile: EnvProfile | undefined): string[] {
         if (!profile) return [];
         return Array.isArray(profile.paths) ? profile.paths : [profile.paths];
@@ -230,7 +227,7 @@ export class EnvironmentMethods extends EnvapterBase {
      * @internal
      */
     protected static override resolveEffectivePaths(): string[] {
-        if (this._envPathsExplicitlySet) return this._envPaths;
+        if (this._envPathsExplicitlySet) return this._envPaths.map((p) => this.resolveAgainstBase(p));
 
         const env = this.getCascadeEnvironment();
         const profileEntry = this._profiles?.[env];
@@ -238,7 +235,7 @@ export class EnvironmentMethods extends EnvapterBase {
 
         // Validate that explicitly configured profile paths exist for the active env.
         if (profilePaths.length > 0) {
-            const missing = profilePaths.filter((p) => !fs.existsSync(p));
+            const missing = profilePaths.filter((p) => !fs.existsSync(this.resolveAgainstBase(p)));
             if (missing.length > 0) {
                 throw new EnvaptError(
                     EnvaptErrorCodes.EnvFilesNotFound,
@@ -248,6 +245,6 @@ export class EnvironmentMethods extends EnvapterBase {
         }
 
         const cascade = this._profiles?.useDefaults === false ? [] : this.buildCascadePaths(env);
-        return [...profilePaths, ...cascade];
+        return [...profilePaths.map((p) => this.resolveAgainstBase(p)), ...cascade];
     }
 }
