@@ -43,7 +43,7 @@ const apiUrl = Envapter.getUsing('API_URL', Converters.Url);
 //    ^?
 ```
 
-A fallback removes `undefined` from the return type, the same way it does for the [primitive readers](/docs/functional-api#fallbacks-shape-the-return-type). Without one, the return is `T | undefined`.
+A fallback removes `undefined` from the return type, the same way it does for the [primitive readers](/docs/envapter#fallbacks-shape-the-return-type). Without one, the return is `T | undefined`.
 
 <Callout type="info">
     A failed conversion never throws. `Url`, `Json`, `Date`, `Regexp`, and the number tokens swallow the parse error
@@ -186,4 +186,4 @@ const dbUrl = Envapter.getUsing('DATABASE_URL', { converter: Converters.Url, req
 //    ^?
 ```
 
-See [Fail-fast on missing values](/docs/functional-api#fail-fast-on-missing-values) for `require`, and [Standard Schema](/docs/standard-schema) for validating a value through zod, valibot, or arktype.
+See [Fail-fast on missing values](/docs/envapter#fail-fast-on-missing-values) for `require`, and [Standard Schema](/docs/standard-schema) for validating a value through zod, valibot, or arktype.
