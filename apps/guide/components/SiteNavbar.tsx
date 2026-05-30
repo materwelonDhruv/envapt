@@ -12,10 +12,11 @@ import { cn } from '@/lib/cn';
 import type { ComponentProps, ReactNode } from 'react';
 
 const NAV_LINKS = [
+    { label: 'Introduction', href: '/docs/' },
     { label: 'Quick Start', href: '/docs/quick-start' },
-    { label: 'Functional API', href: '/docs' },
-    { label: 'Converters', href: '/docs' },
-    { label: 'Reference', href: '/docs' }
+    { label: 'Envapter', href: '/docs/envapter' },
+    { label: 'Decorators', href: '/docs/decorators' },
+    { label: 'Converters', href: '/docs/converters' }
 ];
 
 export function SiteNavbar(props: ComponentProps<'header'>): ReactNode {
@@ -26,8 +27,7 @@ export function SiteNavbar(props: ComponentProps<'header'>): ReactNode {
 
     return (
         <header {...props} className="sticky top-0 z-40 border-b border-fd-border bg-fd-background/80 backdrop-blur-sm">
-            {/* Full-width sticky bar; content centered to the hero's width (max-w-295 px-6) so the
-                branding and controls line up with the page content, not the viewport edge. */}
+            {/* max-w-295 px-6 mirrors the hero so branding and controls align with page content, not the viewport edge. */}
             <div
                 className="mx-auto flex w-full max-w-295 items-center gap-6 px-6"
                 style={{ height: 'var(--fd-nav-height)' }}
@@ -39,7 +39,7 @@ export function SiteNavbar(props: ComponentProps<'header'>): ReactNode {
                     </Link>
                 )}
 
-                <nav className="hidden items-center gap-6 font-mono text-[13px] md:flex">
+                <nav className="hidden items-center gap-6 font-mono text-[13px] lg:flex">
                     {NAV_LINKS.map((link) => (
                         <Link
                             key={link.label}
@@ -57,12 +57,11 @@ export function SiteNavbar(props: ComponentProps<'header'>): ReactNode {
                 <NavControls isDocs={isDocs} menuOpen={menuOpen} onToggleMenu={() => setMenuOpen((open) => !open)} />
             </div>
 
-            {/* Hidden on docs: there the hamburger drives the fumadocs sidebar drawer, not this menu. */}
-            {/* always rendered + CSS-toggled so close animates too (conditional mount can't animate exit) */}
+            {/* Hidden on docs (the hamburger drives the sidebar drawer there). Always mounted + CSS-toggled so the close animates; a conditional mount can't animate exit. */}
             <nav
                 aria-hidden={!menuOpen}
                 className={cn(
-                    'absolute inset-x-0 top-full border-b border-fd-border bg-fd-background transition-[opacity,transform] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] md:hidden',
+                    'absolute inset-x-0 top-full border-b border-fd-border bg-fd-background transition-[opacity,transform] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] lg:hidden',
                     isDocs && 'hidden',
                     menuOpen ? 'translate-y-0 opacity-100' : 'pointer-events-none -translate-y-1 opacity-0'
                 )}

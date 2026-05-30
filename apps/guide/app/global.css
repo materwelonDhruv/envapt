@@ -24,9 +24,11 @@
     --ev-grid: rgba(60, 40, 20, 0.06);
     --ev-panel: #fffdf9;
     --ev-gutter: #c3b9a6;
-    --ev-code-string: #1f857a;
-    --ev-code-comment: #a99b82;
-    --ev-code-num: #7b54c4;
+    /* Eyebrow gold darkened for AA on the light paper background; bright gold returns under .dark. */
+    --ev-eyebrow: #8a5b12;
+    --ev-dot-red: #e35d28;
+    --ev-dot-amber: #f7cc88;
+    --ev-dot-teal: #5fd1c4;
 
     --ev-info: #2563c9;
     --ev-tip: var(--ev-teal);
@@ -64,16 +66,14 @@
     --ev-grid: rgba(255, 255, 255, 0.05);
     --ev-panel: #0e1215;
     --ev-gutter: #3f4750;
-    --ev-code-string: #5fd1c4;
-    --ev-code-comment: #5a636c;
-    --ev-code-num: #9d8bf0;
+    --ev-eyebrow: var(--ev-gold);
     --ev-info: #6ea8f5;
     --ev-danger: #f0726b;
 
     --color-fd-primary: #c76435;
 }
 
-/* SiteNavbar's height. Mirrored into fumadocs' --fd-header-height via the layout: variant so the docs grid offsets sticky content below the navbar. */
+/* Mirrored into fumadocs' --fd-header-height via the layout: variant so the docs grid offsets sticky content below the navbar. */
 :root {
     --fd-nav-height: 60px;
 }
@@ -104,33 +104,49 @@ html {
     filter: drop-shadow(-1px 1px 1px rgb(0 0 0 / 0.28));
 }
 
-.ev-code .ln::before {
-    content: counter(line);
-    counter-increment: line;
-    display: inline-block;
-    width: 18px;
-    margin-right: 18px;
-    color: var(--ev-gutter);
-    text-align: right;
+/* Shiki landing snippets: dual-theme token colors from ayu (same as docs MDX blocks); background
+   and padding reset so code renders inside CodeCard's own panel. */
+.ev-snippet .shiki {
+    margin: 0;
+    background: transparent !important;
+    overflow-x: auto;
+    padding: 1rem;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    line-height: 1.9;
+    color: var(--shiki-light);
 }
-.ev-code {
-    counter-reset: line;
+.ev-snippet-dense .shiki {
+    padding: 0.75rem;
+    font-size: 12px;
+    line-height: 1.8;
 }
-.ev-k {
-    color: var(--ev-gold);
+.ev-snippet .shiki span {
+    color: var(--shiki-light);
 }
-.ev-f {
-    color: var(--ev-link-hover);
+html.dark .ev-snippet .shiki,
+html.dark .ev-snippet .shiki span {
+    color: var(--shiki-dark);
 }
-.ev-s {
-    color: var(--ev-code-string);
+
+/* Section scroll-in entrance, driven by components/Reveal.tsx toggling data-shown. */
+.ev-reveal {
+    opacity: 0;
+    transform: translateY(10px);
+    transition:
+        opacity 360ms cubic-bezier(0.23, 1, 0.32, 1),
+        transform 360ms cubic-bezier(0.23, 1, 0.32, 1);
 }
-.ev-c {
-    color: var(--ev-code-comment);
-    font-style: italic;
+.ev-reveal[data-shown='true'] {
+    opacity: 1;
+    transform: none;
 }
-.ev-num {
-    color: var(--ev-code-num);
+/* Keep content visible when motion is reduced or JS never runs. */
+@media (prefers-reduced-motion: reduce), (scripting: none) {
+    .ev-reveal {
+        opacity: 1;
+        transform: none;
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {

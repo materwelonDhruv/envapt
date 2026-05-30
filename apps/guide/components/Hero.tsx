@@ -1,6 +1,21 @@
 import { BaseButton } from '@/components/BaseButton';
+import { Code } from '@/components/Code';
+import { CodeCard } from '@/components/CodeCard';
 
 import type { ReactNode } from 'react';
+
+const HERO_CODE = `import { Envapter, Converters } from 'envapt';
+
+// numbers, with a fallback
+const port = Envapter.getNumber('PORT', 3000);
+
+// ordered keys, first defined wins
+const url = Envapter.get(['DATABASE_URL', 'DB_URL']);
+
+// typed lists
+const cors = Envapter.getUsing('CORS',
+  Converters.array({ of: Converters.String })
+);`;
 
 export function Hero(): ReactNode {
     return (
@@ -8,7 +23,7 @@ export function Hero(): ReactNode {
             <div className="ev-hero-grid pointer-events-none absolute inset-0" aria-hidden="true" />
             <div className="relative mx-auto grid max-w-295 grid-cols-1 items-center gap-12 px-6 md:grid-cols-[1.05fr_1fr]">
                 <div className="min-w-0">
-                    <p className="mb-4 font-mono text-[13px] tracking-wide text-(--ev-gold)">
+                    <p className="mb-4 font-mono text-[13px] tracking-wide text-(--ev-eyebrow)">
                         {'// the apt way to handle env'}
                     </p>
                     <h1 className="mb-5 text-4xl leading-[1.04] font-semibold tracking-tight text-balance md:text-5xl">
@@ -24,61 +39,38 @@ export function Hero(): ReactNode {
                         <BaseButton href="/docs/quick-start" variant="solid">
                             $ pnpm add envapt
                         </BaseButton>
-                        <BaseButton href="/docs" variant="ghost">
-                            Functional API →
+                        <BaseButton href="/docs" variant="ghost" className="group">
+                            Read the docs
+                            <span
+                                aria-hidden="true"
+                                className="inline-block transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)]:group-hover:translate-x-1 motion-reduce:transition-none"
+                            >
+                                →
+                            </span>
                         </BaseButton>
+                    </div>
+                    <div className="mt-6 flex flex-wrap items-center gap-2 font-mono text-xs text-fd-muted-foreground">
+                        <span className="rounded-full border border-fd-border px-2.5 py-1.5 leading-none">
+                            Node <span className="text-(--ev-teal)">20+</span>
+                        </span>
+                        <span className="rounded-full border border-fd-border px-2.5 py-1.5 leading-none">
+                            Bun <span className="text-(--ev-teal)">1.3+</span>
+                        </span>
+                        <span className="rounded-full border border-fd-border px-2.5 py-1.5 leading-none">
+                            Deno <span className="text-(--ev-teal)">2.5+</span>
+                        </span>
+                        <span className="rounded-full border border-fd-border px-2.5 py-1.5 leading-none">
+                            ESM + CJS
+                        </span>
+                        <span className="rounded-full border border-fd-border px-2.5 py-1.5 leading-none">
+                            <span className="text-(--ev-teal)">0</span> dependencies
+                        </span>
                     </div>
                 </div>
 
-                <div className="ev-editor relative min-w-0 bg-(--ev-panel) ring-1 ring-fd-border ring-inset">
-                    <div className="ev-editor-fold absolute top-0 right-0 size-7" aria-hidden="true" />
-                    <div className="flex items-center gap-2 border-b border-fd-border px-4 py-3">
-                        <span className="size-2.5 rounded-full bg-[#e35d28]" />
-                        <span className="size-2.5 rounded-full bg-[#f7cc88]" />
-                        <span className="size-2.5 rounded-full bg-[#5fd1c4]" />
-                        <span className="ml-1.5 font-mono text-xs text-fd-muted-foreground">config.ts</span>
-                    </div>
-                    <pre className="ev-code overflow-x-auto p-4 font-mono text-[12.5px] leading-[1.9]">
-                        <code>
-                            <span className="ln" />
-                            <span className="ev-k">import</span> {'{ Envapter, Converters }'}{' '}
-                            <span className="ev-k">from</span> <span className="ev-s">{"'envapt'"}</span>
-                            <span className="ev-k">;</span>
-                            {'\n'}
-                            <span className="ln" />
-                            {'\n'}
-                            <span className="ln" />
-                            <span className="ev-c">{'// numbers, with a fallback'}</span>
-                            {'\n'}
-                            <span className="ln" />
-                            <span className="ev-k">const</span> port = Envapter.<span className="ev-f">getNumber</span>(
-                            <span className="ev-s">{"'PORT'"}</span>, <span className="ev-num">3000</span>)
-                            <span className="ev-k">;</span>
-                            {'\n'}
-                            <span className="ln" />
-                            {'\n'}
-                            <span className="ln" />
-                            <span className="ev-c">{'// ordered keys, first defined wins'}</span>
-                            {'\n'}
-                            <span className="ln" />
-                            <span className="ev-k">const</span> url = Envapter.<span className="ev-f">get</span>([
-                            <span className="ev-s">{"'DATABASE_URL'"}</span>, <span className="ev-s">{"'DB_URL'"}</span>
-                            ])<span className="ev-k">;</span>
-                            {'\n'}
-                            <span className="ln" />
-                            {'\n'}
-                            <span className="ln" />
-                            <span className="ev-c">{'// typed lists'}</span>
-                            {'\n'}
-                            <span className="ln" />
-                            <span className="ev-k">const</span> cors = Envapter.<span className="ev-f">getUsing</span>(
-                            <span className="ev-s">{"'CORS'"}</span>,{'\n'}
-                            <span className="ln" />
-                            {'  '}Converters.<span className="ev-f">array</span>({'{ of: Converters.String }'}){'\n'}
-                            <span className="ln" />)<span className="ev-k">;</span>
-                        </code>
-                    </pre>
-                </div>
+                <CodeCard fileName="config.ts">
+                    <Code code={HERO_CODE} />
+                </CodeCard>
             </div>
         </section>
     );

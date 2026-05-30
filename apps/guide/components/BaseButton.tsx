@@ -22,16 +22,19 @@ interface BaseButtonProps {
 const BASE =
     'inline-flex items-center gap-1.5 font-mono font-semibold leading-none whitespace-nowrap cursor-pointer outline-none transition-[transform,background-color,border-color,color] duration-150 motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--ev-link)';
 
-// Press-scale for the standalone CTAs only. scaling pulls a segment off the rounded corner and reveals the group edge, so they press with a
-// background change instead.
+// Standalone CTAs scale the whole box on press. A segment can't: a shrinking box pulls off the group's
+// rounded corner and reveals the bar behind it, so SEGMENT_CONTENT scales the content instead.
 const PRESS = 'transform-gpu backface-hidden will-change-transform active:scale-[0.985] motion-reduce:active:scale-100';
 
 const VARIANTS: Record<Variant, string> = {
     solid: `px-5 py-3 rounded-[10px] text-[13px] text-(--ev-on-brand) bg-(--ev-brand) hover:bg-(--ev-link-hover) ${PRESS}`,
     ghost: `px-5 py-3 rounded-[10px] text-[13px] border border-fd-border hover:border-(--ev-link) hover:text-(--ev-link) ${PRESS}`,
     segment:
-        'h-[34px] px-3 text-[12.5px] text-fd-muted-foreground hover:text-fd-foreground hover:bg-fd-accent active:bg-fd-accent'
+        'group/seg h-[34px] px-3 text-[12.5px] text-fd-muted-foreground hover:bg-fd-accent hover:text-fd-foreground'
 };
+
+const SEGMENT_CONTENT =
+    'flex items-center gap-1.5 transition-transform duration-100 ease-out group-active/seg:scale-90 motion-reduce:transition-none motion-reduce:group-active/seg:scale-100';
 
 export function BaseButton({
     href,
@@ -44,6 +47,7 @@ export function BaseButton({
     'aria-expanded': ariaExpanded
 }: BaseButtonProps): ReactNode {
     const classes = cn(BASE, VARIANTS[variant], className);
+    const body = variant === 'segment' ? <span className={SEGMENT_CONTENT}>{children}</span> : children;
 
     if (href !== undefined) {
         if (/^https?:\/\//.test(href)) {
@@ -56,20 +60,20 @@ export function BaseButton({
                     aria-label={ariaLabel}
                     className={classes}
                 >
-                    {children}
+                    {body}
                 </a>
             );
         }
         return (
             <Link href={href} onClick={onClick} aria-label={ariaLabel} className={classes}>
-                {children}
+                {body}
             </Link>
         );
     }
 
     return (
         <button type="button" onClick={onClick} aria-label={ariaLabel} aria-expanded={ariaExpanded} className={classes}>
-            {children}
+            {body}
         </button>
     );
 }

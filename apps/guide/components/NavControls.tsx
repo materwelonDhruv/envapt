@@ -18,13 +18,13 @@ interface NavControlsProps {
     onToggleMenu: () => void;
 }
 
-// Docs: opens the fumadocs sidebar drawer (the page tree). Elsewhere: toggles the navbar's own link menu.
+// On docs the trigger drives the fumadocs sidebar drawer; elsewhere it toggles the navbar's own link menu.
 function MenuTrigger({ isDocs, menuOpen, onToggleMenu }: NavControlsProps): ReactNode {
     if (isDocs) {
         return (
             <SidebarTrigger
                 aria-label="Open sidebar"
-                className="flex h-8.5 cursor-pointer items-center px-3 text-fd-muted-foreground transition-colors hover:bg-fd-accent hover:text-fd-foreground md:hidden"
+                className="flex h-8.5 cursor-pointer items-center rounded-[10px] border border-fd-border bg-fd-card/40 px-3 text-fd-muted-foreground transition-colors hover:bg-fd-accent hover:text-fd-foreground md:hidden"
             >
                 <svg
                     className="size-4"
@@ -41,8 +41,13 @@ function MenuTrigger({ isDocs, menuOpen, onToggleMenu }: NavControlsProps): Reac
     }
 
     return (
-        <BaseButton aria-label="Menu" aria-expanded={menuOpen} className="md:hidden" onClick={onToggleMenu}>
-            {/* hamburger <-> X: cross-fade + rotate (both rendered, toggled), not a hard swap */}
+        <BaseButton
+            aria-label="Menu"
+            aria-expanded={menuOpen}
+            className="rounded-[10px] border border-fd-border bg-fd-card/40 lg:hidden"
+            onClick={onToggleMenu}
+        >
+            {/* Both icons stay mounted and toggle via opacity so the swap can animate. */}
             <span className="relative block size-4">
                 <svg
                     className={cn(
@@ -79,10 +84,12 @@ function MenuTrigger({ isDocs, menuOpen, onToggleMenu }: NavControlsProps): Reac
 
 export function NavControls({ isDocs, menuOpen, onToggleMenu }: NavControlsProps): ReactNode {
     return (
-        <div className="ml-auto flex items-center divide-x divide-fd-border overflow-hidden rounded-[10px] border border-fd-border bg-fd-card/40">
-            <SearchTrigger />
-            <ThemeToggle />
-            <GithubLink />
+        <div className="ml-auto flex items-center gap-2">
+            <div className="flex items-center divide-x divide-fd-border overflow-hidden rounded-[10px] border border-fd-border bg-fd-card/40">
+                <SearchTrigger />
+                <ThemeToggle />
+                <GithubLink />
+            </div>
             <MenuTrigger isDocs={isDocs} menuOpen={menuOpen} onToggleMenu={onToggleMenu} />
         </div>
     );
