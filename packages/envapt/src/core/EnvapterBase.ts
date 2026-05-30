@@ -21,7 +21,7 @@ export const EnvaptCache = new Map<string, unknown>();
  * @internal
  */
 export abstract class EnvapterBase {
-    protected static _envPaths: string[] = ['.env']; // default path
+    protected static _envPaths: string[] = ['.env'];
     protected static _envPathsExplicitlySet = false;
     protected static _userDefinedEnvFileOptions: EnvFileOptions = {};
     protected static _strict = false;
@@ -34,12 +34,9 @@ export abstract class EnvapterBase {
      * previously-cached converted values get re-evaluated under the new rule.
      */
     static set strict(value: boolean) {
-        // `this._strict = value` would create an own property on the subclass that invoked the
-        // setter; readers walking up from `PrimitiveMethods` would still see the base default.
-        // Pin the write to the base class so the flag is canonical across the chain.
+        // Anchored to EnvapterBase: `this._strict = value` writes an own-property on the subclass that readers walking up to the base would miss.
         EnvapterBase._strict = value;
-        // `this.refreshCache()` so subclass overrides of `resolveEffectivePaths` (the
-        // dotenv-flow cascade on `EnvironmentMethods`) are honored on the rebuild.
+        // `this`, not EnvapterBase: rebuild via the subclass so its `resolveEffectivePaths` override (the dotenv-flow cascade) is honored.
         this.refreshCache();
     }
 
@@ -74,8 +71,7 @@ export abstract class EnvapterBase {
     static set syncProcessEnv(value: boolean) {
         Validator.validateSyncProcessEnv(value);
         const previous = EnvapterBase._syncProcessEnv;
-        // Anchored to EnvapterBase: `this._syncProcessEnv = value` creates an own-property
-        // on the subclass that readers walking up to the base would miss.
+        // Anchored to EnvapterBase: `this._syncProcessEnv = value` writes an own-property on the subclass that readers walking up to the base would miss.
         EnvapterBase._syncProcessEnv = value;
         if (!previous && value && EnvaptCache.size > 0) this.mirrorToProcessEnv();
     }
@@ -133,10 +129,9 @@ export abstract class EnvapterBase {
         EnvaptCache.clear();
         EnvapterBase._dotenvAddedKeys = new Set();
         debugVerbose('cache cleared, reloading config');
-        void this.config; // reload config to repopulate cache
+        void this.config; // getter rebuilds the cache as a side effect
     }
 
-    // Early-return on an empty delta so the verbose summary line is not emitted on a no-op.
     protected static mirrorToProcessEnv(): void {
         if (EnvapterBase._dotenvAddedKeys.size === 0) return;
         for (const key of EnvapterBase._dotenvAddedKeys) {
@@ -189,11 +184,10 @@ export abstract class EnvapterBase {
 
     protected static get config(): Map<string, unknown> {
         if (EnvaptCache.size === 0) {
-            // create isolated environment object to avoid mutating process.env
+            // Clone so the loader and downstream reads never mutate process.env.
             const isolatedEnv: Record<string, string> = { ...(process.env as Record<string, string>) };
 
-            // Path resolution (outside the try below). Surfaces EnvaptError early when an
-            // explicitly configured profile path is missing. dotenv parse errors stay caught.
+            // Outside the try below so a missing configured profile path surfaces its EnvaptError; only dotenv parse errors stay caught.
             const effectivePaths = this.resolveEffectivePaths();
             debugVerbose(`effective .env paths: ${effectivePaths.length === 0 ? '(none)' : effectivePaths.join(', ')}`);
 
@@ -206,13 +200,21 @@ export abstract class EnvapterBase {
                 });
             } catch {}
             EnvapterBase._dotenvAddedKeys = added;
-            // populate the Map with global environment variables
             for (const [key, value] of Object.entries(isolatedEnv)) EnvaptCache.set(key, value);
             debugVerbose(`cache populated: ${EnvaptCache.size} keys total`);
             if (EnvapterBase._syncProcessEnv) this.mirrorToProcessEnv();
         }
 
         return EnvaptCache;
+    }
+
+    /**
+     * Eagerly load the `.env` cascade now instead of lazily on the first read. Idempotent: a no-op
+     * once the cache is built. Useful before mirroring to `process.env` (see {@link syncProcessEnv}),
+     * which is what the `envapt/config` side-effect entry does.
+     */
+    static load(): void {
+        void this.config;
     }
 
     /**
