@@ -18,7 +18,7 @@ export function EnvLoading(): ReactNode {
             lead="In production, envapt reads .env.production.local, then .env.production, then .env.local, then .env. Values from higher files win; missing files are skipped."
         >
             <div className="flex flex-col gap-6 lg:flex-row lg:items-center">
-                <div className="min-w-0 lg:basis-3/5">
+                <div className="min-w-0 lg:w-3/5">
                     <CascadeStack />
                 </div>
 
@@ -29,7 +29,7 @@ export function EnvLoading(): ReactNode {
                     →
                 </span>
 
-                <div className="min-w-0 rounded-xl border border-fd-border bg-(--ev-panel) p-5 lg:basis-2/5">
+                <div className="min-w-0 rounded-xl border border-fd-border bg-(--ev-panel) p-5 lg:w-2/5">
                     <p className="mb-2 font-mono text-[11px] tracking-wide text-fd-muted-foreground uppercase">
                         resolved
                     </p>
