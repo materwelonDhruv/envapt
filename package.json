@@ -57,7 +57,7 @@
         "react-doctor": "^0.2.5",
         "tsdown": "^0.22.0",
         "tsx": "^4.22.3",
-        "turbo": "^2.9.14",
+        "turbo": "^2.9.16",
         "typescript": "catalog:dev",
         "vite": "^8.0.14",
         "vitest": "^4.1.7"
