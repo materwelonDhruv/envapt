@@ -4,9 +4,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 
-import { Glyph } from '@/components/Glyph';
+import { BrandLockup } from '@/components/BrandLockup';
 import { NavControls } from '@/components/NavControls';
-import { Wordmark } from '@/components/Wordmark';
 import { cn } from '@/lib/cn';
 
 import type { ComponentProps, ReactNode } from 'react';
@@ -33,9 +32,8 @@ export function SiteNavbar(props: ComponentProps<'header'>): ReactNode {
                 style={{ height: 'var(--fd-nav-height)' }}
             >
                 {!isDocs && (
-                    <Link href="/" className="flex shrink-0 items-center gap-2.5">
-                        <Glyph className="size-6.5" />
-                        <Wordmark className="h-4.75 w-auto translate-y-px" />
+                    <Link href="/" className="flex shrink-0 items-center">
+                        <BrandLockup glyphSize={26} wordmarkHeight={19} gap={10} />
                     </Link>
                 )}
 
@@ -57,7 +55,7 @@ export function SiteNavbar(props: ComponentProps<'header'>): ReactNode {
                 <NavControls isDocs={isDocs} menuOpen={menuOpen} onToggleMenu={() => setMenuOpen((open) => !open)} />
             </div>
 
-            {/* Hidden on docs (the hamburger drives the sidebar drawer there). Always mounted + CSS-toggled so the close animates; a conditional mount can't animate exit. */}
+            {/* Always mounted and CSS-toggled so the close animates; a conditional mount can't animate exit. Hidden on docs, where the hamburger opens the sidebar drawer instead. */}
             <nav
                 aria-hidden={!menuOpen}
                 className={cn(

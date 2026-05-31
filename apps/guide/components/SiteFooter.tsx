@@ -1,7 +1,6 @@
 import Link from 'next/link';
 
-import { Glyph } from '@/components/Glyph';
-import { Wordmark } from '@/components/Wordmark';
+import { BrandLockup } from '@/components/BrandLockup';
 
 import type { ReactNode } from 'react';
 
@@ -24,9 +23,8 @@ export function SiteFooter(): ReactNode {
         <footer className="border-t border-fd-border">
             <div className="mx-auto grid max-w-295 grid-cols-2 gap-8 px-6 py-12 md:grid-cols-4">
                 <div className="col-span-2">
-                    <Link href="/" className="inline-flex items-center gap-2.5">
-                        <Glyph className="size-6" />
-                        <Wordmark className="h-4 w-auto translate-y-px" />
+                    <Link href="/" className="inline-flex items-center">
+                        <BrandLockup glyphSize={24} wordmarkHeight={16} gap={10} />
                     </Link>
                     <p className="mt-3 max-w-xs text-sm/relaxed text-fd-muted-foreground">
                         The apt way to handle environment variables. Read them as typed values, with zero runtime

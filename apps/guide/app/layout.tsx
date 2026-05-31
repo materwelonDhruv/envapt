@@ -3,6 +3,8 @@ import './global.css';
 import { RootProvider } from 'fumadocs-ui/provider/next';
 import { Hanken_Grotesk, JetBrains_Mono } from 'next/font/google';
 
+import { DEFAULT_OG_IMAGE, REPO_URL, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from '@/lib/site';
+
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 
@@ -10,10 +12,26 @@ const sans = Hanken_Grotesk({ subsets: ['latin'], variable: '--font-hanken', dis
 const mono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-jetbrains', display: 'swap' });
 
 export const metadata: Metadata = {
-    title: { default: 'envapt', template: '%s · envapt' },
-    description:
-        'Read environment variables as real types. Zero runtime dependencies, the same API on Node, Bun, and Deno.'
+    metadataBase: new URL(SITE_URL),
+    title: { default: SITE_NAME, template: `%s · ${SITE_NAME}` },
+    description: SITE_DESCRIPTION,
+    // og/twitter title and description stay unset so Next inherits each page's resolved title and description.
+    openGraph: { type: 'website', siteName: SITE_NAME, url: SITE_URL, locale: 'en_US', images: DEFAULT_OG_IMAGE },
+    twitter: { card: 'summary_large_image' }
     // icons auto-detected from app/icon.svg + app/apple-icon.png (Next file convention)
+};
+
+const structuredData = {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareSourceCode',
+    name: SITE_NAME,
+    description: SITE_DESCRIPTION,
+    url: SITE_URL,
+    codeRepository: REPO_URL,
+    programmingLanguage: 'TypeScript',
+    runtimePlatform: ['Node.js', 'Bun', 'Deno'],
+    license: 'https://www.apache.org/licenses/LICENSE-2.0',
+    author: { '@type': 'Person', name: 'Dhruv' }
 };
 
 export default function RootLayout({ children }: { children: ReactNode }): ReactNode {
@@ -25,6 +43,10 @@ export default function RootLayout({ children }: { children: ReactNode }): React
             suppressHydrationWarning
         >
             <body className="flex min-h-screen flex-col" suppressHydrationWarning>
+                <script
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+                />
                 <RootProvider
                     theme={{ defaultTheme: 'dark', enableSystem: false }}
                     search={{ options: { type: 'static' } }}
