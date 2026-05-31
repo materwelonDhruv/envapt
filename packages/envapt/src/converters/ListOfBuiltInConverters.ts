@@ -1,5 +1,5 @@
 import type { ConverterToken } from './Converters';
-import type { JsonValue } from './Types';
+import type { JsonValue } from '../types';
 
 /**
  * List of built-in scalar converters for Envapt. Arrays are handled separately via

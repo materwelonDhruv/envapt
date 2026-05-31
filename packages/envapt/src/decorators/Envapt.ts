@@ -1,11 +1,9 @@
-import { EnvaptCache } from './core/EnvapterBase';
-import { Envapter } from './Envapter';
-import { EnvaptError, EnvaptErrorCodes } from './Error';
-import { Parser } from './Parser';
-import { Validator } from './Validators';
+import { createPropertyDecorator } from './createPropertyDecorator';
+import { EnvaptError, EnvaptErrorCodes } from '../Error';
+import { Validator } from '../Validators';
 
-import type { ArrayOf } from './Converters';
-import type { InferSchemaOutput, StandardSchemaV1 } from './StandardSchema';
+import type { ArrayOf } from '../converters';
+import type { InferSchemaOutput, StandardSchemaV1 } from '../StandardSchema';
 import type {
     BuiltInConverter,
     ConverterFunction,
@@ -17,62 +15,7 @@ import type {
     InferPrimitiveReturnType,
     PrimitiveConstructor,
     SchemaConstraint
-} from './Types';
-
-function formatKeyForError(key: EnvKeyInput): string {
-    return Array.isArray(key) ? `[${key.join(', ')}]` : String(key);
-}
-
-interface DecoratorConfig<TFallback> {
-    fallback: TFallback | undefined;
-    converter: EnvaptConverter<TFallback> | undefined;
-    hasFallback: boolean;
-    required: boolean;
-    schema: StandardSchemaV1 | undefined;
-}
-
-function createPropertyDecorator<TFallback>(key: EnvKeyInput, config: DecoratorConfig<TFallback>): PropertyDecorator {
-    const { fallback, converter, hasFallback, required, schema } = config;
-    return function (target: object, prop: string | symbol): void {
-        const propKey = String(prop);
-        // Static: target IS the constructor; instance: target is the prototype.
-        // Splitting these prevents cache collisions between same-named static + instance properties.
-        const className = typeof target === 'function' ? target.name : target.constructor.name;
-        const cacheKey = `${className}.${propKey}`;
-
-        Object.defineProperty(target, propKey, {
-            get: function () {
-                let value = EnvaptCache.get(cacheKey) as TFallback | null | undefined;
-
-                if (value === undefined) {
-                    const envapter = new Envapter();
-
-                    if (required && schema === undefined) {
-                        const rawValue = envapter.getRaw(key);
-                        if (rawValue === undefined || rawValue.trim() === '') {
-                            throw new EnvaptError(
-                                EnvaptErrorCodes.MissingEnvValue,
-                                `Required environment variable "${formatKeyForError(key)}" is missing or empty.`
-                            );
-                        }
-                    }
-
-                    const parser = new Parser(envapter);
-                    if (schema !== undefined) {
-                        value = parser.convertWithSchema(key, schema, fallback, hasFallback) as TFallback;
-                    } else {
-                        value = parser.convertValue(key, fallback, converter, hasFallback);
-                    }
-                    EnvaptCache.set(cacheKey, value);
-                }
-
-                return value;
-            },
-            configurable: false,
-            enumerable: true
-        });
-    };
-}
+} from '../types';
 
 /**
  * Usage 1: Either a custom converter function + fallback (both required), OR a fallback

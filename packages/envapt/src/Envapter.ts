@@ -1,8 +1,7 @@
-import { AdvancedMethods } from './core/AdvancedMethods';
+import { AdvancedMethods } from './core';
 import { EnvaptError, EnvaptErrorCodes } from './Error';
 
-export { EnvaptCache } from './core/EnvapterBase';
-export { Environment } from './core/EnvironmentMethods';
+export { EnvaptCache, Environment } from './core';
 
 /**
  * Main configuration class for environment variable management.
@@ -95,7 +94,7 @@ export class Envapter extends AdvancedMethods {
     private static resolveAndValidate(key: string): string | undefined {
         const { value } = this.resolveKeyInput(key);
         if (value === undefined) return undefined;
-        const resolved = this.parser.resolveTemplate(key, value);
+        const resolved = this.templateResolver.resolveTemplate(key, value);
         if (resolved.trim() === '') return undefined;
         return resolved;
     }

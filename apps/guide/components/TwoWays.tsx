@@ -11,10 +11,10 @@ const config = {
   dbUrl: Envapter.getUsing('DATABASE_URL', Converters.Url)
 };`;
 
-const DECORATOR = `import { Envapt, Converters } from 'envapt';
+const DECORATOR = `import { EnvNum, Converters } from 'envapt';
 
 class Config {
-  @Envapt('PORT', { converter: Converters.Number, fallback: 3000 })
+  @EnvNum('PORT', 3000)
   declare static readonly port: number;
 }`;
 

@@ -9,7 +9,7 @@ import { Validator } from '../Validators';
 
 import type { DebugLevel } from '../Debug';
 import type { EnvFileOptions } from '../Dotenv';
-import type { EnvKeyInput } from '../Types';
+import type { EnvKeyInput } from '../types';
 
 /**
  * Base cache for environment variables and computed values

@@ -69,6 +69,35 @@ class Config {
 
 With no `converter` and no `fallback`, the property resolves to the raw string or `null`.
 
+## Shorthand decorators
+
+`@EnvNum`, `@EnvStr`, `@EnvBool`, `@EnvUrl`, and `@EnvTime` are shorthands for `@Envapt` with a fixed converter. The call site is the key and an optional fallback.
+
+```ts twoslash
+import { EnvNum, EnvStr, EnvBool, EnvUrl, EnvTime } from 'envapt';
+// ---cut---
+class Config {
+    @EnvNum('PORT', 3000)
+    declare static readonly port: number;
+
+    @EnvStr('AWS_REGION', 'us-east-1')
+    declare static readonly region: string;
+
+    @EnvBool('DEBUG', false)
+    declare static readonly debug: boolean;
+
+    @EnvUrl('APP_URL', new URL('http://localhost:3000'))
+    declare static readonly url: URL;
+
+    @EnvTime('CACHE_TTL', '15m')
+    declare static readonly cacheTtl: number;
+}
+```
+
+The second argument is the fallback, typed to the converter: `@EnvUrl` takes a `URL`, `@EnvTime` takes a millisecond number or a time string, the rest take their primitive. Omit it and the property resolves to the converted value or `null`. The key can also be an [ordered list](#ordered-keys).
+
+These install the same getter as `@Envapt`, so the [`declare` rule](#declare-the-property-never-initialize-it) applies. They take a fallback only: for `required`, a `schema`, an array, or a custom function, use `@Envapt` with the options object.
+
 ## Required values
 
 Pass `required: true` to throw `EnvaptError` on a missing or empty value instead of returning a fallback. It's mutually exclusive with `fallback`.

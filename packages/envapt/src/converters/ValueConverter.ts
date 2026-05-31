@@ -1,74 +1,23 @@
 import { BuiltInConverters } from './BuiltInConverters';
-import { debugWarn } from './Debug';
-import { EnvaptError, EnvaptErrorCodes } from './Error';
-import { Validator } from './Validators';
+import { EnvaptError, EnvaptErrorCodes } from '../Error';
+import { Validator } from '../Validators';
 
 import type { ArrayOf } from './Converters';
-import type { StandardSchemaV1 } from './StandardSchema';
-import type { BuiltInConverter, EnvKeyInput, EnvaptConverter, PrimitiveConstructor } from './Types';
+import type { StandardSchemaV1 } from '../StandardSchema';
+import type { BuiltInConverter, EnvKeyInput, EnvaptConverter, PrimitiveConstructor } from '../types';
+import type { EnvapterService } from '../types/Env';
 
 function formatKeyForError(key: EnvKeyInput): string {
     return Array.isArray(key) ? `[${key.join(', ')}]` : String(key);
 }
 
 /**
+ * Convert a resolved environment value to its declared type via built-in, primitive, array,
+ * custom, or Standard Schema converters.
  * @internal
  */
-export interface EnvapterService {
-    getRaw(key: EnvKeyInput): string | undefined;
-    get(key: EnvKeyInput, def?: string): string | undefined;
-    isStrict(): boolean;
-}
-
-/**
- * Parser class for handling environment variable template resolution and type conversion
- * @internal
- */
-export class Parser {
-    private readonly TEMPLATE_REGEX = /\${\w*}/g;
-
+export class ValueConverter {
     constructor(private readonly envService: EnvapterService) {}
-
-    /**
-     * Resolve template variables in a string while handling circular references and missing variables
-     * @internal
-     */
-    resolveTemplate(key: string, value: string, stack: Set<string> = new Set<string>()): string {
-        stack.add(key);
-        const strict = this.envService.isStrict();
-
-        const out = value.replace(this.TEMPLATE_REGEX, (template) => {
-            const variable = template.slice(2, -1);
-
-            if (stack.has(variable)) return template; // cycle, preserve
-
-            const raw = this.envService.getRaw(variable);
-            const isMissing = raw === undefined || raw === '' || (strict && raw.trim() === '');
-            if (isMissing) {
-                if (strict) {
-                    throw new EnvaptError(
-                        EnvaptErrorCodes.MissingEnvValue,
-                        `Cannot resolve template variable "\${${variable}}": value is missing or empty.`
-                    );
-                }
-                debugWarn(`unresolved template \${${variable}} preserved as literal`);
-                return template; // missing or empty, preserve
-            }
-
-            const resolved = this.resolveTemplate(variable, raw, new Set(stack));
-
-            // If resolution still references the current key, skip replacement (indirect cycle)
-            if (resolved.includes(`\${${key}}`)) return template;
-
-            // If nothing changed (unresolved placeholders stayed), also preserve original template
-            if (resolved === raw && /\$\{[^}]*\}/.test(resolved)) return template;
-
-            return resolved;
-        });
-
-        stack.delete(key);
-        return out;
-    }
 
     convertValue<TFallback>(
         key: EnvKeyInput,

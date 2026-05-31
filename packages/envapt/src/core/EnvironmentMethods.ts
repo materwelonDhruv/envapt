@@ -4,7 +4,7 @@ import process from 'node:process';
 import { EnvaptError, EnvaptErrorCodes } from '../Error';
 import { EnvapterBase } from './EnvapterBase';
 
-import type { EnvProfile, ProfilesConfig } from '../Types';
+import type { EnvProfile, ProfilesConfig } from '../types';
 
 /**
  * Environment types supported by Envapter

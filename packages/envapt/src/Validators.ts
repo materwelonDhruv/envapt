@@ -1,13 +1,15 @@
 import fs from 'node:fs';
 
-import { isArrayOf } from './Converters';
+// Import the converter modules directly, not via the `./converters` barrel: that barrel pulls in
+// ValueConverter, which imports this Validator, so a barrel import here would cycle.
+import { isArrayOf } from './converters/Converters';
+import { ListOfBuiltInConverters, BuiltInConverterTypeCheckers } from './converters/ListOfBuiltInConverters';
 import { EnvaptError, EnvaptErrorCodes } from './Error';
-import { ListOfBuiltInConverters, BuiltInConverterTypeCheckers } from './ListOfBuiltInConverters';
 
-import type { ArrayOf, ConverterToken } from './Converters';
+import type { ArrayOf, ConverterToken } from './converters/Converters';
 import type { EnvFileOptions } from './Dotenv';
 import type { StandardSchemaV1 } from './StandardSchema';
-import type { BuiltInConverter, ConverterFunction, EnvaptConverter } from './Types';
+import type { BuiltInConverter, ConverterFunction, EnvaptConverter } from './types';
 
 export class Validator {
     /**

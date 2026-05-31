@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 
-import { EnvaptError, EnvaptErrorCodes } from './Error';
+import { EnvaptError, EnvaptErrorCodes } from '../Error';
 
 import type { ArrayOf, CustomElementConverter } from './Converters';
 import type {
@@ -10,7 +10,7 @@ import type {
     MapOfConverterFunctions,
     TimeFallback,
     TimeUnit
-} from './Types';
+} from '../types';
 
 const MS_PER_SECOND = 1000;
 const SECONDS_PER_MINUTE = 60;

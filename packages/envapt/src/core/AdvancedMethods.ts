@@ -1,7 +1,7 @@
 import { EnvaptError, EnvaptErrorCodes } from '../Error';
 import { PrimitiveMethods } from './PrimitiveMethods';
 
-import type { ArrayOf } from '../Converters';
+import type { ArrayOf } from '../converters';
 import type { InferSchemaOutput, StandardSchemaV1 } from '../StandardSchema';
 import type {
     AdvancedConverterReturn,
@@ -12,7 +12,7 @@ import type {
     InferConverterReturnType,
     SchemaConstraint,
     TimeFallback
-} from '../Types';
+} from '../types';
 
 interface GetUsingRequiredOptions<TConverter> {
     converter: TConverter;
@@ -80,7 +80,12 @@ export class AdvancedMethods extends PrimitiveMethods {
                 );
             }
 
-            const result = this.parser.convertValue(resolvedKey, undefined, options.converter as TConverter, false);
+            const result = this.valueConverter.convertValue(
+                resolvedKey,
+                undefined,
+                options.converter as TConverter,
+                false
+            );
             return result as AdvancedConverterReturn<TConverter, TFallback>;
         }
 
@@ -95,7 +100,7 @@ export class AdvancedMethods extends PrimitiveMethods {
         }
 
         const hasFallback = fallback !== undefined;
-        const result = this.parser.convertValue(resolvedKey, fallback, converter, hasFallback);
+        const result = this.valueConverter.convertValue(resolvedKey, fallback, converter, hasFallback);
 
         return result as AdvancedConverterReturn<TConverter, TFallback>;
     }
@@ -156,7 +161,7 @@ export class AdvancedMethods extends PrimitiveMethods {
                 );
             }
 
-            const result = this.parser.convertValue(
+            const result = this.valueConverter.convertValue(
                 resolvedKey,
                 undefined,
                 options.converter as ConverterFunction<undefined>,
@@ -171,7 +176,7 @@ export class AdvancedMethods extends PrimitiveMethods {
 
         const hasFallback = fallback !== undefined;
         // Convert the converter to match the expected signature via unknown
-        const result = this.parser.convertValue(
+        const result = this.valueConverter.convertValue(
             resolvedKey,
             fallback,
             converterOrOptions as unknown as ConverterFunction<TFallback>,
@@ -221,7 +226,12 @@ export class AdvancedMethods extends PrimitiveMethods {
         const hasFallback = arguments.length > 2;
         // SchemaConstraint resolves to the unsatisfiable SchemaMustBeSync brand for async
         // schemas, so reaching this body means the input is structurally a sync Schema.
-        const result = this.parser.convertWithSchema(key, schema as unknown as StandardSchemaV1, fallback, hasFallback);
+        const result = this.valueConverter.convertWithSchema(
+            key,
+            schema as unknown as StandardSchemaV1,
+            fallback,
+            hasFallback
+        );
         return result as InferSchemaOutput<Schema>;
     }
 
@@ -234,7 +244,7 @@ export class AdvancedMethods extends PrimitiveMethods {
         fallback?: InferSchemaOutput<Schema>
     ): InferSchemaOutput<Schema> {
         const hasFallback = arguments.length > 2;
-        const result = AdvancedMethods.parser.convertWithSchema(
+        const result = AdvancedMethods.valueConverter.convertWithSchema(
             key,
             schema as unknown as StandardSchemaV1,
             fallback,

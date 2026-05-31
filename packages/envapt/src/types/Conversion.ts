@@ -1,6 +1,4 @@
-import type { ArrayOf, ConverterToken, CustomElementConverter } from './Converters';
-import type { Environment } from './core/EnvironmentMethods';
-import type { StandardSchemaV1 } from './StandardSchema';
+import type { ArrayOf, ConverterToken, CustomElementConverter } from '../converters/Converters';
 
 /**
  * Scalar built-in converter tokens (e.g. `'number'`, `'time'`).
@@ -22,12 +20,6 @@ type PrimitiveConstructor = typeof String | typeof Number | typeof Boolean | typ
 type BaseInput = string | undefined;
 
 /**
- * Accepted shape for environment variable lookups. Either a single key or an ordered list of keys.
- * @public
- */
-type EnvKeyInput = string | readonly [string, ...string[]];
-
-/**
  * Custom parser function type for environment variables
  * @param raw - Raw string value from environment
  * @param fallback - Fallback value if parsing fails
@@ -42,31 +34,6 @@ type ConverterFunction<TFallback = unknown> = (raw: BaseInput, fallback?: TFallb
  * @public
  */
 type EnvaptConverter<TFallback> = PrimitiveConstructor | BuiltInConverter | ArrayOf | ConverterFunction<TFallback>;
-
-// The brand makes `Err<>` unsatisfiable from user code: a `unique symbol` key cannot be
-// produced externally, so the literal message string can't be copy-pasted to bypass the type.
-// `Msg` stays in the alias name so TS errors surface the human-readable explanation.
-declare const _envaptErrBrand: unique symbol;
-type Err<Msg extends string> = Msg & { readonly [_envaptErrBrand]: never };
-
-type SchemaMustBeSync =
-    Err<'Schema must be synchronous. envapt is boot-time config loading; async refinements (validate returning `Promise<Result>`) belong outside the env layer.'>;
-
-// Standalone slot guard: async-returning `validate` resolves to the brand and fails to
-// assign.
-type SchemaConstraint<Schema extends StandardSchemaV1> =
-    ReturnType<Schema['~standard']['validate']> extends Promise<unknown> ? SchemaMustBeSync : Schema;
-
-/**
- * Options for the \@Envapt decorator (modern API). `required: true` is mutually exclusive
- * with `fallback`; see the per-converter overloads in `Envapt.ts` for the type-level mutex.
- * @public
- */
-interface EnvaptOptions<TFallback = string> {
-    fallback?: TFallback;
-    converter?: EnvaptConverter<TFallback>;
-    required?: boolean;
-}
 
 type JsonPrimitive = string | number | boolean | null;
 type JsonArray = JsonValue[];
@@ -216,41 +183,11 @@ type InferPrimitiveFallbackType<TFallback extends string | number | boolean | bi
                 ? symbol
                 : undefined;
 
-/**
- * Per-environment profile entry passed to {@link configureProfiles}.
- * @public
- */
-interface EnvProfile {
-    /** One or more `.env` paths to load for this environment. Order matters: earlier paths take precedence. */
-    paths: string | string[];
-}
-
-/**
- * Configuration object for {@link configureProfiles}. Maps each `Environment` to an optional
- * profile override. Unspecified environments fall through to the default cascade behavior
- * (`.env.${env}.local`, `.env.local`, `.env.${env}`, `.env`).
- * @public
- */
-type ProfilesConfig = Partial<Record<Environment, EnvProfile>> & {
-    /**
-     * When `false`, disables the default dotenv-flow cascade entirely. Only the explicitly
-     * configured paths are loaded. Defaults to `true` (cascade still runs, configured paths
-     * are layered on top with higher precedence).
-     */
-    useDefaults?: boolean;
-};
-
 export type {
-    Err,
-    SchemaMustBeSync,
-    SchemaConstraint,
     BuiltInConverter,
     PrimitiveConstructor,
     ConverterFunction,
     EnvaptConverter,
-    EnvaptOptions,
-    EnvProfile,
-    ProfilesConfig,
     JsonValue,
     BuiltInConverterFunction,
     MapOfConverterFunctions,
@@ -261,6 +198,5 @@ export type {
     InferConverterFallbackType,
     AdvancedConverterReturn,
     InferPrimitiveReturnType,
-    InferPrimitiveFallbackType,
-    EnvKeyInput
+    InferPrimitiveFallbackType
 };
