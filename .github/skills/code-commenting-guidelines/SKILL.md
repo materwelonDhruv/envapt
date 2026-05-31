@@ -7,6 +7,8 @@ description: Use this when writing, refactoring, or reviewing TypeScript code. D
 
 Use comments to explain intent, constraints, and hidden rules. Do not use comments to narrate obvious syntax.
 
+> **Related:** this skill decides _whether_ and _where_ a comment belongs. For _how_ a comment should read once you write it (voice, word choice, no hype or anthropomorphism), see the `writing-voice` skill.
+
 ## When Comments Are Required
 
 Add a short comment when one of these is true:
@@ -163,7 +165,7 @@ type EnvaptOptions =
 
 ### Overload narration
 
-Multiple overload signatures next to short `//` comments labeling each one ("Time-specific overload", "Required form, time-specific", "Required form, built-in/array") are noise — the signature already conveys this. If users need a map of overloads, write ONE TSDoc block on the implementation signature describing the family, not a per-overload caption.
+Multiple overload signatures next to short `//` comments labeling each one ("Time-specific overload", "Required form, time-specific", "Required form, built-in/array") are noise: the signature already conveys this. If users need a map of overloads, write ONE TSDoc block on the implementation signature describing the family, not a per-overload caption.
 
 ### Stale-after-refactor
 

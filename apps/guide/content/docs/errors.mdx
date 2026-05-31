@@ -1,0 +1,74 @@
+---
+title: Errors
+description: Every EnvaptError code, what throws it, and how to catch and narrow on it.
+---
+
+When envapt rejects a value or a configuration, it throws an `EnvaptError`. The error carries a numeric `code` from the `EnvaptErrorCodes` enum, so you can branch on the exact cause.
+
+```ts twoslash
+import { Envapter, EnvaptError, EnvaptErrorCodes } from 'envapt';
+// ---cut---
+try {
+    Envapter.require('DATABASE_URL');
+} catch (error) {
+    if (error instanceof EnvaptError) {
+        error.code;
+        //    ^?
+        if (error.code === EnvaptErrorCodes.SchemaValidationFailed) {
+            error.issues?.forEach((issue) => console.error(issue.message));
+        }
+    }
+}
+```
+
+## The error shape
+
+`EnvaptError` extends `Error` with:
+
+- `code`: the `EnvaptErrorCodes` member.
+- `name`: set to `` `EnvaptError [<code>]` `` (e.g. `EnvaptError [305]`).
+- `message`: a human-readable description.
+- `issues`: the validator's issue list, populated **only** for `SchemaValidationFailed` (208); `undefined` for every other code.
+- `cause`: the original error when one is chained, used by `SchemaThrew` (209).
+
+## Codes
+
+### Fallback (101-105)
+
+| Code | Name | Thrown when |
+| ---- | ---- | ----------- |
+| 101 | `InvalidFallback` | A fallback value is invalid for the converter (for example, a non-array fallback for an array converter). |
+| 102 | `InvalidFallbackType` | The fallback value's type doesn't match the converter's return type. |
+| 103 | `ArrayFallbackElementTypeMismatch` | An array fallback contains an element of the wrong type. |
+| 104 | `FallbackConverterTypeMismatch` | The fallback type doesn't match the specified converter. |
+| 105 | `MalformedTimeFallback` | A time-string fallback isn't `<integer><unit>` (for example `90m`). |
+
+### Converter (201-209)
+
+| Code | Name | Thrown when |
+| ---- | ---- | ----------- |
+| 201 | `InvalidArrayConverterType` | The `Converters.array` configuration is malformed. |
+| 202 | `InvalidBuiltInConverter` | An unknown built-in converter token is used. |
+| 203 | `InvalidCustomConverter` | A custom converter is not a function. |
+| 204 | `InvalidConverterType` | The converter type is not recognized. |
+| 205 | `PrimitiveCoercionFailed` | Coercing a fallback through a primitive constructor fails. |
+| 206 | `ArrayElementConversionFailed` | An array element fails to convert to the configured element type. |
+| 207 | `EmptyArrayElement` | Strict mode only: an array element is empty or whitespace. |
+| 208 | `SchemaValidationFailed` | A Standard Schema returns issues for a non-empty value. The only code that populates `issues`. |
+| 209 | `SchemaThrew` | A schema's `validate` itself throws. The original error is on `cause`. |
+
+### Configuration and lookup (301-305)
+
+| Code | Name | Thrown when |
+| ---- | ---- | ----------- |
+| 301 | `MissingDelimiter` | An array converter is missing its delimiter. |
+| 302 | `InvalidUserDefinedConfig` | A bad decorator/options combination: `required` with `fallback`, `schema` with `converter`, a non-`StandardSchemaV1` `schema`, an async schema, or an invalid debug level. |
+| 303 | `EnvFilesNotFound` | A configured `.env` path (via `envPaths` or `configureProfiles`) doesn't exist. |
+| 304 | `InvalidKeyInput` | No key, a non-string key, or an empty-string key was passed. |
+| 305 | `MissingEnvValue` | A required value is missing or empty: `require`, `{ required: true }`, a schema with no fallback, or an unresolved template under strict mode. |
+
+<Callout type="info">
+    `issues` is set only for `SchemaValidationFailed` (208), so you can read `error.issues` after checking
+    `error.code === EnvaptErrorCodes.SchemaValidationFailed` without a cast. See [Standard
+    Schema](/docs/standard-schema) for where 208 and 209 come from.
+</Callout>

@@ -1,0 +1,24 @@
+{
+    "pages": [
+        "---Introduction---",
+        "index",
+        "quick-start",
+        "---Core---",
+        "envapter",
+        "environment",
+        "decorators",
+        "---Typing values---",
+        "converters",
+        "templates",
+        "standard-schema",
+        "---Validation---",
+        "strict-mode",
+        "errors",
+        "---Configuration---",
+        "configuration",
+        "env-file-syntax",
+        "---Reference---",
+        "compatibility",
+        "migration"
+    ]
+}

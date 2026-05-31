@@ -1,129 +1,326 @@
 ---
 name: code-quality
-description: Use this when asked to write code, or audit, sweep, or fix code quality in the envapt repo. Covers TypeScript antipatterns to catch by hand, dead-code checks, decorator-API design rules, and when to parallelize work with subagents. Also use when onboarding any agent to this repo's quality standards.
+description: Use this when asked to write code, or audit, sweep, or fix code quality in the envapt repo (incl. the apps/guide Fumadocs docs app). Covers React 19 + Tailwind v4 antipattern categories as a manual review checklist, TS/OOP/fail-fast rules, and when to parallelize with subagents. Also use when onboarding any agent to this repo's quality standards.
 ---
 
-# Code Quality Sweep — envapt
+# Code Quality Sweep
 
-envapt is a single-package pnpm + turbo monorepo (`packages/envapt`). Pure-TypeScript runtime library, no frontend. Quality is enforced through layered checks:
+> **envapt context (read first).** The body of this file (and parts of REACT19.md / TAILWIND.md) was authored for the *breach* monorepo. In **envapt**:
+>
+> - **react-doctor and knip are NOT installed.** Treat the react-doctor categories below as a **manual code-review checklist** (they're genuinely good React/Tailwind rules); ignore the `pnpm react-doctor` / `pnpm knip` mechanics and the `knip.json` apps/api examples unless those tools are actually added.
+> - **Quality gates are** `pnpm lint:fix` → `pnpm tc` → `pnpm lint:fix:md` → `pnpm test`, and `pnpm prePush` before pushing (turbo dispatches from repo root). `packages/envapt/**` changes need a `changeset`. See `AGENTS.md`.
+> - The **React 19 (REACT19.md) + Tailwind v4 (TAILWIND.md)** rules apply to the new **`apps/guide`** docs app (Fumadocs on **Next.js App Router**, so RSC *does* apply — it is **not** a Vite SPA). There is **no shared `@breach/ui`**: brand tokens live in the guide's own `global.css` `@theme`, and `cn()` + UI primitives (e.g. `BaseButton`) live locally inside `apps/guide`.
+> - The **"Route conventions" (Hono / OpenAPI)** section below is breach-only and does **not** apply to envapt.
 
-| Layer                          | What it catches                                                         | How to run                                                                         |
-| ------------------------------ | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| **ESLint + TypeScript** (tool) | Type errors, lint violations, import order, formatting, rule violations | `pnpm lint:fix && pnpm tc` from repo root (turbo runs across the workspace).       |
-| **Vitest** (tool)              | Behavior regressions                                                    | `pnpm test` (only after lint + tc pass).                                           |
-| **Prettier** (tool)            | Formatting                                                              | `pnpm fmt` / `fmt:check`.                                                          |
-| **markdownlint-cli2** (tool)   | Markdown style/syntax issues                                            | `pnpm lint:md` (configured via `.markdownlint.json` + `.markdownlint-cli2.jsonc`). |
-| **changesets** (tool)          | Missing version bump on the published package                           | `pnpm cs` when touching `packages/envapt`; `pnpm cs:status` to check.              |
-| **Coverage** (tool)            | Test coverage gaps                                                      | `pnpm coverage` — v8 reporter, gated in CI.                                        |
+This repo enforces quality through three complementary tools:
 
-The only acceptable end state for a PR is: **`pnpm prePush` exits clean** — which means `build && tc && lint && lint:md && test` all pass.
+| Tool                    | What it catches                                                                                     | Script                                       |
+| ----------------------- | --------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| **react-doctor**        | React antipatterns — mutable deps, index keys, deprecated APIs, design shorthands, giant components | `pnpm react-doctor`                          |
+| **knip**                | Dead code — unused files, exports, types, deps, devDeps, binaries                                   | `pnpm knip`                                  |
+| **ESLint + TypeScript** | Type errors, lint violations, import order, rule violations                                         | `pnpm -C <pkg> lint:fix && pnpm -C <pkg> tc` |
+
+The only acceptable end state is: **react-doctor shows no issues, knip shows no issues (barring false-positives), all packages tc + lint:fix at 0 errors/warnings.**
 
 ---
 
-## Running the gates
+## Running the Tools
 
 ```sh
-# Always lint:fix (never plain lint).
-pnpm lint:fix
+# From repo root
+pnpm react-doctor      # runs react-doctor --verbose across all packages
+pnpm knip              # runs knip with knip.json config
 
-# Then typecheck — must pass before running tests.
-pnpm tc
-
-# Then markdown if you touched any .md.
-pnpm lint:fix:md
-
-# Then tests.
-pnpm test
-
-# The full pre-push gate:
-pnpm prePush     # build + tc + lint + lint:md + test
+# Per-package quality gates (run after every change)
+pnpm -C <pkg> tc
+pnpm -C <pkg> lint:fix
+pnpm -C <pkg> test     # if tests exist
 ```
 
-Husky's `pre-commit` runs `lint-staged` (see `lint-staged.config.mjs`); `pre-push` runs `pnpm prePush`. Don't bypass them with `--no-verify` unless explicitly asked.
+react-doctor is interactive — it prompts you to select which packages to scan. Select all unless you're doing a targeted fix.
 
 ---
 
-## TypeScript antipatterns to catch by hand
+## react-doctor Output: Categories and Fixes
 
-These apply to all code in `packages/envapt/src`. They're not auto-detected — read for them when you review a diff.
+### Errors (✗) — bugs, fix immediately
 
-### Bugs — must fix before merge
+**`no-mutable-in-deps`**
+`location.pathname`, `ref.current`, or other mutable globals in a `useEffect` deps array. These don't trigger re-renders when they change, so the effect won't re-run.
 
-- **`any` in production code** — use `unknown` then narrow with a type guard. Tests may use pragmatic `as unknown as Test` casts with a justification comment; never `as any`.
-- **`as unknown as T` double casts** in production — fix the declaration, write a type guard, or refactor the API.
-- **`@ts-ignore` / `@ts-expect-error` without comment** — every suppression needs a one-line justification on the same line.
-- **Unused exports** — before adding `export` to a symbol, verify it's consumed outside the file. Unused exports are dead code; remove the `export` keyword.
-- **Commented-out code** — delete it. Git history is the archive.
-- **Half-finished `// TODO: complete later`** — finish or delete. Never ship.
+```tsx
+// Bad
+useEffect(() => {
+    doSomething();
+}, [location.pathname]);
 
-### Warnings — fix in the same pass
+// Good — depend on the stable object, read .pathname inside
+useEffect(() => {
+    const path = location.pathname;
+    doSomething(path);
+}, [location]);
 
-- **Block-bodied exported arrow functions** — convert to function declarations. Arrows are for inline callbacks and short utilities only.
-- **Static-only classes used as namespaces** — replace with named exports. The exception: classes that exist for `instanceof` checks or that genuinely model OOP behavior.
-- **Three similar lines** — that's fine. **Four** is the threshold to consider extracting. Don't extract too early.
-- **`?.` and `??` as error suppression** — only use for genuinely optional branches. If a value is _supposed_ to exist and doesn't, fail fast (see `FAIL-FAST-RULES.md`).
-- **Comments that say WHAT** — delete. Comments are for WHY only.
-- **Decorator on field with initializer + `useDefineForClassFields: true`** — known footgun (see `experimental-decorators.md`). envapt's pattern uses `declare static readonly` to dodge it; preserve that.
-
-See `TYPESCRIPT.md` for the deeper rules.
+// Or: read inside the effect body, no dep at all
+useEffect(() => {
+    doSomething(window.location.pathname);
+}, []);
+```
 
 ---
 
-## Dead-code sweep (manual)
+### Warnings (⚠) — fix in the same pass
 
-envapt doesn't have `knip` wired up yet (planned post-v5). Until then, manually:
+**`design-no-bold-heading`**
+`font-bold`, `font-extrabold`, or `font-black` on heading elements (h1–h6). Change to `font-semibold`.
+
+```tsx
+// Bad
+<h2 className="font-extrabold">Title</h2>
+
+// Good
+<h2 className="font-semibold">Title</h2>
+```
+
+**`design-no-redundant-size-axes`**
+`w-N h-N` when both axes are equal. Collapse to `size-N` (Tailwind v3.4+).
+
+```tsx
+// Bad
+<div className="w-4 h-4" />
+
+// Good
+<div className="size-4" />
+```
+
+**`no-react19-deprecated-apis`**
+`useContext(X)` is superseded by `use(X)` in React 19+. Also: `forwardRef` is no longer needed.
+
+```tsx
+// Bad
+import { useContext } from 'react';
+const value = useContext(MyContext);
+
+// Good
+import { use } from 'react';
+const value = use(MyContext);
+```
+
+**`prefer-useReducer`**
+Component has 5+ `useState` calls for related state. Group the related boolean/open-state flags into a `useReducer`.
+
+```tsx
+// Bad — 6 related useState calls
+const [isOpen, setIsOpen] = useState(false);
+const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+// ...
+
+// Good — useReducer for related state group
+type UIState = { isOpen: boolean; isDropdownOpen: boolean; };
+type UIAction = { type: 'open' } | { type: 'closeAll' };
+function uiReducer(state: UIState, action: UIAction): UIState { ... }
+const [ui, dispatchUI] = useReducer(uiReducer, { isOpen: false, isDropdownOpen: false });
+```
+
+**`no-array-index-as-key`**
+Array index used as React key. Causes bugs when the list is reordered or filtered.
+
+```tsx
+// Bad
+items.map((item, i) => <Item key={i} />);
+
+// Good — use stable identity
+items.map((item) => <Item key={item.id} />);
+
+// For static arrays with no ID, use the content itself
+STATIC_TABS.map((tab) => <Tab key={tab.label} />);
+```
+
+**`js-combine-iterations`**
+`.filter().map()` iterates the array twice. Combine into a single `.reduce()` pass.
+
+```ts
+// Bad
+items.filter(predicate).map(transform);
+
+// Good
+items.reduce<Result[]>((acc, item) => {
+    if (predicate(item)) acc.push(transform(item));
+    return acc;
+}, []);
+```
+
+**`server-sequential-independent-await`**
+Two independent `await` calls in sequence — they can race instead of waterfall.
+
+```ts
+// Bad
+const a = await fetchA();
+const b = await fetchB();
+
+// Good
+const [a, b] = await Promise.all([fetchA(), fetchB()]);
+```
+
+**`async-defer-await`**
+`await` appears before a synchronous early-return guard. The guard doesn't need the awaited value, so it runs slower than necessary.
+
+```ts
+// Bad
+async function handle(input: string | null) {
+    const result = await expensiveOperation();
+    if (!input) return; // could have returned before the await
+    return result;
+}
+
+// Good
+async function handle(input: string | null) {
+    if (!input) return;
+    return await expensiveOperation();
+}
+```
+
+**`rendering-hydration-mismatch-time`**
+`new Date()` or `Math.random()` reachable from JSX renders differently on server vs client.
+
+```tsx
+// Bad
+<p>{new Date().toLocaleDateString()}</p>;
+
+// Good — client-only rendering
+const [now, setNow] = useState<Date | null>(null);
+useEffect(() => {
+    setNow(new Date());
+}, []);
+<p>{now?.toLocaleDateString() ?? ''}</p>;
+```
+
+**`no-barrel-import`**
+Importing from a barrel/index file instead of the direct source module. Import from the specific file.
+
+```ts
+// Bad
+import { useAuthStore } from '../stores';
+
+// Good
+import { useAuthStore } from '../stores/useAuthStore';
+```
+
+**`no-giant-component`**
+Component exceeds ~200 lines. Extract into focused sub-components. The parent should read as an orchestrator — state, effects, and composition of named sub-components. The children should be focused on a single visual concern.
+
+---
+
+## Knip Output: Categories and Fixes
+
+### Genuine dead code — fix
+
+| Category              | Fix                                                                        |
+| --------------------- | -------------------------------------------------------------------------- |
+| Unused deps/devDeps   | Remove from `package.json`, run `pnpm install --store-dir .pnpm-store/v11` |
+| Unused files          | Delete with `git rm`                                                       |
+| Unused exports        | Remove the `export` keyword if only used internally; delete if dead code   |
+| Unused exported types | Same — remove `export` if internal, delete if unused                       |
+
+### False positives — configure away in `knip.json`
+
+| Pattern                                                   | Why it's a false positive               | Fix                                                                                                 |
+| --------------------------------------------------------- | --------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Migration files (`apps/api/src/db/migrations/*.ts`)       | Run by migration runner, not imported   | Add to `entry` in workspace config                                                                  |
+| Script files (`apps/api/scripts/*.ts`)                    | Run via `pnpm exec tsx`, not imported   | Add to `entry`                                                                                      |
+| Generated files (`api-types.generated.ts`)                | Auto-generated; exports used externally | Add to `ignore`                                                                                     |
+| CLI deps used via `pnpm exec` (e.g. `openapi-typescript`) | Not imported, called as binary          | Add to `ignoreDependencies`                                                                         |
+| Shell keywords in scripts (e.g. `continue` in bash)       | Not a Node binary                       | Add to `ignoreBinaries`                                                                             |
+| Hono route objects — used via `.openapi(route, handler)`  | Knip can't trace Hono's typed router    | Remove the named export (they're internal-only if only the factory function is consumed externally) |
+| DB schema documentation interfaces                        | Intentionally exported for reference    | Add the file to `ignore` in workspace config                                                        |
+
+### `knip.json` configuration reference
+
+```json
+{
+    "$schema": "https://unpkg.com/knip@latest/schema.json",
+    "ignoreBinaries": ["<shell-keyword-or-tool>"],
+    "workspaces": {
+        "apps/api": {
+            "entry": ["src/index.ts", "scripts/*.ts", "src/db/migrations/*.ts"],
+            "project": ["src/**/*.ts", "scripts/**/*.ts"],
+            "ignoreDependencies": ["<cli-dep-used-via-pnpm-exec>"],
+            "ignore": ["src/db/database.ts"]
+        },
+        "packages/shared": {
+            "ignore": ["src/api-types.generated.ts"]
+        }
+    }
+}
+```
+
+---
+
+## When to Use Subagents
+
+For large sweeps (20+ issues across multiple packages), parallelize:
+
+```
+Subagent A → packages/ui + packages/web
+Subagent B → apps/admin
+Subagent C → apps/shop (usually the largest)
+```
+
+Each subagent should:
+
+1. Run react-doctor for its package(s) to get the full current issue list
+2. Fix every issue found
+3. Run `tc` and `lint:fix` and confirm 0 errors
+4. Re-run react-doctor to confirm the issues are gone
+5. NOT commit — the orchestrator commits after all subagents complete
+
+For small sweeps (under 10 issues, 1–2 packages), fix inline — subagent overhead isn't worth it.
+
+---
+
+## Dependency Removal Protocol
+
+When knip flags an unused dep, verify before removing:
+
+1. `grep -r "from '<pkg>'" . --include="*.ts" --include="*.tsx" | grep -v node_modules` — confirm no imports
+2. `grep -r "require('<pkg>')" .` — check for CJS requires
+3. `grep -r "'<pkg>'" package.json --include="*.json"` — check scripts that call it as a CLI binary
+
+If steps 1–2 return nothing and step 3 shows only a package.json entry: **remove it**.
+
+If step 3 shows a script calling it via `pnpm exec <pkg>`: it's a CLI dep. Add to `ignoreDependencies` in knip.json rather than removing.
+
+For deps removed from `package.json`, always update the lock file:
 
 ```sh
-# Find exports never imported externally
-rg "^export " packages/envapt/src/ --type ts | wc -l
-# Then spot-check each: rg "from '\.\.?/<file>'" or rg "from 'envapt'"
-
-# Find functions defined but never called
-# (Use the ts-language-server's "find references" in your editor — faster.)
+pnpm install --store-dir .pnpm-store/v11
 ```
 
-Run before opening a PR that touches `src/`. If `knip` lands, replace with `pnpm knip`.
+---
+
+## Commit Strategy
+
+Commit after each well-defined phase clears all gates — not all at the end.
+
+Example milestones:
+
+- `fix(<pkg>): react-doctor bugs + warnings` — after a package is clean
+- `chore: remove unused deps and dead code` — after knip cleanup
+- `chore: add knip.json and quality scripts` — when adding tooling
 
 ---
 
-## When to use subagents
+## Route conventions
 
-Use Claude Code subagents (`Agent({ subagent_type, ... })`) when:
-
-- **Research is open-ended** — "what does library X do?" / "how do projects Y handle Z?" Use `general-purpose` with `model: sonnet`.
-- **Multiple independent investigations** can run in parallel — fan out to 3–5 sonnet agents in one message.
-- **The main conversation is at risk of context overflow** — delegate file reads to an agent and ask for a digested report.
-- **You need a fresh perspective** — code review, grilling a plan, second opinion.
-
-Do NOT spawn a subagent for:
-
-- A single file read (use `Read`).
-- A keyword grep (use `Bash` + `rg`).
-- Anything where the answer fits in <500 tokens of tool output.
-
-Always pass `model: "sonnet"` per repo convention (`/Users/dhruv/.claude/projects/-Users-dhruv-Desktop-Coding-envapt/memory/feedback_subagent_model.md`).
+- New API routes in `apps/api` must use `createOpenAPIHono` from `@utils/openApiHono`. Routes are typed against Zod schemas in `@breach/shared` and surfaced via the generated OpenAPI doc consumed by `@breach/web/api`.
+- The only acceptable fallback to plain `Hono` is a raw-body requirement (webhook signature verification), because OpenAPIHono parses bodies before the handler sees them. When this applies, add a comment header to the route file explaining why — see `apps/api/src/routes/webhooks/stripe.ts` for the canonical example.
 
 ---
 
-## Cross-package source paths
+## Related Skills (in this folder)
 
-envapt has one package today (`packages/envapt`). Rule still applies for the future: **never** wire `paths` or `include` in `tsconfig.json` reaching `../<other-pkg>/src`. Consume via package exports only.
-
----
-
-## Commit strategy
-
-- **One concept per commit.** A formatting sweep + a feature change + a doc update = three commits.
-- **Conventional commits** enforced via commitlint: `feat`, `fix`, `chore`, `docs`, `refactor`, `test`, `ci`, `types`, `style`.
-- **Don't amend after pushing** unless explicitly asked.
-- **Don't use `--no-verify`** to skip hooks. If a hook fails, fix the underlying issue.
-- For published-package changes (`packages/envapt/**`), add a changeset: `pnpm cs` → write a one-line summary → commit alongside the change.
-
----
-
-## Related skills (in this folder)
-
-- **`OOP.md`** — class vs function rules, inheritance, composition, no-static-only-classes.
-- **`TYPESCRIPT.md`** — strict-mode rules, `any`/`unknown`/casts, type narrowing, utility types.
-- **`FAIL-FAST-RULES.md`** — when NOT to reach for `?.` / `??`; when to throw instead.
-- **`PREVENT-REINVENTION.md`** — check existing code before writing new abstractions.
+- **[`PREVENT-REINVENTION.md`](./PREVENT-REINVENTION.md)** — checks to run before writing new code (reuse existing primitives, tokens, utilities)
+- **[`TAILWIND.md`](./TAILWIND.md)** — v4 CSS-first setup, cn(), tokens.ts fragments, @theme, opacity modifiers, responsive discipline, v4 gotchas vs v3
+- **[`REACT19.md`](./REACT19.md)** — use() vs useContext, ref as prop, useTransition/useActionState/useOptimistic, deprecated APIs, React Compiler
+- **[`TYPESCRIPT.md`](./TYPESCRIPT.md)** — type narrowing, discriminated unions, generics, satisfies, const assertions, branded types, utility types
+- **[`OOP.md`](./OOP.md)** — class vs function decision, SOLID in TypeScript, service pattern, composition vs inheritance, access modifiers
+- **[`FAIL-FAST-RULES.md`](./FAIL-FAST-RULES.md)** — null/undefined handling, invariant checks, when NOT to use `?.` / `??`

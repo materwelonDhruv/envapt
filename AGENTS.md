@@ -85,7 +85,7 @@ export function compute() {
 - **Don't cast values that are already correctly typed** — adjust the type instead.
 - **Prefer `?.` and `??`** for genuinely optional branches — not to suppress errors or hide broken assumptions. See `.github/skills/code-quality/FAIL-FAST-RULES.md` for when NOT to reach for them.
 - **Prefer `import type { T } from 'pkg'`** for type-only imports. Avoid inline `import('pkg').T`.
-- **Use `type-fest` utility types** if you need structural transforms beyond what's already in `Types.ts`. envapt's `Types.ts` re-exports project-specific aliases — check there first.
+- **Use `type-fest` utility types** if you need structural transforms beyond what's already in `types/`. envapt's `types/` modules re-export project-specific aliases — check there first.
 - **Tests may use pragmatic fixture casts** (`as unknown as Test`) — always include a short justification comment. Tests must not use `as any`.
 - **To disable an ESLint rule inline:** `// eslint-disable-next-line <rule> -- <reason>`. Never file-wide or project-wide.
 
@@ -134,18 +134,20 @@ import type { Foo } from 'pkg'; // not import('pkg').Foo
 ## Repo Surface (where things live)
 
 - `packages/envapt/src/` — the library source:
-    - `index.ts` — public surface
-    - `Envapt.ts` — the `@Envapt` decorator + overload tower
+    - `index.ts` — public surface (barrel)
+    - `config.ts` — side-effect entry (`import 'envapt/config'`): mirrors the loaded cascade into `process.env`
     - `Envapter.ts` — public class, adds `resolve` tagged template
-    - `Converters.ts` — `Converters` enum + `ConverterValue` type
-    - `ListOfBuiltInConverters.ts` — converter list + runtime typeof checkers
-    - `BuiltInConverters.ts` — every built-in converter (string/number/bool/bigint/symbol/json/array/url/regexp/date/time)
-    - `Parser.ts` — template `${VAR}` resolution + converter dispatch
-    - `Validators.ts` — runtime guards for converters/fallbacks/dotenv config
-    - `Types.ts` — all public + internal types
+    - `TemplateResolver.ts` — template `${VAR}` resolution (circular-reference + missing-variable handling)
+    - `Validators.ts` — runtime guards for converters/fallbacks/env-file options
+    - `Dotenv.ts` — internal `.env` loader + `EnvFileOptions` type
+    - `Debug.ts` — debug logging helpers (`debugWarn`/`debugVerbose`) keyed off `Envapter.debug`
+    - `StandardSchema.ts` — inlined Standard Schema V1 interface (sync-only)
     - `Error.ts` — `EnvaptError` + `EnvaptErrorCodes` enum
-    - `core/` — the mixin chain (`EnvapterBase` → `EnvironmentMethods` → `PrimitiveMethods` → `AdvancedMethods`)
-- `packages/envapt/tests/` — vitest tests, numbered `001-`–`013-`, each paired with a fixture `.env.*` file.
+    - `converters/` — converter subsystem (barrel `index.ts`): `Converters` (scalar tokens + `array` builder + `ConverterToken`), `BuiltInConverters` (every built-in: string/number/bool/bigint/symbol/json/array/url/regexp/date/time), `ListOfBuiltInConverters` (converter list + runtime typeof checkers), `ValueConverter` (converter + Standard Schema dispatch)
+    - `decorators/` — decorator surface (barrel `index.ts`): `Envapt` (`@Envapt` + overload tower), `SugarDecorators` (`@EnvNum`/`@EnvStr`/`@EnvBool`/`@EnvUrl`/`@EnvTime`), `createPropertyDecorator` (shared getter-install factory)
+    - `core/` — the mixin chain (barrel `index.ts`): `EnvapterBase` → `EnvironmentMethods` → `PrimitiveMethods` → `AdvancedMethods`
+    - `types/` — all public + internal types (barrel `index.ts`): `Conversion` (converter type system), `Schema` (Standard Schema brand + guards), `Options` (`@Envapt` options + profile config), `Env` (`EnvKeyInput` + internal `EnvapterService` contract)
+- `packages/envapt/tests/` — vitest tests, numbered `001-`–`025-`, each paired with a fixture `.env.*` file.
 - `scripts/` — `bump-jsr.ts`, `release-metadata.ts` (the JSR sync + release-metadata helpers used by the publish workflow).
 - `.changeset/` — pending changesets. Don't edit by hand.
 - `.github/workflows/` — CI. `checks.yml` (lint + tc + test + coverage), `publish.yml` (npm + JSR on push to main), `commitlint.yml`, `cleanup-cache.yml`, etc.
@@ -171,7 +173,7 @@ import type { Foo } from 'pkg'; // not import('pkg').Foo
 envapt uses `experimentalDecorators: true` (see `.vscode/experimental-decorators.md` for the ecosystem audit). The `@Envapt` decorator pattern mutates the prototype via `Object.defineProperty(target, propKey, { get })`. Constraints:
 
 - **Users declare with `declare public/static readonly`** — no field initializer. This dodges the `useDefineForClassFields: true` footgun. Document this prominently in any new decorator example.
-- **The classic 3-arg API (`@Envapt('KEY', fb, Converter)`) is deprecated as of v5** and will be removed before v5 stable. New code uses the modern options-object form: `@Envapt('KEY', { converter, fallback })`.
+- **The classic 3-arg API (`@Envapt('KEY', fb, Converter)`) is deprecated as of v5** and will be removed in v6. New code uses the modern options-object form: `@Envapt('KEY', { converter, fallback })`.
 - **Sugar decorators** (`@EnvNum`, `@EnvUrl`, `@EnvTime`, etc.) added in v5 are thin factories that delegate to `createPropertyDecorator`. Keep them minimal — don't add per-type validation logic; that belongs in the converter.
 
 ---

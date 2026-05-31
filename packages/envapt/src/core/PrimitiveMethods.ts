@@ -1,10 +1,11 @@
-import { BuiltInConverters } from '../BuiltInConverters';
+import { BuiltInConverters, ValueConverter } from '../converters';
 import { debugWarn } from '../Debug';
-import { Parser, type EnvapterService } from '../Parser';
+import { TemplateResolver } from '../TemplateResolver';
 import { EnvapterBase } from './EnvapterBase';
 import { EnvironmentMethods } from './EnvironmentMethods';
 
-import type { ConditionalReturn, EnvKeyInput } from '../Types';
+import type { ConditionalReturn, EnvKeyInput } from '../types';
+import type { EnvapterService } from '../types/Env';
 
 /**
  * @internal
@@ -18,11 +19,12 @@ enum Primitive {
 }
 
 /**
- * Mixin for primitive environment variable getter methods
  * @internal
  */
 export class PrimitiveMethods extends EnvironmentMethods implements EnvapterService {
-    protected static readonly parser: Parser = new Parser(new PrimitiveMethods());
+    private static readonly service = new PrimitiveMethods();
+    protected static readonly templateResolver = new TemplateResolver(PrimitiveMethods.service);
+    protected static readonly valueConverter = new ValueConverter(PrimitiveMethods.service);
 
     // Read `EnvapterBase.strict` directly: `PrimitiveMethods._strict` would resolve to the
     // BaseClass default because a `Envapter.strict = true` write lands as an own-property
@@ -43,7 +45,7 @@ export class PrimitiveMethods extends EnvironmentMethods implements EnvapterServ
         }
         const rawVal = value as string | number | boolean | undefined;
 
-        const parsed = this.parser.resolveTemplate(resolvedKey, String(rawVal));
+        const parsed = this.templateResolver.resolveTemplate(resolvedKey, String(rawVal));
 
         let result: EnvVarReturnType;
         if (type === Primitive.Number) result = BuiltInConverters.number(parsed, def as number) as EnvVarReturnType;
@@ -73,7 +75,6 @@ export class PrimitiveMethods extends EnvironmentMethods implements EnvapterServ
     /**
      * @see {@link PrimitiveMethods.get}
      */
-    get(key: EnvKeyInput, def?: string): string | undefined;
     get<Default extends string | undefined = undefined>(
         key: EnvKeyInput,
         def?: Default

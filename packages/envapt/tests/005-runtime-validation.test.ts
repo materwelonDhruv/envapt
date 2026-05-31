@@ -434,7 +434,7 @@ describe('Runtime Validation', () => {
             const validConfigs = [{ override: true }, { encoding: 'utf8' }, { encoding: 'utf8', override: true }];
 
             for (const config of validConfigs) {
-                expect(() => Validator.validateDotenvConfig(config)).to.not.throw();
+                expect(() => Validator.validateEnvFileOptions(config)).to.not.throw();
             }
         });
 
@@ -442,26 +442,14 @@ describe('Runtime Validation', () => {
             const removedConfigs = [{ quiet: true }, { DOTENV_KEY: 'test-key' }];
 
             for (const config of removedConfigs) {
-                expect(() => Validator.validateDotenvConfig(config))
+                expect(() => Validator.validateEnvFileOptions(config))
                     .to.throw(EnvaptError)
                     .with.property('code', EnvaptErrorCodes.InvalidUserDefinedConfig);
             }
         });
 
-        it('should throw error for path option', () => {
-            expect(() => Validator.validateDotenvConfig({ path: '.env.test' }))
-                .to.throw(EnvaptError)
-                .with.property('code', EnvaptErrorCodes.InvalidUserDefinedConfig);
-        });
-
-        it('should throw error for processEnv option', () => {
-            expect(() => Validator.validateDotenvConfig({ processEnv: {} }))
-                .to.throw(EnvaptError)
-                .with.property('code', EnvaptErrorCodes.InvalidUserDefinedConfig);
-        });
-
         it('should throw error for invalid options', () => {
-            expect(() => Validator.validateDotenvConfig({ invalidOption: 'test' }))
+            expect(() => Validator.validateEnvFileOptions({ invalidOption: 'test' }))
                 .to.throw(EnvaptError)
                 .with.property('code', EnvaptErrorCodes.InvalidUserDefinedConfig);
         });
@@ -469,7 +457,7 @@ describe('Runtime Validation', () => {
         it('should throw error for multiple invalid options', () => {
             const error = (() => {
                 try {
-                    Validator.validateDotenvConfig({ invalidOption1: 'test', invalidOption2: 'test' });
+                    Validator.validateEnvFileOptions({ invalidOption1: 'test', invalidOption2: 'test' });
                     return null;
                 } catch (err) {
                     return err as EnvaptError;

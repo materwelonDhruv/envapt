@@ -1,0 +1,88 @@
+---
+title: .env File Syntax
+description: How envapt parses .env files, including keys, quoting, escapes, multi-line values, and inline comments.
+---
+
+envapt ships its own `.env` parser with zero dependencies. This page is the grammar it accepts. For which files load, see [Configuration](/docs/configuration); for `${VAR}` interpolation, see [Templates](/docs/templates).
+
+## Keys and values
+
+Each line is `KEY=value`. An optional `export` prefix is allowed, so a file you also `source` in a shell works unchanged.
+
+```dotenv
+APP_NAME=envapt
+export PORT=3000
+```
+
+A key is letters, digits, and underscores, and does not start with a digit. Leading whitespace around the key and `=` is ignored. An empty value resolves to an empty string.
+
+```dotenv
+EMPTY=
+```
+
+## Comments
+
+A line whose first non-whitespace character is `#` is a comment. An inline `#` after an unquoted value also starts a comment, but only when preceded by whitespace, so a `#` inside a value is kept.
+
+```dotenv
+# full-line comment
+HOST=localhost # inline comment, stripped
+COLOR=#ff0000 # kept: the # has no leading space before it
+```
+
+`COLOR` reads as `#ff0000`.
+
+## Quoting
+
+A value can be wrapped in single quotes, double quotes, or backticks. The quote style decides escape handling, not whether multi-line works (all three support it).
+
+| Quote            | Escapes                          | Use it for                                          |
+| ---------------- | -------------------------------- | --------------------------------------------------- |
+| `"double"`       | decodes `\n` `\r` `\t` `\\` `\"` | values where you want `\n` to become a real newline |
+| `'single'`       | none, fully literal              | values that should stay exactly as written          |
+| `` `backtick` `` | none, fully literal              | same as single, when the value contains `'`         |
+
+<Callout type="warn">
+    Only double quotes interpret escapes. Inside single quotes or backticks, `\n` stays as the two characters
+    backslash-n, it does not become a newline. Use double quotes when you want escape decoding.
+</Callout>
+
+## Multi-line values
+
+A quoted value runs across as many lines as you need: one opening quote, the content, one closing quote. This is how you store a certificate or private key.
+
+```dotenv
+TLS_CERT="-----BEGIN CERTIFICATE-----
+MIIBkTCB+wIJAKHH...
+...more base64...
+-----END CERTIFICATE-----"
+```
+
+You read it back as one string, newlines intact:
+
+```ts twoslash
+import { Envapter } from 'envapt';
+// ---cut---
+const cert = Envapter.get('TLS_CERT');
+//    ^?
+```
+
+With double quotes you can also keep it on one line and write `\n` between segments; envapt decodes them. With single quotes or backticks the line breaks must be real (a literal `\n` stays literal).
+
+## Unescaped inner quotes
+
+Like dotenv, envapt matches a quoted value to the rightmost matching quote on the value, so unescaped inner quotes are tolerated.
+
+```dotenv
+JSON="{"name":"envapt","port":3000}"
+```
+
+<Callout type="tip">
+    `JSON` above round-trips to `{"name":"envapt","port":3000}` without escaping the inner quotes. Pair it with the
+    [`Json` converter](/docs/converters#json) to parse it.
+</Callout>
+
+<Callout type="info">
+    The parser stores values literally; it does not expand `${VAR}` here. That interpolation runs when you read a value,
+    covered in [Templates](/docs/templates).
+</Callout>

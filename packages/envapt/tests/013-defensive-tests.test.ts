@@ -1,15 +1,14 @@
 import { expect } from 'chai';
 import { describe, it, vi } from 'vitest';
 
-import { BuiltInConverters } from '../src/BuiltInConverters';
-import { Converters } from '../src/Converters';
+import { BuiltInConverters, Converters, ValueConverter } from '../src/converters';
 import { Envapter } from '../src/Envapter';
 import { EnvaptError, EnvaptErrorCodes } from '../src/Error';
-import { Parser } from '../src/Parser';
+import { TemplateResolver } from '../src/TemplateResolver';
 import { Validator } from '../src/Validators';
 
-import type { EnvapterService } from '../src/Parser';
-import type { BuiltInConverter, EnvKeyInput, PrimitiveConstructor } from '../src/Types';
+import type { BuiltInConverter, EnvKeyInput, PrimitiveConstructor } from '../src/types';
+import type { EnvapterService } from '../src/types/Env';
 
 class StubEnvService implements EnvapterService {
     constructor(
@@ -126,26 +125,26 @@ describe('Defensive tests', () => {
         });
     });
 
-    describe('Parser defensive code paths', () => {
+    describe('Converter and template-resolver defensive code paths', () => {
         it('preserves unresolved templates when nested resolution produces placeholders', () => {
-            const parser = new Parser(
+            const resolver = new TemplateResolver(
                 new StubEnvService({
                     TEMPLATE_ONE: '${TEMPLATE_TWO}',
                     TEMPLATE_TWO: '${TEMPLATE_THREE}'
                 })
             );
 
-            const resolved = parser.resolveTemplate('TEMPLATE_ONE', '${TEMPLATE_TWO}');
+            const resolved = resolver.resolveTemplate('TEMPLATE_ONE', '${TEMPLATE_TWO}');
             expect(resolved).to.equal('${TEMPLATE_TWO}');
         });
 
         it('converts primitive Symbol constructors to built-in converters', () => {
-            const parser = new Parser(new StubEnvService({ SYMBOLIC_VALUE: 'envapt' }));
-            const parserInternals = parser as unknown as {
+            const converter = new ValueConverter(new StubEnvService({ SYMBOLIC_VALUE: 'envapt' }));
+            const converterInternals = converter as unknown as {
                 convertPrimitiveToString: (primitiveConstructor: PrimitiveConstructor) => BuiltInConverter;
             };
-            const spy = vi.spyOn(parserInternals, 'convertPrimitiveToString');
-            const result = parser.convertValue('SYMBOLIC_VALUE', undefined, Symbol, false);
+            const spy = vi.spyOn(converterInternals, 'convertPrimitiveToString');
+            const result = converter.convertValue('SYMBOLIC_VALUE', undefined, Symbol, false);
 
             expect(typeof result).to.equal('symbol');
             expect(Symbol.keyFor(result as symbol)).to.equal('envapt');
@@ -154,17 +153,17 @@ describe('Defensive tests', () => {
         });
 
         it('returns [] when array converter yields no items after filtering empty entries', () => {
-            const parser = new Parser(new StubEnvService({ EMPTY_LIST: ' , , ' }));
-            const result = parser.convertValue('EMPTY_LIST', undefined, Converters.array({ delimiter: ',' }), false);
+            const converter = new ValueConverter(new StubEnvService({ EMPTY_LIST: ' , , ' }));
+            const result = converter.convertValue('EMPTY_LIST', undefined, Converters.array({ delimiter: ',' }), false);
             expect(result).to.deep.equal([]);
         });
 
         it('maps primitive Symbol constructors directly via internal converter', () => {
-            const parser = new Parser(new StubEnvService({}));
-            const unsafeParser = parser as unknown as {
+            const converter = new ValueConverter(new StubEnvService({}));
+            const unsafeConverter = converter as unknown as {
                 convertPrimitiveToString: (primitiveConstructor: PrimitiveConstructor) => BuiltInConverter;
             };
-            expect(unsafeParser.convertPrimitiveToString(Symbol)).to.equal('symbol');
+            expect(unsafeConverter.convertPrimitiveToString(Symbol)).to.equal('symbol');
         });
     });
 

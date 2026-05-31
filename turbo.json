@@ -1,11 +1,11 @@
 {
-    "$schema": "https://turbo.build/schema.json",
+    "$schema": "https://v2-9-16.turborepo.dev/schema.json",
     "ui": "tui",
     "tasks": {
         "build": {
             "dependsOn": ["^build"],
             "inputs": ["$TURBO_DEFAULT$", ".env*"],
-            "outputs": ["dist/**", ".next/**", "!.next/cache/**"]
+            "outputs": ["dist/**", ".next/**", "!.next/cache/**", "out/**"]
         },
         "dev": {
             "cache": false,

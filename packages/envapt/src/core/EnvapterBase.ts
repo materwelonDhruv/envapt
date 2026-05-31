@@ -1,4 +1,6 @@
+import { dirname, isAbsolute, join, resolve } from 'node:path';
 import process from 'node:process';
+import { fileURLToPath } from 'node:url';
 
 import { debugVerbose, getDebugLevel, setDebugLevel } from '../Debug';
 import { loadDotenv } from '../Dotenv';
@@ -6,8 +8,8 @@ import { EnvaptError, EnvaptErrorCodes } from '../Error';
 import { Validator } from '../Validators';
 
 import type { DebugLevel } from '../Debug';
-import type { DotenvConfigOptions } from '../Dotenv';
-import type { EnvKeyInput } from '../Types';
+import type { EnvFileOptions } from '../Dotenv';
+import type { EnvKeyInput } from '../types';
 
 /**
  * Base cache for environment variables and computed values
@@ -21,9 +23,10 @@ export const EnvaptCache = new Map<string, unknown>();
  * @internal
  */
 export abstract class EnvapterBase {
-    protected static _envPaths: string[] = ['.env']; // default path
+    protected static _envPaths: string[] = ['.env'];
     protected static _envPathsExplicitlySet = false;
-    protected static _userDefinedDotenvConfig: DotenvConfigOptions = {};
+    protected static _baseDir: string | undefined = undefined;
+    protected static _userDefinedEnvFileOptions: EnvFileOptions = {};
     protected static _strict = false;
     protected static _syncProcessEnv = false;
     // Loader-written keys only (collisions skipped). Refilled on every cache rebuild.
@@ -34,12 +37,9 @@ export abstract class EnvapterBase {
      * previously-cached converted values get re-evaluated under the new rule.
      */
     static set strict(value: boolean) {
-        // `this._strict = value` would create an own property on the subclass that invoked the
-        // setter; readers walking up from `PrimitiveMethods` would still see the base default.
-        // Pin the write to the base class so the flag is canonical across the chain.
+        // Anchored to EnvapterBase: `this._strict` would write an own-property on the subclass that base readers miss.
         EnvapterBase._strict = value;
-        // `this.refreshCache()` so subclass overrides of `resolveEffectivePaths` (the
-        // dotenv-flow cascade on `EnvironmentMethods`) are honored on the rebuild.
+        // `this`, not EnvapterBase: rebuild via the subclass so its `resolveEffectivePaths` override is honored.
         this.refreshCache();
     }
 
@@ -64,7 +64,7 @@ export abstract class EnvapterBase {
      * Opt-in mirror of dotenv-loaded keys back to `process.env`. Default `false`.
      *
      * Only keys the loader actually wrote are mirrored, so collision behavior follows
-     * `dotenvConfig.override`: with the default `false`, pre-existing `process.env` values
+     * `envFileOptions.override`: with the default `false`, pre-existing `process.env` values
      * are preserved; with `true`, the file value wins in both the cache and the mirror.
      *
      * Flipping `false → true` mirrors the existing tracked delta immediately (no cache
@@ -74,8 +74,7 @@ export abstract class EnvapterBase {
     static set syncProcessEnv(value: boolean) {
         Validator.validateSyncProcessEnv(value);
         const previous = EnvapterBase._syncProcessEnv;
-        // Anchored to EnvapterBase: `this._syncProcessEnv = value` creates an own-property
-        // on the subclass that readers walking up to the base would miss.
+        // Anchored to EnvapterBase: `this._syncProcessEnv` would write an own-property on the subclass that base readers miss.
         EnvapterBase._syncProcessEnv = value;
         if (!previous && value && EnvaptCache.size > 0) this.mirrorToProcessEnv();
     }
@@ -99,7 +98,7 @@ export abstract class EnvapterBase {
      */
     static set envPaths(paths: string[] | string) {
         const newPaths = Array.isArray(paths) ? paths : [paths];
-        Validator.validateEnvFilesExist(newPaths);
+        Validator.validateEnvFilesExist(newPaths.map((p) => this.resolveAgainstBase(p)));
 
         this._envPaths = newPaths;
         this._envPathsExplicitlySet = true;
@@ -114,29 +113,58 @@ export abstract class EnvapterBase {
     }
 
     /**
-     * Set custom dotenv configuration options.
+     * Set a base directory that relative `.env` paths resolve against instead of
+     * `process.cwd()`: the auto-cascade, {@link configureProfiles} paths, and relative
+     * `envPaths`. Absolute paths always bypass it. Pass a directory, or a module URL
+     * (`import.meta.url`, ESM) / `import.meta.dirname` / `__dirname` (CJS) to anchor
+     * resolution next to the calling file regardless of launch directory.
+     *
+     * Set this before `envPaths` so relative `envPaths` validate against the right directory.
+     * Unset (`undefined`) restores `process.cwd()` resolution.
      */
-    static set dotenvConfig(config: DotenvConfigOptions) {
-        Validator.validateDotenvConfig(config);
-        this._userDefinedDotenvConfig = config;
+    static set baseDir(value: string | URL | undefined) {
+        EnvapterBase._baseDir = value === undefined ? undefined : this.normalizeBaseDir(value);
+        this.refreshCache();
+    }
+
+    static get baseDir(): string | undefined {
+        return EnvapterBase._baseDir;
+    }
+
+    // `file:` URLs resolve to their containing directory; plain paths (`import.meta.dirname`, `__dirname`) are taken as the directory.
+    private static normalizeBaseDir(value: string | URL): string {
+        if (value instanceof URL) return dirname(fileURLToPath(value));
+        if (value.startsWith('file:')) return dirname(fileURLToPath(value));
+        return resolve(value);
+    }
+
+    // No baseDir: path is returned unchanged so Node resolves it against process.cwd() (the historical default).
+    protected static resolveAgainstBase(candidate: string): string {
+        if (EnvapterBase._baseDir === undefined) return candidate;
+        if (isAbsolute(candidate)) return candidate;
+        return join(EnvapterBase._baseDir, candidate);
+    }
+
+    static set envFileOptions(config: EnvFileOptions) {
+        Validator.validateEnvFileOptions(config);
+        this._userDefinedEnvFileOptions = config;
         this.refreshCache();
     }
 
     /**
      * Get current dotenv configuration options
      */
-    static get dotenvConfig(): DotenvConfigOptions {
-        return this._userDefinedDotenvConfig;
+    static get envFileOptions(): EnvFileOptions {
+        return this._userDefinedEnvFileOptions;
     }
 
     protected static refreshCache(): void {
         EnvaptCache.clear();
         EnvapterBase._dotenvAddedKeys = new Set();
         debugVerbose('cache cleared, reloading config');
-        void this.config; // reload config to repopulate cache
+        void this.config; // getter rebuilds the cache as a side effect
     }
 
-    // Early-return on an empty delta so the verbose summary line is not emitted on a no-op.
     protected static mirrorToProcessEnv(): void {
         if (EnvapterBase._dotenvAddedKeys.size === 0) return;
         for (const key of EnvapterBase._dotenvAddedKeys) {
@@ -158,7 +186,7 @@ export abstract class EnvapterBase {
      */
     protected static resolveEffectivePaths(): string[] {
         /* v8 ignore next -- @preserve */
-        return this._envPaths;
+        return this._envPaths.map((p) => this.resolveAgainstBase(p));
     }
 
     protected static resolveKeyInput(keyInput: EnvKeyInput): { key: string; value: string | undefined } {
@@ -189,24 +217,22 @@ export abstract class EnvapterBase {
 
     protected static get config(): Map<string, unknown> {
         if (EnvaptCache.size === 0) {
-            // create isolated environment object to avoid mutating process.env
+            // Clone so the loader and downstream reads never mutate process.env.
             const isolatedEnv: Record<string, string> = { ...(process.env as Record<string, string>) };
 
-            // Path resolution (outside the try below). Surfaces EnvaptError early when an
-            // explicitly configured profile path is missing. dotenv parse errors stay caught.
+            // Outside the try below so a missing configured profile path surfaces its EnvaptError; only dotenv parse errors stay caught.
             const effectivePaths = this.resolveEffectivePaths();
             debugVerbose(`effective .env paths: ${effectivePaths.length === 0 ? '(none)' : effectivePaths.join(', ')}`);
 
             let added = new Set<string>();
             try {
                 added = loadDotenv({
-                    ...this._userDefinedDotenvConfig,
+                    ...this._userDefinedEnvFileOptions,
                     path: effectivePaths,
                     processEnv: isolatedEnv
                 });
             } catch {}
             EnvapterBase._dotenvAddedKeys = added;
-            // populate the Map with global environment variables
             for (const [key, value] of Object.entries(isolatedEnv)) EnvaptCache.set(key, value);
             debugVerbose(`cache populated: ${EnvaptCache.size} keys total`);
             if (EnvapterBase._syncProcessEnv) this.mirrorToProcessEnv();
@@ -216,7 +242,16 @@ export abstract class EnvapterBase {
     }
 
     /**
-     * Get raw environment variable value without parsing or conversion.
+     * Eagerly load the `.env` cascade now instead of lazily on the first read. Idempotent: a no-op
+     * once the cache is built. Useful before mirroring to `process.env` (see {@link syncProcessEnv}),
+     * which is what the `envapt/config` side-effect entry does.
+     */
+    static load(): void {
+        void this.config;
+    }
+
+    /**
+     * Read an environment variable as its raw string, skipping parsing and conversion.
      */
     getRaw(key: EnvKeyInput): string | undefined {
         return EnvapterBase.resolveKeyInput(key).value;

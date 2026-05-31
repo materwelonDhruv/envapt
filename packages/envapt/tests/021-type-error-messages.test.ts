@@ -9,9 +9,8 @@ import { describe, it } from 'vitest';
 /**
  * Compile-time TS error verification via the TypeScript compiler API. Neither `expect-type`
  * nor `tsd` checks the TEXT of a diagnostic message, only that an error is produced. The
- * dotenvConfig `path` / `processEnv` brands rely on a specific literal appearing in the
- * type-assignment error, so we run `tsc` directly against fixtures and assert message
- * fragments.
+ * SchemaMustBeSync brand relies on a specific literal appearing in the diagnostic, so we run
+ * `tsc` directly against fixtures and assert message fragments.
  *
  * Fixtures live in `tests/type-error-fixtures/` and are excluded from both the package's
  * tsconfig and eslint. A dedicated tsconfig inside that directory exists so the IDE shows
@@ -76,37 +75,6 @@ describe('TS error message verification (compiler API)', () => {
             }
         }
     );
-
-    describe('dotenvConfig forbidden fields surface the branded explanation', () => {
-        it(
-            '`path` rejection is TS2322 with the explanation literal in the message',
-            { timeout: FIXTURE_TIMEOUT_MS },
-            () => {
-                const diagnostics = compileFixture('dotenv-path-forbidden.ts');
-                expect(diagnostics).to.have.lengthOf(1);
-
-                const [diagnostic] = diagnostics;
-                if (!diagnostic) throw new Error('expected exactly one diagnostic');
-                expect(diagnostic.code, 'expected TS2322 (type-not-assignable)').to.equal(2322);
-                expect(diagnostic.message).to.include('`path` is managed by Envapter');
-                expect(diagnostic.message).to.include('Envapter.envPaths');
-            }
-        );
-
-        it(
-            '`processEnv` rejection is TS2322 with the explanation literal in the message',
-            { timeout: FIXTURE_TIMEOUT_MS },
-            () => {
-                const diagnostics = compileFixture('dotenv-process-env-forbidden.ts');
-                expect(diagnostics).to.have.lengthOf(1);
-
-                const [diagnostic] = diagnostics;
-                if (!diagnostic) throw new Error('expected exactly one diagnostic');
-                expect(diagnostic.code, 'expected TS2322 (type-not-assignable)').to.equal(2322);
-                expect(diagnostic.message).to.include('`processEnv` is managed internally by Envapter');
-            }
-        );
-    });
 
     describe('async-validating schema produces the SchemaMustBeSync branded compile error', () => {
         it(

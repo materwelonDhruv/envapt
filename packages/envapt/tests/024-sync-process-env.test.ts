@@ -38,14 +38,14 @@ describe('syncProcessEnv (v5)', () => {
         // Scrub fixture keys BEFORE rebuilding the cache so the loader observes a clean
         // process.env snapshot and tracks every fixture key as added.
         Envapter.syncProcessEnv = false;
-        Envapter.dotenvConfig = {};
+        Envapter.envFileOptions = {};
         cleanFixtureKeys();
         Envapter.envPaths = FIXTURE_PATH;
     });
 
     afterEach(() => {
         Envapter.syncProcessEnv = false;
-        Envapter.dotenvConfig = {};
+        Envapter.envFileOptions = {};
         cleanFixtureKeys();
         resetDebugForTesting();
     });
@@ -122,7 +122,7 @@ describe('syncProcessEnv (v5)', () => {
         it('overwrites the pre-existing process.env value with the file value', () => {
             cleanFixtureKeys();
             process.env.SYNC_KEY_COLLISION = 'from-shell';
-            Envapter.dotenvConfig = { override: true };
+            Envapter.envFileOptions = { override: true };
             Envapter.envPaths = FIXTURE_PATH;
             Envapter.syncProcessEnv = true;
             expect(process.env.SYNC_KEY_COLLISION).to.equal('from-file');

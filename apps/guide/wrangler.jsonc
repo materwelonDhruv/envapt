@@ -1,0 +1,11 @@
+{
+    "$schema": "node_modules/wrangler/config-schema.json",
+    "name": "envapt",
+    "compatibility_date": "2026-05-30",
+    "assets": {
+        "directory": "./out",
+        // 404-page (not the default) serves the static export's 404.html; auto-trailing-slash mirrors next.config trailingSlash: true
+        "not_found_handling": "404-page",
+        "html_handling": "auto-trailing-slash"
+    }
+}

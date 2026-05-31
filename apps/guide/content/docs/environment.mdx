@@ -1,0 +1,112 @@
+---
+title: Environment
+description: Detect the current runtime environment and auto-load the matching .env files for it.
+---
+
+envapt detects which environment it's running in and loads the matching `.env` files for it. The `isProduction` / `isStaging` / `isDevelopment` helpers read that same value.
+
+## Detecting the environment
+
+The environment is resolved from the first of these that is set, falling back to development:
+
+`ENVIRONMENT` → `ENV` → `NODE_ENV` → `development`
+
+Read it as an enum, or through boolean helpers for the common checks.
+
+```ts twoslash
+import { Envapter } from 'envapt';
+// ---cut---
+Envapter.environment; // Environment
+//        ^?
+Envapter.isProduction; // boolean
+Envapter.isStaging;
+Envapter.isDevelopment;
+```
+
+<Callout type="info">
+    `Environment` has three members: `Development`, `Staging`, `Production`. A value of `production` (any case) maps to
+    `Production`, `staging` to `Staging`, and everything else to `Development`.
+</Callout>
+
+## Branching on the environment
+
+Use the helpers where behavior should differ per environment.
+
+```ts twoslash
+import { Envapter } from 'envapt';
+// ---cut---
+const logLevel = Envapter.isProduction ? 'warn' : 'debug';
+//    ^?
+
+if (Envapter.isDevelopment) {
+    // wire up dev-only tooling
+}
+```
+
+## Overriding detection
+
+Set `Envapter.environment` to pin the environment explicitly, regardless of what the env vars say. It accepts the `Environment` enum or a string.
+
+```ts twoslash
+import { Envapter, Environment } from 'envapt';
+// ---cut---
+Envapter.environment = Environment.Staging;
+Envapter.environment = 'production'; // strings work too
+```
+
+An explicit assignment also selects which `.env` files load on the next read, so set it before reading environment-specific values.
+
+<Callout type="tip">
+    Pin `Envapter.environment` once, early in your entry file, before any config reads. Setting it after a read means
+    that read already used the previously detected environment's files.
+</Callout>
+
+## Per-environment `.env` files
+
+For the detected (or overridden) environment, envapt layers a dotenv-flow cascade, loading the first file that exists at each level, highest precedence first:
+
+1. `.env.${env}.local`
+2. `.env.${env}`
+3. `.env.local`
+4. `.env`
+
+So in production it reads `.env.production.local` → `.env.production` → `.env.local` → `.env`. Values from higher-precedence files win; missing files are skipped.
+
+<Callout type="warn">
+    Precedence is **most-specific-wins**: `.env.production` outranks `.env.local`. This differs from dotenv-flow /
+    Next.js, where `.env.local` sits on top. The intent is that a committed `.env.production` stays authoritative for
+    that environment even if a stray `.env.local` is present.
+</Callout>
+
+## Custom profiles
+
+When your per-environment files live elsewhere, `configureProfiles` layers explicit paths on top of the cascade for the environments you name. Earlier paths in the array win.
+
+```ts twoslash
+import { Envapter, Environment } from 'envapt';
+// ---cut---
+Envapter.configureProfiles({
+    [Environment.Production]: { paths: ['config/prod.env', 'secrets/prod.env'] },
+    [Environment.Staging]: { paths: 'config/staging.env' }
+});
+```
+
+<Callout type="danger">
+    A path you name in `configureProfiles` must exist. A missing configured path throws `EnvaptError` with code
+    `EnvFilesNotFound` on the next read. The auto-cascade files are skipped when missing, but configured paths are not.
+</Callout>
+
+Set `useDefaults: false` to load **only** the configured paths and skip the auto-cascade entirely.
+
+```ts twoslash
+import { Envapter, Environment } from 'envapt';
+// ---cut---
+Envapter.configureProfiles({
+    [Environment.Production]: { paths: 'config/prod.env' },
+    useDefaults: false
+});
+
+Envapter.resetProfiles(); // back to the pure cascade
+```
+
+To bypass environment-based selection altogether and load a fixed set of files, set `Envapter.envPaths` directly, covered in [Configuration](/docs/configuration).

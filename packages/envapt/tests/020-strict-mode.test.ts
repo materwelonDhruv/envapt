@@ -374,21 +374,6 @@ describe('Strict mode + required (v5)', () => {
             // @ts-expect-error fallback not allowed when required: true
             Envapter.getUsing('SET_NUMBER', { converter: Converters.Number, required: true, fallback: 3000 });
         });
-
-        it('dotenvConfig forbidden keys are compile-time errors AND runtime errors', () => {
-            // @ts-expect-error `path` is managed by Envapter.envPaths
-            expect(() => (Envapter.dotenvConfig = { path: 'whatever' }))
-                .to.throw(EnvaptError)
-                .with.property('code', EnvaptErrorCodes.InvalidUserDefinedConfig);
-
-            // @ts-expect-error `processEnv` is managed internally by Envapter
-            expect(() => (Envapter.dotenvConfig = { processEnv: {} }))
-                .to.throw(EnvaptError)
-                .with.property('code', EnvaptErrorCodes.InvalidUserDefinedConfig);
-
-            // Reset to clean state so following tests aren't affected.
-            Envapter.dotenvConfig = {};
-        });
     });
 
     describe('Strict mode does NOT make missing keys throw on get*', () => {

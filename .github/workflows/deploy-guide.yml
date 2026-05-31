@@ -1,0 +1,108 @@
+name: deploy-guide
+
+on:
+    push:
+        branches: [main]
+        paths:
+            - 'apps/guide/**'
+            - 'packages/envapt/**'
+            - '.github/workflows/deploy-guide.yml'
+    pull_request:
+        paths:
+            - 'apps/guide/**'
+            - 'packages/envapt/**'
+            - '.github/workflows/deploy-guide.yml'
+    workflow_dispatch:
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+permissions:
+    contents: read
+    pull-requests: write
+
+jobs:
+    deploy:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v6
+              with:
+                  fetch-depth: 0
+            - name: Turbo cache
+              uses: ./.github/actions/turbo-cache
+              with:
+                  turbo_token: ${{ secrets.TURBO_TOKEN }}
+                  turbo_team: ${{ vars.TURBO_TEAM }}
+                  enable_fallback_cache: 'true'
+            - name: Setup pnpm
+              uses: pnpm/action-setup@v6
+            - name: Setup Node.js
+              uses: actions/setup-node@v6
+              with:
+                  node-version: 24.16.0
+                  cache: pnpm
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+            - name: Build
+              run: pnpm build
+
+            - name: Deploy production
+              if: github.event_name == 'push'
+              uses: cloudflare/wrangler-action@v4
+              with:
+                  apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+                  accountId: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+                  workingDirectory: apps/guide
+                  wranglerVersion: '4.95.0'
+                  command: deploy
+
+            - name: Compute preview alias
+              if: github.event_name == 'pull_request'
+              id: alias
+              run: |
+                  alias="$(printf '%s' "${{ github.head_ref }}" \
+                    | tr '[:upper:]' '[:lower:]' \
+                    | tr -c 'a-z0-9' '-' \
+                    | sed -E 's/-+/-/g; s/^-+//; s/-+$//' \
+                    | cut -c1-40 \
+                    | sed -E 's/-+$//')"
+                  echo "alias=$alias" >> "$GITHUB_OUTPUT"
+                  echo "url=https://$alias-envapt.materwelon.workers.dev" >> "$GITHUB_OUTPUT"
+            - name: Deploy preview
+              if: github.event_name == 'pull_request'
+              uses: cloudflare/wrangler-action@v4
+              with:
+                  apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+                  accountId: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+                  workingDirectory: apps/guide
+                  wranglerVersion: '4.95.0'
+                  command: versions upload --preview-alias ${{ steps.alias.outputs.alias }}
+            - name: Comment preview URL
+              if: github.event_name == 'pull_request'
+              uses: actions/github-script@v8
+              env:
+                  PREVIEW_URL: ${{ steps.alias.outputs.url }}
+                  HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+              with:
+                  script: |
+                      const marker = '<!-- envapt-guide-preview -->';
+                      const sha = process.env.HEAD_SHA.slice(0, 7);
+                      const body = [
+                          marker,
+                          '### Docs preview',
+                          '',
+                          `Deployed to ${process.env.PREVIEW_URL}`,
+                          '',
+                          `<sub>Updated for ${sha}. Re-points on every commit.</sub>`
+                      ].join('\n');
+                      const { owner, repo } = context.repo;
+                      const issue_number = context.issue.number;
+                      const { data: comments } = await github.rest.issues.listComments({ owner, repo, issue_number });
+                      const existing = comments.find((c) => c.body?.includes(marker));
+                      if (existing) {
+                          await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
+                      } else {
+                          await github.rest.issues.createComment({ owner, repo, issue_number, body });
+                      }

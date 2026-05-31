@@ -1,0 +1,96 @@
+---
+title: Migration (v4 to v5)
+description: Moving from envapt v4 to v5, the breaking changes, renames, and behavior shifts to watch.
+---
+
+v5 is a major release. This page lists what changed from v4 and how to update. Most apps only need the renames in the first few sections; read [Behavior changes to watch](#behavior-changes-to-watch) for shifts that compile cleanly but run differently.
+
+## Array converters
+
+`Converters.Array` and the inline `{ delimiter, type }` object are replaced by the `Converters.array(...)` builder.
+
+```ts
+// v4
+@Envapt('PORTS', { converter: { delimiter: ',', type: Converters.Number }, fallback: [] })
+
+// v5
+@Envapt('PORTS', { converter: Converters.array({ of: Converters.Number }), fallback: [] })
+```
+
+`of` defaults to `string` and `delimiter` to `,`, and `of` also accepts a `(raw) => T` function for a typed element. `Converters` is now a plain object rather than an enum, so it is no longer usable as a type; use `ConverterToken` instead. See [Converters](/docs/converters).
+
+## dotenvConfig is now envFileOptions
+
+`Envapter.dotenvConfig` is renamed to `Envapter.envFileOptions` (the type `DotenvConfigOptions` becomes `EnvFileOptions`). Only `encoding` and `override` remain. `quiet`, `DOTENV_KEY`, `debug`, `path`, and `processEnv` are gone.
+
+```ts
+// v4
+Envapter.dotenvConfig = { override: true, quiet: false, debug: true };
+
+// v5
+Envapter.envFileOptions = { override: true };
+```
+
+To choose which files load, use [`Envapter.envPaths`](/docs/configuration). `DOTENV_KEY` (dotenv-vault) is out of scope; decrypt externally and pass the resulting `.env` path to `envPaths`.
+
+## Debug output
+
+The `debug` option moved to its own switch, and output is now on stderr with an `[envapt]` prefix instead of `[dotenv]`.
+
+```ts
+// v4
+Envapter.dotenvConfig = { debug: true };
+
+// v5
+Envapter.debug = 'verbose'; // or set ENVAPT_DEBUG=verbose
+```
+
+Levels are `silent` (default), `warn`, and `verbose`. See [Configuration](/docs/configuration#debug-logging).
+
+## Validation with Standard Schema
+
+Custom converters that throw still work, but the recommended way to validate is the [Standard Schema](/docs/standard-schema) adapter (zod, valibot, arktype, or a hand-rolled validator).
+
+```ts
+// v4: a custom converter that throws
+@Envapt('PORT', {
+    converter: (raw) => {
+        const n = Number(raw);
+        if (Number.isNaN(n)) throw new Error('bad PORT');
+        return n;
+    }
+})
+
+// v5
+@Envapt('PORT', { schema: z.coerce.number().int().min(1024) })
+```
+
+## Decorators
+
+The classic positional form is deprecated in v5 and will be removed in v6. Use the options object.
+
+```ts
+// v4 (will be removed in v6)
+@Envapt('PORT', 8080, Number)
+
+// v5
+@Envapt('PORT', { converter: Converters.Number, fallback: 8080 })
+```
+
+Declare decorated properties with `declare` and no initializer. This was always the correct pattern; v5 documents it explicitly. See [Decorators](/docs/decorators).
+
+## Node version
+
+The Node floor dropped from `>=24` to `>=20`, since the old pin existed only for an API envapt no longer uses. Bun `>=1.3` and Deno `>=2.5` are unchanged.
+
+## Behavior changes to watch
+
+<Callout type="danger">
+    These changes compile without edits but run differently than v4. Check them before upgrading.
+</Callout>
+
+- **Per-environment files auto-load.** When `envPaths` is not set, v5 layers a cascade, `.env.${env}.local`, `.env.${env}`, `.env.local`, then `.env`. A stray `.env.local` or `.env.production` in your working directory now loads where v4 ignored it. See [Environment](/docs/environment).
+- **Array element failures throw.** A value that fails its element converter throws `EnvaptError` with code `ArrayElementConversionFailed` (206) instead of silently producing a malformed array.
+- **Time-string fallbacks coerce.** `Envapter.getUsing('X', Converters.Time, '10s')` now returns `10000`, not the string `'10s'`. A malformed time-string fallback throws `MalformedTimeFallback` (105) rather than the older generic code.
+
+`process.env` is still not mutated by default; it never was in v4. If you relied on loaded keys appearing in `process.env`, opt in with [`Envapter.syncProcessEnv`](/docs/configuration#mirroring-to-processenv). See [Errors](/docs/errors) for the full code table.
