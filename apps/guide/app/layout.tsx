@@ -5,7 +5,7 @@ import { Hanken_Grotesk, JetBrains_Mono } from 'next/font/google';
 
 import { DEFAULT_OG_IMAGE, REPO_URL, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from '@/lib/site';
 
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 
 const sans = Hanken_Grotesk({ subsets: ['latin'], variable: '--font-hanken', display: 'swap' });
@@ -19,6 +19,11 @@ export const metadata: Metadata = {
     openGraph: { type: 'website', siteName: SITE_NAME, url: SITE_URL, locale: 'en_US', images: DEFAULT_OG_IMAGE },
     twitter: { card: 'summary_large_image' }
     // icons auto-detected from app/icon.svg + app/apple-icon.png (Next file convention)
+};
+
+// themeColor tints link-embed accents (Discord's side bar) and mobile browser chrome with --ev-brand.
+export const viewport: Viewport = {
+    themeColor: '#de6e39'
 };
 
 const structuredData = {

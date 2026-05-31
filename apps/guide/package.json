@@ -8,6 +8,8 @@
         "dev:fast": "TWOSLASH=0 next dev",
         "build": "fumadocs-mdx && NODE_OPTIONS=--max-old-space-size=8192 next build",
         "start": "pnpm dlx serve out",
+        "deploy": "wrangler deploy",
+        "deploy:preview": "wrangler versions upload",
         "postinstall": "fumadocs-mdx",
         "lint": "eslint . --cache",
         "lint:fix": "eslint . --fix --cache",
@@ -48,6 +50,7 @@
         "tailwindcss": "4.3.0",
         "twoslash": "0.3.8",
         "typescript": "catalog:dev",
+        "wrangler": "^4.95.0",
         "zod": "catalog:dev"
     }
 }

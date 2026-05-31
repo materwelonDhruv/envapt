@@ -1,5 +1,6 @@
 .next/
 out/
 .source/
+.wrangler/
 next-env.d.ts
 *.tsbuildinfo
