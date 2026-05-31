@@ -106,8 +106,8 @@ export function Envapt<TReturnType>(
  *   \@Envapt('APP_PORT', { converter: Converters.Number, fallback: 3000 })
  *   static readonly port: number;
  *
- *   // Use Url converter with a string fallback (must match converter type)
- *   \@Envapt('APP_URL', { converter: Converters.Url, fallback: 'http://localhost:3000' })
+ *   // Url converter: the fallback is a URL instance, not a string
+ *   \@Envapt('APP_URL', { converter: Converters.Url, fallback: new URL('http://localhost:3000') })
  *   static readonly url: URL;
  *
  *   // Prefer CANARY_URL when present, otherwise fall back to APP_URL

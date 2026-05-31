@@ -2,7 +2,7 @@
     "name": "envapt",
     "type": "module",
     "version": "4.1.1",
-    "description": "The apt way to handle env",
+    "description": "Type-safe environment variables for TypeScript. Zero-dependency .env loader and parser with the same API on Node, Bun, and Deno. Decorators, converters, and Standard Schema (zod/valibot/arktype) validation.",
     "types": "./dist/index.d.mts",
     "exports": {
         ".": {
@@ -26,6 +26,10 @@
             }
         }
     },
+    "sideEffects": [
+        "./dist/config.cjs",
+        "./dist/config.mjs"
+    ],
     "files": [
         "dist",
         "NOTICE.md",
@@ -69,7 +73,20 @@
         "variables",
         "config",
         "configuration",
-        "settings"
+        "settings",
+        "typescript",
+        "type-safe",
+        "deno",
+        "bun",
+        "zod",
+        "valibot",
+        "arktype",
+        "validation",
+        "decorator",
+        "dotenv-alternative",
+        "cross-runtime",
+        "esm",
+        "env-var"
     ],
     "author": "Dhruv <materwelondhruv@gmail.com>",
     "license": "Apache-2.0",

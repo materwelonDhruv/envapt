@@ -86,6 +86,14 @@ class Config {
 The guide, converter reference, validation, configuration, and the v4 to v5 migration live at
 **[envapt.materwelon.dev](https://envapt.materwelon.dev)**.
 
+## Agent skill
+
+Install the envapt agent skill so AI coding tools use the correct API:
+
+```sh
+npx skills add materwelonDhruv/envapt
+```
+
 ---
 
 <p align="center"><sub>Built by <a href="https://github.com/materwelondhruv">@materwelonDhruv</a> · Apache 2.0</sub></p>
