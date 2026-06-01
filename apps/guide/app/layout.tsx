@@ -17,7 +17,8 @@ export const metadata: Metadata = {
     description: SITE_DESCRIPTION,
     // og/twitter title and description stay unset so Next inherits each page's resolved title and description.
     openGraph: { type: 'website', siteName: SITE_NAME, url: SITE_URL, locale: 'en_US', images: DEFAULT_OG_IMAGE },
-    twitter: { card: 'summary_large_image' }
+    twitter: { card: 'summary_large_image' },
+    verification: { google: 'zqIImWHhuFI0Yd5Ej2SMF0EYRtVB9zcjMumS2-yaDJ4' }
     // icons auto-detected from app/icon.svg + app/apple-icon.png (Next file convention)
 };
 
