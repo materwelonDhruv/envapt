@@ -9,8 +9,7 @@ import { getMDXComponents } from '@/mdx-components';
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 
-// `output: export` has no runtime fallback for dynamic routes; this makes an unlisted slug 404
-// instead of throwing the "missing param in generateStaticParams" build/dev error.
+// need this so dev build shows 404 page for unlisted slug instead of crashing
 export const dynamicParams = false;
 
 function formatDate(date: string): string {
