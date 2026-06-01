@@ -1,5 +1,11 @@
 # envapt
 
+## 5.0.1
+
+### Patch Changes
+
+- Replace the README hero table with a borderless side-by-side layout so GitHub and npm no longer draw table chrome (or the heading underline) around it, and drop the rule between the hero and the intro.
+
 ## 5.0.0
 
 ### Major Changes

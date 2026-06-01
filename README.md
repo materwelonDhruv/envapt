@@ -1,24 +1,21 @@
-<table border="0" cellspacing="0" cellpadding="0">
-<tr>
-<td width="160" valign="middle" align="center">
-  <img src="https://raw.githubusercontent.com/materwelonDhruv/envapt/main/.github/assets/logo.png" width="120" alt="envapt logo" />
-</td>
-<td valign="middle">
-  <h1>envapt</h1>
-  <p>
-    <strong>The apt way to handle environment variables.</strong><br/>
-    Read them as typed values, with zero runtime dependencies and the same API on Node, Bun, and Deno.
-  </p>
+<img src="https://raw.githubusercontent.com/materwelonDhruv/envapt/main/.github/assets/logo.png" width="120" align="left" alt="envapt logo" />
+
+<h3>envapt</h3>
+
+<p>
+  <strong>The apt way to handle environment variables.</strong><br/>
+  Read them as typed values, with zero runtime dependencies and the same API on Node, Bun, and Deno.
+</p>
+
+<p>
   <a href="https://www.npmjs.com/package/envapt"><img alt="npm" src="https://img.shields.io/npm/v/envapt?logo=npm&logoColor=cb3838&label=%20&labelColor=103544&color=cb3838"></a>
   <a href="https://www.npmjs.com/package/envapt"><img alt="downloads" src="https://img.shields.io/npm/dm/envapt?style=flat&color=f7f6e8&labelColor=103544&label=downloads"></a>
   <a href="https://jsr.io/@materwelon/envapt"><img alt="jsr" src="https://jsr.io/badges/@materwelon/envapt"></a>
   <img alt="CI" src="https://img.shields.io/github/actions/workflow/status/materwelonDhruv/envapt/checks.yml?branch=main&label=tests&style=flat&logo=github&color=3fb950&labelColor=103544">
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/npm/l/envapt?style=flat&color=e97826&logo=apache&label="></a>
-</td>
-</tr>
-</table>
+</p>
 
----
+<br clear="left"/>
 
 `process.env` always hands you a `string | undefined`. envapt returns the type you asked for, with a
 fallback that removes `undefined` from the return type.
