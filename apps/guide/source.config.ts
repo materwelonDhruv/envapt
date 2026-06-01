@@ -1,6 +1,8 @@
 import { rehypeCodeDefaultOptions, remarkNpm } from 'fumadocs-core/mdx-plugins';
+import { pageSchema } from 'fumadocs-core/source/schema';
 import { defineConfig, defineDocs } from 'fumadocs-mdx/config';
 import { transformerTwoslash } from 'fumadocs-twoslash';
+import { z } from 'zod';
 
 import { createSaltedTypesCache } from './lib/twoslash-cache';
 
@@ -9,6 +11,16 @@ export const docs = defineDocs({
     docs: {
         // enables page.data.getText('processed'), consumed by llms-full.txt
         postprocess: { includeProcessedMarkdown: true }
+    }
+});
+
+export const blogPosts = defineDocs({
+    dir: 'content/blog',
+    docs: {
+        schema: pageSchema.extend({
+            author: z.string(),
+            date: z.string()
+        })
     }
 });
 

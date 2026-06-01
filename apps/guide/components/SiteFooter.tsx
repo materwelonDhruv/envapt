@@ -15,7 +15,8 @@ const DOCS = [
 const RESOURCES = [
     { label: 'GitHub', href: 'https://github.com/materwelonDhruv/envapt' },
     { label: 'npm', href: 'https://www.npmjs.com/package/envapt' },
-    { label: 'JSR', href: 'https://jsr.io/@materwelon/envapt' }
+    { label: 'JSR', href: 'https://jsr.io/@materwelon/envapt' },
+    { label: 'Blog', href: '/blog' }
 ];
 
 export function SiteFooter(): ReactNode {
