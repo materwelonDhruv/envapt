@@ -43,6 +43,10 @@ export function defaultCard(): ReactElement {
                         Read environment variables as real types. Zero runtime dependencies, the same API on Node, Bun,
                         and Deno.
                     </div>
+                    <div style={{ display: 'flex', gap: 12, fontFamily: 'JetBrains Mono', fontSize: 27 }}>
+                        <span style={{ color: OG.teal }}>$</span>
+                        <span style={{ color: OG.white }}>npm i envapt</span>
+                    </div>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
                     <div
