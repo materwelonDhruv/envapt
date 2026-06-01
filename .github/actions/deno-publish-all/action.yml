@@ -35,8 +35,12 @@ runs:
                 exit 1
             fi
 
+            # -maxdepth 2 keeps only top-level package configs (packages/<pkg>/deno.json)
+            # and skips nested, non-publishable ones like tests/integration/deno.json,
+            # which has no JSR `name` and makes `deno publish` fail.
             mapfile -d '' -t CONFIG_FILES < <(
                 find "$ABS_SEARCH_ROOT" \
+                    -maxdepth 2 \
                     -type f \
                     \( -name 'deno.json' -o -name 'deno.jsonc' -o -name 'jsr.json' -o -name 'jsr.jsonc' \) \
                     -print0
