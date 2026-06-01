@@ -1,5 +1,11 @@
 # envapt
 
+## 5.0.2
+
+### Patch Changes
+
+- 1ac6429: Tighten README positioning and claims.
+
 ## 5.0.1
 
 ### Patch Changes
