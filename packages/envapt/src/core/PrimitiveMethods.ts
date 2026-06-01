@@ -23,8 +23,8 @@ enum Primitive {
  */
 export class PrimitiveMethods extends EnvironmentMethods implements EnvapterService {
     private static readonly service = new PrimitiveMethods();
-    protected static readonly templateResolver = new TemplateResolver(PrimitiveMethods.service);
-    protected static readonly valueConverter = new ValueConverter(PrimitiveMethods.service);
+    protected static readonly templateResolver: TemplateResolver = new TemplateResolver(PrimitiveMethods.service);
+    protected static readonly valueConverter: ValueConverter = new ValueConverter(PrimitiveMethods.service);
 
     // Read `EnvapterBase.strict` directly: `PrimitiveMethods._strict` would resolve to the
     // BaseClass default because a `Envapter.strict = true` write lands as an own-property

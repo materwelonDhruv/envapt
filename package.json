@@ -32,6 +32,7 @@
         "cs:publish": "changeset publish",
         "cs:status": "changeset status",
         "release": "pnpm run build && pnpm run cs:publish",
+        "release:version": "changeset version && pnpm tsx scripts/bump-jsr.ts",
         "prepublishOnly": "pnpm run clean && pnpm run build",
         "bump:deps:pkgs": "for dir in packages/*/; do echo \"Updating $dir...\"; (cd \"$dir\" && pnpm update --latest); done",
         "bump:deps:apps": "for dir in apps/*/; do echo \"Updating $dir...\"; (cd \"$dir\" && pnpm update --latest); done",
@@ -62,5 +63,5 @@
         "vite": "^8.0.14",
         "vitest": "^4.1.7"
     },
-    "packageManager": "pnpm@11.3.0"
+    "packageManager": "pnpm@11.5.0"
 }
