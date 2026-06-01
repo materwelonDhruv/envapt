@@ -4,7 +4,7 @@
 
 <p>
   <strong>The apt way to handle environment variables.</strong><br/>
-  Read them as typed values, with zero runtime dependencies and the same API on Node, Bun, and Deno.
+  Read them as typed values, with zero runtime dependencies.
 </p>
 
 <p>
@@ -35,7 +35,7 @@ const port = Envapter.getNumber('PORT', 3000); // number, not string | undefined
   your own function or a Standard Schema validator (zod, valibot, arktype).
 - **Zero runtime dependencies.** envapt ships its own `.env` parser, so nothing is added to your
   dependency tree.
-- **The same API on Node, Bun, and Deno.** Node `>=20`, Bun `>=1.3`, Deno `>=2.5`; ESM and CJS.
+- **Runs on Node, Bun, and Deno.** Node `>=20`, Bun `>=1.3`, Deno `>=2.5`; ESM and CJS.
 - **`.env` loading built in.** A per-environment file cascade, `${VAR}` templates, and strict /
   required checks.
 
@@ -56,7 +56,7 @@ Both share the same parsing, converters, and cache.
 
 ### Functional
 
-Read a value anywhere, in JavaScript or TypeScript. No build step.
+Read a value from any call site, in JavaScript or TypeScript. No build step.
 
 ```ts
 import { Envapter, Converters } from 'envapt';

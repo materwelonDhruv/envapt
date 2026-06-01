@@ -1,0 +1,172 @@
+---
+title: Reading typed config from .env in TypeScript
+description: Read env vars as numbers, URLs, durations, and schema-validated values in TypeScript, with fallbacks that narrow the type and any Standard Schema validator you already use.
+author: Dhruv
+date: '2026-06-01'
+---
+
+`Number(process.env.PORT) || 3000`
+
+That line shows up in a lot of config files, and it has two bugs hiding in it.
+
+Misspell `PORT` in your `.env` and you don't get an error, you get `3000`, and you find out in production. Want to set `PORT=0` on purpose? You can't: `Number('0') || 3000` is `3000` too. The `|| fallback` can't tell "missing" from "zero," and `process.env` hands you `string | undefined` regardless, so every read sits one coercion away from a quiet bug.
+
+I got tired of writing that coercion by hand and keeping it correct, so I built envapt.
+
+## The typed read
+
+Here's the same port, read so the fallback only fires when the value is actually missing:
+
+```ts twoslash
+import { Envapter } from 'envapt';
+// ---cut---
+const port = Envapter.getNumber('PORT', 3000); // number, not string | undefined
+const debug = Envapter.getBoolean('DEBUG', false); // 1/yes/true/on -> true
+```
+
+`getNumber` returns `number`. `PORT=0` reads as `0`. A typo in `PORT` is unparseable, so it takes the fallback, but `0` is a perfectly good number and keeps it. The `Number(x) || default` trap is gone because there's no `||` deciding what counts as empty.
+
+The fallback also does something to the type. Passing one strips `undefined` from the return, so nothing downstream needs a `?? 3000`:
+
+```ts twoslash
+import { Envapter } from 'envapt';
+// ---cut---
+const withFallback = Envapter.getNumber('PORT', 3000);
+//    ^?
+const noFallback = Envapter.getNumber('PORT');
+//    ^?
+```
+
+Leave the fallback off and you get `number | undefined`. The type makes you handle the missing case instead of letting you forget. And `getBoolean` reads `1`, `yes`, `true`, `on` as true and `0`, `no`, `false`, `off` as false, case-insensitively, so `DEBUG=1` is `true` and not the silent `false` that `=== 'true'` gives you.
+
+## The shapes that aren't primitives
+
+Most config isn't a bare number. It's a URL, a comma list, a JSON blob, a timeout. `getUsing` takes a converter token and hands back the matching type:
+
+```ts twoslash
+import { Envapter, Converters } from 'envapt';
+// ---cut---
+const apiUrl = Envapter.getUsing('API_URL', Converters.Url);
+//    ^?
+const origins = Envapter.getUsing('ALLOWED_ORIGINS', Converters.array({ of: Converters.Url }));
+//    ^?
+const ttl = Envapter.getUsing('CACHE_TTL', Converters.Time, '5m'); // "5m" -> 300000 (ms)
+//    ^?
+```
+
+`Converters.Url` runs the value through `new URL`, so a non-absolute URL takes the fallback instead of slipping through as a string. `Converters.array({ of: Converters.Url })` splits on the delimiter and converts each element, so the type is `URL[]`, not the `string[]` you'd `.split(',')` your way to. `Converters.Time` reads `5m` and returns `300000`, which means a timeout in your `.env` reads the way you'd write it in code rather than as a pile of zeroes you have to count.
+
+The built-in tokens cover number, integer, float, boolean, bigint, symbol, JSON, URL, RegExp, Date, duration, and arrays. When none of them fit, `getWith` takes a plain `(raw, fallback) => T`:
+
+```ts twoslash
+import { Envapter } from 'envapt';
+// ---cut---
+const parsePair = (raw: string | undefined) => {
+    const [host, port] = (raw ?? 'localhost:80').split(':');
+    return { host, port: Number(port) };
+};
+
+const pair = Envapter.getWith('HOST_PORT', parsePair);
+//    ^?
+```
+
+Most typed-env libraries ask you to learn their schema. envapt doesn't have one.
+
+If your code already validates things with zod (or valibot, or arktype), hand that schema to envapt and it uses it:
+
+```ts twoslash
+import { z } from 'zod/v4';
+import { Envapter } from 'envapt';
+// ---cut---
+const port = Envapter.parse('PORT', z.coerce.number().int().min(1024));
+//    ^? number
+```
+
+t3-env and znv do this job too, and do it well, but they're built on zod: the validator is the dependency. envapt uses the Standard Schema interface instead, so which validator you bring is your call, and envapt itself adds nothing to your lockfile.
+
+`parse` runs the value through the schema and returns whatever the schema outputs, typed. A bad `PORT` throws on the `parse` line with the validator's own message, not a `NaN` that some later arithmetic turns into garbage. A third argument is an optional fallback, returned as-is on a missing value, so it has to already satisfy the type because the schema never sees it:
+
+```ts twoslash
+import { z } from 'zod/v4';
+import { Envapter } from 'envapt';
+// ---cut---
+const timeout = Envapter.parse('TIMEOUT_MS', z.coerce.number(), 30000);
+//    ^?
+```
+
+## If you'd rather have a config class
+
+The same reads bind to a class field with a decorator. The field is declared with `declare` and no initializer, and you need `experimentalDecorators` in your `tsconfig.json`:
+
+```ts twoslash
+import { z } from 'zod/v4';
+import { Envapt, Converters } from 'envapt';
+// ---cut---
+class Config {
+    @Envapt('PORT', { converter: Converters.Number, fallback: 3000 })
+    declare static readonly port: number;
+
+    @Envapt('LOG_LEVEL', { schema: z.enum(['debug', 'info', 'warn']) })
+    declare static readonly logLevel: 'debug' | 'info' | 'warn';
+}
+```
+
+The `declare` and the missing initializer are load-bearing. A real field declaration under `useDefineForClassFields` emits a constructor assignment that overwrites the decorator's getter with `undefined`, so the property reads back as nothing. `declare` tells the compiler the field exists without emitting that assignment. For the common types there's sugar that takes the key and an optional fallback:
+
+```ts twoslash
+import { EnvNum, EnvUrl, EnvTime } from 'envapt';
+// ---cut---
+class Config {
+    @EnvNum('PORT', 3000) declare static readonly port: number;
+    @EnvUrl('APP_URL', new URL('http://localhost:3000')) declare static readonly appUrl: URL;
+    @EnvTime('CACHE_TTL', '5m') declare static readonly ttl: number; // ms
+}
+```
+
+## How I actually use it
+
+In my bot framework, seedcord, which already leans on decorators, the Discord token binds to the `Bot` class that uses it, validated by a converter right at the binding:
+
+```ts twoslash
+import { Envapt } from 'envapt';
+// ---cut---
+function validateDiscordToken(raw: string | undefined): string {
+    if (!raw?.trim()) throw new Error('DISCORD_BOT_TOKEN is missing');
+    if (!/^[\w-]{24,}\.[\w-]{6,}\.[\w-]{27,}$/.test(raw)) {
+        throw new Error('DISCORD_BOT_TOKEN is malformed');
+    }
+    return raw;
+}
+
+class Bot {
+    @Envapt('DISCORD_BOT_TOKEN', { converter: (raw) => validateDiscordToken(raw) })
+    declare public readonly botToken: string; // string; a malformed token throws here
+}
+```
+
+t3-env centralizes: you declare every variable up front in one `createEnv` call, validated once at startup. envapt puts the check on the field that uses the value. Centralizing is the right call when one app owns all its env. seedcord's config is spread across independently-built pieces (the `Bot` owns the token, a webhook subscriber owns its URL), so each piece validates its own variable where it lives, and a malformed token throws the moment that field resolves instead of in a central config module three files away.
+
+envapt reads from `process.env` (and `.env` files when they exist), so it runs on Node, Bun, and Deno. I haven't tested it on Workers, and if your platform doesn't put config in `process.env`, use something that validates the object you hand it instead.
+
+## Loading the .env file
+
+For local development you still want a `.env` file. On Node that's usually `dotenv`. envapt parses `.env` itself, so it loads the file without adding a dependency:
+
+```ts twoslash
+import 'envapt/config';
+```
+
+That import is a drop-in for `dotenv/config`. It reads the cascade and mirrors the result into `process.env`. The cascade is per-environment and the most-specific file wins:
+
+```dotenv
+.env.production.local
+.env.production
+.env.local
+.env
+```
+
+`${VAR}` references expand while the file is parsed, so `DATABASE_URL=postgres://${DB_HOST}/${DB_NAME}` resolves on its own. You don't strictly need that import, either. Drop it and the typed reads still work; they read the cascade directly. The import is only there for the libraries that read `process.env` straight, before envapt does.
+
+## So, finally
+
+What envapt gives you is the combination: a fallback that narrows the type and tells missing from zero, converters for the shapes that aren't strings, and validation through the schema you already wrote rather than the one a helper chose for you. If that's the shape of your config problem, the docs and the v4-to-v5 migration are at [envapt.materwelon.dev](https://envapt.materwelon.dev), it's on [npm](https://www.npmjs.com/package/envapt) and [JSR](https://jsr.io/@materwelon/envapt), and the source is on [GitHub](https://github.com/materwelonDhruv/envapt). Please feel free to ask questions, report bugs, or suggest features in the repo! I'm always open to feedback and contributions.

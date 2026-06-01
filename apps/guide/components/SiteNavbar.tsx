@@ -15,7 +15,8 @@ const NAV_LINKS = [
     { label: 'Quick Start', href: '/docs/quick-start' },
     { label: 'Envapter', href: '/docs/envapter' },
     { label: 'Decorators', href: '/docs/decorators' },
-    { label: 'Converters', href: '/docs/converters' }
+    { label: 'Converters', href: '/docs/converters' },
+    { label: 'Blog', href: '/blog' }
 ];
 
 export function SiteNavbar(props: ComponentProps<'header'>): ReactNode {
