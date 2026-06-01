@@ -1,5 +1,127 @@
 # envapt
 
+## 5.0.0
+
+### Major Changes
+
+- 9711554: **BREAKING:** array converters now use a phantom-branded `Converters.array({ of?, delimiter? })` builder instead of the `{ delimiter, type }` config object. inference survives variable indirection and union-widening, and bad element values in the raw env value throw `EnvaptError` (`ArrayElementConversionFailed`, code 206) instead of silently substituting the raw string into a wrong-typed array.
+
+    Migration:
+
+    ```ts
+    // before
+    @Envapt('PORTS', { converter: { delimiter: ',', type: Converters.Number }, fallback: [] })
+    @Envapt('TAGS', { converter: Converters.Array, fallback: [] })
+
+    // after
+    @Envapt('PORTS', { converter: Converters.array({ of: Converters.Number }), fallback: [] })
+    @Envapt('TAGS', { converter: Converters.array(), fallback: [] })
+    ```
+
+    **BREAKING:** `Converters` migrates from a TS `enum` to an `as const` object so envapt source stays compatible with `erasableSyntaxOnly` / Node's native TS execution. call sites are unchanged (`Converters.Number === 'number'` still holds), but `Converters` is no longer usable as a type. use `ConverterToken` instead.
+
+    **BREAKING:** `Converters.Array` token is gone (use `Converters.array()`). the `ArrayConverter` and `ValidArrayConverterBuiltInType` types are gone (replaced by `ArrayOf<TElement>` and `ArrayElement`).
+
+    new: `of:` accepts a custom `(raw: string) => T` function. the array element type is inferred from the function's return type, so `Converters.array({ of: (raw) => User.parse(raw) })` types the property as `User[]`.
+
+    new: `Converters.array({ of: Converters.Time })` accepts `TimeFallback[]` (e.g. `['5s', '10m']`) as a fallback, matching the existing scalar `Converters.Time` asymmetry. string fallbacks are coerced to milliseconds at resolve time.
+
+    `Envapter.getUsing` now routes through the parser whenever a fallback is provided, so `TimeFallback` / `TimeFallback[]` fallbacks are coerced consistently with the `@Envapt` decorator path. fixes a pre-existing inconsistency where `Envapter.getUsing('MISSING', Converters.Time, '10s')` returned `'10s'` instead of `10000`.
+
+- 9711554: Add `Envapter.debug` three-level log toggle. Removes the `debug` key from the env-file options object.
+    - New `Envapter.debug = 'silent' | 'warn' | 'verbose'` (default `silent`). Output goes to stderr prefixed with `[envapt]`.
+    - New `ENVAPT_DEBUG` env var. Read lazily on first access if the setter was never called; the setter wins after that.
+    - `warn` level: failed `.env` reads, unresolved `${VAR}` templates (non-strict path), fallback values used in place of missing env.
+    - `verbose` level: everything in `warn` plus effective `.env` paths during cache rebuild, the cache-cleared notice, per-file key counts, and per-key load lines.
+    - New `DebugLevel` type re-exported from the package root.
+    - Invalid setter values throw `EnvaptError(InvalidUserDefinedConfig)` with a list of the accepted levels.
+    - **Breaking**: the `debug` key on the env-file options object is removed. Use `Envapter.debug = 'verbose'` (or `ENVAPT_DEBUG=verbose`) instead. The corresponding `[dotenv]`-prefixed lines are gone; all debug output now flows through the unified `[envapt]` surface.
+
+- 9711554: **BREAKING:** dropped `dotenv` as a runtime dependency. envapt now has **zero runtime deps**. A small internal `.env` parser ships inline (`src/Dotenv.ts`) that handles the subset of dotenv semantics envapt actually relies on: KEY=VALUE pairs, `export KEY=...` prefix, single / double / backtick quotes (with `\n`, `\r`, `\t`, `\\`, `\"` escape interpretation for double quotes), multi-line quoted values, inline `# comments`, multiple paths with first-wins (or `override: true`), and `encoding` for non-UTF8 files. End-user behavior is unchanged: the existing test suite (357 tests) passes against the new parser.
+
+    **BREAKING:** `Envapter.envFileOptions` no longer accepts `quiet` or `DOTENV_KEY`.
+    - `quiet` existed only to suppress dotenv's marketing tips. envapt never prints anything from the loader, so the option is meaningless. The default `_userDefinedDotenvConfig` is now `{}` instead of `{ quiet: true }`.
+    - `DOTENV_KEY` was for `dotenv-vault` encrypted `.env` files. Not exercised by any envapt test and out of scope for envapt's internal parser. If you need encrypted env files, decrypt them externally and pass the resulting `.env` path to `Envapter.envPaths`.
+
+    Passing either key to `Envapter.envFileOptions = { ... }` now throws `InvalidUserDefinedConfig` (302). The remaining allowed keys are `encoding` and `override`.
+
+    **BREAKING:** the env-file options accessor was renamed from `Envapter.dotenvConfig` to `Envapter.envFileOptions` (type `DotenvConfigOptions` to `EnvFileOptions`), since it no longer relates to the dropped `dotenv` package.
+
+- 9711554: Add global `Envapter.strict` flag, `required: true` option, and `Envapter.require()` for boot-time existence checks.
+    - New `Envapter.strict` flag (default `false`). When enabled: whitespace-only values are treated as missing on read; empty / whitespace items in array converters throw `EmptyArrayElement (207)` instead of being silently filtered; unresolved `${VAR}` placeholders in cached values and `Envapter.resolve` tagged templates throw `MissingEnvValue (305)` instead of being preserved as literal text. Toggling the flag refreshes the cache.
+    - New `@Envapt(key, { required: true })` decorator option. Throws `MissingEnvValue` on first access if the env value is missing or empty (post-trim). Independent of global `strict`. Mutually exclusive with `fallback`: combining them fails to match any overload at compile time, and the runtime Validator throws `InvalidUserDefinedConfig (302)` for dynamic objects that bypass the types.
+    - New functional options-bag form: `Envapter.getUsing(key, { converter, required: true })` and `Envapter.getWith(key, { converter, required: true })` return the converter's narrowed type (no `| undefined`) and throw `MissingEnvValue` on missing/empty. Positional `(key, converter, fallback?)` form unchanged.
+    - New `Envapter.require(...keys)` existence-check helper. Variadic rest signature, always returns `void`. At least one key required (compile-time error via `[string, ...string[]]` tuple if zero args). Collects every missing key into a single error instead of failing one at a time. Resolves templates before checking.
+    - New error codes: `EmptyArrayElement (207)` for strict-mode array empties; `MissingEnvValue (305)` for required-key absences, `require()` failures, and strict-mode unresolved templates.
+
+### Minor Changes
+
+- 9711554: Add `Envapter.baseDir` to anchor `.env` resolution to a directory instead of `process.cwd()`. The auto-cascade, `configureProfiles` paths, and relative `envPaths` resolve against it; absolute paths bypass it. It accepts a directory path or a module location: `import.meta.url` / `import.meta.dirname` (ESM) or `__dirname` (CJS). Left unset, paths resolve against `process.cwd()` as before.
+
+    This covers monorepos where the process starts from the repository root rather than the package directory, so a package-local `.env` resolves regardless of the working directory.
+
+- 9711554: Deprecate the classic positional `@Envapt('KEY', fallback, Converter)` form. It now carries a `@deprecated` JSDoc tag and will be removed in v6; it still works throughout v5. Use the options object: `@Envapt('KEY', { converter, fallback })`.
+- 9711554: Add the `envapt/config` side-effect entry, a drop-in for `dotenv/config`. `import 'envapt/config'` (or `node --import envapt/config`, or `node -r envapt/config` in CommonJS) loads envapt's per-environment `.env` cascade and mirrors every loaded key into `process.env`, with zero dependencies. Also adds `Envapter.load()` to eagerly load the cascade on demand instead of lazily on first read.
+- 9711554: Lowered the Node engine floor from `>=24.0.0` to `>=20.0.0`. The Node 24 pin was originally there for `util.parseEnv`, which envapt no longer uses now that the internal `.env` parser ships in `src/Dotenv.ts`. Node 20 LTS users (the bulk of the production ecosystem) can install envapt cleanly again. `bun >=1.3.0` and `deno >=2.5.0` engine floors are unchanged.
+- 9711554: new **profiles** support. envapt now auto-loads conventional dotenv-flow files based on the active environment: `.env`, `.env.local`, `.env.${env}`, `.env.${env}.local` (most-specific wins, matches Vite). zero config for the common case.
+
+    new `Envapter.configureProfiles({...})` for non-conventional path mappings per environment. configured paths layer on top of the cascade with higher precedence; pass `useDefaults: false` to skip the cascade entirely.
+
+    new `Envapter.resetProfiles()` clears any profile / envPaths configuration back to the cascade default. useful in tests.
+
+    existing `Envapter.envPaths = '...'` still works as the lowest-level override and takes absolute precedence when explicitly set.
+
+- 9711554: Add Standard Schema v1 adapter (zod, valibot, arktype, hand-rolled).
+    - New `schema:` option on `@Envapt`. Synchronous schemas only.
+    - New `Envapter.parse(key, schema, fallback?)` static + instance methods.
+    - New `StandardSchemaV1` interface inlined verbatim from <https://standardschema.dev>; `InferSchemaInput<S>` / `InferSchemaOutput<S>` helpers exported from the package root. Zero runtime peer dependencies.
+    - New error codes: `SchemaValidationFailed (208)` populates `err.issues` with the schema's `~standard.validate` issue array; `SchemaThrew (209)` chains the underlying throw via `Error.cause`.
+    - Schema slot is mutually exclusive with `converter`: combining them fails to match any overload at compile time, and the runtime Validator throws `InvalidUserDefinedConfig` for dynamic objects that bypass the types.
+    - Async-validating schemas resolve the type slot to the `SchemaMustBeSync` brand; the Parser also throws if a Promise leaks past the type check.
+    - Missing env + fallback returns the fallback as-is without re-validating it through the schema.
+
+- 9711554: Add per-type shorthand decorators: `@EnvNum`, `@EnvStr`, `@EnvBool`, `@EnvUrl`, `@EnvTime`.
+
+    Each is a thin wrapper over `@Envapt` with a fixed converter, so the call site is the key and an optional fallback (`@EnvNum('PORT', 3000)`). The fallback is typed to the converter: `@EnvUrl` takes a `URL`, `@EnvTime` a millisecond number or a time string, the rest their primitive. They accept the ordered-key array form and resolve through the same cache, getter install, and strict-mode path as `@Envapt`. For `required`, a `schema`, an array, or a custom converter, use `@Envapt` with the options object.
+
+- 9711554: Add `Envapter.syncProcessEnv` opt-in to mirror dotenv-loaded keys back to `process.env`.
+    - New `Envapter.syncProcessEnv = boolean` (default `false`). Symmetric with `Envapter.strict` / `Envapter.debug`.
+    - When `true`, after every cache (re)build envapt writes the keys it loaded from `.env` files into the real `process.env`. Only the keys the loader actually wrote into the isolated env are mirrored, so first-wins (`override: false`, default) leaves a pre-existing `process.env` value alone and `envFileOptions.override = true` lets the file value win in both the cache and the mirror.
+    - Flipping `false` to `true` after the cache is already populated mirrors the existing tracked delta immediately (no cache refresh). Flipping `true` to `false` is one-way: previously mirrored keys remain in `process.env` until the process exits.
+    - Invalid setter values (non-boolean) throw `EnvaptError(InvalidUserDefinedConfig)`.
+    - Verbose debug emits per-key `mirrored KEY to process.env` lines plus a summary `mirrored N keys to process.env` after each mirror.
+
+- 9711554: `Converters.Time` fallbacks now accept a time-string in addition to a number: `fallback: '10s'` is the same as `fallback: 10000`. also adds `d` (days) and `w` (weeks) to the supported units. `TimeFallback` is exported if you want to type the fallback yourself.
+
+    malformed time-string fallbacks (like `'1.5h'` or `'1500'`, where the runtime expects an integer with an explicit unit) now throw `EnvaptErrorCodes.MalformedTimeFallback` instead of the generic `FallbackConverterTypeMismatch`. number fallbacks keep working the same way.
+
+### Patch Changes
+
+- 9711554: Add cross-runtime integration test layer under `packages/envapt/tests/integration/`.
+    - Hand-rolled `node:assert`-based smoke (6 portable suites + 1 Deno-only suite, ~30 assertions): basic get, every built-in converter, fallbacks, missing-file recovery, the `@Envapt` decorator's runtime install path, the v5 features (strict, debug, syncProcessEnv, require), and `@Envapt` syntax compiled by the host runtime's TS transpiler.
+    - Runs identically under Node, Bun, and Deno; consumes only the built `dist/index.mjs`.
+    - New `test:integration` package script for local Node runs.
+    - New GitHub Actions workflow `cross-runtime.yml`: build once, fanout across Node `[20, 22, 24]` on ubuntu plus Node 22 on macos and windows, plus Bun on ubuntu and Deno on ubuntu. Branch protection should gate on the aggregator `cross-runtime ok` job.
+
+    **Known limitation: Bun direct-`.ts` execution with `@Envapt` syntax.** Bun 1.3.10+ ignores the `experimentalDecorators` tsconfig flag and emits TC39 Stage 3 decorators ([bun#27575](https://github.com/oven-sh/bun/issues/27575)); envapt's `@Envapt` is a legacy TypeScript decorator and the call shapes are incompatible. Bun users who want the decorator API should precompile with `tsc` / `tsdown` / Vite first, then run the compiled output with Bun. The functional API (`Envapter.get`, `getNumber`, etc.) works without any build step under direct-`.ts` execution.
+
+    No public API change.
+
+- 9711554: Instance `get` now narrows its return type on a fallback. A redundant overload made `env.get('KEY', 'fallback')` resolve to `string | undefined` instead of `string`; removing it makes instance `get` match static `get`.
+- 9711554: Minify the published build and mark the package side-effect-free except the `envapt/config` entry. The
+  `dist` output is now minified (roughly halving the npm install size), and the `sideEffects` field lets
+  bundlers tree-shake the parts of the surface a consumer does not import. No API or behavior change.
+- 9711554: Rewrite the README for v5. The package README is now a short, docs-first landing page: hero, the
+  `process.env` to typed-value pitch, install for npm/pnpm/yarn/bun/Deno (JSR), and one quick start each
+  for the functional and decorator APIs, an agent-skill install line, with the full reference linked at
+  the docs site. Removes the stale v4 surface (the old converter enum, `dotenvConfig`, Node `>=22`, "dotenv bundled").
+
+    Also refresh the npm `description` and `keywords` for registry and search discoverability (adds
+    `typescript`, `type-safe`, `deno`, `bun`, `zod`, `valibot`, `arktype`, `validation`, `decorator`,
+    `cross-runtime`, and related terms), and fix the `@Envapt` url-converter `@example` to pass a `URL`
+    instance for the fallback instead of a string (the previous example would throw at runtime, since the
+    url converter validates the fallback as `instanceof URL`).
+
 ## 4.1.1
 
 ### Patch Changes
