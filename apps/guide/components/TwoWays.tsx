@@ -11,7 +11,7 @@ const config = {
   dbUrl: Envapter.getUsing('DATABASE_URL', Converters.Url)
 };`;
 
-const DECORATOR = `import { EnvNum, Converters } from 'envapt';
+const DECORATOR = `import { EnvNum } from 'envapt';
 
 class Config {
   @EnvNum('PORT', 3000)

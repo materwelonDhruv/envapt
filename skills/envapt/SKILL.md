@@ -1,12 +1,12 @@
 ---
 name: envapt
-description: Type-safe environment variable access for TypeScript and JavaScript with the envapt library. Use when a project imports from 'envapt' or 'envapt/config', reads process.env, loads .env files, migrates off dotenv, or the user mentions envapt, Envapter, or @Envapt. Covers the functional Envapter reader API (get/getNumber/getBoolean/getUsing/parse/require) as the portable default, the @Envapt and @EnvNum/@EnvStr/@EnvBool/@EnvUrl/@EnvTime decorators, built-in and custom converters, Standard Schema (zod/valibot/arktype) validation, the .env cascade and baseDir, and the Node/Bun/Deno compatibility rules including the Bun decorator limitation and the declare-readonly requirement.
+description: Type-safe environment variable access for TypeScript and JavaScript with the envapt library. Use when a project imports from 'envapt' or 'envapt/config', reads process.env, loads .env files, migrates off dotenv, or the user mentions envapt, Envapter, or @Envapt. Covers the functional Envapter reader API (get/getNumber/getBoolean/getUsing/parse/require) as the portable default, the @Envapt and @EnvNum/@EnvStr/@EnvBool/@EnvUrl/@EnvTime decorators, built-in and custom converters, Standard Schema (zod/valibot/arktype) validation, the .env cascade and baseDir, the Bun decorator limitation (bun#27575) and the declare-readonly requirement.
 ---
 
 # envapt
 
-envapt loads `.env` files and reads environment variables as typed, validated values, with one API on
-Node, Bun, and Deno and nothing in `dependencies` or `peerDependencies`. npm: `envapt`. JSR:
+envapt reads environment variables as typed, validated values, with an optional `.env` cascade layered
+on top of `process.env`, and nothing in `dependencies` or `peerDependencies`. npm: `envapt`. JSR:
 `@materwelon/envapt`. Minimums: Node >=20, Bun >=1.3, Deno >=2.5. Ships ESM and CJS.
 
 Use this skill when a file imports from `'envapt'` or `'envapt/config'`, reads `process.env`, loads a
@@ -17,8 +17,8 @@ Use this skill when a file imports from `'envapt'` or `'envapt/config'`, reads `
 envapt has two surfaces. They read the same values through the same cache; pick by the project, not by
 preference.
 
-- **Default to the functional `Envapter` readers.** They work on every runtime, in JS and TS, with no
-  build step and no compiler flags.
+- **Default to the functional `Envapter` readers.** They work in JS and TS with no build step and no
+  compiler flags, on every runtime envapt supports (Node, Bun, Deno).
 - **Use the `@Envapt` decorators only when** the project is TypeScript, already leans decorator-style
   (existing `@`-decorators, `experimentalDecorators` in `tsconfig.json`/`deno.json`, a stack like NestJS
   or TypeORM), and has a build/transpile step.
@@ -187,8 +187,8 @@ try {
 
 ## Migrating from dotenv
 
-envapt loads `.env` **and** returns typed, validated values from one API on Node, Bun, and Deno, with
-nothing in `dependencies` or `peerDependencies`.
+envapt loads `.env` **and** returns typed, validated values from one API, with nothing in
+`dependencies` or `peerDependencies`.
 
 | dotenv                               | envapt                                                    |
 | ------------------------------------ | --------------------------------------------------------- |

@@ -40,8 +40,8 @@ export function defaultCard(): ReactElement {
                         </div>
                     </div>
                     <div style={{ fontSize: 29, color: OG.muted, lineHeight: 1.42, maxWidth: 880 }}>
-                        Read environment variables as real types. Zero runtime dependencies, the same API on Node, Bun,
-                        and Deno.
+                        Read environment variables as real types. Zero runtime dependencies, plus zod/valibot/arktype
+                        validation.
                     </div>
                     <div style={{ display: 'flex', gap: 12, fontFamily: 'JetBrains Mono', fontSize: 27 }}>
                         <span style={{ color: OG.teal }}>$</span>
