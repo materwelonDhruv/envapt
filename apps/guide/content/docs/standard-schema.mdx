@@ -1,0 +1,91 @@
+---
+title: Standard Schema
+description: Validate an environment value through a Standard Schema validator like zod, valibot, or arktype, and get the schema's output type back.
+---
+
+`parse` validates an environment value through any [Standard Schema](https://standardschema.dev) validator, zod, valibot, arktype, or your own, and returns the schema's output type. envapt carries no schema library of its own; it reads the `~standard` interface the validator already exposes, so there is no peer dependency.
+
+```ts twoslash
+import { z } from 'zod/v4';
+import { Envapter } from 'envapt';
+// ---cut---
+const port = Envapter.parse('PORT', z.coerce.number().int().min(1024).max(65535));
+//    ^?
+```
+
+The same schema works on the [`@Envapt`](/docs/decorators) decorator through the `schema` option:
+
+```ts twoslash
+import { z } from 'zod/v4';
+import { Envapt, Envapter } from 'envapt';
+// ---cut---
+class Config extends Envapter {
+    @Envapt('PORT', { schema: z.coerce.number().int().min(1024).max(65535) })
+    declare static readonly port: number;
+}
+```
+
+## Any conformant validator, or none
+
+Because envapt reads the Standard Schema interface, a hand-written validator works with no dependency at all. The return type is inferred from the schema's output.
+
+```ts twoslash
+import { Envapter } from 'envapt';
+import type { StandardSchemaV1 } from 'envapt';
+// ---cut---
+const positiveInt: StandardSchemaV1<string, number> = {
+    '~standard': {
+        version: 1,
+        vendor: 'app',
+        validate(value) {
+            const n = Number(value);
+            if (Number.isInteger(n) && n > 0) return { value: n };
+            return { issues: [{ message: 'must be a positive integer' }] };
+        }
+    }
+};
+
+const port = Envapter.parse('PORT', positiveInt);
+//    ^?
+```
+
+## Fallbacks
+
+`parse` takes an optional third argument. On a missing value it returns the fallback.
+
+```ts twoslash
+import { Envapter } from 'envapt';
+import type { StandardSchemaV1 } from 'envapt';
+declare const positiveInt: StandardSchemaV1<string, number>;
+// ---cut---
+const port = Envapter.parse('PORT', positiveInt, 3000);
+//    ^?
+```
+
+<Callout type="info">
+    The fallback is returned as-is on a missing value; it does not pass through the schema. Make sure the fallback
+    already satisfies the type you expect, since the schema never sees it.
+</Callout>
+
+<Callout type="warn">
+    Passing a third argument at all counts as a fallback, even when that argument is `undefined`. So
+    `Envapter.parse('PORT', schema, undefined)` returns `undefined` on a missing value instead of throwing. Omit the
+    argument entirely when you want the missing-value throw.
+</Callout>
+
+## What throws
+
+`parse` throws `EnvaptError` in three cases:
+
+- The value is missing and you gave no fallback: code `MissingEnvValue`.
+- The schema reports validation issues: code `SchemaValidationFailed`. The error carries the validator's full `issues` array on its `.issues` property.
+- The schema's `validate` itself throws: code `SchemaThrew`, with the original error on `.cause`.
+
+A `${VAR}` template is expanded before validation, so the schema sees the resolved value.
+
+<Callout type="danger">
+    envapt validates at config-load time and accepts synchronous schemas only. A schema whose `validate` returns a
+    `Promise` is a type error, and throws `EnvaptError` with code `InvalidUserDefinedConfig` if you force it past the
+    types. `schema` and `converter` are mutually exclusive, since each one already turns the raw string into a typed
+    value.
+</Callout>

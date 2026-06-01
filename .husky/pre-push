@@ -1,1 +1,3 @@
-pnpm lint && pnpm tc && pnpm test
+echo "Pre-push hook triggered."
+
+pnpm prePush

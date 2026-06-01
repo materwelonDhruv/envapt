@@ -1,7 +1,7 @@
-import { AdvancedMethods } from './core/AdvancedMethods';
+import { AdvancedMethods } from './core';
+import { EnvaptError, EnvaptErrorCodes } from './Error';
 
-export { EnvaptCache } from './core/EnvapterBase';
-export { Environment } from './core/EnvironmentMethods';
+export { EnvaptCache, Environment } from './core';
 
 /**
  * Main configuration class for environment variable management.
@@ -9,7 +9,7 @@ export { Environment } from './core/EnvironmentMethods';
  * Provides both static and instance methods for retrieving typed environment variables
  * with support for template resolution, multiple .env files, and environment detection.
  *
- * Extend your own classes from this to define properties with \@Envapt decorators and provide access to environment variables methods.
+ * Extend your own classes from this to define properties with \@Envapt decorators and get access to environment-variable methods.
  *
  * @example
  * ```ts
@@ -43,10 +43,18 @@ export class Envapter extends AdvancedMethods {
      * ```
      */
     static resolve(strings: TemplateStringsArray, ...keys: string[]): string {
+        const strict = Envapter.strict;
         return strings.reduce((result, string, i) => {
             const envKey = keys[i];
-            const envValue = envKey ? super.get(envKey, '') : '';
-            return result + string + envValue;
+            if (!envKey) return result + string;
+            const raw = super.get(envKey, '');
+            if (strict && raw.trim() === '') {
+                throw new EnvaptError(
+                    EnvaptErrorCodes.MissingEnvValue,
+                    `Cannot resolve template variable "\${${envKey}}": value is missing or empty.`
+                );
+            }
+            return result + string + raw;
         }, '');
     }
 
@@ -55,5 +63,46 @@ export class Envapter extends AdvancedMethods {
      */
     resolve(strings: TemplateStringsArray, ...keys: string[]): string {
         return Envapter.resolve(strings, ...keys);
+    }
+
+    /**
+     * Assert that one or more environment variables are present and non-empty (post-trim,
+     * after template resolution). Throws `MissingEnvValue` listing every missing key.
+     *
+     * For typed fail-fast in functional code, use `Envapter.getUsing(key, { converter, required: true })`.
+     *
+     * @example
+     * ```ts
+     * Envapter.require('DATABASE_URL');
+     * Envapter.require('DATABASE_URL', 'API_KEY', 'SENTRY_DSN');
+     * ```
+     */
+    static require(...keys: [string, ...string[]]): void {
+        const missing: string[] = [];
+        for (const k of keys) {
+            if (Envapter.resolveAndValidate(k) === undefined) missing.push(k);
+        }
+
+        if (missing.length > 0) {
+            throw new EnvaptError(
+                EnvaptErrorCodes.MissingEnvValue,
+                `Missing required environment variables: ${missing.join(', ')}.`
+            );
+        }
+    }
+
+    private static resolveAndValidate(key: string): string | undefined {
+        const { value } = this.resolveKeyInput(key);
+        if (value === undefined) return undefined;
+        const resolved = this.templateResolver.resolveTemplate(key, value);
+        if (resolved.trim() === '') return undefined;
+        return resolved;
+    }
+
+    /**
+     * @see {@link Envapter.require}
+     */
+    require(...keys: [string, ...string[]]): void {
+        Envapter.require(...keys);
     }
 }

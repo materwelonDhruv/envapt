@@ -1,8 +1,11 @@
-import { BuiltInConverters } from '../BuiltInConverters';
-import { Parser, type EnvapterService } from '../Parser';
+import { BuiltInConverters, ValueConverter } from '../converters';
+import { debugWarn } from '../Debug';
+import { TemplateResolver } from '../TemplateResolver';
+import { EnvapterBase } from './EnvapterBase';
 import { EnvironmentMethods } from './EnvironmentMethods';
 
-import type { ConditionalReturn, EnvKeyInput } from '../Types';
+import type { ConditionalReturn, EnvKeyInput } from '../types';
+import type { EnvapterService } from '../types/Env';
 
 /**
  * @internal
@@ -16,11 +19,19 @@ enum Primitive {
 }
 
 /**
- * Mixin for primitive environment variable getter methods
  * @internal
  */
 export class PrimitiveMethods extends EnvironmentMethods implements EnvapterService {
-    protected static readonly parser: Parser = new Parser(new PrimitiveMethods());
+    private static readonly service = new PrimitiveMethods();
+    protected static readonly templateResolver: TemplateResolver = new TemplateResolver(PrimitiveMethods.service);
+    protected static readonly valueConverter: ValueConverter = new ValueConverter(PrimitiveMethods.service);
+
+    // Read `EnvapterBase.strict` directly: `PrimitiveMethods._strict` would resolve to the
+    // BaseClass default because a `Envapter.strict = true` write lands as an own-property
+    // on `Envapter`, which is a descendant of `PrimitiveMethods`, not an ancestor.
+    isStrict(): boolean {
+        return EnvapterBase.strict;
+    }
 
     private static _get<EnvVarReturnType, DefaultType extends EnvVarReturnType | undefined = undefined>(
         key: EnvKeyInput,
@@ -28,10 +39,13 @@ export class PrimitiveMethods extends EnvironmentMethods implements EnvapterServ
         def?: DefaultType
     ): ConditionalReturn<EnvVarReturnType, DefaultType> {
         const { key: resolvedKey, value } = this.resolveKeyInput(key);
+        if (this.treatAsMissing(value)) {
+            if (def !== undefined) debugWarn(`${resolvedKey} not found, using fallback ${String(def)}`);
+            return def as ConditionalReturn<EnvVarReturnType, DefaultType>;
+        }
         const rawVal = value as string | number | boolean | undefined;
-        if (!rawVal) return def as ConditionalReturn<EnvVarReturnType, DefaultType>;
 
-        const parsed = this.parser.resolveTemplate(resolvedKey, String(rawVal));
+        const parsed = this.templateResolver.resolveTemplate(resolvedKey, String(rawVal));
 
         let result: EnvVarReturnType;
         if (type === Primitive.Number) result = BuiltInConverters.number(parsed, def as number) as EnvVarReturnType;
@@ -61,7 +75,6 @@ export class PrimitiveMethods extends EnvironmentMethods implements EnvapterServ
     /**
      * @see {@link PrimitiveMethods.get}
      */
-    get(key: EnvKeyInput, def?: string): string | undefined;
     get<Default extends string | undefined = undefined>(
         key: EnvKeyInput,
         def?: Default
@@ -93,7 +106,7 @@ export class PrimitiveMethods extends EnvironmentMethods implements EnvapterServ
 
     /**
      * Get a boolean environment variable with optional fallback.
-     * Recognizes: `1`, `yes`, `true`, 'on' as **true**; `0`, `no`, `false`, 'off' as **false** (case-insensitive).
+     * Recognizes: `1`, `yes`, `true`, `on` as **true**; `0`, `no`, `false`, `off` as **false** (case-insensitive).
      * Accepts a single key or an ordered array of keys (first match wins).
      */
     static getBoolean<Default extends boolean | undefined = undefined>(

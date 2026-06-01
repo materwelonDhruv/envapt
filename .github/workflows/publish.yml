@@ -22,7 +22,7 @@ jobs:
               with:
                   fetch-depth: 0
             - name: Setup pnpm
-              uses: pnpm/action-setup@v4
+              uses: pnpm/action-setup@v6
             - name: Setup Node.js
               run: pnpm install --frozen-lockfile
             - name: Publish package (dry run)
@@ -36,11 +36,11 @@ jobs:
               with:
                   fetch-depth: 0
 
-            - uses: pnpm/action-setup@v4
+            - uses: pnpm/action-setup@v6
             - run: pnpm install --frozen-lockfile
             - uses: denoland/setup-deno@v2
               with:
-                  deno-version: 2.6.5
+                  deno-version: 2.7.14
             - name: Deno publish dry run
               uses: ./.github/actions/deno-publish-all
               with:
@@ -48,9 +48,11 @@ jobs:
                   dry-run: 'true'
 
     npm-publish:
-        needs: [dry-run-npm]
+        needs: [dry-run-npm, dry-run-jsr]
         if: ${{ github.event.workflow_run.conclusion == 'success' }}
         runs-on: ubuntu-latest
+        outputs:
+            published: ${{ steps.changesets.outputs.published }}
         permissions:
             contents: write
             id-token: write
@@ -69,12 +71,12 @@ jobs:
                   enable_fallback_cache: 'true'
 
             - name: Setup pnpm
-              uses: pnpm/action-setup@v4
+              uses: pnpm/action-setup@v6
 
             - name: Setup Node.js
               uses: actions/setup-node@v6
               with:
-                  node-version: 24.13.0
+                  node-version: 24.16.0
                   cache: pnpm
                   registry-url: https://registry.npmjs.org
 
@@ -98,6 +100,7 @@ jobs:
               id: changesets
               uses: changesets/action@v1
               with:
+                  version: pnpm run release:version
                   publish: pnpm run release
                   commit: 'chore: merge changesets'
                   title: ${{ steps.release_meta.outputs.title }}
@@ -105,18 +108,9 @@ jobs:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                   HUSKY: 0
 
-            - name: Trigger sync-deno-version workflow on release branch
-              if: ${{ steps.changesets.outputs.hasChangesets == 'true' }}
-              uses: ./.github/actions/sync-deno
-              with:
-                  release_branch: changeset-release/${{ github.event.workflow_run.head_branch }}
-                  workflow_file: sync-deno-version.yml
-              env:
-                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
     jsr-publish:
-        needs: [dry-run-jsr]
-        if: ${{ github.event.workflow_run.conclusion == 'success' }}
+        needs: [npm-publish]
+        if: ${{ needs.npm-publish.outputs.published == 'true' }}
         runs-on: ubuntu-latest
         timeout-minutes: 30
         permissions:
@@ -128,13 +122,13 @@ jobs:
               with:
                   fetch-depth: 0
             - name: Setup pnpm
-              uses: pnpm/action-setup@v4
+              uses: pnpm/action-setup@v6
             - name: Install dependencies
               run: pnpm install --frozen-lockfile
             - name: Setup Deno
               uses: denoland/setup-deno@v2
               with:
-                  deno-version: 2.6.5
+                  deno-version: 2.7.14
                   cache: true
             - name: Publish to JSR
               uses: ./.github/actions/deno-publish-all

@@ -1,17 +1,20 @@
 import { expect } from 'chai';
 import { describe, it, vi } from 'vitest';
 
-import { BuiltInConverters } from '../src/BuiltInConverters';
+import { BuiltInConverters, Converters, ValueConverter } from '../src/converters';
 import { Envapter } from '../src/Envapter';
 import { EnvaptError, EnvaptErrorCodes } from '../src/Error';
-import { Parser } from '../src/Parser';
+import { TemplateResolver } from '../src/TemplateResolver';
 import { Validator } from '../src/Validators';
 
-import type { EnvapterService } from '../src/Parser';
-import type { BuiltInConverter, EnvKeyInput, PrimitiveConstructor } from '../src/Types';
+import type { BuiltInConverter, EnvKeyInput, PrimitiveConstructor } from '../src/types';
+import type { EnvapterService } from '../src/types/Env';
 
 class StubEnvService implements EnvapterService {
-    constructor(private readonly values: Record<string, string | undefined>) {}
+    constructor(
+        private readonly values: Record<string, string | undefined>,
+        private readonly strict = false
+    ) {}
 
     getRaw(key: string): string | undefined {
         return this.values[key];
@@ -19,6 +22,10 @@ class StubEnvService implements EnvapterService {
 
     get(key: string): string | undefined {
         return this.values[key];
+    }
+
+    isStrict(): boolean {
+        return this.strict;
     }
 }
 
@@ -62,11 +69,6 @@ describe('Defensive tests', () => {
             expect(BuiltInConverters.symbol('', fallback)).to.equal(fallback);
         });
 
-        it('returns fallback when array items collapse to nothing', () => {
-            const fallback = ['fallback'];
-            expect(BuiltInConverters.array(' , , ', fallback)).to.equal(fallback);
-        });
-
         it('returns fallback when integer parsing fails', () => {
             const fallback = 321;
             expect(BuiltInConverters.integer('not-an-integer', fallback)).to.equal(fallback);
@@ -77,23 +79,25 @@ describe('Defensive tests', () => {
             expect(BuiltInConverters.float('not-a-float', fallback)).to.equal(fallback);
         });
 
-        it('returns an empty array when raw input is blank for custom array converters', () => {
-            const result = BuiltInConverters.processArrayConverter('   ', undefined, { delimiter: ',' });
+        it('returns an empty array when raw input is blank for array converters', () => {
+            const result = BuiltInConverters.processArrayConverter('   ', Converters.array({ delimiter: ',' }));
             expect(result).to.deep.equal([]);
         });
 
-        it('returns fallback when custom array converter produces no items', () => {
-            const fallback = ['keep-me'];
-            const result = BuiltInConverters.processArrayConverter(' , , ', fallback, { delimiter: ',' });
-            expect(result).to.equal(fallback);
+        it('returns [] when items all collapse to empty after filtering', () => {
+            const result = BuiltInConverters.processArrayConverter(' , , ', Converters.array({ delimiter: ',' }));
+            expect(result).to.deep.equal([]);
         });
 
-        it('preserves original value when typed conversion fails inside array converter', () => {
-            const result = BuiltInConverters.processArrayConverter('1,abc', undefined, {
-                delimiter: ',',
-                type: 'number'
-            });
-            expect(result).to.deep.equal([1, 'abc']);
+        it('throws when a typed element conversion fails inside array converter', () => {
+            expect(() =>
+                BuiltInConverters.processArrayConverter(
+                    '1,abc',
+                    Converters.array({ of: Converters.Number, delimiter: ',' })
+                )
+            )
+                .to.throw(EnvaptError)
+                .with.property('code', EnvaptErrorCodes.ArrayElementConversionFailed);
         });
 
         it('returns fallback for invalid numeric timestamp strings', () => {
@@ -121,26 +125,26 @@ describe('Defensive tests', () => {
         });
     });
 
-    describe('Parser defensive code paths', () => {
+    describe('Converter and template-resolver defensive code paths', () => {
         it('preserves unresolved templates when nested resolution produces placeholders', () => {
-            const parser = new Parser(
+            const resolver = new TemplateResolver(
                 new StubEnvService({
                     TEMPLATE_ONE: '${TEMPLATE_TWO}',
                     TEMPLATE_TWO: '${TEMPLATE_THREE}'
                 })
             );
 
-            const resolved = parser.resolveTemplate('TEMPLATE_ONE', '${TEMPLATE_TWO}');
+            const resolved = resolver.resolveTemplate('TEMPLATE_ONE', '${TEMPLATE_TWO}');
             expect(resolved).to.equal('${TEMPLATE_TWO}');
         });
 
         it('converts primitive Symbol constructors to built-in converters', () => {
-            const parser = new Parser(new StubEnvService({ SYMBOLIC_VALUE: 'envapt' }));
-            const parserInternals = parser as unknown as {
+            const converter = new ValueConverter(new StubEnvService({ SYMBOLIC_VALUE: 'envapt' }));
+            const converterInternals = converter as unknown as {
                 convertPrimitiveToString: (primitiveConstructor: PrimitiveConstructor) => BuiltInConverter;
             };
-            const spy = vi.spyOn(parserInternals, 'convertPrimitiveToString');
-            const result = parser.convertValue('SYMBOLIC_VALUE', undefined, Symbol, false);
+            const spy = vi.spyOn(converterInternals, 'convertPrimitiveToString');
+            const result = converter.convertValue('SYMBOLIC_VALUE', undefined, Symbol, false);
 
             expect(typeof result).to.equal('symbol');
             expect(Symbol.keyFor(result as symbol)).to.equal('envapt');
@@ -148,18 +152,18 @@ describe('Defensive tests', () => {
             spy.mockRestore();
         });
 
-        it('returns null when array converter yields no items and no fallback exists', () => {
-            const parser = new Parser(new StubEnvService({ EMPTY_LIST: ' , , ' }));
-            const result = parser.convertValue('EMPTY_LIST', undefined, { delimiter: ',' }, false);
-            expect(result).to.be.null;
+        it('returns [] when array converter yields no items after filtering empty entries', () => {
+            const converter = new ValueConverter(new StubEnvService({ EMPTY_LIST: ' , , ' }));
+            const result = converter.convertValue('EMPTY_LIST', undefined, Converters.array({ delimiter: ',' }), false);
+            expect(result).to.deep.equal([]);
         });
 
         it('maps primitive Symbol constructors directly via internal converter', () => {
-            const parser = new Parser(new StubEnvService({}));
-            const unsafeParser = parser as unknown as {
+            const converter = new ValueConverter(new StubEnvService({}));
+            const unsafeConverter = converter as unknown as {
                 convertPrimitiveToString: (primitiveConstructor: PrimitiveConstructor) => BuiltInConverter;
             };
-            expect(unsafeParser.convertPrimitiveToString(Symbol)).to.equal('symbol');
+            expect(unsafeConverter.convertPrimitiveToString(Symbol)).to.equal('symbol');
         });
     });
 

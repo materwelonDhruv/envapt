@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 110" fill="none" role="img" aria-label="envapt">
+  <!-- file body, top-right corner folded away -->
+  <path d="M15 0 H68 L100 32 V95 Q100 110 85 110 H15 Q0 110 0 95 V15 Q0 0 15 0 Z" fill="#e35d28" />
+  <!-- folded flap: right angle points inward, crease is the outer hypotenuse -->
+  <path d="M68 0 L100 32 L68 32 Z" fill="#f7cc88" />
+</svg>

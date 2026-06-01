@@ -3,7 +3,8 @@
     "extends": "./node_modules/@seedcord/tsconfig/node.json",
     "compilerOptions": {
         "lib": ["ESNext", "esnext.disposable", "Decorators", "Decorators.Legacy"],
-        "rootDir": "."
+        "rootDir": ".",
+        "types": ["node"]
     },
     "include": ["scripts/**/*", "vitest.config.ts"],
     "exclude": ["node_modules", "dist"]

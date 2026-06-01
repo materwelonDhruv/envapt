@@ -117,35 +117,29 @@ describe('Envapter', () => {
     });
 
     describe('configuration management', () => {
-        describe('dotenvConfig', () => {
-            const originalConfig = Envapter.dotenvConfig;
+        describe('envFileOptions', () => {
+            const originalConfig = Envapter.envFileOptions;
 
-            it('should get default dotenvConfig', () => {
-                const config = Envapter.dotenvConfig;
-                expect(config).to.deep.equal({ quiet: true });
+            it('should get default envFileOptions', () => {
+                const config = Envapter.envFileOptions;
+                expect(config).to.deep.equal({});
             });
 
-            it('should set and get valid dotenvConfig', () => {
-                const newConfig = { quiet: false, debug: true, override: true };
-                Envapter.dotenvConfig = newConfig;
-                expect(Envapter.dotenvConfig).to.deep.equal(newConfig);
+            it('should set and get valid envFileOptions', () => {
+                const newConfig = { override: true };
+                Envapter.envFileOptions = newConfig;
+                expect(Envapter.envFileOptions).to.deep.equal(newConfig);
             });
 
             it('should set encoding option', () => {
                 const configWithEncoding = { encoding: 'latin1' as const };
-                Envapter.dotenvConfig = configWithEncoding;
-                expect(Envapter.dotenvConfig).to.deep.equal(configWithEncoding);
-            });
-
-            it('should set DOTENV_KEY option', () => {
-                const configWithKey = { DOTENV_KEY: 'test-key-123' };
-                Envapter.dotenvConfig = configWithKey;
-                expect(Envapter.dotenvConfig).to.deep.equal(configWithKey);
+                Envapter.envFileOptions = configWithEncoding;
+                expect(Envapter.envFileOptions).to.deep.equal(configWithEncoding);
             });
 
             afterEach(() => {
                 // Reset to original config after each test
-                Envapter.dotenvConfig = originalConfig;
+                Envapter.envFileOptions = originalConfig;
             });
         });
 

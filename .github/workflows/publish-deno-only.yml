@@ -28,7 +28,7 @@ jobs:
                   fetch-depth: 0
 
             - name: Setup pnpm
-              uses: pnpm/action-setup@v4
+              uses: pnpm/action-setup@v6
 
             - name: Install dependencies (hoisted node_modules for Deno)
               run: pnpm install --frozen-lockfile --shamefully-hoist
@@ -36,7 +36,7 @@ jobs:
             - name: Setup Deno
               uses: denoland/setup-deno@v2
               with:
-                  deno-version: 2.6.5
+                  deno-version: 2.7.14
                   cache: true
 
             - name: Run Deno publish action

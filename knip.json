@@ -1,0 +1,21 @@
+{
+    "$schema": "https://unpkg.com/knip@latest/schema.json",
+    "workspaces": {
+        ".": {
+            "entry": ["scripts/**/*.ts"],
+            "project": ["scripts/**/*.ts"]
+        },
+        "packages/envapt": {
+            "ignore": ["tests/type-error-fixtures/**"]
+        },
+        "apps/guide": {
+            "entry": [
+                "app/**/{page,layout,route,not-found}.{ts,tsx}",
+                "source.config.ts",
+                "mdx-components.tsx"
+            ],
+            "project": ["app/**/*.{ts,tsx}", "components/**/*.{ts,tsx}", "lib/**/*.{ts,tsx}"],
+            "ignoreDependencies": ["envapt", "twoslash"]
+        }
+    }
+}
