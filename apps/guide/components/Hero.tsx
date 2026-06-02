@@ -32,8 +32,8 @@ export function Hero(): ReactNode {
                         straight from <span className="text-(--ev-link)">.env</span>.
                     </h1>
                     <p className="mb-7 max-w-110 text-lg/relaxed text-fd-muted-foreground">
-                        Read environment variables as real types. Zero runtime dependencies. The same API on Node, Bun,
-                        and Deno.
+                        Read environment variables as real types. Zero runtime dependencies. Zod/Valibot/Arktype
+                        validation.
                     </p>
                     <div className="flex flex-wrap gap-3">
                         <BaseButton href="/docs/quick-start" variant="solid">
@@ -43,7 +43,7 @@ export function Hero(): ReactNode {
                             Read the docs
                             <span
                                 aria-hidden="true"
-                                className="inline-block transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)]:group-hover:translate-x-1 motion-reduce:transition-none"
+                                className="inline-block transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] motion-reduce:transition-none [@media(hover:hover)]:group-hover:translate-x-1"
                             >
                                 →
                             </span>

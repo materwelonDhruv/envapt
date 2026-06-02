@@ -11,7 +11,7 @@ export function ClosingCta(): ReactNode {
                     Read environment variables as real types.
                 </h2>
                 <p className="mb-7 text-lg text-fd-muted-foreground">
-                    Zero runtime dependencies. The same API on Node, Bun, and Deno.
+                    Zero runtime dependencies. Zod/Valibot/Arktype validation.
                 </p>
                 <div className="flex flex-wrap justify-center gap-3">
                     <BaseButton href="/docs/quick-start" variant="solid">
@@ -21,7 +21,7 @@ export function ClosingCta(): ReactNode {
                         Read the docs
                         <span
                             aria-hidden="true"
-                            className="inline-block transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)]:group-hover:translate-x-1 motion-reduce:transition-none"
+                            className="inline-block transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] motion-reduce:transition-none [@media(hover:hover)]:group-hover:translate-x-1"
                         >
                             →
                         </span>
