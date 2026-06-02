@@ -4,6 +4,7 @@
     "version": "0.0.0",
     "description": "The apt way to handle env (repository root)",
     "private": true,
+    "homepage": "https://envapt.materwelon.dev",
     "scripts": {
         "build": "turbo build",
         "dev": "turbo dev",

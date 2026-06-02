@@ -1,26 +1,16 @@
 {
     "$schema": "https://raw.githubusercontent.com/denoland/deno/main/cli/schemas/config-file.v1.json",
     "name": "@materwelon/envapt",
-    "version": "5.0.2",
+    "version": "5.0.3",
     "exports": "./src/index.ts",
     "license": "Apache-2.0",
     "publish": {
-        "include": [
-            "src/**/*.ts",
-            "README.md",
-            "LICENSE",
-            "NOTICE.md",
-            "CHANGELOG.md"
-        ]
+        "include": ["src/**/*.ts", "README.md", "LICENSE", "NOTICE.md", "CHANGELOG.md"]
     },
     "lint": {
         "rules": {
-            "exclude": [
-                "no-sloppy-imports"
-            ]
+            "exclude": ["no-sloppy-imports"]
         }
     },
-    "unstable": [
-        "sloppy-imports"
-    ]
+    "unstable": ["sloppy-imports"]
 }

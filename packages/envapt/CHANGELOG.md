@@ -1,5 +1,11 @@
 # envapt
 
+## 5.0.3
+
+### Patch Changes
+
+- Update homepage in package.json
+
 ## 5.0.2
 
 ### Patch Changes
