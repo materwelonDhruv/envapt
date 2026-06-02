@@ -21,9 +21,6 @@
         // Project-specific tools
         "mikestead.dotenv",
 
-        // Development productivity
-        "gruntfuggly.todo-tree",
-
         // Testing
         "vitest.explorer"
     ]
