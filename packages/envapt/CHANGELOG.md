@@ -1,5 +1,11 @@
 # envapt
 
+## 5.1.0
+
+### Minor Changes
+
+- Emit one output module per source file (`unbundle`) so bundlers can tree-shake standalone imports: importing only `EnvaptError` or `Converters` now drops roughly 92-98% of gzip size, while the full `Envapter` path is unchanged.
+
 ## 5.0.3
 
 ### Patch Changes
