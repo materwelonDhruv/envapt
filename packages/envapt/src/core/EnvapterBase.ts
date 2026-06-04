@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { debugVerbose, getDebugLevel, setDebugLevel } from '../Debug';
 import { loadDotenv } from '../Dotenv';
 import { EnvaptError, EnvaptErrorCodes } from '../Error';
+import { bindRuntimeFromSource, setRuntimeSink } from '../runtime';
 import { NodeEnvSource } from '../sources/NodeEnvSource';
 import { Validator } from '../Validators';
 
@@ -33,6 +34,12 @@ export abstract class EnvapterBase {
     // Loader-written keys only (collisions skipped). Refilled on every cache rebuild.
     protected static _dotenvAddedKeys: Set<string> = new Set<string>();
     protected static _source: EnvSource = new NodeEnvSource();
+
+    // So ENVAPT_DEBUG and stderr output work on a plain `import 'envapt'`, before any useSource() call.
+    static {
+        setRuntimeSink((line) => process.stderr.write(`${line}\n`));
+        bindRuntimeFromSource(EnvapterBase._source);
+    }
 
     /**
      * Enable or disable strict mode. Default `false`. Setting refreshes the cache so
@@ -275,6 +282,7 @@ export abstract class EnvapterBase {
      */
     static useSource(source: EnvSource): void {
         EnvapterBase._source = source;
+        bindRuntimeFromSource(source);
         this.refreshCache();
     }
 
