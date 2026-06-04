@@ -1,7 +1,7 @@
 export { Envapt, EnvBool, EnvNum, EnvStr, EnvTime, EnvUrl } from './decorators';
 export { Envapter, Environment } from './Envapter';
 export { Converters, isArrayOf } from './converters';
-export { NodeEnvSource, ManualEnvSource } from './sources';
+export { NodeEnvSource, ManualEnvSource, WorkerEnvSource } from './sources';
 export type { ArrayElement, ArrayOf, ConverterToken, CustomElementConverter } from './converters';
 export type { DebugLevel } from './Debug';
 export type { EnvFileOptions } from './Dotenv';

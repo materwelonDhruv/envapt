@@ -1,12 +1,8 @@
-import { dirname, isAbsolute, join, resolve } from 'node:path';
-import process from 'node:process';
-import { fileURLToPath } from 'node:url';
-
 import { debugVerbose, getDebugLevel, setDebugLevel } from '../Debug';
 import { loadDotenv } from '../Dotenv';
 import { EnvaptError, EnvaptErrorCodes } from '../Error';
-import { bindRuntimeFromSource, setRuntimeSink } from '../runtime';
-import { NodeEnvSource } from '../sources/NodeEnvSource';
+import { bindRuntimeFromSource } from '../runtime';
+import { UnboundEnvSource } from '../sources/UnboundEnvSource';
 import { Validator } from '../Validators';
 
 import type { DebugLevel } from '../Debug';
@@ -33,13 +29,9 @@ export abstract class EnvapterBase {
     protected static _syncProcessEnv = false;
     // Loader-written keys only (collisions skipped). Refilled on every cache rebuild.
     protected static _dotenvAddedKeys: Set<string> = new Set<string>();
-    protected static _source: EnvSource = new NodeEnvSource();
-
-    // So a plain `import 'envapt'` still reads ENVAPT_DEBUG and writes to stderr, before any useSource() call.
-    static {
-        setRuntimeSink((line) => process.stderr.write(`${line}\n`));
-        bindRuntimeFromSource(EnvapterBase._source);
-    }
+    // Unbound by default so non-Node builds throw NoSourceBound on read until useSource() is called.
+    // The Node entry (src/node.ts) binds NodeEnvSource at load, so `import 'envapt'` needs no setup.
+    protected static _source: EnvSource = new UnboundEnvSource();
 
     /**
      * Enable or disable strict mode. Default `false`. Setting refreshes the cache so
@@ -57,9 +49,9 @@ export abstract class EnvapterBase {
     }
 
     /**
-     * Set the debug log level. Defaults to `silent`. When unset, reads `ENVAPT_DEBUG` from
-     * `process.env` on first access; the setter overrides any env-var value. Output goes
-     * to stderr prefixed with `[envapt]`.
+     * Set the debug log level. Defaults to `silent`. When unset, reads `ENVAPT_DEBUG` from the
+     * bound source on first access; the setter overrides any env-var value. Output goes to stderr
+     * on Node (the console elsewhere), prefixed with `[envapt]`.
      */
     static set debug(level: DebugLevel) {
         setDebugLevel(level);
@@ -106,6 +98,7 @@ export abstract class EnvapterBase {
      * {@link configureProfiles} configuration are ignored.
      */
     static set envPaths(paths: string[] | string) {
+        EnvapterBase.assertFileApiSupported('envPaths');
         const newPaths = Array.isArray(paths) ? paths : [paths];
         Validator.validateEnvFilesExist(
             newPaths.map((p) => this.resolveAgainstBase(p)),
@@ -135,7 +128,14 @@ export abstract class EnvapterBase {
      * Unset (`undefined`) restores `process.cwd()` resolution.
      */
     static set baseDir(value: string | URL | undefined) {
-        EnvapterBase._baseDir = value === undefined ? undefined : this.normalizeBaseDir(value);
+        const source = EnvapterBase._source;
+        if (!source.supportsFiles) {
+            throw new EnvaptError(
+                EnvaptErrorCodes.FileApiUnsupported,
+                'baseDir requires a filesystem-backed source; the bound source does not support .env files.'
+            );
+        }
+        EnvapterBase._baseDir = value === undefined ? undefined : source.normalizeBaseDir(value);
         this.refreshCache();
     }
 
@@ -143,24 +143,35 @@ export abstract class EnvapterBase {
         return EnvapterBase._baseDir;
     }
 
-    // `file:` URLs resolve to their containing directory; plain paths (`import.meta.dirname`, `__dirname`) are taken as the directory.
-    private static normalizeBaseDir(value: string | URL): string {
-        if (value instanceof URL) return dirname(fileURLToPath(value));
-        if (value.startsWith('file:')) return dirname(fileURLToPath(value));
-        return resolve(value);
+    // No baseDir: candidate returned unchanged so the source resolves it against its own default
+    // (process.cwd() on Node). Resolution goes through the source to keep this class node-free.
+    protected static resolveAgainstBase(candidate: string): string {
+        const baseDir = EnvapterBase._baseDir;
+        if (baseDir === undefined) return candidate;
+        const source = EnvapterBase._source;
+        /* v8 ignore next -- @preserve callers are all file-gated, so the source is never bare here */
+        if (!source.supportsFiles) return candidate;
+        return source.resolvePath(baseDir, candidate);
     }
 
-    // No baseDir: path is returned unchanged so Node resolves it against process.cwd() (the historical default).
-    protected static resolveAgainstBase(candidate: string): string {
-        if (EnvapterBase._baseDir === undefined) return candidate;
-        if (isAbsolute(candidate)) return candidate;
-        return join(EnvapterBase._baseDir, candidate);
+    // File-based config (envPaths/baseDir/configureProfiles) is meaningless without a filesystem;
+    // fail fast instead of silently ignoring it on the browser or Workers.
+    protected static assertFileApiSupported(api: string): void {
+        if (!EnvapterBase._source.supportsFiles) {
+            throw new EnvaptError(
+                EnvaptErrorCodes.FileApiUnsupported,
+                `${api} requires a filesystem-backed source; the bound source does not support .env files.`
+            );
+        }
     }
 
     // Existence via the bound source instead of fs.existsSync/accessSync: a file "exists" when the
-    // source can read it. A source without a filesystem reports everything missing.
+    // source can read it.
     protected static sourceFileExists(path: string): boolean {
-        return EnvapterBase._source.readFile?.(path, 'utf8') !== undefined;
+        const source = EnvapterBase._source;
+        /* v8 ignore next -- @preserve every caller is file-gated, so this never sees a bare source */
+        if (!source.supportsFiles) return false;
+        return source.readFile(path, 'utf8') !== undefined;
     }
 
     static set envFileOptions(config: EnvFileOptions) {
@@ -185,13 +196,18 @@ export abstract class EnvapterBase {
 
     protected static mirrorToProcessEnv(): void {
         if (EnvapterBase._dotenvAddedKeys.size === 0) return;
+        const source = EnvapterBase._source;
+        /* v8 ignore next -- @preserve dotenv keys only accumulate under a file source, so the delta implies supportsFiles here */
+        if (!source.supportsFiles) return;
+        const mirrored: Record<string, string> = {};
         for (const key of EnvapterBase._dotenvAddedKeys) {
             const value = EnvaptCache.get(key);
             /* v8 ignore next -- @preserve loader only writes strings; defensive against future cache contents */
             if (typeof value !== 'string') continue;
-            process.env[key] = value;
+            mirrored[key] = value;
             debugVerbose(`mirrored ${key} to process.env`);
         }
+        source.writeVars(mirrored);
         debugVerbose(`mirrored ${EnvapterBase._dotenvAddedKeys.size} keys to process.env`);
     }
 
@@ -242,7 +258,7 @@ export abstract class EnvapterBase {
             let added = new Set<string>();
             // Sources without a filesystem (injected objects on the browser or Workers) skip the
             // .env cascade, profiles, and envPaths; only the readVars() snapshot populates the cache.
-            if (source.supportsFiles && source.readFile) {
+            if (source.supportsFiles) {
                 // Outside the try below so a missing configured profile path surfaces its EnvaptError; only dotenv parse errors stay caught.
                 const effectivePaths = this.resolveEffectivePaths();
                 debugVerbose(
@@ -276,9 +292,10 @@ export abstract class EnvapterBase {
     }
 
     /**
-     * Bind the environment {@link EnvSource}. Defaults to {@link NodeEnvSource} (a `process.env`
-     * snapshot plus the `.env` cascade). Pass a `ManualEnvSource` (or any `EnvSource`) to seed
-     * config from an injected object instead, e.g. on the browser. Clears and rebuilds the cache.
+     * Bind the environment {@link EnvSource}. On Node the entry binds {@link NodeEnvSource} for you
+     * (a `process.env` snapshot plus the `.env` cascade); on the browser or Workers, pass a
+     * `ManualEnvSource` / `WorkerEnvSource` (or any `EnvSource`) before reading. Clears and rebuilds
+     * the cache.
      */
     static useSource(source: EnvSource): void {
         EnvapterBase._source = source;

@@ -144,6 +144,7 @@ export class EnvironmentMethods extends EnvapterBase {
      * ```
      */
     static configureProfiles(config: ProfilesConfig): void {
+        this.assertFileApiSupported('configureProfiles');
         this._profiles = config;
         this.refreshCache();
     }

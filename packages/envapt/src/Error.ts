@@ -45,7 +45,11 @@ export enum EnvaptErrorCodes {
     /** Thrown when no valid environment key is provided */
     InvalidKeyInput = 304,
     /** Thrown when a required environment value is missing or empty (post-trim) */
-    MissingEnvValue = 305
+    MissingEnvValue = 305,
+    /** Thrown when a file-based API (envPaths, baseDir, configureProfiles) is used on a source without filesystem support */
+    FileApiUnsupported = 306,
+    /** Thrown when an environment value is read before a source is bound via Envapter.useSource */
+    NoSourceBound = 307
 }
 
 interface EnvaptErrorOptions {

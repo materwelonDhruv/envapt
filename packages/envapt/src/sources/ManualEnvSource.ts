@@ -1,4 +1,4 @@
-import type { EnvSource } from '../types';
+import type { BareEnvSource } from '../types';
 
 /**
  * Environment source seeded from a plain object you provide. Use it on the browser, in tests,
@@ -6,7 +6,7 @@ import type { EnvSource } from '../types';
  * It has no filesystem, so the `.env` cascade and file-based APIs do not apply.
  * @public
  */
-export class ManualEnvSource implements EnvSource {
+export class ManualEnvSource implements BareEnvSource {
     readonly supportsFiles = false;
     private readonly vars: Record<string, string>;
 
