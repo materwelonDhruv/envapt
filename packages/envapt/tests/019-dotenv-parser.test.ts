@@ -5,7 +5,12 @@ import { join } from 'node:path';
 import { expect } from 'chai';
 import { afterAll, afterEach, beforeAll, describe, it } from 'vitest';
 
+import { NodeEnvSource } from '../src';
 import { loadDotenv, parseDotenv } from '../src/Dotenv';
+
+// loadDotenv takes an injected reader; reuse the library's Node reader rather than re-implementing fs.
+const reader = new NodeEnvSource();
+const nodeReadFile = reader.readFile.bind(reader);
 
 describe('Dotenv parser', () => {
     describe('parseDotenv — basic syntax', () => {
@@ -147,7 +152,7 @@ describe('Dotenv parser', () => {
         it('reads a single file into processEnv', () => {
             const path = writeEnv('basic.env', 'FOO=bar\nBAZ=qux');
             const target: Record<string, string> = {};
-            loadDotenv({ path, processEnv: target });
+            loadDotenv({ path, processEnv: target, readFile: nodeReadFile });
             expect(target).to.deep.equal({ FOO: 'bar', BAZ: 'qux' });
         });
 
@@ -155,7 +160,7 @@ describe('Dotenv parser', () => {
             const first = writeEnv('first.env', 'WINNER=first\nONLY_FIRST=a');
             const second = writeEnv('second.env', 'WINNER=second\nONLY_SECOND=b');
             const target: Record<string, string> = {};
-            loadDotenv({ path: [first, second], processEnv: target });
+            loadDotenv({ path: [first, second], processEnv: target, readFile: nodeReadFile });
             expect(target.WINNER).to.equal('first');
             expect(target.ONLY_FIRST).to.equal('a');
             expect(target.ONLY_SECOND).to.equal('b');
@@ -165,21 +170,21 @@ describe('Dotenv parser', () => {
             const first = writeEnv('over1.env', 'KEY=first');
             const second = writeEnv('over2.env', 'KEY=second');
             const target: Record<string, string> = {};
-            loadDotenv({ path: [first, second], processEnv: target, override: true });
+            loadDotenv({ path: [first, second], processEnv: target, override: true, readFile: nodeReadFile });
             expect(target.KEY).to.equal('second');
         });
 
         it('does not overwrite pre-existing processEnv values by default', () => {
             const path = writeEnv('preset.env', 'KEY=fromfile');
             const target: Record<string, string> = { KEY: 'frominit' };
-            loadDotenv({ path, processEnv: target });
+            loadDotenv({ path, processEnv: target, readFile: nodeReadFile });
             expect(target.KEY).to.equal('frominit');
         });
 
         it('overwrites pre-existing processEnv values when override is true', () => {
             const path = writeEnv('preset-override.env', 'KEY=fromfile');
             const target: Record<string, string> = { KEY: 'frominit' };
-            loadDotenv({ path, processEnv: target, override: true });
+            loadDotenv({ path, processEnv: target, override: true, readFile: nodeReadFile });
             expect(target.KEY).to.equal('fromfile');
         });
 
@@ -187,14 +192,16 @@ describe('Dotenv parser', () => {
             const real = writeEnv('real.env', 'FOO=bar');
             const ghost = join(tmpDir, 'does-not-exist.env');
             const target: Record<string, string> = {};
-            expect(() => loadDotenv({ path: [ghost, real], processEnv: target })).to.not.throw();
+            expect(() =>
+                loadDotenv({ path: [ghost, real], processEnv: target, readFile: nodeReadFile })
+            ).to.not.throw();
             expect(target.FOO).to.equal('bar');
         });
 
         it('supports a custom encoding option', () => {
             const path = writeEnv('latin1.env', 'GREETING=hello');
             const target: Record<string, string> = {};
-            loadDotenv({ path, processEnv: target, encoding: 'latin1' });
+            loadDotenv({ path, processEnv: target, encoding: 'latin1', readFile: nodeReadFile });
             expect(target.GREETING).to.equal('hello');
         });
 

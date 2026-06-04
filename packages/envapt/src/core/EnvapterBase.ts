@@ -100,7 +100,10 @@ export abstract class EnvapterBase {
      */
     static set envPaths(paths: string[] | string) {
         const newPaths = Array.isArray(paths) ? paths : [paths];
-        Validator.validateEnvFilesExist(newPaths.map((p) => this.resolveAgainstBase(p)));
+        Validator.validateEnvFilesExist(
+            newPaths.map((p) => this.resolveAgainstBase(p)),
+            (p) => EnvapterBase.sourceFileExists(p)
+        );
 
         this._envPaths = newPaths;
         this._envPathsExplicitlySet = true;
@@ -145,6 +148,12 @@ export abstract class EnvapterBase {
         if (EnvapterBase._baseDir === undefined) return candidate;
         if (isAbsolute(candidate)) return candidate;
         return join(EnvapterBase._baseDir, candidate);
+    }
+
+    // Existence via the bound source instead of fs.existsSync/accessSync: a file "exists" when the
+    // source can read it. A source without a filesystem reports everything missing.
+    protected static sourceFileExists(path: string): boolean {
+        return EnvapterBase._source.readFile?.(path, 'utf8') !== undefined;
     }
 
     static set envFileOptions(config: EnvFileOptions) {
@@ -226,7 +235,7 @@ export abstract class EnvapterBase {
             let added = new Set<string>();
             // Sources without a filesystem (injected objects on the browser or Workers) skip the
             // .env cascade, profiles, and envPaths; only the readVars() snapshot populates the cache.
-            if (source.supportsFiles) {
+            if (source.supportsFiles && source.readFile) {
                 // Outside the try below so a missing configured profile path surfaces its EnvaptError; only dotenv parse errors stay caught.
                 const effectivePaths = this.resolveEffectivePaths();
                 debugVerbose(
@@ -236,7 +245,8 @@ export abstract class EnvapterBase {
                     added = loadDotenv({
                         ...this._userDefinedEnvFileOptions,
                         path: effectivePaths,
-                        processEnv: isolatedEnv
+                        processEnv: isolatedEnv,
+                        readFile: source.readFile.bind(source)
                     });
                 } catch {}
             }

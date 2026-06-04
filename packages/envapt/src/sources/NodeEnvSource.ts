@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import process from 'node:process';
 
 import type { EnvSource } from '../types';
@@ -13,5 +14,14 @@ export class NodeEnvSource implements EnvSource {
     readVars(): Record<string, string> {
         // Clone so the loader and downstream reads never mutate process.env.
         return { ...(process.env as Record<string, string>) };
+    }
+
+    readFile(path: string, encoding: string): string | undefined {
+        try {
+            // justified: our public encoding type is `string`; fs needs the BufferEncoding subset.
+            return fs.readFileSync(path, encoding as BufferEncoding);
+        } catch {
+            return undefined;
+        }
     }
 }

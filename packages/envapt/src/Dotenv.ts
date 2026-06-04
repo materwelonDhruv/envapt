@@ -1,5 +1,3 @@
-import fs from 'node:fs';
-
 import { debugVerbose, debugWarn } from './Debug';
 
 /**
@@ -11,7 +9,7 @@ import { debugVerbose, debugWarn } from './Debug';
  */
 export interface EnvFileOptions {
     /** Encoding for reading .env files. Defaults to 'utf8'. */
-    encoding?: BufferEncoding;
+    encoding?: string;
     /** When true, later files override earlier ones (and existing processEnv values). Default false (first-wins). */
     override?: boolean;
 }
@@ -24,6 +22,8 @@ export interface EnvFileOptions {
 export interface LoadDotenvInput extends EnvFileOptions {
     path: string | string[];
     processEnv: Record<string, string>;
+    // Injected so the loader stays free of `node:fs`. Returns `undefined` when the file is absent.
+    readFile(path: string, encoding: string): string | undefined;
 }
 
 // Matches: optional `export`, KEY name, optional whitespace, `=`, optional whitespace, value tail.
@@ -197,15 +197,13 @@ function unescapeDouble(raw: string): string {
  */
 export function loadDotenv(input: LoadDotenvInput): Set<string> {
     const paths = Array.isArray(input.path) ? input.path : [input.path];
-    const encoding: BufferEncoding = input.encoding ?? 'utf8';
+    const encoding = input.encoding ?? 'utf8';
     const override = input.override ?? false;
     const written = new Set<string>();
 
     for (const filePath of paths) {
-        let src: string;
-        try {
-            src = fs.readFileSync(filePath, encoding);
-        } catch {
+        const src = input.readFile(filePath, encoding);
+        if (src === undefined) {
             debugWarn(`could not read ${filePath}`);
             continue;
         }

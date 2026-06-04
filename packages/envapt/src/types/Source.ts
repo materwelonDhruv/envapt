@@ -13,6 +13,11 @@ interface EnvSource {
      * cascade, profiles, and `envPaths` are skipped. Defaults to `false`.
      */
     readonly supportsFiles?: boolean;
+    /**
+     * Read a file's text, or `undefined` when it is absent or unreadable. Consulted only when
+     * `supportsFiles` is true; it backs both the `.env` loader and existence checks.
+     */
+    readFile?(path: string, encoding: string): string | undefined;
 }
 
 export type { EnvSource };

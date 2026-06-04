@@ -1,4 +1,3 @@
-import fs from 'node:fs';
 import process from 'node:process';
 
 import { EnvaptError, EnvaptErrorCodes } from '../Error';
@@ -202,7 +201,7 @@ export class EnvironmentMethods extends EnvapterBase {
         const envName = Environment[env].toLowerCase();
         return [`.env.${envName}.local`, `.env.${envName}`, '.env.local', '.env']
             .map((name) => this.resolveAgainstBase(name))
-            .filter((p) => fs.existsSync(p));
+            .filter((p) => this.sourceFileExists(p));
     }
 
     private static normalizeProfilePaths(profile: EnvProfile | undefined): string[] {
@@ -235,7 +234,7 @@ export class EnvironmentMethods extends EnvapterBase {
 
         // Validate that explicitly configured profile paths exist for the active env.
         if (profilePaths.length > 0) {
-            const missing = profilePaths.filter((p) => !fs.existsSync(this.resolveAgainstBase(p)));
+            const missing = profilePaths.filter((p) => !this.sourceFileExists(this.resolveAgainstBase(p)));
             if (missing.length > 0) {
                 throw new EnvaptError(
                     EnvaptErrorCodes.EnvFilesNotFound,
