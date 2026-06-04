@@ -1,6 +1,6 @@
 import type { EnvSource } from './types';
 
-// Debug can't import EnvapterBase for the source (that would cycle), so the source/sink inject here.
+// EnvapterBase imports Debug; importing it back would cycle, so the source/sink are injected via the setters below.
 /* v8 ignore start -- @preserve replaced at load on Node; the Node suite never runs these defaults */
 let sink: (line: string) => void = (line) => {
     // eslint-disable-next-line no-console -- the off-Node fallback log sink

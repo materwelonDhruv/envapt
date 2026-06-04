@@ -35,7 +35,7 @@ export abstract class EnvapterBase {
     protected static _dotenvAddedKeys: Set<string> = new Set<string>();
     protected static _source: EnvSource = new NodeEnvSource();
 
-    // So ENVAPT_DEBUG and stderr output work on a plain `import 'envapt'`, before any useSource() call.
+    // So a plain `import 'envapt'` still reads ENVAPT_DEBUG and writes to stderr, before any useSource() call.
     static {
         setRuntimeSink((line) => process.stderr.write(`${line}\n`));
         bindRuntimeFromSource(EnvapterBase._source);

@@ -1,5 +1,3 @@
-import process from 'node:process';
-
 import { EnvaptError, EnvaptErrorCodes } from '../Error';
 import { EnvapterBase } from './EnvapterBase';
 
@@ -168,16 +166,15 @@ export class EnvironmentMethods extends EnvapterBase {
     }
 
     /**
-     * Determine the current environment for cascade-file selection by reading `process.env`
-     * directly. Bypassing `this.config` to avoid a circular dependency (cascade selection
-     * happens before `.env` files are loaded). The post-load `Envapter.environment` value
-     * may differ if a loaded `.env` file declares its own `ENVIRONMENT`/`ENV`/`NODE_ENV`.
+     * Reads the source's raw vars (not `this.config`, which would recurse: cascade selection runs
+     * before the `.env` load). `Envapter.environment` may differ post-load if a file sets `ENVIRONMENT`.
      * @internal
      */
     protected static getCascadeEnvironment(): Environment {
         if (this._environment !== undefined) return this._environment;
 
-        const raw = process.env.ENVIRONMENT ?? process.env.ENV ?? process.env.NODE_ENV ?? 'development';
+        const vars = EnvapterBase._source.readVars();
+        const raw = vars.ENVIRONMENT ?? vars.ENV ?? vars.NODE_ENV ?? 'development';
         const lower = raw.toLowerCase();
         if (lower === 'production') return Environment.Production;
         if (lower === 'staging') return Environment.Staging;
