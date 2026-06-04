@@ -5,11 +5,12 @@ import { fileURLToPath } from 'node:url';
 import { debugVerbose, getDebugLevel, setDebugLevel } from '../Debug';
 import { loadDotenv } from '../Dotenv';
 import { EnvaptError, EnvaptErrorCodes } from '../Error';
+import { NodeEnvSource } from '../sources/NodeEnvSource';
 import { Validator } from '../Validators';
 
 import type { DebugLevel } from '../Debug';
 import type { EnvFileOptions } from '../Dotenv';
-import type { EnvKeyInput } from '../types';
+import type { EnvKeyInput, EnvSource } from '../types';
 
 /**
  * Base cache for environment variables and computed values
@@ -31,6 +32,7 @@ export abstract class EnvapterBase {
     protected static _syncProcessEnv = false;
     // Loader-written keys only (collisions skipped). Refilled on every cache rebuild.
     protected static _dotenvAddedKeys: Set<string> = new Set<string>();
+    protected static _source: EnvSource = new NodeEnvSource();
 
     /**
      * Enable or disable strict mode. Default `false`. Setting refreshes the cache so
@@ -217,21 +219,27 @@ export abstract class EnvapterBase {
 
     protected static get config(): Map<string, unknown> {
         if (EnvaptCache.size === 0) {
-            // Clone so the loader and downstream reads never mutate process.env.
-            const isolatedEnv: Record<string, string> = { ...(process.env as Record<string, string>) };
-
-            // Outside the try below so a missing configured profile path surfaces its EnvaptError; only dotenv parse errors stay caught.
-            const effectivePaths = this.resolveEffectivePaths();
-            debugVerbose(`effective .env paths: ${effectivePaths.length === 0 ? '(none)' : effectivePaths.join(', ')}`);
+            const source = EnvapterBase._source;
+            // Clone so the loader and downstream reads never mutate the source's backing object.
+            const isolatedEnv: Record<string, string> = { ...source.readVars() };
 
             let added = new Set<string>();
-            try {
-                added = loadDotenv({
-                    ...this._userDefinedEnvFileOptions,
-                    path: effectivePaths,
-                    processEnv: isolatedEnv
-                });
-            } catch {}
+            // Sources without a filesystem (injected objects on the browser or Workers) skip the
+            // .env cascade, profiles, and envPaths; only the readVars() snapshot populates the cache.
+            if (source.supportsFiles) {
+                // Outside the try below so a missing configured profile path surfaces its EnvaptError; only dotenv parse errors stay caught.
+                const effectivePaths = this.resolveEffectivePaths();
+                debugVerbose(
+                    `effective .env paths: ${effectivePaths.length === 0 ? '(none)' : effectivePaths.join(', ')}`
+                );
+                try {
+                    added = loadDotenv({
+                        ...this._userDefinedEnvFileOptions,
+                        path: effectivePaths,
+                        processEnv: isolatedEnv
+                    });
+                } catch {}
+            }
             EnvapterBase._dotenvAddedKeys = added;
             for (const [key, value] of Object.entries(isolatedEnv)) EnvaptCache.set(key, value);
             debugVerbose(`cache populated: ${EnvaptCache.size} keys total`);
@@ -248,6 +256,16 @@ export abstract class EnvapterBase {
      */
     static load(): void {
         void this.config;
+    }
+
+    /**
+     * Bind the environment {@link EnvSource}. Defaults to {@link NodeEnvSource} (a `process.env`
+     * snapshot plus the `.env` cascade). Pass a `ManualEnvSource` (or any `EnvSource`) to seed
+     * config from an injected object instead, e.g. on the browser. Clears and rebuilds the cache.
+     */
+    static useSource(source: EnvSource): void {
+        EnvapterBase._source = source;
+        this.refreshCache();
     }
 
     /**
