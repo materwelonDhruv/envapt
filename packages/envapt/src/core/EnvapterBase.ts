@@ -9,17 +9,10 @@ import type { DebugLevel } from '../Debug';
 import type { EnvFileOptions } from '../Dotenv';
 import type { EnvKeyInput, EnvSource, FileEnvSource } from '../types';
 
-/**
- * Base cache for environment variables and computed values
- * @internal
- */
+/** @internal */
 export const EnvaptCache = new Map<string, unknown>();
 
-/**
- * Base class for environment variable management
- * Handles configuration, caching, and basic environment loading
- * @internal
- */
+/** @internal */
 export abstract class EnvapterBase {
     protected static _envPaths: string[] = ['.env'];
     protected static _envPathsExplicitlySet = false;
@@ -30,7 +23,7 @@ export abstract class EnvapterBase {
     // Loader-written keys only (collisions skipped). Refilled on every cache rebuild.
     protected static _dotenvAddedKeys: Set<string> = new Set<string>();
     // Unbound by default so non-Node builds throw NoSourceBound on read until useSource() is called.
-    // The Node entry (src/node.ts) binds NodeEnvSource at load, so `import 'envapt'` needs no setup.
+    // NodeEnvapter's static block binds NodeEnvSource when referenced, so `import 'envapt'` needs no setup.
     protected static _source: EnvSource = new UnboundEnvSource();
 
     /**
@@ -140,19 +133,14 @@ export abstract class EnvapterBase {
             /* v8 ignore next -- @preserve loader only writes strings; defensive against future cache contents */
             if (typeof value !== 'string') continue;
             mirrored[key] = value;
-            debugVerbose(`mirrored ${key} to process.env`);
+            debugVerbose(`mirrored ${key} to the ambient environment`);
         }
         source.writeVars(mirrored);
-        debugVerbose(`mirrored ${EnvapterBase._dotenvAddedKeys.size} keys to process.env`);
+        debugVerbose(`mirrored ${EnvapterBase._dotenvAddedKeys.size} keys to the ambient environment`);
     }
 
-    /**
-     * Resolve the effective `.env` paths to load. Default implementation just returns the
-     * explicit `_envPaths` array; subclasses (`EnvironmentMethods`) override to layer in the
-     * dotenv-flow cascade and any `Envapter.configureProfiles` overrides when `envPaths` was
-     * never explicitly set.
-     * @internal
-     */
+    // Default returns the explicit `_envPaths`; EnvironmentMethods overrides to layer the dotenv-flow
+    // cascade + configureProfiles when envPaths was never explicitly set.
     protected static resolveEffectivePaths(): string[] {
         /* v8 ignore next -- @preserve */
         return this._envPaths.map((p) => this.resolveAgainstBase(p));

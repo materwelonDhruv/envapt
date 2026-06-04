@@ -3,32 +3,54 @@
     "type": "module",
     "version": "5.1.1",
     "description": "Type-safe environment variables for TypeScript. Zero-dependency .env loader and parser with the same API on Node, Bun, and Deno. Decorators, converters, and Standard Schema (zod/valibot/arktype) validation.",
-    "types": "./dist/index.d.mts",
+    "types": "./dist/node/index.d.mts",
     "exports": {
         ".": {
-            "import": {
-                "types": "./dist/index.d.mts",
-                "default": "./dist/index.mjs"
+            "workerd": {
+                "types": "./dist/workerd/index.d.mts",
+                "default": "./dist/workerd/index.mjs"
             },
-            "require": {
-                "types": "./dist/index.d.cts",
-                "default": "./dist/index.cjs"
+            "browser": {
+                "types": "./dist/browser/index.d.mts",
+                "default": "./dist/browser/index.mjs"
+            },
+            "node": {
+                "import": {
+                    "types": "./dist/node/index.d.mts",
+                    "default": "./dist/node/index.mjs"
+                },
+                "require": {
+                    "types": "./dist/node/index.d.cts",
+                    "default": "./dist/node/index.cjs"
+                }
+            },
+            "default": {
+                "import": {
+                    "types": "./dist/node/index.d.mts",
+                    "default": "./dist/node/index.mjs"
+                },
+                "require": {
+                    "types": "./dist/node/index.d.cts",
+                    "default": "./dist/node/index.cjs"
+                }
             }
         },
         "./config": {
             "import": {
-                "types": "./dist/config.d.mts",
-                "default": "./dist/config.mjs"
+                "types": "./dist/node/config.d.mts",
+                "default": "./dist/node/config.mjs"
             },
             "require": {
-                "types": "./dist/config.d.cts",
-                "default": "./dist/config.cjs"
+                "types": "./dist/node/config.d.cts",
+                "default": "./dist/node/config.cjs"
             }
         }
     },
     "sideEffects": [
-        "./dist/config.cjs",
-        "./dist/config.mjs"
+        "./dist/node/config.cjs",
+        "./dist/node/config.mjs",
+        "./dist/browser/index.mjs",
+        "./dist/workerd/index.mjs"
     ],
     "files": [
         "dist",
@@ -44,7 +66,8 @@
     "homepage": "https://envapt.materwelon.dev",
     "scripts": {
         "clean": "rm -rf dist",
-        "build": "tsdown",
+        "build": "pnpm run clean && tsdown",
+        "build:verify": "pnpm tsx scripts/verify-no-node.ts",
         "dev": "tsc --watch",
         "lint": "eslint '{src,tests,scripts}/**/*.{ts,tsx}' --cache",
         "lint:fix": "eslint '{src,tests,scripts}/**/*.{ts,tsx}' --fix --cache",

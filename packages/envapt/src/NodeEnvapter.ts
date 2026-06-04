@@ -1,6 +1,10 @@
+import process from 'node:process';
+
 import { EnvapterBase } from './core/EnvapterBase';
 import { EnvironmentMethods } from './core/EnvironmentMethods';
 import { Envapter } from './Envapter';
+import { setRuntimeSink } from './runtime';
+import { NodeEnvSource } from './sources/NodeEnvSource';
 import { Validator } from './Validators';
 
 import type { EnvFileOptions } from './Dotenv';
@@ -17,6 +21,14 @@ import type { ProfilesConfig } from './types';
  * @public
  */
 export class NodeEnvapter extends Envapter {
+    // A static block (not a top-level statement in a separate entry) keeps the bind intrinsic to this
+    // class: tree-shaken out of `import { EnvaptError }`, run whenever `Envapter` is referenced, with no
+    // sideEffects entry. Depends on the es2022 native static-block emit; lowering the target defeats it.
+    static {
+        setRuntimeSink((line) => process.stderr.write(`${line}\n`));
+        NodeEnvapter.useSource(new NodeEnvSource());
+    }
+
     /**
      * Set custom .env file paths. Accepts either a single path or array of paths.
      * Setting new paths clears the cache and reloads environment variables.
@@ -110,9 +122,8 @@ export class NodeEnvapter extends Envapter {
         EnvironmentMethods._profiles = undefined;
         EnvapterBase._envPaths = ['.env'];
         EnvapterBase._envPathsExplicitlySet = false;
-        // `_environment*` is written by determineEnvironment via `this`, so clear it via `this` too,
-        // not via EnvironmentMethods (whose slot a subclass own-property would shadow). The refresh
-        // then re-determines the environment from the source on the next read.
+        // Clear via `this`, not EnvironmentMethods: determineEnvironment writes `_environment*` via
+        // `this`, so a base-anchored clear would leave a subclass own-property shadowing it.
         this._environmentExplicitlySet = false;
         this._environment = undefined;
         this.refreshCache();
