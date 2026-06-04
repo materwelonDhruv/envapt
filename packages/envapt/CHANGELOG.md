@@ -1,5 +1,11 @@
 # envapt
 
+## 5.1.1
+
+### Patch Changes
+
+- Embed the README into the published npm manifest so it renders on the package page. pnpm leaves the README out of the manifest by default, which left npmjs.com showing no README on every prior release.
+
 ## 5.1.0
 
 ### Minor Changes

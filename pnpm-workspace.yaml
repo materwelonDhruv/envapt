@@ -2,6 +2,9 @@ packages:
     - packages/*
     - apps/*
 
+# Embed the README in the published manifest so it shows on npmjs.com (pnpm 11 reads this only from here, not .npmrc).
+embedReadme: true
+
 allowBuilds:
     esbuild: true
     msgpackr-extract: true
