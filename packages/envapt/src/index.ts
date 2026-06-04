@@ -1,5 +1,6 @@
 export { Envapt, EnvBool, EnvNum, EnvStr, EnvTime, EnvUrl } from './decorators';
-export { Envapter, Environment } from './Envapter';
+export { Environment } from './Envapter';
+export { NodeEnvapter as Envapter } from './NodeEnvapter';
 export { Converters, isArrayOf } from './converters';
 export { NodeEnvSource, ManualEnvSource, WorkerEnvSource } from './sources';
 export type { ArrayElement, ArrayOf, ConverterToken, CustomElementConverter } from './converters';

@@ -127,46 +127,6 @@ export class EnvironmentMethods extends EnvapterBase {
     }
 
     /**
-     * Configure per-environment `.env` path overrides on top of the dotenv-flow auto-cascade.
-     *
-     * When set, each `Environment` key's `paths` are loaded at higher precedence than the
-     * cascade for that environment. Unspecified environments still use the cascade as-is.
-     * Set `useDefaults: false` to disable the cascade entirely (load only the configured paths).
-     *
-     * Setting an explicit `Envapter.envPaths` value at any point overrides this configuration.
-     *
-     * @example
-     * ```ts
-     * Envapter.configureProfiles({
-     *   [Environment.Staging]: { paths: 'config/staging.env' },
-     *   [Environment.Production]: { paths: ['config/prod.env', 'secrets/prod.env'] }
-     * });
-     * ```
-     */
-    static configureProfiles(config: ProfilesConfig): void {
-        this.assertFileApiSupported('configureProfiles');
-        this._profiles = config;
-        this.refreshCache();
-    }
-
-    /**
-     * Reset all path-resolution configuration to defaults: clears any prior
-     * {@link configureProfiles} call AND any explicit `Envapter.envPaths` assignment.
-     * Returns the resolver to the pure dotenv-flow cascade.
-     */
-    static resetProfiles(): void {
-        this._profiles = undefined;
-        this._envPaths = ['.env'];
-        this._envPathsExplicitlySet = false;
-        // Also clear the explicit-env flag so the next refresh re-determines env from
-        // process.env / loaded files. resetProfiles is a "back to defaults" call.
-        // Any user-set environment is wiped along with paths and profiles.
-        this._environmentExplicitlySet = false;
-        this._environment = undefined;
-        this.refreshCache();
-    }
-
-    /**
      * Reads the source's raw vars (not `this.config`, which would recurse: cascade selection runs
      * before the `.env` load). `Envapter.environment` may differ post-load if a file sets `ENVIRONMENT`.
      * @internal
@@ -209,7 +169,7 @@ export class EnvironmentMethods extends EnvapterBase {
 
     /**
      * Override the base implementation to layer the dotenv-flow cascade + any
-     * {@link configureProfiles} overrides on top of `_envPaths` when the user has NOT
+     * `Envapter.configureProfiles` overrides on top of `_envPaths` when the user has NOT
      * explicitly set `envPaths`.
      *
      * Precedence (passed to dotenv with first-wins semantics):

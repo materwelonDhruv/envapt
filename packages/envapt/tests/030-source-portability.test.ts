@@ -1,14 +1,19 @@
+import { resolve } from 'node:path';
+
 import { expect } from 'chai';
 import { afterEach, describe, it } from 'vitest';
 
 import { Converters, Envapter, EnvaptErrorCodes, ManualEnvSource, NodeEnvSource, WorkerEnvSource } from '../src';
+import { EnvapterBase } from '../src/core/EnvapterBase';
 import { EnvaptError } from '../src/Error';
 import { UnboundEnvSource } from '../src/sources/UnboundEnvSource';
 
 describe('Source portability (v5.2)', () => {
     afterEach(() => {
-        // setup.ts binds NodeEnvSource per file; restore it after any swap so later tests see Node again.
+        // setup.ts binds NodeEnvSource per file; restore it + reset path config after any swap so
+        // later tests see a clean Node default.
         Envapter.useSource(new NodeEnvSource());
+        Envapter.resetProfiles();
     });
 
     describe('UnboundEnvSource', () => {
@@ -64,6 +69,18 @@ describe('Source portability (v5.2)', () => {
             expect(Envapter.getNumber('PORT')).to.equal(3000);
             expect(Envapter.getBoolean('FLAG')).to.equal(true);
             expect(Envapter.getUsing('CFG', Converters.Json)).to.deep.equal({ a: 1 });
+        });
+    });
+
+    describe('NodeEnvapter state anchoring', () => {
+        it('writes envPaths to EnvapterBase, where the engine reads it', () => {
+            // A mis-anchored setter (writing `this._envPaths`) is behaviorally invisible: its own
+            // refresh warms the shared cache, so this pins that the write happens on EnvapterBase.
+            // pragmatic white-box read of protected state -- justified: asserts where the write landed
+            const base = EnvapterBase as unknown as { _envPaths: string[] };
+            const fixture = resolve(import.meta.dirname, '.env.extra');
+            Envapter.envPaths = fixture;
+            expect(base._envPaths).to.deep.equal([fixture]);
         });
     });
 });

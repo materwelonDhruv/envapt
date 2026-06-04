@@ -7,7 +7,7 @@ import { Validator } from '../Validators';
 
 import type { DebugLevel } from '../Debug';
 import type { EnvFileOptions } from '../Dotenv';
-import type { EnvKeyInput, EnvSource } from '../types';
+import type { EnvKeyInput, EnvSource, FileEnvSource } from '../types';
 
 /**
  * Base cache for environment variables and computed values
@@ -90,59 +90,6 @@ export abstract class EnvapterBase {
         return false;
     }
 
-    /**
-     * Set custom .env file paths. Accepts either a single path or array of paths.
-     * Setting new paths clears the cache and reloads environment variables.
-     *
-     * When set, this takes absolute precedence. The dotenv-flow auto-cascade and any
-     * {@link configureProfiles} configuration are ignored.
-     */
-    static set envPaths(paths: string[] | string) {
-        EnvapterBase.assertFileApiSupported('envPaths');
-        const newPaths = Array.isArray(paths) ? paths : [paths];
-        Validator.validateEnvFilesExist(
-            newPaths.map((p) => this.resolveAgainstBase(p)),
-            (p) => EnvapterBase.sourceFileExists(p)
-        );
-
-        this._envPaths = newPaths;
-        this._envPathsExplicitlySet = true;
-        this.refreshCache();
-    }
-
-    /**
-     * Get currently configured .env file paths
-     */
-    static get envPaths(): string[] {
-        return this._envPaths;
-    }
-
-    /**
-     * Set a base directory that relative `.env` paths resolve against instead of
-     * `process.cwd()`: the auto-cascade, {@link configureProfiles} paths, and relative
-     * `envPaths`. Absolute paths always bypass it. Pass a directory, or a module URL
-     * (`import.meta.url`, ESM) / `import.meta.dirname` / `__dirname` (CJS) to anchor
-     * resolution next to the calling file regardless of launch directory.
-     *
-     * Set this before `envPaths` so relative `envPaths` validate against the right directory.
-     * Unset (`undefined`) restores `process.cwd()` resolution.
-     */
-    static set baseDir(value: string | URL | undefined) {
-        const source = EnvapterBase._source;
-        if (!source.supportsFiles) {
-            throw new EnvaptError(
-                EnvaptErrorCodes.FileApiUnsupported,
-                'baseDir requires a filesystem-backed source; the bound source does not support .env files.'
-            );
-        }
-        EnvapterBase._baseDir = value === undefined ? undefined : source.normalizeBaseDir(value);
-        this.refreshCache();
-    }
-
-    static get baseDir(): string | undefined {
-        return EnvapterBase._baseDir;
-    }
-
     // No baseDir: candidate returned unchanged so the source resolves it against its own default
     // (process.cwd() on Node). Resolution goes through the source to keep this class node-free.
     protected static resolveAgainstBase(candidate: string): string {
@@ -155,9 +102,10 @@ export abstract class EnvapterBase {
     }
 
     // File-based config (envPaths/baseDir/configureProfiles) is meaningless without a filesystem;
-    // fail fast instead of silently ignoring it on the browser or Workers.
-    protected static assertFileApiSupported(api: string): void {
-        if (!EnvapterBase._source.supportsFiles) {
+    // throw instead of silently ignoring it on the browser or Workers. Narrows the source so callers
+    // can reach the file capabilities (resolvePath/normalizeBaseDir) after the check.
+    protected static assertFileApiSupported(api: string, source: EnvSource): asserts source is FileEnvSource {
+        if (!source.supportsFiles) {
             throw new EnvaptError(
                 EnvaptErrorCodes.FileApiUnsupported,
                 `${api} requires a filesystem-backed source; the bound source does not support .env files.`
@@ -172,19 +120,6 @@ export abstract class EnvapterBase {
         /* v8 ignore next -- @preserve every caller is file-gated, so this never sees a bare source */
         if (!source.supportsFiles) return false;
         return source.readFile(path, 'utf8') !== undefined;
-    }
-
-    static set envFileOptions(config: EnvFileOptions) {
-        Validator.validateEnvFileOptions(config);
-        this._userDefinedEnvFileOptions = config;
-        this.refreshCache();
-    }
-
-    /**
-     * Get current dotenv configuration options
-     */
-    static get envFileOptions(): EnvFileOptions {
-        return this._userDefinedEnvFileOptions;
     }
 
     protected static refreshCache(): void {
@@ -214,7 +149,7 @@ export abstract class EnvapterBase {
     /**
      * Resolve the effective `.env` paths to load. Default implementation just returns the
      * explicit `_envPaths` array; subclasses (`EnvironmentMethods`) override to layer in the
-     * dotenv-flow cascade and any {@link configureProfiles} overrides when `envPaths` was
+     * dotenv-flow cascade and any `Envapter.configureProfiles` overrides when `envPaths` was
      * never explicitly set.
      * @internal
      */
