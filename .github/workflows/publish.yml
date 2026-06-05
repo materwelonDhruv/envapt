@@ -6,11 +6,17 @@ on:
         types: [completed]
         branches:
             - main
+            - next
 
 permissions:
     contents: write
     id-token: write
     pull-requests: write
+
+# Serialize publishes per channel; never cancel an in-flight publish.
+concurrency:
+    group: publish-${{ github.event.workflow_run.head_branch }}
+    cancel-in-progress: false
 
 jobs:
     dry-run-npm:
@@ -20,6 +26,7 @@ jobs:
             - name: Checkout repository
               uses: actions/checkout@v6
               with:
+                  ref: ${{ github.event.workflow_run.head_branch }}
                   fetch-depth: 0
             - name: Setup pnpm
               uses: pnpm/action-setup@v6
@@ -29,11 +36,13 @@ jobs:
               run: pnpm publish --dry-run --no-git-checks
 
     dry-run-jsr:
-        if: ${{ github.event.workflow_run.conclusion == 'success' }}
+        # JSR has no prerelease channel, so it is validated and published for stable (main) only.
+        if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' }}
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v6
               with:
+                  ref: ${{ github.event.workflow_run.head_branch }}
                   fetch-depth: 0
 
             - uses: pnpm/action-setup@v6
@@ -49,7 +58,13 @@ jobs:
 
     npm-publish:
         needs: [dry-run-npm, dry-run-jsr]
-        if: ${{ github.event.workflow_run.conclusion == 'success' }}
+        # dry-run-jsr is skipped on the next channel. !cancelled() forces this job to evaluate
+        # its result checks instead of auto-skipping because a dependency was skipped.
+        if: >-
+            ${{ !cancelled()
+            && github.event.workflow_run.conclusion == 'success'
+            && needs.dry-run-npm.result == 'success'
+            && (needs.dry-run-jsr.result == 'success' || needs.dry-run-jsr.result == 'skipped') }}
         runs-on: ubuntu-latest
         outputs:
             published: ${{ steps.changesets.outputs.published }}
@@ -62,7 +77,26 @@ jobs:
             - name: Checkout repository
               uses: actions/checkout@v6
               with:
+                  ref: ${{ github.event.workflow_run.head_branch }}
                   fetch-depth: 0
+
+            # Hard stop against publishing the wrong channel: next must be in changeset
+            # pre-mode (so versions are -next.N and the dist-tag is `next`), main must not be
+            # (so a stray pre.json can never overwrite the `latest` tag).
+            - name: Guard release channel
+              run: |
+                  branch="${{ github.event.workflow_run.head_branch }}"
+                  mode="$(jq -r '.mode // "exit"' .changeset/pre.json 2>/dev/null || echo exit)"
+                  echo "branch=$branch pre-mode=$mode"
+                  if [ "$branch" = "next" ] && [ "$mode" != "pre" ]; then
+                      echo "::error::next must be in changeset pre-mode (pre.json mode=pre); got '$mode'. Refusing to publish."
+                      exit 1
+                  fi
+                  if [ "$branch" = "main" ] && [ "$mode" = "pre" ]; then
+                      echo "::error::main must not be in pre-mode. Refusing to publish a prerelease to the latest tag."
+                      exit 1
+                  fi
+
             - name: Turbo cache
               uses: ./.github/actions/turbo-cache
               with:
@@ -110,7 +144,7 @@ jobs:
 
     jsr-publish:
         needs: [npm-publish]
-        if: ${{ needs.npm-publish.outputs.published == 'true' }}
+        if: ${{ needs.npm-publish.outputs.published == 'true' && github.event.workflow_run.head_branch == 'main' }}
         runs-on: ubuntu-latest
         timeout-minutes: 30
         permissions:
@@ -120,6 +154,7 @@ jobs:
             - name: Checkout repository
               uses: actions/checkout@v6
               with:
+                  ref: ${{ github.event.workflow_run.head_branch }}
                   fetch-depth: 0
             - name: Setup pnpm
               uses: pnpm/action-setup@v6
