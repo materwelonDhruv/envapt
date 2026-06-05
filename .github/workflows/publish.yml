@@ -17,37 +17,12 @@ concurrency:
 
 jobs:
     checks:
-        runs-on: ubuntu-latest
-        steps:
-            - name: Checkout repository
-              uses: actions/checkout@v6
-              with:
-                  fetch-depth: 0
-            - name: Turbo cache
-              uses: ./.github/actions/turbo-cache
-              with:
-                  turbo_token: ${{ secrets.TURBO_TOKEN }}
-                  turbo_team: ${{ vars.TURBO_TEAM }}
-                  enable_fallback_cache: 'true'
-            - name: Setup pnpm
-              uses: pnpm/action-setup@v6
-            - name: Setup Node.js
-              uses: actions/setup-node@v6
-              with:
-                  node-version: 24.16.0
-                  cache: pnpm
-            - name: Install dependencies
-              run: pnpm install --frozen-lockfile
-            - name: Build project
-              run: pnpm build
-            - name: Run type check
-              run: pnpm tc
-            - name: Run lint
-              run: pnpm lint
-            - name: Run tests
-              run: pnpm test
-            - name: Run audit
-              run: pnpm audit --audit-level=high
+        uses: ./.github/workflows/checks.yml
+        secrets: inherit
+
+    cross-runtime:
+        uses: ./.github/workflows/cross-runtime.yml
+        secrets: inherit
 
     dry-run-npm:
         needs: [checks]
@@ -71,7 +46,6 @@ jobs:
 
     dry-run-jsr:
         needs: [checks]
-        # JSR has no prerelease channel, so it is validated and published for stable (main) only.
         if: ${{ github.ref_name == 'main' }}
         runs-on: ubuntu-latest
         steps:
@@ -94,11 +68,11 @@ jobs:
                   dry-run: 'true'
 
     npm-publish:
-        needs: [dry-run-npm, dry-run-jsr]
-        # dry-run-jsr is skipped on the next channel. !cancelled() forces this job to evaluate its
-        # result checks instead of auto-skipping because a dependency was skipped.
+        needs: [checks, cross-runtime, dry-run-npm, dry-run-jsr]
         if: >-
             ${{ !cancelled()
+            && needs.checks.result == 'success'
+            && needs.cross-runtime.result == 'success'
             && needs.dry-run-npm.result == 'success'
             && (needs.dry-run-jsr.result == 'success' || needs.dry-run-jsr.result == 'skipped') }}
         runs-on: ubuntu-latest
@@ -136,7 +110,6 @@ jobs:
               run: npm config get registry && npm ping
             - name: Install dependencies
               run: pnpm install --frozen-lockfile
-            # Enforces the channel guard (next must be pre-mode, main must not be)
             - name: Release preflight
               id: preflight
               run: pnpm tsx scripts/release-preflight.ts

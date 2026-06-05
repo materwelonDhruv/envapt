@@ -2,7 +2,7 @@ name: deploy-guide
 
 on:
     push:
-        branches: [main]
+        branches: [main, next]
         paths:
             - 'apps/guide/**'
             - 'packages/envapt/**'
@@ -49,7 +49,7 @@ jobs:
               run: pnpm build
 
             - name: Deploy production
-              if: github.event_name == 'push'
+              if: github.event_name == 'push' && github.ref == 'refs/heads/main'
               uses: cloudflare/wrangler-action@v4
               with:
                   apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -57,6 +57,16 @@ jobs:
                   workingDirectory: apps/guide
                   wranglerVersion: '4.95.0'
                   command: deploy
+
+            - name: Deploy next docs
+              if: github.event_name == 'push' && github.ref == 'refs/heads/next'
+              uses: cloudflare/wrangler-action@v4
+              with:
+                  apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+                  accountId: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+                  workingDirectory: apps/guide
+                  wranglerVersion: '4.95.0'
+                  command: deploy --env next
 
             - name: Compute preview alias
               if: github.event_name == 'pull_request'

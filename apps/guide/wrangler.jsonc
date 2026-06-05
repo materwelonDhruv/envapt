@@ -7,5 +7,17 @@
         // 404-page (not the default) serves the static export's 404.html; auto-trailing-slash mirrors next.config trailingSlash: true
         "not_found_handling": "404-page",
         "html_handling": "auto-trailing-slash"
+    },
+    "env": {
+        // assets is non-inheritable in wrangler envs, so the block is repeated rather than inherited.
+        "next": {
+            "name": "envapt-next",
+            "routes": [{ "pattern": "next-envapt.materwelon.dev", "custom_domain": true }],
+            "assets": {
+                "directory": "./out",
+                "not_found_handling": "404-page",
+                "html_handling": "auto-trailing-slash"
+            }
+        }
     }
 }

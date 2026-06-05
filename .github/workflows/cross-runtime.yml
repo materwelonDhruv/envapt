@@ -1,6 +1,7 @@
 name: cross-runtime
 
 on:
+    workflow_call:
     pull_request:
         paths-ignore:
             - '**/*.md'
@@ -8,15 +9,9 @@ on:
             - '.changeset/**'
             - '.github/ISSUE_TEMPLATE/**'
             - '.github/PULL_REQUEST_TEMPLATE.md'
-    push:
-        branches: [main, next]
-        paths-ignore:
-            - '**/*.md'
-            - '.vscode/**'
-            - '.changeset/**'
 
 concurrency:
-    group: ${{ github.workflow }}-${{ github.ref }}
+    group: cross-runtime-${{ github.ref }}
     cancel-in-progress: true
 
 jobs:
@@ -37,7 +32,6 @@ jobs:
             - uses: actions/upload-artifact@v4
               with:
                   name: envapt-dist-and-suites
-                  # Already-minified ESM compresses poorly; level 0 saves CPU on both ends.
                   compression-level: 0
                   path: |
                       packages/envapt/dist/
@@ -45,9 +39,6 @@ jobs:
                   if-no-files-found: error
 
     test-node:
-        # Multi-OS only at the LTS cell. Path-separator and CRLF risks live at the OS
-        # boundary; doubling the OS triplet across every Node version adds zero new
-        # bug-class coverage for a pure-JS lib with no native deps.
         name: node ${{ matrix.node }} / ${{ matrix.os }}
         needs: build
         runs-on: ${{ matrix.os }}
@@ -71,9 +62,6 @@ jobs:
             - run: node packages/envapt/tests/integration/run.mjs
 
     test-bun:
-        # Ubuntu-only: Bun's Windows/macOS variance catches Bun engine bugs (e.g.
-        # bun#16907, bun#23831), not envapt bugs. Engine flakes would just gate PRs
-        # on something we can't fix.
         name: bun / ubuntu
         needs: build
         runs-on: ubuntu-latest
@@ -88,10 +76,6 @@ jobs:
             - run: bun packages/envapt/tests/integration/run.mjs
 
     test-deno:
-        # Ubuntu-only for the same reason as Bun. `--config` forces the local deno.json
-        # so `experimentalDecorators: true` actually applies: Deno historically ignored
-        # this flag silently (denoland/deno#15968 fixed 2024-07), so without an explicit
-        # config the .ts decorator suite would not exercise the legacy transpile path.
         name: deno / ubuntu
         needs: build
         runs-on: ubuntu-latest
@@ -106,8 +90,6 @@ jobs:
             - run: deno run -A --config packages/envapt/tests/integration/deno.json packages/envapt/tests/integration/run.mjs
 
     cross-runtime-ok:
-        # Single aggregator. Set this as the required check in branch protection so
-        # renaming matrix variables (e.g. node 24 -> 26) does not break gating.
         name: cross-runtime ok
         needs: [test-node, test-bun, test-deno]
         if: always()

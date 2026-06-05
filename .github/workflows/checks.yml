@@ -1,11 +1,13 @@
 name: checks
 
 on:
+    workflow_call:
     pull_request:
     push:
+        branches-ignore: [main, next]
 
 concurrency:
-    group: ${{ github.workflow }}-${{ github.ref }}
+    group: checks-${{ github.ref }}
     cancel-in-progress: true
 
 jobs:
