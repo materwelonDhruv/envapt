@@ -9,10 +9,9 @@
         "html_handling": "auto-trailing-slash"
     },
     "env": {
-        // assets is non-inheritable in wrangler envs, so the block is repeated rather than inherited.
+        // The next-envapt.materwelon.dev custom domain is bound in the dashboard
         "next": {
             "name": "envapt-next",
-            "routes": [{ "pattern": "next-envapt.materwelon.dev", "custom_domain": true }],
             "assets": {
                 "directory": "./out",
                 "not_found_handling": "404-page",
