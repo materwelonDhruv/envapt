@@ -1,20 +1,56 @@
 name: publish-n-release
 
 on:
-    workflow_run:
-        workflows: ['checks']
-        types: [completed]
+    push:
         branches:
             - main
+            - next
 
 permissions:
     contents: write
     id-token: write
     pull-requests: write
 
+concurrency:
+    group: publish-${{ github.ref_name }}
+    cancel-in-progress: false
+
 jobs:
+    checks:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v6
+              with:
+                  fetch-depth: 0
+            - name: Turbo cache
+              uses: ./.github/actions/turbo-cache
+              with:
+                  turbo_token: ${{ secrets.TURBO_TOKEN }}
+                  turbo_team: ${{ vars.TURBO_TEAM }}
+                  enable_fallback_cache: 'true'
+            - name: Setup pnpm
+              uses: pnpm/action-setup@v6
+            - name: Setup Node.js
+              uses: actions/setup-node@v6
+              with:
+                  node-version: 24.16.0
+                  cache: pnpm
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+            - name: Build project
+              run: pnpm build
+            - name: Run type check
+              run: pnpm tc
+            - name: Run lint
+              run: pnpm lint
+            - name: Run tests
+              run: pnpm test
+            - name: Run audit
+              run: pnpm audit --audit-level=high
+
     dry-run-npm:
-        if: ${{ github.event.workflow_run.conclusion == 'success' }}
+        needs: [checks]
         runs-on: ubuntu-latest
         steps:
             - name: Checkout repository
@@ -24,21 +60,31 @@ jobs:
             - name: Setup pnpm
               uses: pnpm/action-setup@v6
             - name: Setup Node.js
+              uses: actions/setup-node@v6
+              with:
+                  node-version: 24.16.0
+                  cache: pnpm
+            - name: Install dependencies
               run: pnpm install --frozen-lockfile
             - name: Publish package (dry run)
               run: pnpm publish --dry-run --no-git-checks
 
     dry-run-jsr:
-        if: ${{ github.event.workflow_run.conclusion == 'success' }}
+        needs: [checks]
+        # JSR has no prerelease channel, so it is validated and published for stable (main) only.
+        if: ${{ github.ref_name == 'main' }}
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v6
+            - name: Checkout repository
+              uses: actions/checkout@v6
               with:
                   fetch-depth: 0
-
-            - uses: pnpm/action-setup@v6
-            - run: pnpm install --frozen-lockfile
-            - uses: denoland/setup-deno@v2
+            - name: Setup pnpm
+              uses: pnpm/action-setup@v6
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+            - name: Setup Deno
+              uses: denoland/setup-deno@v2
               with:
                   deno-version: 2.7.14
             - name: Deno publish dry run
@@ -49,7 +95,12 @@ jobs:
 
     npm-publish:
         needs: [dry-run-npm, dry-run-jsr]
-        if: ${{ github.event.workflow_run.conclusion == 'success' }}
+        # dry-run-jsr is skipped on the next channel. !cancelled() forces this job to evaluate its
+        # result checks instead of auto-skipping because a dependency was skipped.
+        if: >-
+            ${{ !cancelled()
+            && needs.dry-run-npm.result == 'success'
+            && (needs.dry-run-jsr.result == 'success' || needs.dry-run-jsr.result == 'skipped') }}
         runs-on: ubuntu-latest
         outputs:
             published: ${{ steps.changesets.outputs.published }}
@@ -69,17 +120,14 @@ jobs:
                   turbo_token: ${{ secrets.TURBO_TOKEN }}
                   turbo_team: ${{ vars.TURBO_TEAM }}
                   enable_fallback_cache: 'true'
-
             - name: Setup pnpm
               uses: pnpm/action-setup@v6
-
             - name: Setup Node.js
               uses: actions/setup-node@v6
               with:
                   node-version: 24.16.0
                   cache: pnpm
                   registry-url: https://registry.npmjs.org
-
             - name: Update npm to latest
               run: npm i -g npm@latest
             - name: Check Node.js and npm versions
@@ -88,20 +136,27 @@ jobs:
               run: npm config get registry && npm ping
             - name: Install dependencies
               run: pnpm install --frozen-lockfile
-
+            # Enforces the channel guard (next must be pre-mode, main must not be)
+            - name: Release preflight
+              id: preflight
+              run: pnpm tsx scripts/release-preflight.ts
+              env:
+                  GITHUB_REF_NAME: ${{ github.ref_name }}
             - name: Determine release metadata
               id: release_meta
+              if: ${{ steps.preflight.outputs.run == 'true' }}
               uses: ./.github/actions/release-metadata
-
             - name: Run prepublishOnly script
+              if: ${{ steps.preflight.outputs.run == 'true' }}
               run: pnpm run prepublishOnly
-
             - name: Run changesets
               id: changesets
+              if: ${{ steps.preflight.outputs.run == 'true' }}
               uses: changesets/action@v1
               with:
                   version: pnpm run release:version
                   publish: pnpm run release
+                  branch: ${{ github.ref_name }}
                   commit: 'chore: merge changesets'
                   title: ${{ steps.release_meta.outputs.title }}
               env:
@@ -110,7 +165,7 @@ jobs:
 
     jsr-publish:
         needs: [npm-publish]
-        if: ${{ needs.npm-publish.outputs.published == 'true' }}
+        if: ${{ needs.npm-publish.outputs.published == 'true' && github.ref_name == 'main' }}
         runs-on: ubuntu-latest
         timeout-minutes: 30
         permissions:
