@@ -8,7 +8,7 @@ envapt now runs on the browser and Cloudflare Workers, not only Node. The engine
 
 - `NodeEnvSource`: a `process.env` snapshot plus the `.env` cascade. Bound automatically on Node, Bun, and Deno, so you do not call `useSource` yourself.
 - `WorkerEnvSource`: reads a Cloudflare Workers `env` binding. Non-string bindings are JSON-stringified so the converters still apply.
-- `ManualEnvSource`: reads a plain object you pass in, snapshotted at construction. Use it on the browser or in tests.
+- `ManualEnvSource`: reads any object you pass in, snapshotted at construction, with non-string values JSON-stringified like `WorkerEnvSource`. Pass `import.meta.env` or a bundler-injected object directly on the browser, or a plain object in tests.
 
 ```ts
 import { Envapter, ManualEnvSource } from 'envapt';
@@ -17,7 +17,7 @@ Envapter.useSource(new ManualEnvSource({ PORT: '3000', FLAG: 'true' }));
 Envapter.getNumber('PORT'); // 3000
 ```
 
-The core imports no `node:*` module: `node:fs`, `node:path`, `node:process`, and `node:url` are confined to `NodeEnvSource`. envapt ships a build per runtime, so a Workers or browser bundle pulls in no Node built-ins, and workerd needs no `nodejs_compat` flag.
+The core imports no `node:*` module: `node:fs`, `node:path`, `node:process`, and `node:url` are confined to `NodeEnvSource`. envapt ships a build per runtime, so a Workers or browser bundle pulls in no Node built-ins, and workerd needs no `nodejs_compat` flag. Bare `envapt` resolves the right build through the `exports` conditions, and the dedicated `envapt/workerd` and `envapt/browser` entries add the matching types, which omit the file-only APIs so a stray call is a compile error rather than a runtime `FileApiUnsupported`.
 
 Two new `EnvaptErrorCodes` replace silent no-ops with a thrown error:
 

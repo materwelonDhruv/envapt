@@ -9,7 +9,10 @@ import { Envapter, Environment } from '../src';
 describe('profile loading', () => {
     const envDirectory = resolve(import.meta.dirname, 'environment');
 
-    const profiles: Record<Environment, { path: string; name: string; port: number; apiUrl: string; flag: boolean }> = {
+    const profiles: Record<
+        Exclude<Environment, Environment.Test>,
+        { path: string; name: string; port: number; apiUrl: string; flag: boolean }
+    > = {
         [Environment.Development]: {
             path: resolve(envDirectory, '.env.development'),
             name: 'dev-profile',

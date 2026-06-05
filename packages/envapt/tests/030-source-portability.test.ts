@@ -72,6 +72,28 @@ describe('Source portability (v5.2)', () => {
         });
     });
 
+    describe('ManualEnvSource', () => {
+        it('passes strings through and JSON-stringifies non-string values', () => {
+            const source = new ManualEnvSource({ STR: 'x', NUM: 3000, FLAG: true, CFG: { a: 1 } });
+            expect(source.readVars()).to.deep.equal({
+                STR: 'x',
+                NUM: '3000',
+                FLAG: 'true',
+                CFG: '{"a":1}'
+            });
+        });
+
+        it('accepts an import.meta.env-shaped object straight through', () => {
+            // Vite's import.meta.env mixes string VITE_* vars with boolean DEV/PROD/SSR flags.
+            Envapter.useSource(
+                new ManualEnvSource({ VITE_API_URL: 'https://api.example.com', DEV: true, MODE: 'production' })
+            );
+            expect(Envapter.getUsing('VITE_API_URL', Converters.Url)?.href).to.equal('https://api.example.com/');
+            expect(Envapter.getBoolean('DEV')).to.equal(true);
+            expect(Envapter.get('MODE')).to.equal('production');
+        });
+    });
+
     describe('NodeEnvapter state anchoring', () => {
         it('writes envPaths to EnvapterBase, where the engine reads it', () => {
             // A mis-anchored setter (writing `this._envPaths`) is behaviorally invisible: its own

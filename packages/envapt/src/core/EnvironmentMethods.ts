@@ -1,3 +1,4 @@
+import { debugWarn } from '../Debug';
 import { EnvaptError, EnvaptErrorCodes } from '../Error';
 import { EnvapterBase } from './EnvapterBase';
 
@@ -10,7 +11,26 @@ import type { EnvProfile, ProfilesConfig } from '../types';
 export enum Environment {
     Development,
     Staging,
-    Production
+    Production,
+    Test
+}
+
+// Keys carrying the environment name, highest precedence first. Checked in order until the first with a non-empty value is found, or defaulting to development if none are set.
+const ENV_KEYS = ['ENVIRONMENT', 'ENV', 'NODE_ENV', 'MODE'] as const;
+
+function parseEnvironment(raw: string): Environment | undefined {
+    switch (raw.toLowerCase()) {
+        case 'production':
+            return Environment.Production;
+        case 'staging':
+            return Environment.Staging;
+        case 'test':
+            return Environment.Test;
+        case 'development':
+            return Environment.Development;
+        default:
+            return undefined;
+    }
 }
 
 /**
@@ -23,25 +43,41 @@ export class EnvironmentMethods extends EnvapterBase {
     protected static _profiles: ProfilesConfig | undefined;
 
     protected static determineEnvironment(env?: string | Environment): void {
-        const environment =
-            env ??
-            this.getRawValue('ENVIRONMENT', this.getRawValue('ENV', this.getRawValue('NODE_ENV', 'development')));
-
-        if (typeof environment === 'string') {
-            this._environment =
-                environment.toLowerCase() === 'production'
-                    ? Environment.Production
-                    : environment === 'staging'
-                      ? Environment.Staging
-                      : Environment.Development;
-        } else {
-            this._environment = environment;
+        if (typeof env === 'number') {
+            this._environment = env;
+            this._environmentExplicitlySet = true;
+            return;
         }
-        if (env !== undefined) this._environmentExplicitlySet = true;
+        if (typeof env === 'string') {
+            this._environment = parseEnvironment(env) ?? Environment.Development;
+            this._environmentExplicitlySet = true;
+            return;
+        }
+
+        const raw = this.firstEnvKeyValue((key) => {
+            const value = this.config.get(key);
+            return typeof value === 'string' ? value : undefined;
+        });
+        if (raw === undefined) {
+            debugWarn(`no environment set (looked for ${ENV_KEYS.join(', ')}); defaulting to development`);
+            this._environment = Environment.Development;
+            return;
+        }
+        const parsed = parseEnvironment(raw);
+        if (parsed === undefined) {
+            debugWarn(`unrecognized environment "${raw}"; defaulting to development`);
+            this._environment = Environment.Development;
+            return;
+        }
+        this._environment = parsed;
     }
 
-    private static getRawValue(key: string, fallback: string): string {
-        return (this.config.get(key) as string) || fallback;
+    private static firstEnvKeyValue(read: (key: string) => string | undefined): string | undefined {
+        for (const key of ENV_KEYS) {
+            const value = read(key);
+            if (value !== undefined && value.length > 0) return value;
+        }
+        return undefined;
     }
 
     /**
@@ -117,6 +153,20 @@ export class EnvironmentMethods extends EnvapterBase {
         return EnvironmentMethods.environment === Environment.Development;
     }
 
+    /**
+     * Check if the current environment is test
+     */
+    static get isTest(): boolean {
+        return this.environment === Environment.Test;
+    }
+
+    /**
+     * @see {@link EnvironmentMethods.isTest}
+     */
+    get isTest(): boolean {
+        return EnvironmentMethods.environment === Environment.Test;
+    }
+
     protected static override refreshCache(): void {
         // If the env was inferred (not user-set), reset it so re-hydration re-determines
         // from current state. If the user explicitly set Envapter.environment = X, preserve
@@ -135,11 +185,8 @@ export class EnvironmentMethods extends EnvapterBase {
         if (this._environment !== undefined) return this._environment;
 
         const vars = EnvapterBase._source.readVars();
-        const raw = vars.ENVIRONMENT ?? vars.ENV ?? vars.NODE_ENV ?? 'development';
-        const lower = raw.toLowerCase();
-        if (lower === 'production') return Environment.Production;
-        if (lower === 'staging') return Environment.Staging;
-        return Environment.Development;
+        const raw = this.firstEnvKeyValue((key) => vars[key]);
+        return raw === undefined ? Environment.Development : (parseEnvironment(raw) ?? Environment.Development);
     }
 
     /**
@@ -179,7 +226,7 @@ export class EnvironmentMethods extends EnvapterBase {
      *   4. `.env.local`
      *   5. `.env`
      *
-     * If `useDefaults: false` is set on the profiles config, only (1) is loaded — no cascade.
+     * If `useDefaults: false` is set on the profiles config, only (1) is loaded, no cascade.
      * If `envPaths` was explicitly set, only `envPaths` is loaded (everything else ignored).
      * @internal
      */

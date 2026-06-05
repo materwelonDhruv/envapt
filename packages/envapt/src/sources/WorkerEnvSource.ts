@@ -1,3 +1,5 @@
+import { coerceToStringRecord } from './coerce';
+
 import type { BareEnvSource } from '../types';
 
 /**
@@ -12,18 +14,7 @@ export class WorkerEnvSource implements BareEnvSource {
     private readonly vars: Record<string, string>;
 
     constructor(env: Record<string, unknown>) {
-        const snapshot: Record<string, string> = {};
-        for (const [key, value] of Object.entries(env)) {
-            if (typeof value === 'string') {
-                snapshot[key] = value;
-                continue;
-            }
-            // JSON.stringify returns undefined for undefined / functions / symbols; drop those keys.
-            const encoded = JSON.stringify(value);
-            // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- TS lib mistypes JSON.stringify's return as always-string; it is string | undefined at runtime
-            if (encoded !== undefined) snapshot[key] = encoded;
-        }
-        this.vars = snapshot;
+        this.vars = coerceToStringRecord(env);
     }
 
     readVars(): Record<string, string> {

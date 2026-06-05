@@ -35,6 +35,7 @@ describe('Instance Properties with @Envapt', () => {
             expect(instance.isProduction).to.be.true;
             expect(instance.isDevelopment).to.be.false;
             expect(instance.isStaging).to.be.false;
+            expect(instance.isTest).to.be.false;
         });
 
         it('should update environment to Staging', () => {
