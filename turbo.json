@@ -5,7 +5,8 @@
         "build": {
             "dependsOn": ["^build"],
             "inputs": ["$TURBO_DEFAULT$", ".env*"],
-            "outputs": ["dist/**", ".next/**", "!.next/cache/**", "out/**"]
+            "outputs": ["dist/**", ".next/**", "!.next/cache/**", "out/**"],
+            "env": ["NEXT_PUBLIC_SITE_URL"]
         },
         "dev": {
             "cache": false,

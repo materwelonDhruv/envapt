@@ -1,4 +1,4 @@
-export const SITE_URL = 'https://envapt.materwelon.dev';
+export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://envapt.materwelon.dev';
 export const SITE_NAME = 'envapt';
 export const SITE_DESCRIPTION =
     'Read environment variables as real types, with zero runtime dependencies and zod/valibot/arktype validation. Runs on Node, Bun, Deno, Cloudflare Workers, and the browser; loads .env files on Node, Bun, and Deno.';
