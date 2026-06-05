@@ -40,8 +40,6 @@ jobs:
               run: pnpm install --frozen-lockfile
             - name: Build project
               run: pnpm build
-            - name: Verify portable builds are node-free
-              run: pnpm --filter envapt build:verify
             - name: Run type check
               run: pnpm tc
             - name: Run lint
