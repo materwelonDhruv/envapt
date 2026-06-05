@@ -5,5 +5,9 @@
     "@envapt/guide": "1.0.0",
     "envapt": "5.1.1"
   },
-  "changesets": []
+  "changesets": [
+    "environment-detection-test-mode",
+    "pluggable-env-sources",
+    "time-fallback-decimal"
+  ]
 }
