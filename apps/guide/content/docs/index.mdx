@@ -29,7 +29,7 @@ class Config {
 
 - **Typed values.** A fallback removes `undefined` from the return type. [Converters](/docs/converters) convert numbers, booleans, bigint, JSON, URLs, dates, durations, and arrays, or pass your own function or a [Standard Schema](/docs/standard-schema) validator (zod, valibot, arktype).
 - **Zero runtime dependencies.** envapt ships its own `.env` parser (used on Node, Bun, and Deno), so nothing is added to your dependency tree.
-- **The same API on Node, Bun, and Deno, plus Cloudflare Workers and the browser.** Off Node you bind an environment source. See [Compatibility](/docs/compatibility) and [Sources](/docs/sources).
+- **The same API on Node, Bun, and Deno, Cloudflare Workers, and the browser.** Off Node you bind an environment source. See [Compatibility](/docs/compatibility) and [Sources](/docs/sources).
 - **`.env` loading built in on Node.** A per-environment file [cascade](/docs/environment), `${VAR}` [templates](/docs/templates), and [strict](/docs/strict-mode) / required checks. The cascade needs a filesystem; off Node you pass values through the source.
 
 ## Next

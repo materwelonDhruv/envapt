@@ -113,9 +113,9 @@ const grace = Envapter.getUsing('GRACE', Converters.Time, '1.5h');
 The units are `ms`, `s`, `m`, `h`, `d`, `w`. The fallback may be a number (already milliseconds) or a time-string.
 
 <Callout type="warn">
-    A raw env value is lenient: a unit is optional and decimals are allowed (`1.5h`). A **string fallback** is strict:
-    it needs an integer and an explicit unit (`90m`, not `1.5h` or `5400`). A malformed string fallback throws
-    `EnvaptError` with code `MalformedTimeFallback`.
+    A raw env value may omit the unit (a bare number is milliseconds). A **string fallback** must include the unit
+    (`90m` or `1.5h`), since a unitless number is already expressed as a number fallback (`5400`). Both forms accept
+    decimals. A malformed string fallback throws `EnvaptError` with code `MalformedTimeFallback`.
 </Callout>
 
 ## Arrays

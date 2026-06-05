@@ -114,7 +114,7 @@ export function Envapt<TReturnType>(
  *   \@Envapt(['CANARY_URL', 'APP_URL'], { converter: Converters.Url })
  *   static readonly canaryUrl: URL | null;
  *
- *   // `Converters.Time` accepts either a number (milliseconds) or a time-string fallback (`<integer><unit>`).
+ *   // `Converters.Time` accepts either a number (milliseconds) or a time-string fallback (`<number><unit>`).
  *   \@Envapt('REQUEST_TIMEOUT', { converter: Converters.Time, fallback: '10s' })
  *   static readonly requestTimeout: number;
  *
