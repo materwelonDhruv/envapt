@@ -31,6 +31,9 @@ describe('Converters.Time — time-string fallbacks', () => {
 
             @Envapt('TEST_TIME_STRING_FALLBACK_W', { converter: Converters.Time, fallback: '1w' })
             static readonly w: number;
+
+            @Envapt('TEST_TIME_STRING_FALLBACK_DECIMAL', { converter: Converters.Time, fallback: '1.5h' })
+            static readonly decimal: number;
         }
 
         it('parses ms', () => expect(Strings.ms).to.equal(1500));
@@ -39,6 +42,8 @@ describe('Converters.Time — time-string fallbacks', () => {
         it('parses h', () => expect(Strings.h).to.equal(3 * 60 * 60 * 1000));
         it('parses d', () => expect(Strings.d).to.equal(24 * 60 * 60 * 1000));
         it('parses w', () => expect(Strings.w).to.equal(7 * 24 * 60 * 60 * 1000));
+        // Decimals parse the same as a raw value; the only string-fallback constraint is the explicit unit.
+        it('parses a decimal value', () => expect(Strings.decimal).to.equal(1.5 * 60 * 60 * 1000));
     });
 
     describe('absent fallback', () => {
@@ -67,22 +72,6 @@ describe('Converters.Time — time-string fallbacks', () => {
             }
 
             expect(() => BogusFallback.bogus)
-                .to.throw(EnvaptError)
-                .with.property('code', EnvaptErrorCodes.MalformedTimeFallback);
-        });
-
-        it('throws MalformedTimeFallback for a decimal time-string (runtime is integer-only)', () => {
-            class DecimalFallback extends Envapter {
-                // `${number}${TimeUnit}` accepts '1.5h' at compile time, but the runtime regex
-                // requires an integer value. Documents the type/runtime gap.
-                @Envapt('UNDEFINED_TIME_FOR_DECIMAL_FALLBACK', {
-                    converter: Converters.Time,
-                    fallback: '1.5h'
-                })
-                static readonly decimal: number;
-            }
-
-            expect(() => DecimalFallback.decimal)
                 .to.throw(EnvaptError)
                 .with.property('code', EnvaptErrorCodes.MalformedTimeFallback);
         });

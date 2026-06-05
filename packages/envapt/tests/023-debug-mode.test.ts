@@ -5,12 +5,16 @@ import { expect } from 'chai';
 import { expectTypeOf } from 'expect-type';
 import { afterEach, beforeAll, beforeEach, describe, it, vi } from 'vitest';
 
-import { Envapter, EnvaptErrorCodes } from '../src';
+import { Envapter, EnvaptErrorCodes, NodeEnvSource } from '../src';
 import { resetDebugForTesting } from '../src/Debug';
 import { loadDotenv } from '../src/Dotenv';
 import { EnvaptError } from '../src/Error';
 
 import type { DebugLevel } from '../src';
+
+// loadDotenv takes an injected reader; reuse the library's Node reader rather than re-implementing fs.
+const reader = new NodeEnvSource();
+const nodeReadFile = reader.readFile.bind(reader);
 
 interface StderrCapture {
     lines: string[];
@@ -232,7 +236,7 @@ describe('Debug mode (v5)', () => {
             const ghost = resolve(import.meta.dirname, '.env.does-not-exist-at-all');
             const capture = captureStderr();
             try {
-                loadDotenv({ path: ghost, processEnv: {} });
+                loadDotenv({ path: ghost, processEnv: {}, readFile: nodeReadFile });
                 const line = capture.lines.find((l) => l.includes(ghost));
                 expect(line, 'expected a could-not-read warn').to.exist;
                 expect(line).to.include('could not read');

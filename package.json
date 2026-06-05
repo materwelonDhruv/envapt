@@ -19,7 +19,7 @@
         "tc": "turbo tc",
         "test": "turbo test",
         "coverage": "turbo coverage",
-        "prePush": "pnpm build && pnpm tc && pnpm lint && pnpm lint:md && pnpm test",
+        "prePush": "pnpm build && pnpm --filter envapt build:verify && pnpm tc && pnpm lint && pnpm lint:md && pnpm test",
         "lint-staged": "lint-staged",
         "clean": "turbo clean",
         "clean:node": "find . -name node_modules -type d -prune -exec rm -rf '{}' +",

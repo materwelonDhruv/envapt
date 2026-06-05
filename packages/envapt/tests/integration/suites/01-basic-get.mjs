@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 
 import { FIXTURE_PATH } from './_helpers.mjs';
-import { Envapter } from '../../../dist/index.mjs';
+import { Envapter } from '../../../dist/node/index.mjs';
 
 export default async function basicGet() {
     Envapter.envPaths = FIXTURE_PATH;

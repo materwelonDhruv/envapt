@@ -36,7 +36,7 @@ To fail fast on a specific value, use `require` or the `{ required: true }` form
 import { Envapter, Converters } from 'envapt';
 // ---cut---
 // throws if unset, independent of Envapter.strict
-const dbUrl = Envapter.getUsing('DATABASE_URL', { converter: Converters.Url, required: true });
+const s3Endpoint = Envapter.getUsing('S3_ENDPOINT_URL', { converter: Converters.Url, required: true });
 //    ^?
 
 Envapter.require('API_KEY', 'SENTRY_DSN');

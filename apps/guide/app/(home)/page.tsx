@@ -8,7 +8,7 @@ import { canonicalUrl, DEFAULT_OG_IMAGE, SITE_NAME } from '@/lib/site';
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 
-const homeTitle = 'envapt · Typed config from .env for Node, Bun, and Deno';
+const homeTitle = 'envapt · Typed config for Node, Bun, Deno, Workers, and the browser';
 
 export const metadata: Metadata = {
     title: { absolute: homeTitle },

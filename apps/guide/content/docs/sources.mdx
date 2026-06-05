@@ -1,0 +1,65 @@
+---
+title: Sources
+description: Bind an environment source with useSource, and what the Node, Worker, and manual providers read.
+---
+
+An environment source is the object envapt reads variables from. On Node, Bun, and Deno a source is bound for you on import, reading `process.env` and the `.env` file cascade. On Cloudflare Workers and in the browser there is none of that, so you bind a source yourself with `Envapter.useSource(...)` and read with the same typed API.
+
+<Callout type="info">
+    On Node, Bun, and Deno you never call `useSource`. The Node entry binds a source that reads a clone of `process.env`
+    plus the `.env` cascade at import time.
+</Callout>
+
+## The providers
+
+envapt ships three sources.
+
+- `NodeEnvSource` is bound automatically on the Node entry and is Node-only. It reads a clone of `process.env` and the `.env` cascade.
+- `WorkerEnvSource` wraps the Cloudflare `env` binding. See [Workers](/docs/workers).
+- `ManualEnvSource` wraps any object you pass, like the config your bundler injects into a browser build, so you can pass `import.meta.env` directly. See [Browser](/docs/browser).
+
+`WorkerEnvSource` and `ManualEnvSource` both snapshot the object at construction (so later mutation does not leak in) and JSON-stringify non-string values so the converters parse them the same way.
+
+You pass the source the object the runtime exposes, the Worker `env` binding or the bundler's injected config, not one you write out by hand. The value is the typed read on top:
+
+```ts twoslash
+import { Envapter, WorkerEnvSource, Converters } from 'envapt';
+// ---cut---
+declare const env: Record<string, unknown>; // the Cloudflare env binding
+Envapter.useSource(new WorkerEnvSource(env));
+
+const upstream = Envapter.getUsing('UPSTREAM_URL', Converters.Url); // URL | undefined
+const cacheTtl = Envapter.getUsing('CACHE_TTL', Converters.Time, '5m'); // number (ms)
+```
+
+## Any object can be a source
+
+`EnvSource` is one required method, `readVars(): Record<string, string>`. Any object that satisfies it works, so you can adapt another config system, a secrets payload or an RPC response, without writing a provider.
+
+```ts twoslash
+import { Envapter, Converters } from 'envapt';
+
+import type { EnvSource } from 'envapt';
+// ---cut---
+declare const secrets: Record<string, string>; // fetched from your secrets manager
+const source: EnvSource = { readVars: () => secrets };
+Envapter.useSource(source);
+
+const apiBase = Envapter.getUsing('API_BASE_URL', Converters.Url);
+const poolSize = Envapter.getNumber('DB_POOL_SIZE', 10);
+```
+
+An optional `supportsFiles` flag marks a source as backing the file-only config APIs. Only `NodeEnvSource` sets it, which is why the `.env` cascade and `envPaths` work on Node and nowhere else.
+
+## When nothing is bound
+
+Reading a value before you call `useSource` throws `EnvaptError` with code `NoSourceBound`. It cannot happen on Node, where the source is bound on import.
+
+The file-only config APIs (`envPaths`, `baseDir`, `envFileOptions`, `configureProfiles`, `resetProfiles`) need a source that backs the filesystem. Calling one on a bare source throws `EnvaptError` with code `FileApiUnsupported`. See [Errors](/docs/errors) for both.
+
+<Callout type="warn">
+    Off Node there is no filesystem: the `.env` cascade and the file-only config APIs are absent. Pass your values
+    through `ManualEnvSource` or `WorkerEnvSource` instead.
+</Callout>
+
+For the per-runtime flows see [Workers](/docs/workers) and [Browser](/docs/browser); the build selection is in [Compatibility](/docs/compatibility).

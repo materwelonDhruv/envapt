@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { resolve } from 'node:path';
 
 import { FIXTURE_PATH } from './_helpers.mjs';
-import { EnvaptError, EnvaptErrorCodes, Envapter } from '../../../dist/index.mjs';
+import { EnvaptError, EnvaptErrorCodes, Envapter } from '../../../dist/node/index.mjs';
 
 export default async function missingFile() {
     const ghost = resolve(FIXTURE_PATH, '../this-fixture-does-not-exist.env');

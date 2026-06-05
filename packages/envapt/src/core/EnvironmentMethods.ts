@@ -1,6 +1,4 @@
-import fs from 'node:fs';
-import process from 'node:process';
-
+import { debugWarn } from '../Debug';
 import { EnvaptError, EnvaptErrorCodes } from '../Error';
 import { EnvapterBase } from './EnvapterBase';
 
@@ -13,7 +11,26 @@ import type { EnvProfile, ProfilesConfig } from '../types';
 export enum Environment {
     Development,
     Staging,
-    Production
+    Production,
+    Test
+}
+
+// Keys carrying the environment name, highest precedence first. Checked in order until the first with a non-empty value is found, or defaulting to development if none are set.
+const ENV_KEYS = ['ENVIRONMENT', 'ENV', 'NODE_ENV', 'MODE'] as const;
+
+function parseEnvironment(raw: string): Environment | undefined {
+    switch (raw.toLowerCase()) {
+        case 'production':
+            return Environment.Production;
+        case 'staging':
+            return Environment.Staging;
+        case 'test':
+            return Environment.Test;
+        case 'development':
+            return Environment.Development;
+        default:
+            return undefined;
+    }
 }
 
 /**
@@ -26,25 +43,41 @@ export class EnvironmentMethods extends EnvapterBase {
     protected static _profiles: ProfilesConfig | undefined;
 
     protected static determineEnvironment(env?: string | Environment): void {
-        const environment =
-            env ??
-            this.getRawValue('ENVIRONMENT', this.getRawValue('ENV', this.getRawValue('NODE_ENV', 'development')));
-
-        if (typeof environment === 'string') {
-            this._environment =
-                environment.toLowerCase() === 'production'
-                    ? Environment.Production
-                    : environment === 'staging'
-                      ? Environment.Staging
-                      : Environment.Development;
-        } else {
-            this._environment = environment;
+        if (typeof env === 'number') {
+            this._environment = env;
+            this._environmentExplicitlySet = true;
+            return;
         }
-        if (env !== undefined) this._environmentExplicitlySet = true;
+        if (typeof env === 'string') {
+            this._environment = parseEnvironment(env) ?? Environment.Development;
+            this._environmentExplicitlySet = true;
+            return;
+        }
+
+        const raw = this.firstEnvKeyValue((key) => {
+            const value = this.config.get(key);
+            return typeof value === 'string' ? value : undefined;
+        });
+        if (raw === undefined) {
+            debugWarn(`no environment set (looked for ${ENV_KEYS.join(', ')}); defaulting to development`);
+            this._environment = Environment.Development;
+            return;
+        }
+        const parsed = parseEnvironment(raw);
+        if (parsed === undefined) {
+            debugWarn(`unrecognized environment "${raw}"; defaulting to development`);
+            this._environment = Environment.Development;
+            return;
+        }
+        this._environment = parsed;
     }
 
-    private static getRawValue(key: string, fallback: string): string {
-        return (this.config.get(key) as string) || fallback;
+    private static firstEnvKeyValue(read: (key: string) => string | undefined): string | undefined {
+        for (const key of ENV_KEYS) {
+            const value = read(key);
+            if (value !== undefined && value.length > 0) return value;
+        }
+        return undefined;
     }
 
     /**
@@ -120,6 +153,20 @@ export class EnvironmentMethods extends EnvapterBase {
         return EnvironmentMethods.environment === Environment.Development;
     }
 
+    /**
+     * Check if the current environment is test
+     */
+    static get isTest(): boolean {
+        return this.environment === Environment.Test;
+    }
+
+    /**
+     * @see {@link EnvironmentMethods.isTest}
+     */
+    get isTest(): boolean {
+        return EnvironmentMethods.environment === Environment.Test;
+    }
+
     protected static override refreshCache(): void {
         // If the env was inferred (not user-set), reset it so re-hydration re-determines
         // from current state. If the user explicitly set Envapter.environment = X, preserve
@@ -130,59 +177,16 @@ export class EnvironmentMethods extends EnvapterBase {
     }
 
     /**
-     * Configure per-environment `.env` path overrides on top of the dotenv-flow auto-cascade.
-     *
-     * When set, each `Environment` key's `paths` are loaded at higher precedence than the
-     * cascade for that environment. Unspecified environments still use the cascade as-is.
-     * Set `useDefaults: false` to disable the cascade entirely (load only the configured paths).
-     *
-     * Setting an explicit `Envapter.envPaths` value at any point overrides this configuration.
-     *
-     * @example
-     * ```ts
-     * Envapter.configureProfiles({
-     *   [Environment.Staging]: { paths: 'config/staging.env' },
-     *   [Environment.Production]: { paths: ['config/prod.env', 'secrets/prod.env'] }
-     * });
-     * ```
-     */
-    static configureProfiles(config: ProfilesConfig): void {
-        this._profiles = config;
-        this.refreshCache();
-    }
-
-    /**
-     * Reset all path-resolution configuration to defaults: clears any prior
-     * {@link configureProfiles} call AND any explicit `Envapter.envPaths` assignment.
-     * Returns the resolver to the pure dotenv-flow cascade.
-     */
-    static resetProfiles(): void {
-        this._profiles = undefined;
-        this._envPaths = ['.env'];
-        this._envPathsExplicitlySet = false;
-        // Also clear the explicit-env flag so the next refresh re-determines env from
-        // process.env / loaded files. resetProfiles is a "back to defaults" call.
-        // Any user-set environment is wiped along with paths and profiles.
-        this._environmentExplicitlySet = false;
-        this._environment = undefined;
-        this.refreshCache();
-    }
-
-    /**
-     * Determine the current environment for cascade-file selection by reading `process.env`
-     * directly. Bypassing `this.config` to avoid a circular dependency (cascade selection
-     * happens before `.env` files are loaded). The post-load `Envapter.environment` value
-     * may differ if a loaded `.env` file declares its own `ENVIRONMENT`/`ENV`/`NODE_ENV`.
+     * Reads the source's raw vars (not `this.config`, which would recurse: cascade selection runs
+     * before the `.env` load). `Envapter.environment` may differ post-load if a file sets `ENVIRONMENT`.
      * @internal
      */
     protected static getCascadeEnvironment(): Environment {
         if (this._environment !== undefined) return this._environment;
 
-        const raw = process.env.ENVIRONMENT ?? process.env.ENV ?? process.env.NODE_ENV ?? 'development';
-        const lower = raw.toLowerCase();
-        if (lower === 'production') return Environment.Production;
-        if (lower === 'staging') return Environment.Staging;
-        return Environment.Development;
+        const vars = EnvapterBase._source.readVars();
+        const raw = this.firstEnvKeyValue((key) => vars[key]);
+        return raw === undefined ? Environment.Development : (parseEnvironment(raw) ?? Environment.Development);
     }
 
     /**
@@ -202,7 +206,7 @@ export class EnvironmentMethods extends EnvapterBase {
         const envName = Environment[env].toLowerCase();
         return [`.env.${envName}.local`, `.env.${envName}`, '.env.local', '.env']
             .map((name) => this.resolveAgainstBase(name))
-            .filter((p) => fs.existsSync(p));
+            .filter((p) => this.sourceFileExists(p));
     }
 
     private static normalizeProfilePaths(profile: EnvProfile | undefined): string[] {
@@ -212,7 +216,7 @@ export class EnvironmentMethods extends EnvapterBase {
 
     /**
      * Override the base implementation to layer the dotenv-flow cascade + any
-     * {@link configureProfiles} overrides on top of `_envPaths` when the user has NOT
+     * `Envapter.configureProfiles` overrides on top of `_envPaths` when the user has NOT
      * explicitly set `envPaths`.
      *
      * Precedence (passed to dotenv with first-wins semantics):
@@ -222,7 +226,7 @@ export class EnvironmentMethods extends EnvapterBase {
      *   4. `.env.local`
      *   5. `.env`
      *
-     * If `useDefaults: false` is set on the profiles config, only (1) is loaded — no cascade.
+     * If `useDefaults: false` is set on the profiles config, only (1) is loaded, no cascade.
      * If `envPaths` was explicitly set, only `envPaths` is loaded (everything else ignored).
      * @internal
      */
@@ -235,7 +239,7 @@ export class EnvironmentMethods extends EnvapterBase {
 
         // Validate that explicitly configured profile paths exist for the active env.
         if (profilePaths.length > 0) {
-            const missing = profilePaths.filter((p) => !fs.existsSync(this.resolveAgainstBase(p)));
+            const missing = profilePaths.filter((p) => !this.sourceFileExists(this.resolveAgainstBase(p)));
             if (missing.length > 0) {
                 throw new EnvaptError(
                     EnvaptErrorCodes.EnvFilesNotFound,

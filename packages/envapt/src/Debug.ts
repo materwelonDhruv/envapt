@@ -1,6 +1,5 @@
-import process from 'node:process';
-
 import { EnvaptError, EnvaptErrorCodes } from './Error';
+import { readRuntimeEnv, writeRuntimeLine } from './runtime';
 
 /**
  * Debug log levels for {@link Envapter.debug}. `silent` (default) emits nothing.
@@ -24,7 +23,7 @@ function isDebugLevel(value: string | undefined): value is DebugLevel {
 // Reads `ENVAPT_DEBUG` lazily on first access. Setter wins after that.
 function resolveLevel(): DebugLevel {
     if (!initialized) {
-        const fromEnv = process.env.ENVAPT_DEBUG;
+        const fromEnv = readRuntimeEnv().ENVAPT_DEBUG;
         currentLevel = isDebugLevel(fromEnv) ? fromEnv : 'silent';
         initialized = true;
     }
@@ -58,13 +57,13 @@ export function resetDebugForTesting(): void {
 export function debugWarn(message: string): void {
     const level = resolveLevel();
     if (level === 'warn' || level === 'verbose') {
-        process.stderr.write(`[envapt] ${message}\n`);
+        writeRuntimeLine(`[envapt] ${message}`);
     }
 }
 
 /** @internal */
 export function debugVerbose(message: string): void {
     if (resolveLevel() === 'verbose') {
-        process.stderr.write(`[envapt] ${message}\n`);
+        writeRuntimeLine(`[envapt] ${message}`);
     }
 }

@@ -1,5 +1,3 @@
-import fs from 'node:fs';
-
 // Import the converter modules directly, not via the `./converters` barrel: that barrel pulls in
 // ValueConverter, which imports this Validator, so a barrel import here would cycle.
 import { isArrayOf } from './converters/Converters';
@@ -252,18 +250,10 @@ export class Validator {
         return true;
     }
 
-    /**
-     * Check if each provided path points to an accessible env file
-     */
-    static validateEnvFilesExist(paths: string[]): void {
-        const missing = paths.filter((p) => {
-            try {
-                fs.accessSync(p, fs.constants.F_OK);
-                return false;
-            } catch {
-                return true;
-            }
-        });
+    // Existence is probed through the caller-supplied `fileExists` (backed by the bound source) so
+    // this stays free of `node:fs`.
+    static validateEnvFilesExist(paths: string[], fileExists: (path: string) => boolean): void {
+        const missing = paths.filter((p) => !fileExists(p));
 
         if (missing.length > 0) {
             throw new EnvaptError(

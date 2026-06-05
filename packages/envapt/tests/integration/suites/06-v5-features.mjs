@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import process from 'node:process';
 
 import { FIXTURE_PATH } from './_helpers.mjs';
-import { EnvaptError, EnvaptErrorCodes, Envapter } from '../../../dist/index.mjs';
+import { EnvaptError, EnvaptErrorCodes, Envapter } from '../../../dist/node/index.mjs';
 
 export default async function v5Features() {
     await strictMode();

@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 import { expect } from 'chai';
@@ -8,6 +9,9 @@ import { EnvaptError } from '../src/Error';
 import { Validator } from '../src/Validators';
 
 import type { JsonValue } from '../src';
+
+// validateEnvFilesExist takes an existence probe; this suite supplies the Node fs check.
+const nodeExists = (path: string): boolean => existsSync(path);
 
 describe('Runtime Validation', () => {
     beforeAll(() => (Envapter.envPaths = resolve(import.meta.dirname, '.env.extra')));
@@ -472,7 +476,7 @@ describe('Runtime Validation', () => {
 
     describe('env file validation', () => {
         it('should throw error for non-existent single file', () => {
-            expect(() => Validator.validateEnvFilesExist(['/non/existent/file.env']))
+            expect(() => Validator.validateEnvFilesExist(['/non/existent/file.env'], nodeExists))
                 .to.throw(EnvaptError)
                 .with.property('code', EnvaptErrorCodes.EnvFilesNotFound);
         });
@@ -480,7 +484,7 @@ describe('Runtime Validation', () => {
         it('should throw error for non-existent multiple files', () => {
             const error = (() => {
                 try {
-                    Validator.validateEnvFilesExist(['/non/existent/file1.env', '/non/existent/file2.env']);
+                    Validator.validateEnvFilesExist(['/non/existent/file1.env', '/non/existent/file2.env'], nodeExists);
                     return null;
                 } catch (err) {
                     return err as EnvaptError;
@@ -494,7 +498,7 @@ describe('Runtime Validation', () => {
 
         it('should not throw error for existing file', () => {
             const testEnvPath = resolve(import.meta.dirname, '.env.envapt-test');
-            expect(() => Validator.validateEnvFilesExist([testEnvPath])).to.not.throw();
+            expect(() => Validator.validateEnvFilesExist([testEnvPath], nodeExists)).to.not.throw();
         });
     });
 });

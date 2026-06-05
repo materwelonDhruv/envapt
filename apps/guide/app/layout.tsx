@@ -32,7 +32,7 @@ const structuredData = {
     url: SITE_URL,
     codeRepository: REPO_URL,
     programmingLanguage: 'TypeScript',
-    runtimePlatform: ['Node.js', 'Bun', 'Deno'],
+    runtimePlatform: ['Node.js', 'Bun', 'Deno', 'Cloudflare Workers', 'Browser'],
     license: 'https://www.apache.org/licenses/LICENSE-2.0',
     author: { '@type': 'Person', name: 'Dhruv' }
 };
