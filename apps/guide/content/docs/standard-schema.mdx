@@ -13,15 +13,15 @@ const port = Envapter.parse('PORT', z.coerce.number().int().min(1024).max(65535)
 //    ^?
 ```
 
-The same schema works on the [`@Envapt`](/docs/decorators) decorator through the `schema` option:
+A schema works on the [`@Envapt`](/docs/decorators) decorator too, through the `schema` option:
 
 ```ts twoslash
 import { z } from 'zod/v4';
 import { Envapt, Envapter } from 'envapt';
 // ---cut---
 class Config extends Envapter {
-    @Envapt('PORT', { schema: z.coerce.number().int().min(1024).max(65535) })
-    declare static readonly port: number;
+    @Envapt('LOG_LEVEL', { schema: z.enum(['debug', 'info', 'warn', 'error']) })
+    declare static readonly logLevel: 'debug' | 'info' | 'warn' | 'error';
 }
 ```
 

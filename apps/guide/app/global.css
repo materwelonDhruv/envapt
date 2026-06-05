@@ -160,6 +160,11 @@ html.dark .ev-snippet .shiki span {
     }
 }
 
+#nd-sidebar a[href^='/docs'] {
+    padding-block: 0.3rem;
+    margin-inline-start: 0.5rem;
+}
+
 /* Twoslash hover popover: wrap long TSDoc @example code instead of forcing a horizontal scroll. */
 .twoslash-popup-container {
     max-width: min(90vw, 560px);

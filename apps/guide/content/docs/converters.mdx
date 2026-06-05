@@ -58,9 +58,9 @@ A fallback removes `undefined` from the return type, the same way it does for th
 ```ts twoslash
 import { Envapter, Converters } from 'envapt';
 // ---cut---
-// COUNT=42px
-const count = Envapter.getUsing('COUNT', Converters.Integer); // 42
-const ratio = Envapter.getUsing('RATIO', Converters.Float, 1.0);
+// MAX_CONNECTIONS=100
+const maxConnections = Envapter.getUsing('MAX_CONNECTIONS', Converters.Integer); // 100
+const sampleRate = Envapter.getUsing('SAMPLE_RATE', Converters.Float, 1.0);
 ```
 
 ## JSON
@@ -139,13 +139,13 @@ The element type can be any scalar token except `Json` and `Regexp`, or your own
 ```ts twoslash
 import { Envapter, Converters } from 'envapt';
 // ---cut---
-const toPoint = (raw: string) => {
-    const [x, y] = raw.split(':');
-    return { x: Number(x), y: Number(y) };
+const toUpstream = (raw: string) => {
+    const [host, port] = raw.split(':');
+    return { host, port: Number(port) };
 };
 
-// COORDS=1:2,3:4
-const points = Envapter.getUsing('COORDS', Converters.array({ of: toPoint }));
+// UPSTREAMS=10.0.0.1:8080,10.0.0.2:8080
+const upstreams = Envapter.getUsing('UPSTREAMS', Converters.array({ of: toUpstream }));
 //    ^?
 ```
 
@@ -164,12 +164,13 @@ When no built-in fits, pass a function to `getWith`. It receives the raw value (
 ```ts twoslash
 import { Envapter } from 'envapt';
 // ---cut---
-const parsePair = (raw: string | undefined) => {
-    const [host, port] = (raw ?? 'localhost:80').split(':');
-    return { host, port: Number(port) };
+const toSemver = (raw: string | undefined) => {
+    const [major, minor, patch] = (raw ?? '0.0.0').split('.').map(Number);
+    return { major, minor, patch };
 };
 
-const pair = Envapter.getWith('HOST_PORT', parsePair);
+// APP_VERSION=2.4.1
+const version = Envapter.getWith('APP_VERSION', toSemver);
 //    ^?
 ```
 

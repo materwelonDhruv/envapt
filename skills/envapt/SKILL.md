@@ -1,16 +1,19 @@
 ---
 name: envapt
-description: Type-safe environment variable access for TypeScript and JavaScript with the envapt library. Use when a project imports from 'envapt' or 'envapt/config', reads process.env, loads .env files, migrates off dotenv, or the user mentions envapt, Envapter, or @Envapt. Covers the functional Envapter reader API (get/getNumber/getBoolean/getUsing/parse/require) as the portable default, the @Envapt and @EnvNum/@EnvStr/@EnvBool/@EnvUrl/@EnvTime decorators, built-in and custom converters, Standard Schema (zod/valibot/arktype) validation, the .env cascade and baseDir, the Bun decorator limitation (bun#27575) and the declare-readonly requirement.
+description: Type-safe environment variable access for TypeScript and JavaScript with the envapt library. Use when a project imports from 'envapt', 'envapt/config', 'envapt/workerd', or 'envapt/browser', reads process.env, loads .env files, runs on Cloudflare Workers or in the browser, migrates off dotenv, or the user mentions envapt, Envapter, or @Envapt. Covers the functional Envapter reader API (get/getNumber/getBoolean/getUsing/parse/require) as the portable default, the @Envapt and @EnvNum/@EnvStr/@EnvBool/@EnvUrl/@EnvTime decorators, built-in and custom converters, Standard Schema (zod/valibot/arktype) validation, the .env cascade and baseDir, the pluggable EnvSource API (useSource with WorkerEnvSource and ManualEnvSource) for Cloudflare Workers and the browser, the Bun decorator limitation (bun#27575) and the declare-readonly requirement.
 ---
 
 # envapt
 
 envapt reads environment variables as typed, validated values, with an optional `.env` cascade layered
 on top of `process.env`, and nothing in `dependencies` or `peerDependencies`. npm: `envapt`. JSR:
-`@materwelon/envapt`. Minimums: Node >=20, Bun >=1.3, Deno >=2.5. Ships ESM and CJS.
+`@materwelon/envapt`. Minimums: Node >=20, Bun >=1.3, Deno >=2.5. Ships ESM and CJS. It also runs on
+Cloudflare Workers (import from `envapt/workerd`) and in the browser (`envapt/browser`), where you bind
+a source yourself (see the Runtimes and sources section below).
 
-Use this skill when a file imports from `'envapt'` or `'envapt/config'`, reads `process.env`, loads a
-`.env`, migrates off dotenv, or the user names envapt / `Envapter` / `@Envapt`.
+Use this skill when a file imports from `'envapt'`, `'envapt/config'`, `'envapt/workerd'`, or
+`'envapt/browser'`, reads `process.env`, loads a `.env`, runs on Workers or the browser, migrates off
+dotenv, or the user names envapt / `Envapter` / `@Envapt`.
 
 ## Choosing the API: functional vs decorators
 
@@ -18,7 +21,8 @@ envapt has two surfaces. They read the same values through the same cache; pick 
 preference.
 
 - **Default to the functional `Envapter` readers.** They work in JS and TS with no build step and no
-  compiler flags, on every runtime envapt supports (Node, Bun, Deno).
+  compiler flags, on every runtime envapt supports (Node, Bun, Deno, Cloudflare Workers, the browser).
+  Off Node you bind a source first (see the Runtimes and sources section below).
 - **Use the `@Envapt` decorators only when** the project is TypeScript, already leans decorator-style
   (existing `@`-decorators, `experimentalDecorators` in `tsconfig.json`/`deno.json`, a stack like NestJS
   or TypeORM), and has a build/transpile step.
@@ -127,6 +131,41 @@ Custom converters have **two different shapes**:
 - **Array element** (`Converters.array({ of })`): `(raw: string) => T`. Gets one trimmed, non-empty slot;
   no `undefined`, no fallback.
 
+## Runtimes and sources
+
+envapt reads through a pluggable `EnvSource`, and the build you import binds the right one.
+
+- **Node, Bun, Deno** (`import ... from 'envapt'`): a `NodeEnvSource` is bound automatically (a
+  `process.env` snapshot plus the `.env` cascade). Nothing to wire up.
+- **Cloudflare Workers** (`import ... from 'envapt/workerd'`): bind the `env` binding yourself, once,
+  before any read.
+
+    ```ts
+    import { Envapter, WorkerEnvSource } from 'envapt/workerd';
+    import { env } from 'cloudflare:workers'; // or the `env` passed to fetch(request, env)
+
+    Envapter.useSource(new WorkerEnvSource(env)); // bind once at module load
+    ```
+
+- **Browser** (`import ... from 'envapt/browser'`): seed a `ManualEnvSource` from the object your
+  bundler injects.
+
+    ```ts
+    import { Envapter, ManualEnvSource } from 'envapt/browser';
+
+    Envapter.useSource(new ManualEnvSource(import.meta.env)); // Vite; or a webpack DefinePlugin object
+    ```
+
+`WorkerEnvSource` and `ManualEnvSource` both snapshot the object and JSON-stringify non-string values,
+so you pass the runtime's object straight through. Any object with a `readVars(): Record<string, string>`
+method is a valid `EnvSource`.
+
+Off Node there is no filesystem: the `.env` cascade and the file-only APIs (`envPaths`, `baseDir`,
+`envFileOptions`, `configureProfiles`, `resetProfiles`) are absent and throw `EnvaptError`
+`FileApiUnsupported`; a read before `useSource` throws `NoSourceBound`. Import from `envapt/workerd` /
+`envapt/browser`, not bare `envapt`: the dedicated entries omit the file APIs from the type, so a stray
+call is a compile error, while bare `envapt` falls back to the Node types where it only fails at runtime.
+
 ## Loading .env files
 
 By default envapt loads a per-environment cascade. Precedence is **most-specific-wins**:
@@ -138,11 +177,13 @@ Envapter.baseDir = import.meta.dirname; // anchor relative .env resolution to th
 Envapter.envPaths = ['.env', '.env.local']; // explicit paths; disables the auto-cascade. Set baseDir first.
 Envapter.strict = true; // whitespace-only values count as missing
 Envapter.syncProcessEnv = true; // mirror loaded keys into process.env
-Envapter.environment; // Environment.Development | Staging | Production; also isProduction / isStaging / isDevelopment
+Envapter.environment; // Environment.Development | Staging | Production | Test; also isProduction / isStaging / isDevelopment / isTest
 ```
 
-`Envapter.configureProfiles({ ... })` sets per-environment path lists; `Envapter.debug` (or the
-`ENVAPT_DEBUG` env var) turns on stderr logging.
+The environment is detected from the first set of `ENVIRONMENT` -> `ENV` -> `NODE_ENV` -> `MODE`
+(case-insensitive; `MODE` covers Vite browser builds), defaulting to development.
+`Envapter.configureProfiles({ ... })` sets per-environment path lists (Node only, like `baseDir` /
+`envPaths`); `Envapter.debug` (or the `ENVAPT_DEBUG` env var) turns on logging.
 
 ### Drop-in for dotenv
 
@@ -172,7 +213,8 @@ as-is and is NOT passed through the schema**, only a present env value is valida
 
 Reader and decorator failures throw `EnvaptError` with a numeric `code` (`EnvaptErrorCodes`). The common
 ones: `MissingEnvValue` (a `required` value is absent), `InvalidUserDefinedConfig` (bad options, e.g.
-`required` + `fallback`), `SchemaValidationFailed` (carries an `issues` array), `MalformedTimeFallback`.
+`required` + `fallback`), `SchemaValidationFailed` (carries an `issues` array), `MalformedTimeFallback`,
+`FileApiUnsupported` (a file-only API called off Node), `NoSourceBound` (a read before `useSource` off Node).
 
 ```ts
 import { EnvaptError, EnvaptErrorCodes } from 'envapt';
@@ -200,15 +242,16 @@ envapt loads `.env` **and** returns typed, validated values from one API, with n
 
 ## Gotchas
 
-| Gotcha                      | Rule                                                                                    |
-| --------------------------- | --------------------------------------------------------------------------------------- |
-| Decorator reads `undefined` | Use `declare readonly x: T` with no initializer (the `useDefineForClassFields` footgun) |
-| Decorator broken on Bun     | `@Envapt` does not work on Bun-direct `.ts` (bun#27575); use the functional API         |
-| `@EnvUrl` fallback          | It's a `URL` instance, not a string: `new URL('...')`                                   |
-| `Time` / `@EnvTime`         | Resolves to milliseconds; fallback is a ms number or a time string (`'15m'`)            |
-| Schema fallback             | A fallback is returned as-is; only present env values pass through the schema           |
-| `required` + `fallback`     | Mutually exclusive; so are `schema` + `converter`                                       |
-| Cascade order               | Most-specific-wins: `.env.<env>.local` > `.env.<env>` > `.env.local` > `.env`           |
+| Gotcha                      | Rule                                                                                                                                                   |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Decorator reads `undefined` | Use `declare readonly x: T` with no initializer (the `useDefineForClassFields` footgun)                                                                |
+| Decorator broken on Bun     | `@Envapt` does not work on Bun-direct `.ts` (bun#27575); use the functional API                                                                        |
+| `@EnvUrl` fallback          | It's a `URL` instance, not a string: `new URL('...')`                                                                                                  |
+| `Time` / `@EnvTime`         | Resolves to milliseconds; fallback is a ms number or a time string (`'15m'`)                                                                           |
+| Schema fallback             | A fallback is returned as-is; only present env values pass through the schema                                                                          |
+| `required` + `fallback`     | Mutually exclusive; so are `schema` + `converter`                                                                                                      |
+| Cascade order               | Most-specific-wins: `.env.<env>.local` > `.env.<env>` > `.env.local` > `.env`                                                                          |
+| Off Node (Workers/browser)  | Import from `envapt/workerd` / `envapt/browser`; `Envapter.useSource(...)` before reading (else `NoSourceBound`); file APIs throw `FileApiUnsupported` |
 
 ## Old patterns (recognize, then migrate)
 

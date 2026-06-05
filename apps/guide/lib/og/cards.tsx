@@ -13,6 +13,14 @@ export function ogImage(node: ReactElement): ImageResponse {
     return new ImageResponse(node, { ...OG_SIZE, fonts: loadOgFonts() });
 }
 
+const RUNTIMES: { label: string; version?: string }[] = [
+    { label: 'Node', version: '20+' },
+    { label: 'Bun', version: '1.3+' },
+    { label: 'Deno', version: '2.5+' },
+    { label: 'Workers' },
+    { label: 'Browser' }
+];
+
 // The default / home card.
 export function defaultCard(): ReactElement {
     return (
@@ -41,7 +49,7 @@ export function defaultCard(): ReactElement {
                     </div>
                     <div style={{ fontSize: 29, color: OG.muted, lineHeight: 1.42, maxWidth: 880 }}>
                         Read environment variables as real types. Zero runtime dependencies, plus zod/valibot/arktype
-                        validation.
+                        validation, and much more.
                     </div>
                     <div style={{ display: 'flex', gap: 12, fontFamily: 'JetBrains Mono', fontSize: 27 }}>
                         <span style={{ color: OG.teal }}>$</span>
@@ -66,22 +74,12 @@ export function defaultCard(): ReactElement {
                         }}
                     >
                         <div style={{ display: 'flex', gap: 22, color: OG.muted }}>
-                            <div style={{ display: 'flex', gap: 6 }}>
-                                <span>Node</span>
-                                <span style={{ color: OG.teal }}>20+</span>
-                            </div>
-                            <div style={{ display: 'flex', gap: 6 }}>
-                                <span>Bun</span>
-                                <span style={{ color: OG.teal }}>1.3+</span>
-                            </div>
-                            <div style={{ display: 'flex', gap: 6 }}>
-                                <span>Deno</span>
-                                <span style={{ color: OG.teal }}>2.5+</span>
-                            </div>
-                            <div style={{ display: 'flex', gap: 6 }}>
-                                <span style={{ color: OG.teal }}>0</span>
-                                <span>deps</span>
-                            </div>
+                            {RUNTIMES.map((r) => (
+                                <div key={r.label} style={{ display: 'flex', gap: 6 }}>
+                                    <span>{r.label}</span>
+                                    {r.version ? <span style={{ color: OG.teal }}>{r.version}</span> : null}
+                                </div>
+                            ))}
                         </div>
                         <div style={{ color: OG.url }}>envapt.materwelon.dev</div>
                     </div>

@@ -11,7 +11,7 @@ That line shows up in a lot of config files, and it has two bugs hiding in it.
 
 Misspell `PORT` in your `.env` and you don't get an error, you get `3000`, and you find out in production. Want to set `PORT=0` on purpose? You can't: `Number('0') || 3000` is `3000` too. The `|| fallback` can't tell "missing" from "zero," and `process.env` hands you `string | undefined` regardless, so every read sits one coercion away from a quiet bug.
 
-I got tired of writing that coercion by hand and keeping it correct, so I built envapt.
+I got tired of writing that coercion by hand and keeping it correct, so I built envapt. On Node, Bun, and Deno it reads `process.env` and your `.env` files; off Node the source is pluggable, so the same reads work on Cloudflare Workers and in the browser.
 
 ## The typed read
 
@@ -61,12 +61,16 @@ The built-in tokens cover number, integer, float, boolean, bigint, symbol, JSON,
 ```ts twoslash
 import { Envapter } from 'envapt';
 // ---cut---
-const parsePair = (raw: string | undefined) => {
-    const [host, port] = (raw ?? 'localhost:80').split(':');
-    return { host, port: Number(port) };
+const toBytes = (raw: string | undefined) => {
+    const n = Number.parseInt(raw ?? '0', 10);
+    if (/gb$/i.test(raw ?? '')) return n * 1e9;
+    if (/mb$/i.test(raw ?? '')) return n * 1e6;
+    if (/kb$/i.test(raw ?? '')) return n * 1e3;
+    return n;
 };
 
-const pair = Envapter.getWith('HOST_PORT', parsePair);
+// MAX_BODY=10mb
+const maxBody = Envapter.getWith('MAX_BODY', toBytes);
 //    ^?
 ```
 
@@ -146,7 +150,7 @@ class Bot {
 
 t3-env centralizes: you declare every variable up front in one `createEnv` call, validated once at startup. envapt puts the check on the field that uses the value. Centralizing is the right call when one app owns all its env. seedcord's config is spread across independently-built pieces (the `Bot` owns the token, a webhook subscriber owns its URL), so each piece validates its own variable where it lives, and a malformed token throws the moment that field resolves instead of in a central config module three files away.
 
-envapt reads from `process.env` (and `.env` files when they exist), so it runs on Node, Bun, and Deno. I haven't tested it on Workers, and if your platform doesn't put config in `process.env`, use something that validates the object you hand it instead.
+On Node, Bun, and Deno, envapt reads `process.env` and the `.env` cascade with no setup. On Cloudflare Workers and in the browser there is no filesystem, so you bind the source yourself: a `WorkerEnvSource` over the `env` binding in a Worker, a `ManualEnvSource` over the config your bundler injects in the browser. The typed reads, converters, and validators are identical across all of them; the `.env` cascade and the file-only config APIs are the part that stays on Node.
 
 ## Loading the .env file
 

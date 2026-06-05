@@ -1,0 +1,99 @@
+---
+title: Workers
+description: Bind a WorkerEnvSource from the env binding once at module load, with no .env files on workerd.
+---
+
+On Cloudflare Workers (workerd) there is no filesystem and no ambient `process.env`. Your configuration is the `env` object the runtime exposes. Bind a `WorkerEnvSource` from it once, then read with the same typed API as everywhere else.
+
+Import the Workers build from `envapt/workerd`. It is node-free and omits the file-only config APIs from its type.
+
+<Callout type="danger">
+
+Import from `envapt/workerd`, not bare `envapt`. The `envapt/workerd` entry omits the file-only config APIs (`envPaths`, `baseDir`, `configureProfiles`, and the rest) from its type, so a stray call is a compile error. Bare `envapt` leaves you on the Node types, where those APIs look available and instead throw `EnvaptError.FileApiUnsupported` at runtime. See [Errors](/docs/errors).
+
+```ts twoslash
+// @errors: 2339
+import { Envapter } from 'envapt/workerd';
+
+Envapter.getNumber('PORT', 3000); // readers work
+Envapter.envPaths = ['.env']; // a file-only API is not on the type
+```
+
+</Callout>
+
+## Bind once at module load
+
+Env vars and secrets are readable at module scope through `cloudflare:workers`, and they are constant for a deployment. Bind the source in a config module and export the typed values the Worker needs, so binding happens once per isolate instead of on every request.
+
+```ts title="src/config.ts"
+import { env } from 'cloudflare:workers';
+import { Envapter, WorkerEnvSource, Converters } from 'envapt/workerd';
+
+Envapter.useSource(new WorkerEnvSource(env));
+Envapter.require('ORIGIN_URL', 'API_TOKEN');
+
+export const config = {
+    origin: Envapter.getUsing('ORIGIN_URL', Converters.Url)!,
+    token: Envapter.get('API_TOKEN')!,
+    cacheTtl: Envapter.getUsing('CACHE_TTL', Converters.Time, '1m')
+};
+```
+
+```ts title="src/index.ts"
+import { config } from './config';
+
+export default {
+    async fetch(request: Request): Promise<Response> {
+        if (request.headers.get('authorization') !== `Bearer ${config.token}`) {
+            return new Response('Unauthorized', { status: 401 });
+        }
+        const url = new URL(request.url);
+        return fetch(new URL(url.pathname + url.search, config.origin), request);
+    }
+} satisfies ExportedHandler;
+```
+
+<Callout type="warn">
+    `useSource` sets process-global state shared across the isolate. That is safe here because a Worker's `env` is
+    constant for a deployment, so binding it once is idempotent. Do not put per-request data, the `request` or a user
+    id, into the source.
+</Callout>
+
+## If you cannot import `env`
+
+On an older compatibility date, or anywhere `env` is not importable at module scope, bind it at the top of the handler instead. The `env` is the same on every request, so the re-bind is idempotent.
+
+```ts title="src/index.ts"
+import { Envapter, WorkerEnvSource, Converters } from 'envapt/workerd';
+
+export default {
+    async fetch(request: Request, env: Record<string, unknown>): Promise<Response> {
+        Envapter.useSource(new WorkerEnvSource(env));
+        const origin = Envapter.getUsing('ORIGIN_URL', { converter: Converters.Url, required: true });
+        return fetch(new URL(new URL(request.url).pathname, origin), request);
+    }
+} satisfies ExportedHandler;
+```
+
+## Non-string bindings
+
+A Cloudflare `vars` entry can be JSON, not only a string. `WorkerEnvSource` JSON-stringifies any non-string binding so the converters parse it the same way. A binding whose value stringifies to `undefined` is dropped, and anything you read this way must be JSON-serializable.
+
+```ts twoslash
+import { Envapter, WorkerEnvSource, Converters } from 'envapt/workerd';
+// ---cut---
+declare const env: { FEATURE_FLAGS: { beta: boolean } }; // a JSON `vars` binding
+Envapter.useSource(new WorkerEnvSource(env));
+
+const flags = Envapter.getUsing('FEATURE_FLAGS', Converters.Json); // parsed back from the stringified binding
+```
+
+## No filesystem
+
+There is no `.env` cascade, no custom profiles, and no file-only config APIs (`envPaths`, `baseDir`, `configureProfiles`, and the rest) on workerd; calling one throws. Bind the source before your first read. See [Sources](/docs/sources) for what happens otherwise and [Errors](/docs/errors) for the codes.
+
+## Decorators need a build step
+
+`@Envapt` and the sugar decorators need a compile step (`experimentalDecorators`), the same as on Node; the functional API does not. A decorated property caches its value on first read, and Cloudflare `env` scalars are stable per isolate, so the cached value matches the binding.
+
+Configure Worker `vars` and bindings through Cloudflare's [environment variables](https://developers.cloudflare.com/workers/configuration/environment-variables/) docs. For the providers and the contract see [Sources](/docs/sources).

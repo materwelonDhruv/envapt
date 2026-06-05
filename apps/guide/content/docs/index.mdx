@@ -1,14 +1,14 @@
 ---
 title: Introduction
-description: Read environment variables as typed values, with zero runtime dependencies, plus zod/valibot/arktype validation.
+description: Read environment variables as typed values, with zero runtime dependencies, plus zod/valibot/arktype validation, and much more.
 ---
 
 envapt reads environment variables as typed values. You give it a key and a fallback; it returns a `number`, `boolean`, `URL`, `Date`, an array, or any type you define, instead of the `string | undefined` you get from `process.env`.
 
 ```ts twoslash
-import { Envapter } from 'envapt';
+import { Envapter, Converters } from 'envapt';
 // ---cut---
-const port = Envapter.getNumber('PORT', 3000);
+const redisUrl = Envapter.getUsing('REDIS_URL', Converters.Url, new URL('redis://localhost:6379'));
 //    ^?
 ```
 
@@ -20,17 +20,17 @@ Read values functionally with [`Envapter`](/docs/envapter), or bind them to clas
 import { Envapt, Converters } from 'envapt';
 // ---cut---
 class Config {
-    @Envapt('PORT', { converter: Converters.Number, fallback: 3000 })
-    declare static readonly port: number;
+    @Envapt('REDIS_URL', { converter: Converters.Url, fallback: new URL('redis://localhost:6379') })
+    declare static readonly redisUrl: URL;
 }
 ```
 
 ## What you get
 
 - **Typed values.** A fallback removes `undefined` from the return type. [Converters](/docs/converters) convert numbers, booleans, bigint, JSON, URLs, dates, durations, and arrays, or pass your own function or a [Standard Schema](/docs/standard-schema) validator (zod, valibot, arktype).
-- **Zero runtime dependencies.** envapt ships its own `.env` parser, so nothing is added to your dependency tree.
-- **The same API on Node, Bun, and Deno.** See [Compatibility](/docs/compatibility).
-- **`.env` loading built in.** A per-environment file [cascade](/docs/environment), `${VAR}` [templates](/docs/templates), and [strict](/docs/strict-mode) / required checks.
+- **Zero runtime dependencies.** envapt ships its own `.env` parser (used on Node, Bun, and Deno), so nothing is added to your dependency tree.
+- **The same API on Node, Bun, and Deno, plus Cloudflare Workers and the browser.** Off Node you bind an environment source. See [Compatibility](/docs/compatibility) and [Sources](/docs/sources).
+- **`.env` loading built in on Node.** A per-environment file [cascade](/docs/environment), `${VAR}` [templates](/docs/templates), and [strict](/docs/strict-mode) / required checks. The cascade needs a filesystem; off Node you pass values through the source.
 
 ## Next
 

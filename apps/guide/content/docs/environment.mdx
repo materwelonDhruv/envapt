@@ -3,13 +3,15 @@ title: Environment
 description: Detect the current runtime environment and auto-load the matching .env files for it.
 ---
 
-envapt detects which environment it's running in and loads the matching `.env` files for it. The `isProduction` / `isStaging` / `isDevelopment` helpers read that same value.
+envapt detects which environment it's running in and loads the matching `.env` files for it. The `isProduction` / `isStaging` / `isDevelopment` / `isTest` helpers read that same value.
 
 ## Detecting the environment
 
-The environment is resolved from the first of these that is set, falling back to development:
+The environment is resolved from the first of these keys that is set, falling back to development:
 
-`ENVIRONMENT` → `ENV` → `NODE_ENV` → `development`
+`ENVIRONMENT` → `ENV` → `NODE_ENV` → `MODE` → `development`
+
+`MODE` is last because Vite-family browser builds expose `import.meta.env.MODE` but none of the others, so binding `new ManualEnvSource(import.meta.env)` lets the same helpers work there. See [Browser](/docs/browser).
 
 Read it as an enum, or through boolean helpers for the common checks.
 
@@ -21,11 +23,13 @@ Envapter.environment; // Environment
 Envapter.isProduction; // boolean
 Envapter.isStaging;
 Envapter.isDevelopment;
+Envapter.isTest;
 ```
 
 <Callout type="info">
-    `Environment` has three members: `Development`, `Staging`, `Production`. A value of `production` (any case) maps to
-    `Production`, `staging` to `Staging`, and everything else to `Development`.
+    `Environment` has four members: `Development`, `Staging`, `Production`, and `Test`. Matching is case-insensitive:
+    `production`, `staging`, `test`, and `development` map to their member. Any other value, or no key set at all, falls
+    back to `Development`; set `Envapter.debug = 'warn'` to log that fallback.
 </Callout>
 
 ## Branching on the environment
@@ -63,7 +67,12 @@ An explicit assignment also selects which `.env` files load on the next read, so
 
 ## Per-environment `.env` files
 
-For the detected (or overridden) environment, envapt layers a dotenv-flow cascade, loading the first file that exists at each level, highest precedence first:
+<Callout type="info">
+    The cascade reads files from disk, so it runs on Node, Bun, and Deno only. On Cloudflare Workers and in the browser
+    there is no filesystem and no cascade; you bind an environment source instead. See [Sources](/docs/sources).
+</Callout>
+
+For the detected (or overridden) environment (production, staging, development), envapt layers a dotenv-flow cascade, loading the first file that exists at each level, highest precedence first:
 
 1. `.env.${env}.local`
 2. `.env.${env}`
@@ -80,7 +89,7 @@ So in production it reads `.env.production.local` → `.env.production` → `.en
 
 ## Custom profiles
 
-When your per-environment files live elsewhere, `configureProfiles` layers explicit paths on top of the cascade for the environments you name. Earlier paths in the array win.
+When your per-environment files live elsewhere, `configureProfiles` layers explicit paths on top of the cascade for the environments you name. Earlier paths in the array win. `configureProfiles` and `resetProfiles` read the filesystem, so they are not available off Node; see [Sources](/docs/sources).
 
 ```ts twoslash
 import { Envapter, Environment } from 'envapt';

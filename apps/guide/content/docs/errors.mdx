@@ -35,40 +35,42 @@ try {
 
 ### Fallback (101-105)
 
-| Code | Name | Thrown when |
-| ---- | ---- | ----------- |
-| 101 | `InvalidFallback` | A fallback value is invalid for the converter (for example, a non-array fallback for an array converter). |
-| 102 | `InvalidFallbackType` | The fallback value's type doesn't match the converter's return type. |
-| 103 | `ArrayFallbackElementTypeMismatch` | An array fallback contains an element of the wrong type. |
-| 104 | `FallbackConverterTypeMismatch` | The fallback type doesn't match the specified converter. |
-| 105 | `MalformedTimeFallback` | A time-string fallback isn't `<integer><unit>` (for example `90m`). |
+| Code | Name                               | Thrown when                                                                                               |
+| ---- | ---------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| 101  | `InvalidFallback`                  | A fallback value is invalid for the converter (for example, a non-array fallback for an array converter). |
+| 102  | `InvalidFallbackType`              | The fallback value's type doesn't match the converter's return type.                                      |
+| 103  | `ArrayFallbackElementTypeMismatch` | An array fallback contains an element of the wrong type.                                                  |
+| 104  | `FallbackConverterTypeMismatch`    | The fallback type doesn't match the specified converter.                                                  |
+| 105  | `MalformedTimeFallback`            | A time-string fallback isn't `<integer><unit>` (for example `90m`).                                       |
 
 ### Converter (201-209)
 
-| Code | Name | Thrown when |
-| ---- | ---- | ----------- |
-| 201 | `InvalidArrayConverterType` | The `Converters.array` configuration is malformed. |
-| 202 | `InvalidBuiltInConverter` | An unknown built-in converter token is used. |
-| 203 | `InvalidCustomConverter` | A custom converter is not a function. |
-| 204 | `InvalidConverterType` | The converter type is not recognized. |
-| 205 | `PrimitiveCoercionFailed` | Coercing a fallback through a primitive constructor fails. |
-| 206 | `ArrayElementConversionFailed` | An array element fails to convert to the configured element type. |
-| 207 | `EmptyArrayElement` | Strict mode only: an array element is empty or whitespace. |
-| 208 | `SchemaValidationFailed` | A Standard Schema returns issues for a non-empty value. The only code that populates `issues`. |
-| 209 | `SchemaThrew` | A schema's `validate` itself throws. The original error is on `cause`. |
+| Code | Name                           | Thrown when                                                                                    |
+| ---- | ------------------------------ | ---------------------------------------------------------------------------------------------- |
+| 201  | `InvalidArrayConverterType`    | The `Converters.array` configuration is malformed.                                             |
+| 202  | `InvalidBuiltInConverter`      | An unknown built-in converter token is used.                                                   |
+| 203  | `InvalidCustomConverter`       | A custom converter is not a function.                                                          |
+| 204  | `InvalidConverterType`         | The converter type is not recognized.                                                          |
+| 205  | `PrimitiveCoercionFailed`      | Coercing a fallback through a primitive constructor fails.                                     |
+| 206  | `ArrayElementConversionFailed` | An array element fails to convert to the configured element type.                              |
+| 207  | `EmptyArrayElement`            | Strict mode only: an array element is empty or whitespace.                                     |
+| 208  | `SchemaValidationFailed`       | A Standard Schema returns issues for a non-empty value. The only code that populates `issues`. |
+| 209  | `SchemaThrew`                  | A schema's `validate` itself throws. The original error is on `cause`.                         |
 
-### Configuration and lookup (301-305)
+### Configuration and lookup (301-307)
 
-| Code | Name | Thrown when |
-| ---- | ---- | ----------- |
-| 301 | `MissingDelimiter` | An array converter is missing its delimiter. |
-| 302 | `InvalidUserDefinedConfig` | A bad decorator/options combination: `required` with `fallback`, `schema` with `converter`, a non-`StandardSchemaV1` `schema`, an async schema, or an invalid debug level. |
-| 303 | `EnvFilesNotFound` | A configured `.env` path (via `envPaths` or `configureProfiles`) doesn't exist. |
-| 304 | `InvalidKeyInput` | No key, a non-string key, or an empty-string key was passed. |
-| 305 | `MissingEnvValue` | A required value is missing or empty: `require`, `{ required: true }`, a schema with no fallback, or an unresolved template under strict mode. |
+| Code | Name                       | Thrown when                                                                                                                                                                                                      |
+| ---- | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 301  | `MissingDelimiter`         | An array converter is missing its delimiter.                                                                                                                                                                     |
+| 302  | `InvalidUserDefinedConfig` | A bad decorator/options combination: `required` with `fallback`, `schema` with `converter`, a non-`StandardSchemaV1` `schema`, an async schema, or an invalid debug level.                                       |
+| 303  | `EnvFilesNotFound`         | A configured `.env` path (via `envPaths` or `configureProfiles`) doesn't exist.                                                                                                                                  |
+| 304  | `InvalidKeyInput`          | No key, a non-string key, or an empty-string key was passed.                                                                                                                                                     |
+| 305  | `MissingEnvValue`          | A required value is missing or empty: `require`, `{ required: true }`, a schema with no fallback, or an unresolved template under strict mode.                                                                   |
+| 306  | `FileApiUnsupported`       | A file-only API (`envPaths`, `baseDir`, `envFileOptions`, `configureProfiles`, `resetProfiles`) is used on a source with no filesystem, such as Cloudflare Workers or the browser. See [Sources](/docs/sources). |
+| 307  | `NoSourceBound`            | A value is read before a source is bound with `Envapter.useSource`. Cannot occur on Node, where the source is bound on import.                                                                                   |
 
 <Callout type="info">
-    `issues` is set only for `SchemaValidationFailed` (208), so you can read `error.issues` after checking
-    `error.code === EnvaptErrorCodes.SchemaValidationFailed` without a cast. See [Standard
-    Schema](/docs/standard-schema) for where 208 and 209 come from.
+    `issues` is set only for `SchemaValidationFailed` (208), so you can read `error.issues` after checking `error.code
+    === EnvaptErrorCodes.SchemaValidationFailed` without a cast. See [Standard Schema](/docs/standard-schema) for where
+    208 and 209 come from.
 </Callout>
