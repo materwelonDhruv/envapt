@@ -45,7 +45,7 @@
         "@commitlint/cli": "^21.0.1",
         "@commitlint/config-conventional": "^21.0.1",
         "@seedcord/eslint-config": "catalog:dev",
-        "@seedcord/tsconfig": "^1.1.2",
+        "@seedcord/tsconfig": "^2.0.0",
         "@types/chai": "^5.2.3",
         "@types/node": "catalog:dev",
         "@vitest/coverage-v8": "^4.1.7",
