@@ -1,0 +1,28 @@
+name: lint-actions
+
+on:
+    pull_request:
+        paths:
+            - '.github/workflows/**'
+            - '.github/actions/**'
+    push:
+        branches:
+            - main
+            - next
+        paths:
+            - '.github/workflows/**'
+            - '.github/actions/**'
+
+permissions:
+    contents: read
+
+jobs:
+    actionlint:
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+        steps:
+            - uses: actions/checkout@v6
+            - name: actionlint
+              run: |
+                  curl -sSfL https://raw.githubusercontent.com/rhysd/actionlint/v1.7.12/scripts/download-actionlint.bash | bash -s -- 1.7.12
+                  ./actionlint -color

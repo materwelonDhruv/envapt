@@ -18,16 +18,13 @@ jobs:
     build:
         name: Build dist artifact
         runs-on: ubuntu-latest
+        timeout-minutes: 20
         steps:
             - uses: actions/checkout@v6
               with:
                   fetch-depth: 1
-            - uses: pnpm/action-setup@v6
-            - uses: actions/setup-node@v6
-              with:
-                  node-version: 24.16.0
-                  cache: pnpm
-            - run: pnpm install --frozen-lockfile
+            - name: Setup workspace
+              uses: ./.github/actions/setup
             - run: pnpm --filter envapt build
             - uses: actions/upload-artifact@v4
               with:
@@ -42,6 +39,7 @@ jobs:
         name: node ${{ matrix.node }} / ${{ matrix.os }}
         needs: build
         runs-on: ${{ matrix.os }}
+        timeout-minutes: 15
         strategy:
             fail-fast: false
             matrix:
@@ -65,8 +63,9 @@ jobs:
         name: bun / ubuntu
         needs: build
         runs-on: ubuntu-latest
+        timeout-minutes: 15
         steps:
-            - uses: oven-sh/setup-bun@v2
+            - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
               with:
                   bun-version: 1.3.x
             - uses: actions/download-artifact@v4
@@ -79,8 +78,9 @@ jobs:
         name: deno / ubuntu
         needs: build
         runs-on: ubuntu-latest
+        timeout-minutes: 15
         steps:
-            - uses: denoland/setup-deno@v2
+            - uses: denoland/setup-deno@667a34cdef165d8d2b2e98dde39547c9daac7282 # v2
               with:
                   deno-version: v2.7.x
             - uses: actions/download-artifact@v4
@@ -94,6 +94,7 @@ jobs:
         needs: [test-node, test-bun, test-deno]
         if: always()
         runs-on: ubuntu-latest
+        timeout-minutes: 5
         steps:
             - name: Verify every runtime job succeeded
               run: |
