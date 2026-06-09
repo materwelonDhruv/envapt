@@ -83,6 +83,17 @@ This list is illustrative, not exhaustive. When a word isn't on it, apply the ru
 
 Rule of thumb: **if an adjective can't be replaced by a measurable fact or a code reference, delete it.**
 
+### Banned punctuation
+
+Three marks are banned in prose (comments, commit bodies, docs, PR descriptions, and chat replies): the em-dash `—`, the semicolon `;`, and the colon `:`. They invite two-clause splices and list-y throat-clearing that read as AI prose. Use a comma, parentheses, or two separate sentences instead. This is a prose rule only. Code syntax that requires a colon or semicolon (type annotations, object keys, statement terminators) is exempt.
+
+```ts
+// Bad: colon splice + semicolon splice
+// turn the value into its slot: out of range would corrupt neighbours; check first.
+// Good: one fact, plain comma
+// out of range would carry into the neighbouring field on decode.
+```
+
 ---
 
 ## 3. BEFORE → AFTER rewrites
