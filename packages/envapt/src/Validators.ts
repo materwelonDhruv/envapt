@@ -30,7 +30,7 @@ export class Validator {
     static isStandardSchema(value: unknown): value is StandardSchemaV1 {
         if (typeof value !== 'object' || value === null) return false;
         if (!('~standard' in value)) return false;
-        const slot = (value as { '~standard': unknown })['~standard'];
+        const slot = value['~standard'];
         if (typeof slot !== 'object' || slot === null) return false;
         const props = slot as { version?: unknown; validate?: unknown };
         return props.version === 1 && typeof props.validate === 'function';
@@ -66,7 +66,7 @@ export class Validator {
         }
 
         const elementOf = value.of;
-        const isScalar = typeof elementOf === 'string' && ListOfBuiltInConverters.includes(elementOf as ConverterToken);
+        const isScalar = typeof elementOf === 'string' && ListOfBuiltInConverters.includes(elementOf);
         const isCustomFn = typeof elementOf === 'function';
         if (!isScalar && !isCustomFn) {
             throw new EnvaptError(

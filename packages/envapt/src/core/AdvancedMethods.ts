@@ -129,10 +129,7 @@ export class AdvancedMethods extends PrimitiveMethods {
         converterOrOptions: TConverter | GetUsingRequiredOptions<TConverter>,
         fallback?: TFallback
     ): AdvancedConverterReturn<TConverter, TFallback> {
-        return AdvancedMethods.getUsing(key, converterOrOptions as TConverter, fallback) as AdvancedConverterReturn<
-            TConverter,
-            TFallback
-        >;
+        return AdvancedMethods.getUsing(key, converterOrOptions as TConverter, fallback);
     }
 
     /**
@@ -232,7 +229,7 @@ export class AdvancedMethods extends PrimitiveMethods {
             fallback,
             hasFallback
         );
-        return result as InferSchemaOutput<Schema>;
+        return result;
     }
 
     /**
@@ -250,6 +247,6 @@ export class AdvancedMethods extends PrimitiveMethods {
             fallback,
             hasFallback
         );
-        return result as InferSchemaOutput<Schema>;
+        return result;
     }
 }

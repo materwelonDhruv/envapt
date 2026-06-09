@@ -2,7 +2,7 @@
     "$schema": "https://json.schemastore.org/tsconfig.json",
     "extends": "../../tsconfig.json",
     "compilerOptions": {
-        "lib": ["ESNext", "esnext.disposable", "Decorators", "Decorators.Legacy"],
+        "lib": ["ESNext", "Decorators.Legacy"],
         "rootDir": "."
     },
     "include": ["src/**/*", "tests/**/*", "scripts/**/*", "tsdown.config.ts"],

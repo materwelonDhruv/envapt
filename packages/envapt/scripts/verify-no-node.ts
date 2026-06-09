@@ -151,6 +151,8 @@ function omissionProof(): void {
             process.execPath,
             [
                 tscPath,
+                // TS 6.0 (TS5112): CLI files + an in-scope tsconfig errors without this; the proof runs on its own flags.
+                '--ignoreConfig',
                 '--noEmit',
                 '--strict',
                 '--skipLibCheck',
