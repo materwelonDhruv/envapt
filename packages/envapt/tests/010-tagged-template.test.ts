@@ -1,7 +1,6 @@
 import { resolve } from 'node:path';
 
-import { expect } from 'chai';
-import { it, describe, beforeAll } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 
 import { Envapter } from '../src';
 

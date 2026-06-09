@@ -55,18 +55,12 @@ importers:
       '@seedcord/tsconfig':
         specifier: ^2.0.0
         version: 2.0.0
-      '@types/chai':
-        specifier: ^5.2.3
-        version: 5.2.3
       '@types/node':
         specifier: catalog:dev
         version: 25.9.1
       '@vitest/coverage-v8':
         specifier: ^4.1.7
         version: 4.1.7(vitest@4.1.7)
-      chai:
-        specifier: ^6.2.2
-        version: 6.2.2
       eslint:
         specifier: catalog:dev
         version: 9.39.2(jiti@2.7.0)
@@ -215,9 +209,6 @@ importers:
       arktype:
         specifier: ^2.2.0
         version: 2.2.0
-      expect-type:
-        specifier: ^1.3.0
-        version: 1.3.0
       valibot:
         specifier: ^1.4.1
         version: 1.4.1(typescript@6.0.3)

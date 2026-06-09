@@ -1,7 +1,6 @@
 import { resolve } from 'node:path';
 
-import { expect } from 'chai';
-import { afterEach, describe, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 
 import { Converters, Envapter, EnvaptErrorCodes, ManualEnvSource, NodeEnvSource, WorkerEnvSource } from '../src';
 import { EnvapterBase } from '../src/core/EnvapterBase';
