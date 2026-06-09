@@ -182,9 +182,7 @@ describe('Advanced Converter Methods', () => {
 
         it('should work with instance method', () => {
             const instance = new Envapter();
-            const customConverter = (raw: string | undefined): string => {
-                return raw ? raw.toUpperCase() : 'DEFAULT';
-            };
+            const customConverter = (raw: string | undefined): string => (raw ? raw.toUpperCase() : 'DEFAULT');
 
             const result = instance.getWith('TEST_STRING', customConverter);
             expect(result).to.equal('HELLO WORLD');
