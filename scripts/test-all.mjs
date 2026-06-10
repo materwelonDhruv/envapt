@@ -13,7 +13,12 @@ const captureBytes = 64 * 1024 * 1024;
 process.stdout.write('── build ──\n');
 execFileSync('pnpm', ['--filter', 'envapt', 'build'], { stdio: 'inherit' });
 
-const playwrightCache = [join(homedir(), '.cache/ms-playwright'), join(homedir(), 'Library/Caches/ms-playwright')];
+const playwrightCache = [
+    process.env.PLAYWRIGHT_BROWSERS_PATH,
+    join(homedir(), '.cache/ms-playwright'),
+    join(homedir(), 'Library/Caches/ms-playwright'),
+    join(homedir(), 'AppData/Local/ms-playwright')
+].filter((dir) => dir && dir !== '0');
 const hasChromium = playwrightCache.some(existsSync);
 
 const slices = [

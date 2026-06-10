@@ -1,8 +1,13 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 
 import { Envapter, ManualEnvSource } from '../../dist/browser/index.mjs';
 
 describe('browser config injection', () => {
+    afterEach(() => {
+        const win = window as Window & { __ENV__?: Record<string, unknown> };
+        delete win.__ENV__;
+    });
+
     it('reads typed values from an import.meta.env-shaped object', () => {
         const injected = { ...import.meta.env, VITE_API: 'https://x.test', VITE_PORT: '3000' };
         Envapter.useSource(new ManualEnvSource(injected));
