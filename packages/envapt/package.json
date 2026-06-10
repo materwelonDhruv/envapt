@@ -77,8 +77,8 @@
         "build": "pnpm run clean && tsdown",
         "build:verify": "pnpm tsx scripts/verify-no-node.ts",
         "dev": "tsc --watch",
-        "lint": "eslint '{src,tests,scripts}/**/*.{ts,tsx}' --cache",
-        "lint:fix": "eslint '{src,tests,scripts}/**/*.{ts,tsx}' --fix --cache",
+        "lint": "eslint '{src,tests,scripts}/**/*.{ts,tsx,mjs,cjs}' --cache",
+        "lint:fix": "eslint '{src,tests,scripts}/**/*.{ts,tsx,mjs,cjs}' --fix --cache",
         "fmt": "prettier --write '{src,tests,scripts}/**/*.{ts,tsx,json,md}' --cache",
         "fmt:check": "prettier --check '{src,tests,scripts}/**/*.{ts,tsx,json,md}' --cache",
         "fmt:all": "prettier --write .",
@@ -87,6 +87,10 @@
         "test": "vitest run",
         "test:watch": "vitest dev",
         "test:integration": "node tests/integration/run.mjs",
+        "test:workers": "tsc --noEmit -p tests/workers/tsconfig.json && vitest run --config vitest.workers.config.ts",
+        "test:browser": "tsc --noEmit -p tests/browser/tsconfig.json && vitest run --config vitest.browser.config.ts",
+        "test:consumer-build": "node tests/consumer-build/run.mjs",
+        "test:all": "node ../../scripts/test-all.mjs",
         "coverage": "pnpm run test --coverage",
         "cs": "changeset",
         "cs:publish": "changeset publish",
@@ -134,7 +138,13 @@
         "provenance": true
     },
     "devDependencies": {
+        "@cloudflare/vitest-pool-workers": "0.16.14",
+        "@cloudflare/workers-types": "^4.20260609.1",
+        "@vitest/browser": "4.1.7",
+        "@vitest/browser-playwright": "4.1.7",
         "arktype": "^2.2.0",
+        "esbuild": "^0.28.0",
+        "playwright": "1.60.0",
         "valibot": "^1.4.1",
         "zod": "catalog:dev"
     }

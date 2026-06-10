@@ -102,6 +102,18 @@ Pull requests that do not pass CI will not be reviewed in detail.
 - Add regression tests for bug fixes
 - Tests should be clear and easy to understand
 
+### Running the tests
+
+`pnpm test` runs the fast offline unit suite (Node) and covers most changes. The portable build also ships to Cloudflare Workers and the browser, so those runtimes have dedicated suites that stay out of the default run and read the built `dist/`:
+
+- `pnpm --filter envapt test:integration`, the Node, Bun, and Deno suites (Bun and Deno are skipped when not installed)
+- `pnpm --filter envapt test:workers`, the workerd suite on real workerd via `@cloudflare/vitest-pool-workers`
+- `pnpm --filter envapt test:browser`, the browser suite in headless Chromium (one-time `pnpm --filter envapt exec playwright install chromium`)
+- `pnpm --filter envapt test:consumer-build`, bundles `envapt` with esbuild for the browser and workerd conditions and asserts no `node:` built-ins leak in
+- `pnpm --filter envapt test:all`, builds once then runs every suite in parallel, skipping the browser suite when Chromium is absent
+
+Build the package before running the workerd or browser suite on its own, or use `test:all`, which builds first. CI runs all of them as parallel jobs.
+
 ## Questions?
 
 If you have questions or need help:

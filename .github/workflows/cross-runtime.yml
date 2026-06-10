@@ -89,9 +89,54 @@ jobs:
                   path: packages/envapt/
             - run: deno run -A --config packages/envapt/tests/integration/deno.json packages/envapt/tests/integration/run.mjs
 
+    test-workerd:
+        name: workerd
+        runs-on: ubuntu-latest
+        timeout-minutes: 20
+        steps:
+            - uses: actions/checkout@v6
+              with:
+                  fetch-depth: 1
+            - name: Setup workspace
+              uses: ./.github/actions/setup
+            - run: pnpm --filter envapt build
+            - run: pnpm --filter envapt test:workers
+
+    test-browser:
+        name: browser
+        runs-on: ubuntu-latest
+        timeout-minutes: 20
+        steps:
+            - uses: actions/checkout@v6
+              with:
+                  fetch-depth: 1
+            - name: Setup workspace
+              uses: ./.github/actions/setup
+            - name: Cache Playwright browsers
+              uses: actions/cache@v4
+              with:
+                  path: ~/.cache/ms-playwright
+                  key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+            - run: pnpm --filter envapt exec playwright install --with-deps chromium
+            - run: pnpm --filter envapt build
+            - run: pnpm --filter envapt test:browser
+
+    test-consumer-build:
+        name: consumer-build
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        steps:
+            - uses: actions/checkout@v6
+              with:
+                  fetch-depth: 1
+            - name: Setup workspace
+              uses: ./.github/actions/setup
+            - run: pnpm --filter envapt build
+            - run: pnpm --filter envapt test:consumer-build
+
     cross-runtime-ok:
         name: cross-runtime ok
-        needs: [test-node, test-bun, test-deno]
+        needs: [test-node, test-bun, test-deno, test-workerd, test-browser, test-consumer-build]
         if: always()
         runs-on: ubuntu-latest
         timeout-minutes: 5
