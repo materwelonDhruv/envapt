@@ -1,5 +1,11 @@
 # envapt
 
+## 5.2.0-next.1
+
+### Patch Changes
+
+- b8e26dd: Move the build and lint toolchain to TypeScript 6.0. No public API or runtime change.
+
 ## 5.2.0-next.0
 
 ### Minor Changes
