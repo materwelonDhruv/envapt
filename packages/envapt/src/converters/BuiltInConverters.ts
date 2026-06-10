@@ -61,6 +61,7 @@ function parseTimeString(input: string, strict = false): number | undefined {
  * Built-in converter implementations
  * @internal
  */
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class -- dispatch-table helper, the documented exception to the no-static-class rule
 export class BuiltInConverters {
     static string(raw: string, _fallback?: string): string | undefined {
         return String(raw);

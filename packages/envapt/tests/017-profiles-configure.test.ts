@@ -1,8 +1,7 @@
 import { resolve } from 'node:path';
 import process from 'node:process';
 
-import { expect } from 'chai';
-import { afterEach, beforeEach, describe, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { Envapter, EnvaptError, EnvaptErrorCodes, Environment } from '../src';
 

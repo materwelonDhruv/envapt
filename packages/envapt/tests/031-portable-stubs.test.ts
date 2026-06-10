@@ -1,5 +1,4 @@
-import { expect } from 'chai';
-import { describe, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import { Envapter, EnvaptError, EnvaptErrorCodes } from '../src/browser';
 import { Envapter as WorkerdEnvapter } from '../src/workerd';

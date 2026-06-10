@@ -1,10 +1,8 @@
 import { resolve } from 'node:path';
 
 import { type as ark } from 'arktype';
-import { expect } from 'chai';
-import { expectTypeOf } from 'expect-type';
 import * as v from 'valibot';
-import { afterEach, beforeAll, describe, it } from 'vitest';
+import { afterEach, beforeAll, describe, expect, expectTypeOf, it } from 'vitest';
 import { z } from 'zod/v4';
 
 import { Envapt, Envapter, EnvaptErrorCodes } from '../src';

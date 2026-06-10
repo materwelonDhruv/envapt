@@ -151,6 +151,7 @@ function omissionProof(): void {
             process.execPath,
             [
                 tscPath,
+                '--ignoreConfig',
                 '--noEmit',
                 '--strict',
                 '--skipLibCheck',

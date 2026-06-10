@@ -1,5 +1,4 @@
-import { expect } from 'chai';
-import { afterEach, describe, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 
 import { Envapter, ManualEnvSource, NodeEnvSource } from '../src';
 

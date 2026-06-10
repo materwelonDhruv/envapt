@@ -2,7 +2,6 @@
     "$schema": "https://json.schemastore.org/tsconfig.json",
     "extends": "./node_modules/@seedcord/tsconfig/node.json",
     "compilerOptions": {
-        "lib": ["ESNext", "esnext.disposable", "Decorators", "Decorators.Legacy"],
         "rootDir": ".",
         "types": ["node"]
     },

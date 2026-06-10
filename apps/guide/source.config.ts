@@ -51,9 +51,7 @@ export default defineConfig({
                 ...(twoslashEnabled
                     ? [
                           transformerTwoslash({
-                              // `@Envapt` is a legacy decorator; type-check samples with the same
-                              // setting as envapt's own tsconfig, or twoslash rejects them (TS 1206).
-                              twoslashOptions: { compilerOptions: { experimentalDecorators: true } },
+                              twoslashOptions: { compilerOptions: { experimentalDecorators: true, types: ['node'] } },
                               // Persist computed types to `.next/cache/twoslash` so only the first
                               // build pays the cold-compile cost (heavy with zod in the graph). The
                               // cache key is salted with envapt's dist hash so it self-busts on rebuild.

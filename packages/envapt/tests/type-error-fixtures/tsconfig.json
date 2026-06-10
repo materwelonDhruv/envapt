@@ -4,7 +4,7 @@
         "target": "ES2024",
         "module": "esnext",
         "moduleResolution": "bundler",
-        "lib": ["ESNext", "esnext.disposable", "Decorators", "Decorators.Legacy"],
+        "lib": ["ESNext", "Decorators.Legacy"],
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true,
         "esModuleInterop": true,

@@ -1,8 +1,6 @@
 import { resolve } from 'node:path';
 
-import { expect } from 'chai';
-import { expectTypeOf } from 'expect-type';
-import { afterEach, beforeAll, describe, it } from 'vitest';
+import { afterEach, beforeAll, describe, expect, expectTypeOf, it } from 'vitest';
 
 import { Converters, Envapt, Envapter, EnvaptErrorCodes } from '../src';
 import { EnvaptError } from '../src/Error';

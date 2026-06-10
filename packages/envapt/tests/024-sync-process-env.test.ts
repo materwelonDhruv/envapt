@@ -1,8 +1,7 @@
 import { resolve } from 'node:path';
 import process from 'node:process';
 
-import { expect } from 'chai';
-import { afterEach, beforeAll, beforeEach, describe, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { Envapter, EnvaptErrorCodes } from '../src';
 import { resetDebugForTesting } from '../src/Debug';

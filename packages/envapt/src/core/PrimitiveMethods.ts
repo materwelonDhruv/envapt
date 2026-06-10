@@ -57,7 +57,7 @@ export class PrimitiveMethods extends EnvironmentMethods implements EnvapterServ
             result = BuiltInConverters.symbol(parsed, def as symbol) as EnvVarReturnType;
         else result = BuiltInConverters.string(parsed, def as string) as EnvVarReturnType;
 
-        return result as ConditionalReturn<EnvVarReturnType, DefaultType>;
+        return result;
     }
 
     /**

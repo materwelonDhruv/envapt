@@ -1,8 +1,7 @@
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-import { expect } from 'chai';
-import { it, describe, beforeAll } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 
 import { Converters, Envapt, Envapter, EnvaptErrorCodes } from '../src';
 import { EnvaptError } from '../src/Error';
