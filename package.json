@@ -8,8 +8,8 @@
     "scripts": {
         "build": "turbo build",
         "dev": "turbo dev",
-        "lint": "turbo lint",
-        "lint:fix": "turbo lint:fix",
+        "lint": "turbo lint && eslint 'scripts/**/*.{ts,mjs,cjs}' --cache",
+        "lint:fix": "turbo lint:fix && eslint 'scripts/**/*.{ts,mjs,cjs}' --fix --cache",
         "lint:md": "markdownlint-cli2",
         "lint:fix:md": "markdownlint-cli2 --fix",
         "knip": "knip",

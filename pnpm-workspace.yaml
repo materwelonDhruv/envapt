@@ -10,7 +10,7 @@ allowBuilds:
     msgpackr-extract: true
     sharp: false
     unrs-resolver: true
-    workerd: false
+    workerd: true
 
 catalogs:
     dev:

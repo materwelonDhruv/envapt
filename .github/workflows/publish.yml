@@ -24,8 +24,29 @@ jobs:
         uses: ./.github/workflows/cross-runtime.yml
         secrets: inherit
 
-    dry-run-npm:
+    preflight:
         needs: [checks]
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+        outputs:
+            run: ${{ steps.preflight.outputs.run }}
+            publish_jsr: ${{ steps.preflight.outputs.publish_jsr }}
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v6
+              with:
+                  fetch-depth: 0
+            - name: Setup workspace
+              uses: ./.github/actions/setup
+            - name: Release preflight
+              id: preflight
+              run: pnpm tsx scripts/release-preflight.ts
+              env:
+                  GITHUB_REF_NAME: ${{ github.ref_name }}
+
+    dry-run-npm:
+        needs: [preflight]
+        if: ${{ needs.preflight.outputs.run == 'true' || needs.preflight.outputs.publish_jsr == 'true' }}
         runs-on: ubuntu-latest
         timeout-minutes: 20
         steps:
@@ -39,8 +60,8 @@ jobs:
               run: pnpm publish --dry-run --no-git-checks
 
     dry-run-jsr:
-        needs: [checks]
-        if: ${{ github.ref_name == 'main' }}
+        needs: [preflight]
+        if: ${{ needs.preflight.outputs.run == 'true' || needs.preflight.outputs.publish_jsr == 'true' }}
         runs-on: ubuntu-latest
         timeout-minutes: 20
         steps:
@@ -61,17 +82,15 @@ jobs:
                   dry-run: 'true'
 
     npm-publish:
-        needs: [checks, cross-runtime, dry-run-npm, dry-run-jsr]
+        needs: [preflight, cross-runtime, dry-run-npm, dry-run-jsr]
         if: >-
             ${{ !cancelled()
-            && needs.checks.result == 'success'
+            && needs.preflight.outputs.run == 'true'
             && needs.cross-runtime.result == 'success'
             && needs.dry-run-npm.result == 'success'
-            && (needs.dry-run-jsr.result == 'success' || needs.dry-run-jsr.result == 'skipped') }}
+            && needs.dry-run-jsr.result == 'success' }}
         runs-on: ubuntu-latest
         timeout-minutes: 30
-        outputs:
-            published: ${{ steps.changesets.outputs.published }}
         permissions:
             contents: write
             id-token: write
@@ -98,21 +117,12 @@ jobs:
               run: node -v && npm -v
             - name: Check npm registry and ping
               run: npm config get registry && npm ping
-            - name: Release preflight
-              id: preflight
-              run: pnpm tsx scripts/release-preflight.ts
-              env:
-                  GITHUB_REF_NAME: ${{ github.ref_name }}
             - name: Determine release metadata
               id: release_meta
-              if: ${{ steps.preflight.outputs.run == 'true' }}
               uses: ./.github/actions/release-metadata
             - name: Run prepublishOnly script
-              if: ${{ steps.preflight.outputs.run == 'true' }}
               run: pnpm run prepublishOnly
             - name: Run changesets
-              id: changesets
-              if: ${{ steps.preflight.outputs.run == 'true' }}
               uses: changesets/action@a45c4d594aa4e2c509dc14a9f2b3b67ba3780d0d # v1.9.0
               with:
                   version: pnpm run release:version
@@ -125,8 +135,13 @@ jobs:
                   HUSKY: 0
 
     jsr-publish:
-        needs: [npm-publish]
-        if: ${{ needs.npm-publish.outputs.published == 'true' && github.ref_name == 'main' }}
+        needs: [preflight, cross-runtime, dry-run-npm, dry-run-jsr]
+        if: >-
+            ${{ !cancelled()
+            && needs.preflight.outputs.publish_jsr == 'true'
+            && needs.cross-runtime.result == 'success'
+            && needs.dry-run-npm.result == 'success'
+            && needs.dry-run-jsr.result == 'success' }}
         runs-on: ubuntu-latest
         timeout-minutes: 30
         permissions:
