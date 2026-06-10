@@ -66,7 +66,7 @@ function CascadeStack(): ReactNode {
                 load order · most-specific wins
             </p>
             <ol className="flex flex-col gap-2">
-                <li className="rounded-lg border border-fd-border border-l-2 border-l-(--ev-teal) bg-(--ev-panel)">
+                <li className="rounded-lg border border-l-2 border-fd-border border-l-(--ev-teal) bg-(--ev-panel)">
                     <div className="flex items-center justify-between px-3 py-2">
                         <span className="font-mono text-[12.5px]">.env.production.local</span>
                         <span className="font-mono text-[11px] text-(--ev-teal)">wins</span>
