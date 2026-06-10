@@ -8,6 +8,7 @@
   "changesets": [
     "environment-detection-test-mode",
     "pluggable-env-sources",
-    "time-fallback-decimal"
+    "time-fallback-decimal",
+    "typescript-6-toolchain"
   ]
 }
