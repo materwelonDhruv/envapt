@@ -1,6 +1,7 @@
 import { rehypeCodeDefaultOptions, remarkNpm } from 'fumadocs-core/mdx-plugins';
 import { pageSchema } from 'fumadocs-core/source/schema';
 import { defineConfig, defineDocs } from 'fumadocs-mdx/config';
+import lastModified from 'fumadocs-mdx/plugins/last-modified';
 import { transformerTwoslash } from 'fumadocs-twoslash';
 import { z } from 'zod';
 
@@ -40,6 +41,7 @@ const PACKAGE_MANAGERS = [
 ];
 
 export default defineConfig({
+    plugins: [lastModified()],
     mdxOptions: {
         remarkPlugins: [[remarkNpm, { persist: { id: 'package-manager' }, packageManagers: PACKAGE_MANAGERS }]],
         rehypeCodeOptions: {

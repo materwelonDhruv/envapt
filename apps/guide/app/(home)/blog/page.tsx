@@ -1,15 +1,24 @@
 import Link from 'next/link';
 
-import { canonicalUrl, SITE_NAME } from '@/lib/site';
+import { canonicalUrl, DEFAULT_OG_IMAGE, SITE_NAME } from '@/lib/site';
 import { blog } from '@/lib/source';
 
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 
+// Next.js replaces (not deep-merges) the root layout's openGraph when a route sets its own,
+// so the full block is redeclared here to keep og:url pointing at /blog instead of the homepage.
 export const metadata: Metadata = {
     title: 'Blog',
     description: `Release notes and tutorials from the ${SITE_NAME} project.`,
-    alternates: { canonical: canonicalUrl('/blog') }
+    alternates: { canonical: canonicalUrl('/blog') },
+    openGraph: {
+        type: 'website',
+        siteName: SITE_NAME,
+        url: canonicalUrl('/blog'),
+        locale: 'en_US',
+        images: DEFAULT_OG_IMAGE
+    }
 };
 
 function formatDate(date: string): string {
