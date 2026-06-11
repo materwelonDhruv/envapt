@@ -17,74 +17,63 @@ concurrency:
 
 jobs:
     checks:
+        uses: ./.github/workflows/checks.yml
+        secrets: inherit
+
+    cross-runtime:
+        uses: ./.github/workflows/cross-runtime.yml
+        secrets: inherit
+
+    preflight:
+        needs: [checks]
         runs-on: ubuntu-latest
+        timeout-minutes: 10
+        outputs:
+            run: ${{ steps.preflight.outputs.run }}
+            publish_jsr: ${{ steps.preflight.outputs.publish_jsr }}
         steps:
             - name: Checkout repository
               uses: actions/checkout@v6
               with:
                   fetch-depth: 0
-            - name: Turbo cache
-              uses: ./.github/actions/turbo-cache
-              with:
-                  turbo_token: ${{ secrets.TURBO_TOKEN }}
-                  turbo_team: ${{ vars.TURBO_TEAM }}
-                  enable_fallback_cache: 'true'
-            - name: Setup pnpm
-              uses: pnpm/action-setup@v6
-            - name: Setup Node.js
-              uses: actions/setup-node@v6
-              with:
-                  node-version: 24.16.0
-                  cache: pnpm
-            - name: Install dependencies
-              run: pnpm install --frozen-lockfile
-            - name: Build project
-              run: pnpm build
-            - name: Run type check
-              run: pnpm tc
-            - name: Run lint
-              run: pnpm lint
-            - name: Run tests
-              run: pnpm test
-            - name: Run audit
-              run: pnpm audit --audit-level=high
+            - name: Setup workspace
+              uses: ./.github/actions/setup
+            - name: Release preflight
+              id: preflight
+              run: pnpm tsx scripts/release-preflight.ts
+              env:
+                  GITHUB_REF_NAME: ${{ github.ref_name }}
 
     dry-run-npm:
-        needs: [checks]
+        needs: [preflight]
+        if: ${{ needs.preflight.outputs.run == 'true' || needs.preflight.outputs.publish_jsr == 'true' }}
         runs-on: ubuntu-latest
+        timeout-minutes: 20
         steps:
             - name: Checkout repository
               uses: actions/checkout@v6
               with:
                   fetch-depth: 0
-            - name: Setup pnpm
-              uses: pnpm/action-setup@v6
-            - name: Setup Node.js
-              uses: actions/setup-node@v6
-              with:
-                  node-version: 24.16.0
-                  cache: pnpm
-            - name: Install dependencies
-              run: pnpm install --frozen-lockfile
+            - name: Setup workspace
+              uses: ./.github/actions/setup
             - name: Publish package (dry run)
               run: pnpm publish --dry-run --no-git-checks
+              working-directory: packages/envapt
 
     dry-run-jsr:
-        needs: [checks]
-        # JSR has no prerelease channel, so it is validated and published for stable (main) only.
-        if: ${{ github.ref_name == 'main' }}
+        needs: [preflight]
+        if: ${{ needs.preflight.outputs.run == 'true' || needs.preflight.outputs.publish_jsr == 'true' }}
         runs-on: ubuntu-latest
+        timeout-minutes: 20
         steps:
             - name: Checkout repository
               uses: actions/checkout@v6
               with:
                   fetch-depth: 0
-            - name: Setup pnpm
-              uses: pnpm/action-setup@v6
-            - name: Install dependencies
-              run: pnpm install --frozen-lockfile
+            - name: Setup workspace
+              uses: ./.github/actions/setup
             - name: Setup Deno
-              uses: denoland/setup-deno@v2
+              uses: denoland/setup-deno@667a34cdef165d8d2b2e98dde39547c9daac7282 # v2
               with:
                   deno-version: 2.7.14
             - name: Deno publish dry run
@@ -94,16 +83,15 @@ jobs:
                   dry-run: 'true'
 
     npm-publish:
-        needs: [dry-run-npm, dry-run-jsr]
-        # dry-run-jsr is skipped on the next channel. !cancelled() forces this job to evaluate its
-        # result checks instead of auto-skipping because a dependency was skipped.
+        needs: [preflight, cross-runtime, dry-run-npm, dry-run-jsr]
         if: >-
             ${{ !cancelled()
+            && needs.preflight.outputs.run == 'true'
+            && needs.cross-runtime.result == 'success'
             && needs.dry-run-npm.result == 'success'
-            && (needs.dry-run-jsr.result == 'success' || needs.dry-run-jsr.result == 'skipped') }}
+            && needs.dry-run-jsr.result == 'success' }}
         runs-on: ubuntu-latest
-        outputs:
-            published: ${{ steps.changesets.outputs.published }}
+        timeout-minutes: 30
         permissions:
             contents: write
             id-token: write
@@ -120,13 +108,9 @@ jobs:
                   turbo_token: ${{ secrets.TURBO_TOKEN }}
                   turbo_team: ${{ vars.TURBO_TEAM }}
                   enable_fallback_cache: 'true'
-            - name: Setup pnpm
-              uses: pnpm/action-setup@v6
-            - name: Setup Node.js
-              uses: actions/setup-node@v6
+            - name: Setup workspace
+              uses: ./.github/actions/setup
               with:
-                  node-version: 24.16.0
-                  cache: pnpm
                   registry-url: https://registry.npmjs.org
             - name: Update npm to latest
               run: npm i -g npm@latest
@@ -134,25 +118,13 @@ jobs:
               run: node -v && npm -v
             - name: Check npm registry and ping
               run: npm config get registry && npm ping
-            - name: Install dependencies
-              run: pnpm install --frozen-lockfile
-            # Enforces the channel guard (next must be pre-mode, main must not be)
-            - name: Release preflight
-              id: preflight
-              run: pnpm tsx scripts/release-preflight.ts
-              env:
-                  GITHUB_REF_NAME: ${{ github.ref_name }}
             - name: Determine release metadata
               id: release_meta
-              if: ${{ steps.preflight.outputs.run == 'true' }}
               uses: ./.github/actions/release-metadata
             - name: Run prepublishOnly script
-              if: ${{ steps.preflight.outputs.run == 'true' }}
               run: pnpm run prepublishOnly
             - name: Run changesets
-              id: changesets
-              if: ${{ steps.preflight.outputs.run == 'true' }}
-              uses: changesets/action@v1
+              uses: changesets/action@a45c4d594aa4e2c509dc14a9f2b3b67ba3780d0d # v1.9.0
               with:
                   version: pnpm run release:version
                   publish: pnpm run release
@@ -164,8 +136,13 @@ jobs:
                   HUSKY: 0
 
     jsr-publish:
-        needs: [npm-publish]
-        if: ${{ needs.npm-publish.outputs.published == 'true' && github.ref_name == 'main' }}
+        needs: [preflight, cross-runtime, dry-run-npm, dry-run-jsr]
+        if: >-
+            ${{ !cancelled()
+            && needs.preflight.outputs.publish_jsr == 'true'
+            && needs.cross-runtime.result == 'success'
+            && needs.dry-run-npm.result == 'success'
+            && needs.dry-run-jsr.result == 'success' }}
         runs-on: ubuntu-latest
         timeout-minutes: 30
         permissions:
@@ -176,12 +153,10 @@ jobs:
               uses: actions/checkout@v6
               with:
                   fetch-depth: 0
-            - name: Setup pnpm
-              uses: pnpm/action-setup@v6
-            - name: Install dependencies
-              run: pnpm install --frozen-lockfile
+            - name: Setup workspace
+              uses: ./.github/actions/setup
             - name: Setup Deno
-              uses: denoland/setup-deno@v2
+              uses: denoland/setup-deno@667a34cdef165d8d2b2e98dde39547c9daac7282 # v2
               with:
                   deno-version: 2.7.14
                   cache: true

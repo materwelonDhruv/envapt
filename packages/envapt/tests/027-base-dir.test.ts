@@ -4,8 +4,7 @@ import { join, resolve } from 'node:path';
 import process from 'node:process';
 import { pathToFileURL } from 'node:url';
 
-import { expect } from 'chai';
-import { afterEach, beforeAll, beforeEach, describe, it } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { Envapter, EnvaptErrorCodes, Environment } from '../src';
 import { EnvaptError } from '../src/Error';

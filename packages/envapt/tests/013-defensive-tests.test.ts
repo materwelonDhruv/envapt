@@ -1,5 +1,4 @@
-import { expect } from 'chai';
-import { describe, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { BuiltInConverters, Converters, ValueConverter } from '../src/converters';
 import { Envapter } from '../src/Envapter';

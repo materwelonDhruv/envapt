@@ -50,12 +50,7 @@ export interface ArrayOf<TElement extends ArrayElement = ArrayElement> {
  * @internal
  */
 export function isArrayOf(value: unknown): value is ArrayOf {
-    return (
-        typeof value === 'object' &&
-        value !== null &&
-        '__envaptKind' in value &&
-        (value as { __envaptKind: unknown }).__envaptKind === 'array'
-    );
+    return typeof value === 'object' && value !== null && '__envaptKind' in value && value.__envaptKind === 'array';
 }
 
 type ArrayScalarElement = Exclude<ConverterToken, 'json' | 'regexp'>;

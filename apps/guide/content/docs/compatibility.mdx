@@ -1,9 +1,9 @@
 ---
 title: Compatibility
-description: Runtime support, engine versions, module formats, and how decorators behave on Node, Bun, and Deno.
+description: Runtime support, engine versions, module formats, per-runtime builds, and how decorators behave across runtimes.
 ---
 
-envapt runs on Node, Bun, and Deno with the same API and zero runtime dependencies. The functional reader API works on every runtime with no build step. The `@Envapt` decorator is TypeScript-only and has per-runtime requirements, covered below.
+envapt runs on Node, Bun, and Deno with the same API and zero runtime dependencies. It also runs on Cloudflare Workers (workerd) and in the browser, where you bind an environment source yourself and there is no `.env` cascade. The functional reader API works on every runtime with no build step. The `@Envapt` decorator is TypeScript-only and has per-runtime requirements, covered below.
 
 ## Engine versions
 
@@ -14,6 +14,8 @@ envapt runs on Node, Bun, and Deno with the same API and zero runtime dependenci
 | Deno    | `>=2.5` |
 
 Each release is tested against Node 20, 22, and 24, plus Bun and Deno.
+
+Cloudflare Workers and the browser have no semver engine; the right build is selected by the package `exports` conditions (below), not by an engine version.
 
 ## Install
 
@@ -26,6 +28,18 @@ The Deno tab installs from JSR; you can also use the npm specifier with `deno ad
 ## Module formats
 
 envapt ships both ESM and CommonJS with type definitions for each, so `import` and `require` both resolve. There are no runtime dependencies.
+
+## Per-runtime builds
+
+The package `exports` conditions select a build per runtime:
+
+- **Node, Bun, and Deno** resolve the Node build from `envapt`. `NodeEnvSource` is bound on import, so it reads `process.env` and the `.env` cascade, and the file APIs work.
+- **Cloudflare Workers** import from `envapt/workerd`. There is no filesystem, so the file APIs are not available; bind a [`WorkerEnvSource`](/docs/sources) from the `env` binding exported via `cloudflare:workers` or in a fetch.
+- **The browser** imports from `envapt/browser`. There is no filesystem or `process.env`, so seed a [`ManualEnvSource`](/docs/sources) with the values your bundler injects.
+
+The workerd and browser builds contain no `node:` imports. Bind a source before your first read; see [Sources](/docs/sources).
+
+On Workers and the browser, import from `envapt/workerd` and `envapt/browser`. These entries carry the matching types, which omit the five file-only APIs, so calling one is a compile error rather than a runtime [`FileApiUnsupported`](/docs/errors). TypeScript does not apply the `workerd` / `browser` conditions on its own, so bare `envapt` leaves you on the Node types, where those APIs look available.
 
 ## Decorators per runtime
 

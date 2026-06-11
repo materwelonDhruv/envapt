@@ -19,6 +19,12 @@ Envapter.debug = 'verbose';
     `process.env`. Values are read from envapt's own cache. `syncProcessEnv` (below) opts into writing them back.
 </Callout>
 
+<Callout type="warn">
+    Everything on this page reads or writes the filesystem, so it applies to Node, Bun, and Deno only. The five file
+    APIs (`envPaths`, `baseDir`, `envFileOptions`, `configureProfiles`, `resetProfiles`) are not available on Cloudflare
+    Workers or in the browser; there you bind an environment source instead. See [Sources](/docs/sources).
+</Callout>
+
 ## Which files load
 
 By default envapt loads `.env`, and in a detected environment it layers a per-environment cascade (covered in [Environment](/docs/environment)).
@@ -50,9 +56,9 @@ Envapter.envFileOptions = { override: true, encoding: 'utf8' };
 
 Relative paths resolve against the working directory (`process.cwd()`) by default. In a monorepo the process often starts at the repository root, not the package directory, so a package-local `.env` is not found. Set `Envapter.baseDir` to the directory that relative paths resolve against: the auto-cascade, `configureProfiles` paths, and relative `envPaths`. Absolute paths are used unchanged.
 
-```ts
+```ts twoslash
 import { Envapter } from 'envapt';
-
+// ---cut---
 // ESM: resolve .env next to this module, whatever the working directory is
 Envapter.baseDir = import.meta.url;
 

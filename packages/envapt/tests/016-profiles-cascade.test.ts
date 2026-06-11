@@ -1,8 +1,7 @@
 import { resolve } from 'node:path';
 import process from 'node:process';
 
-import { expect } from 'chai';
-import { afterEach, beforeEach, describe, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { Envapter, Environment } from '../src';
 
@@ -12,9 +11,14 @@ import { Envapter, Environment } from '../src';
  * and `_envPathsExplicitlySet` through the public API surface so the cascade is the
  * active path-resolution mode.
  */
-describe('profiles — dotenv-flow auto-cascade', () => {
+describe('profiles: dotenv-flow auto-cascade', () => {
     const originalCwd = process.cwd();
-    const originalEnv = process.env.NODE_ENV;
+    const originalEnv = {
+        ENVIRONMENT: process.env.ENVIRONMENT,
+        ENV: process.env.ENV,
+        NODE_ENV: process.env.NODE_ENV,
+        MODE: process.env.MODE
+    };
 
     beforeEach(() => {
         Envapter.resetProfiles();
@@ -23,8 +27,11 @@ describe('profiles — dotenv-flow auto-cascade', () => {
 
     afterEach(() => {
         process.chdir(originalCwd);
-        if (originalEnv === undefined) delete process.env.NODE_ENV;
-        else process.env.NODE_ENV = originalEnv;
+        // Restore every detection key a test may have set or deleted, so none leak to the next case.
+        for (const [key, value] of Object.entries(originalEnv)) {
+            if (value === undefined) Reflect.deleteProperty(process.env, key);
+            else process.env[key] = value;
+        }
         Envapter.resetProfiles();
     });
 
@@ -80,7 +87,7 @@ describe('profiles — dotenv-flow auto-cascade', () => {
     });
 
     it('silently skips missing cascade files', () => {
-        // The `default` fixture only has `.env` — no `.env.local`, `.env.development`, etc.
+        // The `default` fixture only has `.env`, no `.env.local`, `.env.development`, etc.
         // Cascade should NOT throw on missing files; it just loads what exists.
         process.chdir(resolve(import.meta.dirname, 'cascade-fixtures', 'default'));
         Envapter.environment = Environment.Development;
@@ -139,14 +146,22 @@ describe('profiles — dotenv-flow auto-cascade', () => {
         }
     });
 
-    it('falls back to development when ENVIRONMENT, ENV, and NODE_ENV are all absent', () => {
+    it('falls back to development when ENVIRONMENT, ENV, NODE_ENV, and MODE are all absent', () => {
         process.chdir(resolve(import.meta.dirname, 'cascade-fixtures', 'all-layers'));
         delete process.env.ENVIRONMENT;
         delete process.env.ENV;
         delete process.env.NODE_ENV;
+        delete process.env.MODE;
         Envapter.resetProfiles();
 
-        // No env vars set → cascade falls back to Development → loads .env.development.local etc.
+        expect(Envapter.get('CASCADE_KEY')).to.equal('dev-local');
+    });
+
+    it('falls back to development for an unrecognized environment value', () => {
+        process.chdir(resolve(import.meta.dirname, 'cascade-fixtures', 'all-layers'));
+        process.env.ENVIRONMENT = 'qa';
+        Envapter.resetProfiles();
+
         expect(Envapter.get('CASCADE_KEY')).to.equal('dev-local');
     });
 });

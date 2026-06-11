@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 
 import { FIXTURE_PATH } from './_helpers.mjs';
-import { Envapt, Envapter } from '../../../dist/index.mjs';
+import { Envapt, Envapter } from '../../../dist/node/index.mjs';
 
 // Deno-only suite. Bun 1.3.10+ permanently emits Stage 3 decorators (bun#27575),
 // incompatible with envapt's legacy install signature. Node has no native TS.

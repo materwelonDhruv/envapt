@@ -2,10 +2,27 @@
     "$schema": "node_modules/wrangler/config-schema.json",
     "name": "envapt",
     "compatibility_date": "2026-05-30",
+    "main": "./worker.ts",
     "assets": {
         "directory": "./out",
-        // 404-page (not the default) serves the static export's 404.html; auto-trailing-slash mirrors next.config trailingSlash: true
+        "binding": "ASSETS",
+        // 404-page serves the static export's 404.html instead of the default, and auto-trailing-slash mirrors next.config trailingSlash true
         "not_found_handling": "404-page",
-        "html_handling": "auto-trailing-slash"
+        "html_handling": "auto-trailing-slash",
+        // route every request through worker.ts so it can add noindex on non-production hosts
+        "run_worker_first": true
+    },
+    "env": {
+        // can't inherit assets block so duplicating it
+        "next": {
+            "name": "envapt-next",
+            "assets": {
+                "directory": "./out",
+                "binding": "ASSETS",
+                "not_found_handling": "404-page",
+                "html_handling": "auto-trailing-slash",
+                "run_worker_first": true
+            }
+        }
     }
 }

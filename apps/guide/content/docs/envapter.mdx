@@ -28,8 +28,8 @@ import { Envapter } from 'envapt';
 const name = Envapter.get('APP_NAME', 'envapt'); // string
 const port = Envapter.getNumber('PORT', 3000); // number
 const debug = Envapter.getBoolean('DEBUG', false); // boolean
-const max = Envapter.getBigInt('MAX_SAFE', 0n); // bigint
-const tag = Envapter.getSymbol('BUILD_TAG'); // symbol | undefined
+const maxBytes = Envapter.getBigInt('MAX_UPLOAD_BYTES', 0n); // bigint
+const key = Envapter.getSymbol('KEY', Symbol.for('envapt:key')); // symbol
 ```
 
 `getBoolean` reads `1`, `yes`, `true`, `on` as **true** and `0`, `no`, `false`, `off` as **false**, case-insensitively. Anything else uses the fallback.
@@ -107,8 +107,8 @@ Fallbacks behave like the primitives, removing `undefined` from the return type.
 ```ts twoslash
 import { Envapter } from 'envapt';
 // ---cut---
-// API_HOST=api.example.com, API_PORT=8080
-const endpoint = Envapter.resolve`https://${'API_HOST'}:${'API_PORT'}`;
+// PGUSER=app, PGPASSWORD=secret, PGHOST=db.internal, PGDATABASE=myapp
+const dsn = Envapter.resolve`postgres://${'PGUSER'}:${'PGPASSWORD'}@${'PGHOST'}/${'PGDATABASE'}`;
 //    ^?
 ```
 
@@ -157,4 +157,4 @@ Static and instance reads hit the same cache.
 
 ## Environment detection
 
-`Envapter` also detects the current runtime environment and auto-loads the matching `.env` files for it. The `isProduction` / `isStaging` / `isDevelopment` helpers, the `Environment` enum, and per-environment file selection all live on [Environment](/docs/environment).
+`Envapter` also detects the current runtime environment and auto-loads the matching `.env` files for it. The `isProduction` / `isStaging` / `isDevelopment` / `isTest` helpers, the `Environment` enum, and per-environment file selection all live on [Environment](/docs/environment).

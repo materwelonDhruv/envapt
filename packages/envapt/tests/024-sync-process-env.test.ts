@@ -1,8 +1,7 @@
 import { resolve } from 'node:path';
 import process from 'node:process';
 
-import { expect } from 'chai';
-import { afterEach, beforeAll, beforeEach, describe, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { Envapter, EnvaptErrorCodes } from '../src';
 import { resetDebugForTesting } from '../src/Debug';
@@ -155,8 +154,8 @@ describe('syncProcessEnv (v5)', () => {
             const capture = captureStderr();
             try {
                 Envapter.syncProcessEnv = true;
-                const perKey = capture.lines.find((l) => l.includes('mirrored SYNC_KEY_A to process.env'));
-                const summary = capture.lines.find((l) => /mirrored \d+ keys to process.env/u.test(l));
+                const perKey = capture.lines.find((l) => l.includes('mirrored SYNC_KEY_A to the ambient environment'));
+                const summary = capture.lines.find((l) => /mirrored \d+ keys to the ambient environment/u.test(l));
                 expect(perKey, 'expected a per-key mirror line').to.exist;
                 expect(summary, 'expected a summary mirror line').to.exist;
             } finally {

@@ -1,0 +1,10 @@
+{
+    "extends": "../../tsconfig.json",
+    "compilerOptions": {
+        "noEmit": true,
+        "rootDir": "../..",
+        "types": ["@cloudflare/workers-types"]
+    },
+    "include": ["**/*.ts", "../../dist/workerd/index.d.mts"],
+    "exclude": []
+}

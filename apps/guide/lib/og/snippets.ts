@@ -12,11 +12,12 @@ export const OG_SNIPPETS: Record<string, OgSnippet | undefined> = {
         filename: 'config.ts',
         lang: 'ts',
         code: `// envapt - typed env vars, zero deps
-import { Envapter } from 'envapt';
+import { Envapter, Converters } from 'envapt';
 
-const port = Envapter.getNumber('PORT', 3000);
-const debug = Envapter.getBoolean('DEBUG', false);
-// number and boolean, not string | undefined`
+const url = Envapter.getUsing(
+  'UPSTREAM_URL', Converters.Url
+);
+// a URL, not string | undefined`
     },
     'quick-start': {
         filename: 'app.ts',
@@ -50,11 +51,11 @@ const level = Envapter.isProduction
         lang: 'ts',
         code: `// Decorators - bind env vars to typed fields
 class Config {
-  @EnvNum('PORT', 3000)
-  declare static readonly port: number;
+  @EnvUrl('DATABASE_URL')
+  declare static readonly db: URL;
 
-  @EnvBool('DEBUG', false)
-  declare static readonly debug: boolean;
+  @EnvTime('CACHE_TTL', '15m')
+  declare static readonly cacheTtl: number;
 }`
     },
     converters: {
@@ -138,5 +139,37 @@ TLS_KEY="line one\\nline two"`
     "experimentalDecorators": true
   }
 }`
+    },
+    sources: {
+        filename: 'config.ts',
+        lang: 'ts',
+        code: `// Sources - any readVars() object is a source
+const source = { readVars: () => secrets };
+Envapter.useSource(source);
+const db = Envapter.getUsing(
+  'DATABASE_URL', Converters.Url
+);`
+    },
+    workers: {
+        filename: 'worker.ts',
+        lang: 'ts',
+        code: `// Workers - bind the env binding at module load
+import { env } from 'cloudflare:workers';
+
+Envapter.useSource(new WorkerEnvSource(env));
+const origin = Envapter.getUsing(
+  'ORIGIN_URL', Converters.Url
+);`
+    },
+    browser: {
+        filename: 'client.ts',
+        lang: 'ts',
+        code: `// Browser - seed your bundler's injected config
+Envapter.useSource(
+  new ManualEnvSource(import.meta.env)
+);
+const api = Envapter.getUsing(
+  'VITE_API_URL', Converters.Url
+);`
     }
 };

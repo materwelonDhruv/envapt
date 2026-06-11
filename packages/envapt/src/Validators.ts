@@ -1,5 +1,3 @@
-import fs from 'node:fs';
-
 // Import the converter modules directly, not via the `./converters` barrel: that barrel pulls in
 // ValueConverter, which imports this Validator, so a barrel import here would cycle.
 import { isArrayOf } from './converters/Converters';
@@ -11,6 +9,7 @@ import type { EnvFileOptions } from './Dotenv';
 import type { StandardSchemaV1 } from './StandardSchema';
 import type { BuiltInConverter, ConverterFunction, EnvaptConverter } from './types';
 
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class -- cohesive dispatch of stateless type guards, same shape as BuiltInConverters
 export class Validator {
     /**
      * Check if a value is a built-in scalar converter token
@@ -32,7 +31,7 @@ export class Validator {
     static isStandardSchema(value: unknown): value is StandardSchemaV1 {
         if (typeof value !== 'object' || value === null) return false;
         if (!('~standard' in value)) return false;
-        const slot = (value as { '~standard': unknown })['~standard'];
+        const slot = value['~standard'];
         if (typeof slot !== 'object' || slot === null) return false;
         const props = slot as { version?: unknown; validate?: unknown };
         return props.version === 1 && typeof props.validate === 'function';
@@ -68,7 +67,7 @@ export class Validator {
         }
 
         const elementOf = value.of;
-        const isScalar = typeof elementOf === 'string' && ListOfBuiltInConverters.includes(elementOf as ConverterToken);
+        const isScalar = typeof elementOf === 'string' && ListOfBuiltInConverters.includes(elementOf);
         const isCustomFn = typeof elementOf === 'function';
         if (!isScalar && !isCustomFn) {
             throw new EnvaptError(
@@ -252,18 +251,10 @@ export class Validator {
         return true;
     }
 
-    /**
-     * Check if each provided path points to an accessible env file
-     */
-    static validateEnvFilesExist(paths: string[]): void {
-        const missing = paths.filter((p) => {
-            try {
-                fs.accessSync(p, fs.constants.F_OK);
-                return false;
-            } catch {
-                return true;
-            }
-        });
+    // Existence is probed through the caller-supplied `fileExists` (backed by the bound source) so
+    // this stays free of `node:fs`.
+    static validateEnvFilesExist(paths: string[], fileExists: (path: string) => boolean): void {
+        const missing = paths.filter((p) => !fileExists(p));
 
         if (missing.length > 0) {
             throw new EnvaptError(

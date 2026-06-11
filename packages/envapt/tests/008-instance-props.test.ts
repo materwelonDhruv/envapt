@@ -1,7 +1,6 @@
 import { resolve } from 'node:path';
 
-import { expect } from 'chai';
-import { beforeAll, describe, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 
 import { Converters, Envapt, Envapter, Environment } from '../src';
 
@@ -35,6 +34,7 @@ describe('Instance Properties with @Envapt', () => {
             expect(instance.isProduction).to.be.true;
             expect(instance.isDevelopment).to.be.false;
             expect(instance.isStaging).to.be.false;
+            expect(instance.isTest).to.be.false;
         });
 
         it('should update environment to Staging', () => {

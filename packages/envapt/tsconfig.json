@@ -2,9 +2,23 @@
     "$schema": "https://json.schemastore.org/tsconfig.json",
     "extends": "../../tsconfig.json",
     "compilerOptions": {
-        "lib": ["ESNext", "esnext.disposable", "Decorators", "Decorators.Legacy"],
+        "lib": ["ESNext", "Decorators.Legacy"],
         "rootDir": "."
     },
-    "include": ["src/**/*", "tests/**/*", "tsdown.config.ts"],
-    "exclude": ["node_modules", "dist", "tests/type-error-fixtures/**"]
+    "include": [
+        "src/**/*",
+        "tests/**/*",
+        "scripts/**/*",
+        "tsdown.config.ts",
+        "vitest.workers.config.ts",
+        "vitest.browser.config.ts"
+    ],
+    "exclude": [
+        "node_modules",
+        "dist",
+        "tests/type-error-fixtures/**",
+        "tests/workers/**",
+        "tests/browser/**",
+        "tests/consumer-build/**"
+    ]
 }

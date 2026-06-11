@@ -38,14 +38,14 @@ Reading `HEALTHCHECK` returns `https://api.example.com/health`.
 When a referenced variable is missing or empty, envapt leaves the literal `${VAR}` text in place.
 
 ```dotenv
-GREETING=hello ${NAME}
+DB_HOST=localhost
+DATABASE_URL=postgres://${DB_HOST}:${DB_PORT}/app
 ```
 
-Reading `GREETING` with no `NAME` set returns `hello ${NAME}`. Enable [debug mode](/docs/configuration#debug-mode) to log each unresolved reference. Under [strict mode](/docs/strict-mode), an unresolved reference throws `EnvaptError` with code `MissingEnvValue` instead of being left as text.
+With `DB_PORT` unset, reading `DATABASE_URL` returns `postgres://localhost:${DB_PORT}/app`: the resolved `${DB_HOST}`, and the literal `${DB_PORT}` left in place. Enable [debug mode](/docs/configuration#debug-mode) to log each unresolved reference.
 
-<Callout type="warn">
-    In non-strict mode the placeholder reaches your consumer: the value still carries the literal `${VAR}` text rather
-    than a resolved value. Turn on strict mode if a missing reference should be a hard failure instead.
+<Callout type="tip">
+    Turn on strict mode if an unresolved reference shoud throw `EnvaptError` with code `MissingEnvValue` instead.
 </Callout>
 
 ## Cycle protection

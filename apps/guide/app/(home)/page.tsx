@@ -1,3 +1,4 @@
+import { AnyRuntime } from '@/components/AnyRuntime';
 import { ClosingCta } from '@/components/ClosingCta';
 import { ConverterShowcase } from '@/components/ConverterShowcase';
 import { EnvLoading } from '@/components/EnvLoading';
@@ -8,7 +9,7 @@ import { canonicalUrl, DEFAULT_OG_IMAGE, SITE_NAME } from '@/lib/site';
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 
-const homeTitle = 'envapt · Typed config from .env for Node, Bun, and Deno';
+const homeTitle = 'envapt · Typed config for Node, Bun, Deno, Workers, and the browser';
 
 export const metadata: Metadata = {
     title: { absolute: homeTitle },
@@ -30,6 +31,7 @@ export default function HomePage(): ReactNode {
             <TwoWays />
             <ConverterShowcase />
             <EnvLoading />
+            <AnyRuntime />
             <ClosingCta />
         </main>
     );

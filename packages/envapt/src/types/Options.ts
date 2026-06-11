@@ -13,7 +13,7 @@ interface EnvaptOptions<TFallback = string> {
 }
 
 /**
- * Per-environment profile entry passed to {@link configureProfiles}.
+ * Per-environment profile entry passed to `Envapter.configureProfiles`.
  * @public
  */
 interface EnvProfile {
@@ -22,7 +22,7 @@ interface EnvProfile {
 }
 
 /**
- * Configuration object for {@link configureProfiles}. Maps each `Environment` to an optional
+ * Configuration object for `Envapter.configureProfiles`. Maps each `Environment` to an optional
  * profile override. Unspecified environments fall through to the default cascade behavior
  * (`.env.${env}.local`, `.env.local`, `.env.${env}`, `.env`).
  * @public

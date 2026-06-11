@@ -1,27 +1,18 @@
-import { dirname, isAbsolute, join, resolve } from 'node:path';
-import process from 'node:process';
-import { fileURLToPath } from 'node:url';
-
 import { debugVerbose, getDebugLevel, setDebugLevel } from '../Debug';
 import { loadDotenv } from '../Dotenv';
 import { EnvaptError, EnvaptErrorCodes } from '../Error';
+import { bindRuntimeFromSource } from '../runtime';
+import { UnboundEnvSource } from '../sources/UnboundEnvSource';
 import { Validator } from '../Validators';
 
 import type { DebugLevel } from '../Debug';
 import type { EnvFileOptions } from '../Dotenv';
-import type { EnvKeyInput } from '../types';
+import type { EnvKeyInput, EnvSource, FileEnvSource } from '../types';
 
-/**
- * Base cache for environment variables and computed values
- * @internal
- */
+/** @internal */
 export const EnvaptCache = new Map<string, unknown>();
 
-/**
- * Base class for environment variable management
- * Handles configuration, caching, and basic environment loading
- * @internal
- */
+/** @internal */
 export abstract class EnvapterBase {
     protected static _envPaths: string[] = ['.env'];
     protected static _envPathsExplicitlySet = false;
@@ -31,6 +22,9 @@ export abstract class EnvapterBase {
     protected static _syncProcessEnv = false;
     // Loader-written keys only (collisions skipped). Refilled on every cache rebuild.
     protected static _dotenvAddedKeys: Set<string> = new Set<string>();
+    // Unbound by default so non-Node builds throw NoSourceBound on read until useSource() is called.
+    // NodeEnvapter's static block binds NodeEnvSource when referenced, so `import 'envapt'` needs no setup.
+    protected static _source: EnvSource = new UnboundEnvSource();
 
     /**
      * Enable or disable strict mode. Default `false`. Setting refreshes the cache so
@@ -48,9 +42,9 @@ export abstract class EnvapterBase {
     }
 
     /**
-     * Set the debug log level. Defaults to `silent`. When unset, reads `ENVAPT_DEBUG` from
-     * `process.env` on first access; the setter overrides any env-var value. Output goes
-     * to stderr prefixed with `[envapt]`.
+     * Set the debug log level. Defaults to `silent`. When unset, reads `ENVAPT_DEBUG` from the
+     * bound source on first access; the setter overrides any env-var value. Output goes to stderr
+     * on Node (the console elsewhere), prefixed with `[envapt]`.
      */
     static set debug(level: DebugLevel) {
         setDebugLevel(level);
@@ -89,73 +83,36 @@ export abstract class EnvapterBase {
         return false;
     }
 
-    /**
-     * Set custom .env file paths. Accepts either a single path or array of paths.
-     * Setting new paths clears the cache and reloads environment variables.
-     *
-     * When set, this takes absolute precedence. The dotenv-flow auto-cascade and any
-     * {@link configureProfiles} configuration are ignored.
-     */
-    static set envPaths(paths: string[] | string) {
-        const newPaths = Array.isArray(paths) ? paths : [paths];
-        Validator.validateEnvFilesExist(newPaths.map((p) => this.resolveAgainstBase(p)));
-
-        this._envPaths = newPaths;
-        this._envPathsExplicitlySet = true;
-        this.refreshCache();
-    }
-
-    /**
-     * Get currently configured .env file paths
-     */
-    static get envPaths(): string[] {
-        return this._envPaths;
-    }
-
-    /**
-     * Set a base directory that relative `.env` paths resolve against instead of
-     * `process.cwd()`: the auto-cascade, {@link configureProfiles} paths, and relative
-     * `envPaths`. Absolute paths always bypass it. Pass a directory, or a module URL
-     * (`import.meta.url`, ESM) / `import.meta.dirname` / `__dirname` (CJS) to anchor
-     * resolution next to the calling file regardless of launch directory.
-     *
-     * Set this before `envPaths` so relative `envPaths` validate against the right directory.
-     * Unset (`undefined`) restores `process.cwd()` resolution.
-     */
-    static set baseDir(value: string | URL | undefined) {
-        EnvapterBase._baseDir = value === undefined ? undefined : this.normalizeBaseDir(value);
-        this.refreshCache();
-    }
-
-    static get baseDir(): string | undefined {
-        return EnvapterBase._baseDir;
-    }
-
-    // `file:` URLs resolve to their containing directory; plain paths (`import.meta.dirname`, `__dirname`) are taken as the directory.
-    private static normalizeBaseDir(value: string | URL): string {
-        if (value instanceof URL) return dirname(fileURLToPath(value));
-        if (value.startsWith('file:')) return dirname(fileURLToPath(value));
-        return resolve(value);
-    }
-
-    // No baseDir: path is returned unchanged so Node resolves it against process.cwd() (the historical default).
+    // No baseDir: candidate returned unchanged so the source resolves it against its own default
+    // (process.cwd() on Node). Resolution goes through the source to keep this class node-free.
     protected static resolveAgainstBase(candidate: string): string {
-        if (EnvapterBase._baseDir === undefined) return candidate;
-        if (isAbsolute(candidate)) return candidate;
-        return join(EnvapterBase._baseDir, candidate);
+        const baseDir = EnvapterBase._baseDir;
+        if (baseDir === undefined) return candidate;
+        const source = EnvapterBase._source;
+        /* v8 ignore next -- @preserve callers are all file-gated, so the source is never bare here */
+        if (!source.supportsFiles) return candidate;
+        return source.resolvePath(baseDir, candidate);
     }
 
-    static set envFileOptions(config: EnvFileOptions) {
-        Validator.validateEnvFileOptions(config);
-        this._userDefinedEnvFileOptions = config;
-        this.refreshCache();
+    // File-based config (envPaths/baseDir/configureProfiles) is meaningless without a filesystem;
+    // throw instead of silently ignoring it on the browser or Workers. Narrows the source so callers
+    // can reach the file capabilities (resolvePath/normalizeBaseDir) after the check.
+    protected static assertFileApiSupported(api: string, source: EnvSource): asserts source is FileEnvSource {
+        if (!source.supportsFiles) {
+            throw new EnvaptError(
+                EnvaptErrorCodes.FileApiUnsupported,
+                `${api} requires a filesystem-backed source; the bound source does not support .env files.`
+            );
+        }
     }
 
-    /**
-     * Get current dotenv configuration options
-     */
-    static get envFileOptions(): EnvFileOptions {
-        return this._userDefinedEnvFileOptions;
+    // Existence via the bound source instead of fs.existsSync/accessSync: a file "exists" when the
+    // source can read it.
+    protected static sourceFileExists(path: string): boolean {
+        const source = EnvapterBase._source;
+        /* v8 ignore next -- @preserve every caller is file-gated, so this never sees a bare source */
+        if (!source.supportsFiles) return false;
+        return source.readFile(path, 'utf8') !== undefined;
     }
 
     protected static refreshCache(): void {
@@ -167,23 +124,23 @@ export abstract class EnvapterBase {
 
     protected static mirrorToProcessEnv(): void {
         if (EnvapterBase._dotenvAddedKeys.size === 0) return;
+        const source = EnvapterBase._source;
+        /* v8 ignore next -- @preserve dotenv keys only accumulate under a file source, so the delta implies supportsFiles here */
+        if (!source.supportsFiles) return;
+        const mirrored: Record<string, string> = {};
         for (const key of EnvapterBase._dotenvAddedKeys) {
             const value = EnvaptCache.get(key);
             /* v8 ignore next -- @preserve loader only writes strings; defensive against future cache contents */
             if (typeof value !== 'string') continue;
-            process.env[key] = value;
-            debugVerbose(`mirrored ${key} to process.env`);
+            mirrored[key] = value;
+            debugVerbose(`mirrored ${key} to the ambient environment`);
         }
-        debugVerbose(`mirrored ${EnvapterBase._dotenvAddedKeys.size} keys to process.env`);
+        source.writeVars(mirrored);
+        debugVerbose(`mirrored ${EnvapterBase._dotenvAddedKeys.size} keys to the ambient environment`);
     }
 
-    /**
-     * Resolve the effective `.env` paths to load. Default implementation just returns the
-     * explicit `_envPaths` array; subclasses (`EnvironmentMethods`) override to layer in the
-     * dotenv-flow cascade and any {@link configureProfiles} overrides when `envPaths` was
-     * never explicitly set.
-     * @internal
-     */
+    // Default returns the explicit `_envPaths`; EnvironmentMethods overrides to layer the dotenv-flow
+    // cascade + configureProfiles when envPaths was never explicitly set.
     protected static resolveEffectivePaths(): string[] {
         /* v8 ignore next -- @preserve */
         return this._envPaths.map((p) => this.resolveAgainstBase(p));
@@ -217,21 +174,28 @@ export abstract class EnvapterBase {
 
     protected static get config(): Map<string, unknown> {
         if (EnvaptCache.size === 0) {
-            // Clone so the loader and downstream reads never mutate process.env.
-            const isolatedEnv: Record<string, string> = { ...(process.env as Record<string, string>) };
-
-            // Outside the try below so a missing configured profile path surfaces its EnvaptError; only dotenv parse errors stay caught.
-            const effectivePaths = this.resolveEffectivePaths();
-            debugVerbose(`effective .env paths: ${effectivePaths.length === 0 ? '(none)' : effectivePaths.join(', ')}`);
+            const source = EnvapterBase._source;
+            // Clone so the loader and downstream reads never mutate the source's backing object.
+            const isolatedEnv: Record<string, string> = { ...source.readVars() };
 
             let added = new Set<string>();
-            try {
-                added = loadDotenv({
-                    ...this._userDefinedEnvFileOptions,
-                    path: effectivePaths,
-                    processEnv: isolatedEnv
-                });
-            } catch {}
+            // Sources without a filesystem (injected objects on the browser or Workers) skip the
+            // .env cascade, profiles, and envPaths; only the readVars() snapshot populates the cache.
+            if (source.supportsFiles) {
+                // Outside the try below so a missing configured profile path surfaces its EnvaptError; only dotenv parse errors stay caught.
+                const effectivePaths = this.resolveEffectivePaths();
+                debugVerbose(
+                    `effective .env paths: ${effectivePaths.length === 0 ? '(none)' : effectivePaths.join(', ')}`
+                );
+                try {
+                    added = loadDotenv({
+                        ...this._userDefinedEnvFileOptions,
+                        path: effectivePaths,
+                        processEnv: isolatedEnv,
+                        readFile: source.readFile.bind(source)
+                    });
+                } catch {}
+            }
             EnvapterBase._dotenvAddedKeys = added;
             for (const [key, value] of Object.entries(isolatedEnv)) EnvaptCache.set(key, value);
             debugVerbose(`cache populated: ${EnvaptCache.size} keys total`);
@@ -248,6 +212,18 @@ export abstract class EnvapterBase {
      */
     static load(): void {
         void this.config;
+    }
+
+    /**
+     * Bind the environment {@link EnvSource}. On Node the entry binds {@link NodeEnvSource} for you
+     * (a `process.env` snapshot plus the `.env` cascade); on the browser or Workers, pass a
+     * `ManualEnvSource` / `WorkerEnvSource` (or any `EnvSource`) before reading. Clears and rebuilds
+     * the cache.
+     */
+    static useSource(source: EnvSource): void {
+        EnvapterBase._source = source;
+        bindRuntimeFromSource(source);
+        this.refreshCache();
     }
 
     /**

@@ -11,7 +11,7 @@ export enum EnvaptErrorCodes {
     ArrayFallbackElementTypeMismatch = 103,
     /** Thrown when fallback type doesn't match the specified converter */
     FallbackConverterTypeMismatch = 104,
-    /** Thrown when a time-string fallback is malformed (does not match the required `<integer><unit>` format) */
+    /** Thrown when a time-string fallback is malformed (does not match the required `<number><unit>` format) */
     MalformedTimeFallback = 105,
 
     // Converter related errors
@@ -45,7 +45,11 @@ export enum EnvaptErrorCodes {
     /** Thrown when no valid environment key is provided */
     InvalidKeyInput = 304,
     /** Thrown when a required environment value is missing or empty (post-trim) */
-    MissingEnvValue = 305
+    MissingEnvValue = 305,
+    /** Thrown when a file-based API (envPaths, baseDir, configureProfiles) is used on a source without filesystem support */
+    FileApiUnsupported = 306,
+    /** Thrown when an environment value is read before a source is bound via Envapter.useSource */
+    NoSourceBound = 307
 }
 
 interface EnvaptErrorOptions {

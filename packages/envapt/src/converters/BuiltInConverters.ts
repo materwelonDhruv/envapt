@@ -32,14 +32,14 @@ const TIME_UNIT_MS: Record<TimeUnit, number> = {
 };
 
 const TIME_LOOSE_RE = new RegExp(String.raw`^(\d+(?:\.\d+)?)(ms|s|m|h|d|w)?$`, 'u');
-const TIME_STRICT_RE = new RegExp(String.raw`^(\d+)(ms|s|m|h|d|w)$`, 'u');
+const TIME_STRICT_RE = new RegExp(String.raw`^(\d+(?:\.\d+)?)(ms|s|m|h|d|w)$`, 'u');
 
 /**
  * Parse a time string (e.g. `"30s"`, `"1.5h"`) into milliseconds.
  *
  * @param input - The string to parse.
- * @param strict - When `true`, require an explicit unit and disallow decimals (used for fallback strings).
- *                 When `false` (default), allow decimals and treat missing unit as `ms` (used for raw env values).
+ * @param strict - When `true`, require an explicit unit (used for fallback strings).
+ *                 When `false` (default), treat a missing unit as `ms` (used for raw env values). Both allow decimals.
  * @returns The duration in milliseconds, or `undefined` if the input does not match the expected format.
  * @internal
  */
@@ -61,6 +61,7 @@ function parseTimeString(input: string, strict = false): number | undefined {
  * Built-in converter implementations
  * @internal
  */
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class -- dispatch-table helper, the documented exception to the no-static-class rule
 export class BuiltInConverters {
     static string(raw: string, _fallback?: string): string | undefined {
         return String(raw);
@@ -159,12 +160,12 @@ export class BuiltInConverters {
         // Raw didn't parse so apply fallback
         if (typeof fallback === 'number') return fallback;
         if (typeof fallback === 'string') {
-            // String fallback is held to the stricter format: explicit unit, integer value.
+            // A string fallback must name a unit; a unitless number is expressed as a number fallback, not a string.
             const parsedFallback = parseTimeString(fallback, true);
             if (parsedFallback === undefined) {
                 throw new EnvaptError(
                     EnvaptErrorCodes.MalformedTimeFallback,
-                    `Time-string fallback "${fallback}" is not a valid format. Expected <integer><unit> where unit is one of: ms, s, m, h, d, w.`
+                    `Time-string fallback "${fallback}" is not a valid format. Expected <number><unit> where unit is one of: ms, s, m, h, d, w.`
                 );
             }
             return parsedFallback;

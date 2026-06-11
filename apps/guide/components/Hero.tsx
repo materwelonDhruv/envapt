@@ -59,6 +59,8 @@ export function Hero(): ReactNode {
                         <span className="rounded-full border border-fd-border px-2.5 py-1.5 leading-none">
                             Deno <span className="text-(--ev-teal)">2.5+</span>
                         </span>
+                        <span className="rounded-full border border-fd-border px-2.5 py-1.5 leading-none">Workers</span>
+                        <span className="rounded-full border border-fd-border px-2.5 py-1.5 leading-none">Browser</span>
                         <span className="rounded-full border border-fd-border px-2.5 py-1.5 leading-none">
                             ESM + CJS
                         </span>

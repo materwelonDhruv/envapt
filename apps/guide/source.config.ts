@@ -1,6 +1,7 @@
 import { rehypeCodeDefaultOptions, remarkNpm } from 'fumadocs-core/mdx-plugins';
 import { pageSchema } from 'fumadocs-core/source/schema';
 import { defineConfig, defineDocs } from 'fumadocs-mdx/config';
+import lastModified from 'fumadocs-mdx/plugins/last-modified';
 import { transformerTwoslash } from 'fumadocs-twoslash';
 import { z } from 'zod';
 
@@ -40,6 +41,7 @@ const PACKAGE_MANAGERS = [
 ];
 
 export default defineConfig({
+    plugins: [lastModified()],
     mdxOptions: {
         remarkPlugins: [[remarkNpm, { persist: { id: 'package-manager' }, packageManagers: PACKAGE_MANAGERS }]],
         rehypeCodeOptions: {
@@ -49,9 +51,7 @@ export default defineConfig({
                 ...(twoslashEnabled
                     ? [
                           transformerTwoslash({
-                              // `@Envapt` is a legacy decorator; type-check samples with the same
-                              // setting as envapt's own tsconfig, or twoslash rejects them (TS 1206).
-                              twoslashOptions: { compilerOptions: { experimentalDecorators: true } },
+                              twoslashOptions: { compilerOptions: { experimentalDecorators: true, types: ['node'] } },
                               // Persist computed types to `.next/cache/twoslash` so only the first
                               // build pays the cold-compile cost (heavy with zod in the graph). The
                               // cache key is salted with envapt's dist hash so it self-busts on rebuild.

@@ -47,8 +47,30 @@ user.displayName = payload.name;
 - Keep comments short and local.
 - Prefer `//` inline comments over JSDoc for implementation details.
 - Use JSDoc (`/** */`) only on public API surfaces where callers need context; keep them minimal.
+- **Public-facing TSDoc (`/** \*/`on exported API) uses proper capitalization and complete sentences.** Inline`//` implementation comments stay lowercase fragments. Both still follow the writing-voice punctuation ban (no em-dash, semicolon, or colon).
 - Put the comment immediately above the line or block whose intent is non-obvious.
 - Explain why the rule exists or what breaks if it changes.
+
+## Connect Clauses The Way You'd Say Them
+
+Once a comment earns its place, it should read like you explaining the code to someone next to you, not a telegram. Join cause and effect with the ordinary words you would use out loud, so, and, because, but, then, instead of clipping every thought into its own stiff fragment or stacking formal clauses. The punctuation ban from the `writing-voice` skill (no `;` `:` `—`) already pushes you here, and a connector word is almost always the replacement that reads best.
+
+Read the comment out loud. If it sounds like something you would say to a colleague at the keyboard, keep it. If it sounds like a spec sheet, you are probably missing the connector that ties the facts together.
+
+Stiff, clipped into fragments with no connective tissue:
+
+```ts
+// decode once. cache it. a subclass field is too late.
+const cached = decodeCache.get(this);
+```
+
+Natural, the same facts joined the way you would explain them:
+
+```ts
+// decode once and cache it here, because a subclass field would initialize too late to hold
+// the value (populate runs inside super()).
+const cached = decodeCache.get(this);
+```
 
 ## Good Patterns
 
@@ -155,9 +177,7 @@ If a comment explains a TYPE definition that's two lines above, the comment is r
 // `EnvaptOptions` is a discriminated union over `required` so the compile-time check
 // rejects `required: true` paired with `fallback`. The runtime Validator catches the
 // dynamic case that bypasses the types.
-type EnvaptOptions =
-    | { required: false; fallback?: T }
-    | { required: true; fallback?: Err<'...'> };
+type EnvaptOptions = { required: false; fallback?: T } | { required: true; fallback?: Err<'...'> };
 
 // Good: the brand-name and Err<> explanation belong on the brand type itself, once.
 // Consumers don't need a paragraph re-explaining the union.

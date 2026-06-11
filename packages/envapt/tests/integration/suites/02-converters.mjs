@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 
 import { FIXTURE_PATH } from './_helpers.mjs';
-import { Converters, Envapter } from '../../../dist/index.mjs';
+import { Converters, Envapter } from '../../../dist/node/index.mjs';
 
 export default async function converters() {
     Envapter.envPaths = FIXTURE_PATH;

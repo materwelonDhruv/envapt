@@ -4,26 +4,26 @@ on:
     pull_request:
     push:
 
+permissions:
+    contents: read
+
 env:
     CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
 jobs:
     coverage:
         runs-on: ubuntu-latest
+        timeout-minutes: 25
         steps:
             - uses: actions/checkout@v6
               with:
                   fetch-depth: 0
-            - uses: pnpm/action-setup@v6
-            - uses: actions/setup-node@v6
-              with:
-                  node-version: 24.16.0
-                  cache: pnpm
-            - run: pnpm install --frozen-lockfile
+            - name: Setup workspace
+              uses: ./.github/actions/setup
             - run: pnpm build
             - run: pnpm tc
             - run: pnpm coverage
-            - uses: codecov/codecov-action@v6
+            - uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v6
               with:
                   files: coverage/lcov.info
                   fail_ci_if_error: true
