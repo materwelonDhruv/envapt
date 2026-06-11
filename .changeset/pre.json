@@ -6,6 +6,7 @@
     "envapt": "5.1.1"
   },
   "changesets": [
+    "cozy-bats-trade",
     "environment-detection-test-mode",
     "pluggable-env-sources",
     "time-fallback-decimal",
