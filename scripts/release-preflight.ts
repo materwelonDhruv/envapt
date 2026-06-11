@@ -59,6 +59,8 @@ const isVersionOnJsr = (name: string, version: string): boolean => {
         const parsed = JSON.parse(meta) as { versions?: Record<string, unknown> };
         return parsed.versions !== undefined && version in parsed.versions;
     } catch {
+        // deno publish skips a version already on jsr, so a duplicate attempt is a safe no-op. returning
+        // false here to attempt the publish so we don't accidentally drop a release.
         return false;
     }
 };
@@ -109,8 +111,9 @@ const run = pendingChangesets || needsPublish;
 console.log(`pendingChangesets=${pendingChangesets} needsPublish=${needsPublish} (${name}@${version}) run=${run}`);
 setOutput('run', String(run));
 
-// jsr has no version-PR phase, so gate on consumed changesets, otherwise `deno publish` republishes a live version and fails
+// publish whenever the version is not yet on jsr. changeset pre mode keeps the .md files after a
+// prerelease is versioned, so a pending-changesets check would never let jsr publish.
 const { name: jsrName, version: jsrVersion } = readDenoConfig();
-const publishJsr = !pendingChangesets && !isVersionOnJsr(jsrName, jsrVersion);
+const publishJsr = !isVersionOnJsr(jsrName, jsrVersion);
 console.log(`jsr ${jsrName}@${jsrVersion} publish_jsr=${publishJsr}`);
 setOutput('publish_jsr', String(publishJsr));

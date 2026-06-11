@@ -58,6 +58,7 @@ jobs:
               uses: ./.github/actions/setup
             - name: Publish package (dry run)
               run: pnpm publish --dry-run --no-git-checks
+              working-directory: packages/envapt
 
     dry-run-jsr:
         needs: [preflight]
