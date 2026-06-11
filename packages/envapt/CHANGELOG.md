@@ -1,5 +1,11 @@
 # envapt
 
+## 5.2.0-next.2
+
+### Patch Changes
+
+- bad5f6b: update package.json desc and engines/os
+
 ## 5.2.0-next.1
 
 ### Patch Changes
