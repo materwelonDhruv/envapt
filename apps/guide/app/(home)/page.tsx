@@ -1,3 +1,4 @@
+import { AnyRuntime } from '@/components/AnyRuntime';
 import { ClosingCta } from '@/components/ClosingCta';
 import { ConverterShowcase } from '@/components/ConverterShowcase';
 import { EnvLoading } from '@/components/EnvLoading';
@@ -30,6 +31,7 @@ export default function HomePage(): ReactNode {
             <TwoWays />
             <ConverterShowcase />
             <EnvLoading />
+            <AnyRuntime />
             <ClosingCta />
         </main>
     );
