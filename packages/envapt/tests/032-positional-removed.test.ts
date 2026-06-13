@@ -5,8 +5,7 @@ import { Envapt, EnvaptError } from '../src';
 // The positional `@Envapt(key, fallback, converter)` form was removed in v6. The type overloads
 // reject it, so this guards the runtime path a caller still reaches through a cast or plain JS.
 describe('removed positional @Envapt form', () => {
-    // Fixture cast: the positional signature no longer exists on the public type, so it is
-    // recreated here to drive the runtime guard a JS caller would hit.
+    // recreate the removed positional signature so the cast can call the runtime guard directly
     const positional = Envapt as unknown as (key: string, fallback: unknown, converter?: unknown) => PropertyDecorator;
 
     it('throws when a non-options second argument is passed', () => {
