@@ -139,11 +139,11 @@
     },
     "devDependencies": {
         "@cloudflare/vitest-pool-workers": "0.16.14",
-        "@cloudflare/workers-types": "^4.20260609.1",
+        "@cloudflare/workers-types": "^4.20260612.1",
         "@vitest/browser": "4.1.7",
         "@vitest/browser-playwright": "4.1.7",
         "arktype": "^2.2.0",
-        "esbuild": "^0.28.0",
+        "esbuild": "^0.28.1",
         "playwright": "1.60.0",
         "valibot": "^1.4.1",
         "zod": "catalog:dev"
