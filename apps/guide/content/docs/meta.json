@@ -19,6 +19,7 @@
         "env-file-syntax",
         "---Reference---",
         "compatibility",
-        "migration"
+        "migration",
+        "migration-v5-to-v6"
     ]
 }

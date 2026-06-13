@@ -1,0 +1,28 @@
+---
+title: Migration (v5 to v6)
+description: Moving from envapt v5 to v6, the removed positional decorator form and the test-environment behavior to watch.
+---
+
+v6 is a major release. This page lists what changed from v5 and how to update. The code change is one removed decorator form. Read [Behavior changes to watch](#behavior-changes-to-watch) for a runtime shift that compiles cleanly but runs differently.
+
+## Decorators
+
+The positional `@Envapt('KEY', fallback, converter)` form, deprecated in v5, is removed. Use the options object. The no-argument `@Envapt('KEY')` form is unchanged.
+
+```ts
+// v5 (removed in v6)
+@Envapt('PORT', 8080, Number)
+
+// v6
+@Envapt('PORT', { converter: Converters.Number, fallback: 8080 })
+```
+
+A second argument that is not an options object now throws `EnvaptError` with `InvalidUserDefinedConfig` at decoration time, so a stray positional call surfaces immediately instead of being misread. The internal `InferPrimitiveFallbackType` type is removed with the overload.
+
+## Behavior changes to watch
+
+<Callout type="danger">
+    This change compiles without edits but runs differently than v5.1. Check it before upgrading.
+</Callout>
+
+- **`NODE_ENV=test` resolves to `Environment.Test`.** `Envapter.isTest` returns true under a test runner, and `isDevelopment` returns false where it returned true on v5.1 and earlier. Vite's `MODE=test` maps the same way. This first shipped by mistake in the 5.2.0 minor, which is deprecated on npm. If you branch on `isDevelopment` inside tests, switch to `isTest` or set the environment explicitly. See [Environment](/docs/environment).
