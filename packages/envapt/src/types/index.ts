@@ -12,8 +12,7 @@ export type {
     InferConverterReturnType,
     InferConverterFallbackType,
     AdvancedConverterReturn,
-    InferPrimitiveReturnType,
-    InferPrimitiveFallbackType
+    InferPrimitiveReturnType
 } from './Conversion';
 export type { Err, SchemaMustBeSync, SchemaConstraint } from './Schema';
 export type { EnvaptOptions, EnvProfile, ProfilesConfig } from './Options';

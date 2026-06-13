@@ -9,9 +9,7 @@ import type {
     ConverterFunction,
     EnvKeyInput,
     EnvaptConverter,
-    EnvaptOptions,
     InferConverterFallbackType,
-    InferPrimitiveFallbackType,
     InferPrimitiveReturnType,
     PrimitiveConstructor,
     SchemaConstraint
@@ -182,7 +180,7 @@ export function Envapt<TConstructor extends PrimitiveConstructor>(
 export function Envapt(key: EnvKeyInput, options: { required: true }): PropertyDecorator;
 
 /**
- * Classic API: No fallback
+ * No-fallback form. The property resolves from env or `null`.
  *
  * @param key - Environment variable name(s) to load
  * @public
@@ -197,36 +195,6 @@ export function Envapt(key: EnvKeyInput, options: { required: true }): PropertyD
  */
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export function Envapt<_TReturnType = string | null>(key: EnvKeyInput): PropertyDecorator;
-
-/**
- * Classic API: Primitive fallback only
- *
- * @param key - Environment variable name(s) to load
- * @param fallback - Default primitive value
- * @param converter - Optional primitive constructor (String, Number, etc.)
- * @public
- * @deprecated - Use the options object: `@Envapt('KEY', { converter, fallback })`. The positional
- * form only accepts primitive constructors and cannot express built-in tokens, array/custom
- * converters, `schema`, or `required`. Deprecated in v5, removed in v6.
- * @example
- * ```ts
- * // Classic API with primitive fallback and optional primitive converter
- * class Config extends Envapter {
- *   // Provide fallback only
- *   \@Envapt('HOST', 'localhost')
- *   static readonly host: string;
- *
- *   // Provide fallback and converter
- *   \@Envapt('PORT', 8080, Number)
- *   static readonly port: number;
- * }
- * ```
- */
-export function Envapt<TFallback extends string | number | boolean | bigint | symbol | undefined>(
-    key: EnvKeyInput,
-    fallback: InferPrimitiveFallbackType<TFallback>,
-    converter?: PrimitiveConstructor
-): PropertyDecorator;
 
 /**
  * Usage 6: Standard Schema v1 adapter (zod, valibot, arktype, hand-rolled). Synchronous
@@ -246,36 +214,35 @@ export function Envapt<Schema extends StandardSchemaV1>(
 /**
  * Instance/Static Property decorator that automatically loads and converts environment variables.
  */
-export function Envapt<TFallback = unknown>(
-    key: EnvKeyInput,
-    fallbackOrOptions?: TFallback | EnvaptOptions<TFallback>,
-    converter?: EnvaptConverter<TFallback>
-): PropertyDecorator {
-    // Determine if using new options API or classic API
+export function Envapt<TFallback = unknown>(key: EnvKeyInput, options?: unknown): PropertyDecorator {
     let fallback: TFallback | undefined;
     let actualConverter: EnvaptConverter<TFallback> | undefined;
     let actualSchema: StandardSchemaV1 | undefined;
-    let hasFallback = true;
+    let hasFallback = false;
     let required = false;
 
-    if (
-        fallbackOrOptions &&
-        typeof fallbackOrOptions === 'object' &&
-        ('fallback' in fallbackOrOptions ||
-            'converter' in fallbackOrOptions ||
-            'required' in fallbackOrOptions ||
-            'schema' in fallbackOrOptions)
-    ) {
-        const options = fallbackOrOptions as {
+    if (options !== undefined) {
+        if (
+            typeof options !== 'object' ||
+            options === null ||
+            !('fallback' in options || 'converter' in options || 'required' in options || 'schema' in options)
+        ) {
+            throw new EnvaptError(
+                EnvaptErrorCodes.InvalidUserDefinedConfig,
+                'The positional `@Envapt(key, fallback, converter)` form was removed in v6. Pass an options object instead, like `@Envapt(key, { converter, fallback })`.'
+            );
+        }
+
+        const opts = options as {
             fallback?: TFallback;
             converter?: EnvaptConverter<TFallback>;
             required?: boolean;
             schema?: unknown;
         };
-        fallback = options.fallback;
-        actualConverter = options.converter;
-        hasFallback = 'fallback' in options;
-        required = options.required === true;
+        fallback = opts.fallback;
+        actualConverter = opts.converter;
+        hasFallback = 'fallback' in opts;
+        required = opts.required === true;
 
         if (required && hasFallback && fallback !== undefined) {
             throw new EnvaptError(
@@ -284,8 +251,8 @@ export function Envapt<TFallback = unknown>(
             );
         }
 
-        if ('schema' in options && options.schema !== undefined) {
-            if (!Validator.isStandardSchema(options.schema)) {
+        if ('schema' in opts && opts.schema !== undefined) {
+            if (!Validator.isStandardSchema(opts.schema)) {
                 throw new EnvaptError(
                     EnvaptErrorCodes.InvalidUserDefinedConfig,
                     '`schema` must be a Standard Schema v1 object (zod, valibot, arktype, or any `~standard`-conformant value).'
@@ -297,13 +264,8 @@ export function Envapt<TFallback = unknown>(
                     '`schema` and `converter` are mutually exclusive on @Envapt options. Drop one as they both turn a raw env string into a typed value.'
                 );
             }
-            actualSchema = options.schema;
+            actualSchema = opts.schema;
         }
-    } else {
-        // Classic API
-        fallback = fallbackOrOptions as TFallback;
-        actualConverter = converter;
-        hasFallback = arguments.length > 1;
     }
 
     return createPropertyDecorator(key, {

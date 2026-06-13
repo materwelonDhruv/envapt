@@ -166,23 +166,6 @@ type InferPrimitiveReturnType<TConstructor extends PrimitiveConstructor> = TCons
             ? symbol
             : never;
 
-/**
- * Type inference for primitive fallback values
- * @internal
- */
-type InferPrimitiveFallbackType<TFallback extends string | number | boolean | bigint | symbol | undefined> =
-    TFallback extends string
-        ? string
-        : TFallback extends number
-          ? number
-          : TFallback extends boolean
-            ? boolean
-            : TFallback extends bigint
-              ? bigint
-              : TFallback extends symbol
-                ? symbol
-                : undefined;
-
 export type {
     BuiltInConverter,
     PrimitiveConstructor,
@@ -197,6 +180,5 @@ export type {
     InferConverterReturnType,
     InferConverterFallbackType,
     AdvancedConverterReturn,
-    InferPrimitiveReturnType,
-    InferPrimitiveFallbackType
+    InferPrimitiveReturnType
 };

@@ -7,10 +7,10 @@ import { Envapt, Envapter } from '../src';
 describe('Missing .env file handling', () => {
     describe('when no .env file exists at default location', () => {
         class TestEnvWithoutFile {
-            @Envapt('NONEXISTENT_VAR', 'fallback-value')
+            @Envapt('NONEXISTENT_VAR', { fallback: 'fallback-value' })
             public static readonly nonexistentVar: string;
 
-            @Envapt('ANOTHER_NONEXISTENT_VAR', 42)
+            @Envapt('ANOTHER_NONEXISTENT_VAR', { fallback: 42 })
             public static readonly anotherNonexistentVar: number;
 
             @Envapt('PROCESS_ENV_VAR')

@@ -92,4 +92,13 @@ describe('TS error message verification (compiler API)', () => {
             }
         );
     });
+
+    describe('removed positional @Envapt form produces a no-overload compile error', () => {
+        it('produces a TS2769 diagnostic for a primitive second argument', { timeout: FIXTURE_TIMEOUT_MS }, () => {
+            const diagnostics = compileFixture('positional-removed.ts');
+            const has2769 = diagnostics.some((d) => d.code === 2769);
+            expect(has2769, joinedMessages(diagnostics)).to.be.true;
+            expect(joinedMessages(diagnostics)).to.include('No overload matches this call');
+        });
+    });
 });

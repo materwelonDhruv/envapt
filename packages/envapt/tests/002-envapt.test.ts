@@ -9,7 +9,7 @@ describe('Envapt', () => {
 
     describe('automatic type detection', () => {
         class TestTypeDetection {
-            @Envapt('NONEXISTENT_TEST_VAR', undefined)
+            @Envapt('NONEXISTENT_TEST_VAR', { fallback: undefined })
             public static readonly testUndefinedVar: string | undefined;
 
             @Envapt('NONEXISTENT_VAR_WITHOUT_FALLBACK', { converter: String })
@@ -27,10 +27,10 @@ describe('Envapt', () => {
             @Envapt('URI', { fallback: 'db://localhost:27017/' })
             public static readonly uri: string;
 
-            @Envapt('BIGINT_VAR', 23478n)
+            @Envapt('BIGINT_VAR', { fallback: 23478n })
             public static readonly bigintVar: bigint;
 
-            @Envapt('SYMBOL_VAR', Symbol('test'))
+            @Envapt('SYMBOL_VAR', { fallback: Symbol('test') })
             public static readonly symbolVar: symbol;
         }
 
