@@ -9,7 +9,8 @@ const DOCS = [
     { label: 'Envapter', href: '/docs/envapter' },
     { label: 'Decorators', href: '/docs/decorators' },
     { label: 'Converters', href: '/docs/converters' },
-    { label: 'Migration', href: '/docs/migration' }
+    { label: 'Migration v4 to v5', href: '/docs/migration-v4-to-v5' },
+    { label: 'Migration v5 to v6', href: '/docs/migration-v5-to-v6' }
 ];
 
 const RESOURCES = [

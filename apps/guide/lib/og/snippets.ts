@@ -119,7 +119,7 @@ HOST=localhost # inline comment, stripped
 COLOR=#ff0000 # kept: no space before the #
 TLS_KEY="line one\\nline two"`
     },
-    migration: {
+    'migration-v4-to-v5': {
         filename: 'config.ts',
         lang: 'ts',
         code: `// Migration - array converters now use array()
@@ -129,6 +129,15 @@ TLS_KEY="line one\\nline two"`
 // v5
 @Envapt('PORTS', { converter:
   Converters.array({ of: Converters.Number }) })`
+    },
+    'migration-v5-to-v6': {
+        filename: 'config.ts',
+        lang: 'ts',
+        code: `// Migration - positional form removed in v6
+// v5
+@Envapt('PORT', 8080, Number)
+// v6
+@EnvNum('PORT', 8080)`
     },
     compatibility: {
         filename: 'tsconfig.json',
