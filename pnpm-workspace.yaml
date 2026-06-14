@@ -38,6 +38,7 @@ overrides:
   fast-uri: '>=3.1.2'
   flatted: '>=3.4.0'
   picomatch: '>=4.0.4'
+  esbuild: '>=0.28.1'
 
 minimumReleaseAgeExclude:
   - oxlint-plugin-react-doctor@0.5.4
