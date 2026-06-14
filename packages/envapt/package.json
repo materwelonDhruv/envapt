@@ -1,7 +1,7 @@
 {
     "name": "envapt",
     "type": "module",
-    "version": "5.2.0",
+    "version": "6.0.0",
     "description": "Type-safe environment variables for TypeScript. Zero-dependency .env loader and parser with one API across Node, Bun, Deno, Cloudflare Workers, and the Browser. Decorators, converters, Standard Schema (zod/valibot/arktype) validation, and much more.",
     "types": "./dist/node/index.d.mts",
     "exports": {
