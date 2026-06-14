@@ -7,17 +7,20 @@ v6 is a major release. This page lists what changed from v5 and how to update. T
 
 ## Decorators
 
-The positional `@Envapt('KEY', fallback, converter)` form, deprecated in v5, is removed. Use the options object. The no-argument `@Envapt('KEY')` form is unchanged.
+The positional `@Envapt('KEY', fallback, converter)` form, deprecated in v5, is removed. Use the options object, or a [sugar decorator](/docs/decorators) for the common case. The no-argument `@Envapt('KEY')` form is unchanged.
 
 ```ts
 // v5 (removed in v6)
 @Envapt('PORT', 8080, Number)
 
-// v6
+// v6 options object
 @Envapt('PORT', { converter: Converters.Number, fallback: 8080 })
+
+// v6 sugar decorator, shorter than the old positional form
+@EnvNum('PORT', 8080)
 ```
 
-A second argument that is not an options object now throws `EnvaptError` with `InvalidUserDefinedConfig` at decoration time, so a stray positional call surfaces immediately instead of being misread. The internal `InferPrimitiveFallbackType` type is removed with the overload.
+The sugar decorators `@EnvNum`, `@EnvStr`, `@EnvBool`, `@EnvUrl`, and `@EnvTime` each wrap a built-in converter, so the terse common case stays shorter than the positional form ever was. A second argument that is not an options object now throws `EnvaptError` with `InvalidUserDefinedConfig` at decoration time, so a stray positional call surfaces immediately instead of being misread. The internal `InferPrimitiveFallbackType` type is removed with the overload.
 
 ## Behavior changes to watch
 
