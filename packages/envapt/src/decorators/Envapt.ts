@@ -229,7 +229,7 @@ export function Envapt<TFallback = unknown>(key: EnvKeyInput, options?: unknown)
         ) {
             throw new EnvaptError(
                 EnvaptErrorCodes.InvalidUserDefinedConfig,
-                'The positional `@Envapt(key, fallback, converter)` form was removed in v6. Pass an options object instead, like `@Envapt(key, { converter, fallback })`.'
+                'The positional `@Envapt(key, fallback, converter)` form was removed in v6. Pass an options object instead, like `@Envapt(key, { converter, fallback })`, or use one of the sugar decorators.'
             );
         }
 
