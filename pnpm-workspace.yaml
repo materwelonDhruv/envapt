@@ -1,40 +1,44 @@
 packages:
-    - packages/*
-    - apps/*
+  - packages/*
+  - apps/*
 
 # Embed the README in the published manifest so it shows on npmjs.com (pnpm 11 reads this only from here, not .npmrc).
 embedReadme: true
 
 allowBuilds:
-    esbuild: true
-    msgpackr-extract: true
-    sharp: false
-    unrs-resolver: true
-    workerd: true
+  esbuild: true
+  msgpackr-extract: true
+  sharp: false
+  unrs-resolver: true
+  workerd: true
 
 catalogs:
-    dev:
-        '@seedcord/eslint-config': 1.4.0
-        '@types/node': 25.9.1
-        prettier: 3.8.3
-        eslint: 9.39.2
-        typescript: 6.0.3
-        zod: 4.4.3
+  dev:
+    '@seedcord/eslint-config': 1.4.0
+    '@types/node': 25.9.3
+    prettier: 3.8.4
+    eslint: 9.39.2
+    typescript: 6.0.3
+    zod: 4.4.3
 
 # Security overrides: force-patch transitive deps with known high-severity CVEs.
 # Revisit when `@seedcord/eslint-config` publishes a newer version that pulls these
 # transitively, then drop the overrides that are no longer needed.
 overrides:
-    # `eslint-plugin-import` and `@eslint/eslintrc` use minimatch v3 default-import style;
-    # pin to latest patched 3.x (3.1.5+ covers CVE) so the plugins keep working.
-    eslint-plugin-import>minimatch: '^3.1.5'
-    '@eslint/eslintrc>minimatch': '^3.1.5'
-    # Modern consumers use minimatch v9; pin to the patched 9.0.7+.
-    '@typescript-eslint/eslint-plugin>minimatch': '^9.0.7'
-    '@typescript-eslint/utils>minimatch': '^9.0.7'
-    # Other CVE patches (no compat caveats):
-    vite: '^8.0.14'
-    rollup: '>=4.59.0'
-    fast-uri: '>=3.1.2'
-    flatted: '>=3.4.0'
-    picomatch: '>=4.0.4'
+  # `eslint-plugin-import` and `@eslint/eslintrc` use minimatch v3 default-import style;
+  # pin to latest patched 3.x (3.1.5+ covers CVE) so the plugins keep working.
+  eslint-plugin-import>minimatch: '^3.1.5'
+  '@eslint/eslintrc>minimatch': '^3.1.5'
+  # Modern consumers use minimatch v9; pin to the patched 9.0.7+.
+  '@typescript-eslint/eslint-plugin>minimatch': '^9.0.7'
+  '@typescript-eslint/utils>minimatch': '^9.0.7'
+  # Other CVE patches (no compat caveats):
+  vite: '^8.0.14'
+  rollup: '>=4.59.0'
+  fast-uri: '>=3.1.2'
+  flatted: '>=3.4.0'
+  picomatch: '>=4.0.4'
+
+minimumReleaseAgeExclude:
+  - oxlint-plugin-react-doctor@0.5.4
+  - react-doctor@0.5.4
