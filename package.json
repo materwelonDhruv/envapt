@@ -54,7 +54,7 @@
         "lint-staged": "^17.0.7",
         "markdownlint-cli2": "^0.22.1",
         "prettier": "catalog:dev",
-        "react-doctor": "^0.5.1",
+        "react-doctor": "^0.5.4",
         "tsdown": "^0.22.2",
         "tsx": "^4.22.4",
         "turbo": "^2.9.18",
