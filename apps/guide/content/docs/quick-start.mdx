@@ -57,9 +57,9 @@ Decorators need `experimentalDecorators` enabled, and the property declared with
     [Decorators](/docs/decorators#declare-the-property-never-initialize-it).
 </Callout>
 
-## Drop-in for dotenv
+## Mirror loaded values to process.env
 
-For the `dotenv/config` workflow, import `envapt/config`. It loads the `.env` cascade and mirrors every loaded key into `process.env` in one step, so `process.env.PORT` works without touching `Envapter`.
+Import `envapt/config` to load the `.env` cascade and mirror every loaded key into `process.env` in one step, so `process.env.PORT` works without touching `Envapter`. This is the same pattern as the `dotenv/config` import, so code that reads `process.env` directly still sees the values.
 
 ```ts twoslash
 import 'envapt/config';
@@ -80,4 +80,4 @@ For typed reads on top, keep using [`Envapter`](/docs/envapter).
 
 ## Requirements
 
-envapt runs on Node `>=20`, Bun `>=1.3`, and Deno `>=2.5`, Cloudflare Workers, and the browser, where you bind an environment source yourself. The functional API needs no build step on any runtime; the decorator API is TypeScript and needs compilation, with one caveat on Bun. See [Compatibility](/docs/compatibility).
+envapt runs on Node `>=20`, Bun `>=1.3`, Deno `>=2.5`, Cloudflare Workers, and the browser. On Node, Bun, and Deno a source binds on import, on Workers and in the browser you bind one yourself. The functional API needs no build step on any runtime. The decorator API is TypeScript and needs compilation, with one caveat on Bun. See [Compatibility](/docs/compatibility).

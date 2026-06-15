@@ -3,8 +3,8 @@
 <h3>envapt</h3>
 
 <p>
-  <strong>The apt way to handle environment variables.</strong><br/>
-  Read them as typed values, with zero runtime dependencies.
+  <strong>The apt way to read typed config.</strong><br/>
+  Read config from any source as real typed values, with zero runtime dependencies.
 </p>
 
 <p>
@@ -17,9 +17,10 @@
 
 <br clear="left"/>
 
-`process.env` always hands you a `string | undefined`. envapt returns the type you asked for, with a
-fallback that removes `undefined` from the return type. On Node, Bun, and Deno it reads `process.env`
-and your `.env` files; on Cloudflare Workers and in the browser you bind the source with
+envapt returns config as the type you asked for instead of the `string | undefined` you get raw, with
+a fallback that removes `undefined` from the return type. It reads from whatever source you bind. On
+Node, Bun, and Deno that is `process.env` and your `.env` files, bound on import. On Cloudflare
+Workers, in the browser, or for a secrets object you fetched at boot, you bind the source with
 `Envapter.useSource(...)`.
 
 ```ts
@@ -35,14 +36,17 @@ const port = Envapter.getNumber('PORT', 3000); // number, not string | undefined
 - **Typed values.** A fallback removes `undefined` from the return type. Built-in converters cover
   numbers, booleans, bigint, JSON, URLs, regular expressions, dates, durations, and arrays, or pass
   your own function or a Standard Schema validator (zod, valibot, arktype).
-- **Zero runtime dependencies.** envapt ships its own `.env` parser, so nothing is added to your
-  dependency tree.
+- **Any source.** A source is any object with a `readVars()` method, so you can bind `process.env`, a
+  Cloudflare Workers binding, a browser bundle, or a secrets payload you fetched from a store at boot.
+  On Node, Bun, and Deno one binds on import.
+- **Zero runtime dependencies.** The reader, converters, and built-in `.env` parser are self-contained,
+  so nothing is added to your dependency tree.
 - **Runs on Node, Bun, Deno, Cloudflare Workers, and the browser.** Node `>=20`, Bun `>=1.3`, Deno
-  `>=2.5` (ESM and CJS); the Workers and browser builds resolve through the package `exports`
+  `>=2.5` (ESM and CJS). The Workers and browser builds resolve through the package `exports`
   conditions.
-- **`.env` loading on Node, Bun, and Deno.** A per-environment file cascade, `${VAR}` templates, and
-  strict / required checks. Off Node there is no filesystem, so you bind a source with
-  `Envapter.useSource(...)` and read with the same typed API.
+- **`.env` loading built in on Node.** The default Node source adds a per-environment file cascade,
+  `${VAR}` templates, and strict / required checks. Off Node there is no filesystem, so you bind
+  another source with `Envapter.useSource(...)` and read with the same typed API.
 
 ## Install
 
@@ -62,7 +66,7 @@ Both share the same parsing, converters, and cache.
 ### Functional
 
 Read a value from any call site, in JavaScript or TypeScript. No build step. On Node the source is
-bound for you; on Workers and in the browser, call `Envapter.useSource(...)` first.
+bound for you. On Workers and in the browser, call `Envapter.useSource(...)` first.
 
 ```ts
 import { Envapter, Converters } from 'envapt';

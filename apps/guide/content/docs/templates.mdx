@@ -3,7 +3,7 @@ title: Templates
 description: Reference one environment variable from inside another, and build strings from keys with the resolve tagged template.
 ---
 
-An environment value can reference another with `${VAR}`. envapt expands those references when you read the value, so you compose values in your `.env` file instead of repeating them.
+A value can reference another with `${VAR}`. envapt expands those references when you read the value, whatever source the values came from, so you compose values instead of repeating them.
 
 ```dotenv
 DB_HOST=localhost

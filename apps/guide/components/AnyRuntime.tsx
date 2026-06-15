@@ -23,9 +23,9 @@ const beta = Envapter.getBoolean('VITE_BETA', false);`;
 export function AnyRuntime(): ReactNode {
     return (
         <Section
-            eyebrow="// any runtime"
+            eyebrow="// any source"
             title="Bind a source, read it typed."
-            lead="On Node, Bun, and Deno the source binds itself on import. On Cloudflare Workers and in the browser you bind it in one line, then read with the same typed API."
+            lead="A source is any object with a readVars() method. On Node, Bun, and Deno one binds itself on import, reading process.env and your .env files. On Cloudflare Workers, in the browser, or for secrets you fetch from a store at boot, you bind it in one line and read with the same typed API."
         >
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                 <CodeCard fileName="worker.ts">
@@ -53,9 +53,21 @@ export function AnyRuntime(): ReactNode {
                         <Link href="/docs/sources" className="text-(--ev-link) hover:underline">
                             Sources
                         </Link>
+                        <span className="text-(--ev-gutter)"> · </span>
+                        <Link href="/docs/secret-stores" className="text-(--ev-link) hover:underline">
+                            Secret stores
+                        </Link>
                     </p>
                 </div>
                 <p className="mt-3 border-t border-fd-border pt-3 font-mono text-[12.5px] text-fd-muted-foreground">
+                    Fetch secrets from 1Password, Vault, Doppler, or any store at boot, then bind the resolved object as
+                    a source. envapt reads them typed, it does not fetch them.{' '}
+                    <Link href="/docs/secret-stores" className="text-(--ev-link) hover:underline">
+                        Using secret stores
+                    </Link>
+                    .
+                </p>
+                <p className="mt-3 font-mono text-[12.5px] text-fd-muted-foreground">
                     Browser values are inlined into your bundle, so seed public configuration only, never a secret.
                 </p>
             </div>

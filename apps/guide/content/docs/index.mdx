@@ -1,9 +1,9 @@
 ---
 title: Introduction
-description: Read environment variables as typed values, with zero runtime dependencies, plus zod/valibot/arktype validation, and much more.
+description: Read config as typed values from any source, with zero runtime dependencies and zod/valibot/arktype validation.
 ---
 
-envapt reads environment variables as typed values. You give it a key and a fallback; it returns a `number`, `boolean`, `URL`, `Date`, an array, or any type you define, instead of the `string | undefined` you get from `process.env`.
+envapt reads config as typed values from any source you bind, `process.env`, a Cloudflare Workers binding, a browser bundle, a secret store, or any object. You give it a key and a fallback, and it returns a `number`, `boolean`, `URL`, `Date`, an array, or any type you define, instead of the `string | undefined` you get raw.
 
 ```ts twoslash
 import { Envapter, Converters } from 'envapt';
@@ -28,9 +28,10 @@ class Config {
 ## What you get
 
 - **Typed values.** A fallback removes `undefined` from the return type. [Converters](/docs/converters) convert numbers, booleans, bigint, JSON, URLs, dates, durations, and arrays, or pass your own function or a [Standard Schema](/docs/standard-schema) validator (zod, valibot, arktype).
-- **Zero runtime dependencies.** envapt ships its own `.env` parser (used on Node, Bun, and Deno), so nothing is added to your dependency tree.
-- **The same API on Node, Bun, and Deno, Cloudflare Workers, and the browser.** Off Node you bind an environment source. See [Compatibility](/docs/compatibility) and [Sources](/docs/sources).
-- **`.env` loading built in on Node.** A per-environment file [cascade](/docs/environment), `${VAR}` [templates](/docs/templates), and [strict](/docs/strict-mode) / required checks. The cascade needs a filesystem; off Node you pass values through the source.
+- **Any source.** A [source](/docs/sources) is any object with a `readVars()` method. Bind `process.env`, a Cloudflare Workers binding, a browser bundle, or a [secret store](/docs/secret-stores) payload you fetched at boot. On Node, Bun, and Deno one binds on import.
+- **Zero runtime dependencies.** The reader, converters, and the built-in `.env` parser are self-contained, so nothing is added to your dependency tree.
+- **`.env` loading built in on Node.** The default Node source adds a per-environment file [cascade](/docs/environment), `${VAR}` [templates](/docs/templates), and [strict](/docs/strict-mode) / required checks. It needs a filesystem, so off Node you pass values through another source.
+- **The same API on Node, Bun, Deno, Cloudflare Workers, and the browser.** See [Compatibility](/docs/compatibility).
 
 ## Next
 

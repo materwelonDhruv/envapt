@@ -157,4 +157,4 @@ Static and instance reads hit the same cache.
 
 ## Environment detection
 
-`Envapter` also detects the current runtime environment and auto-loads the matching `.env` files for it. The `isProduction` / `isStaging` / `isDevelopment` / `isTest` helpers, the `Environment` enum, and per-environment file selection all live on [Environment](/docs/environment).
+`Envapter` also detects the current runtime environment and exposes it through the `isProduction` / `isStaging` / `isDevelopment` / `isTest` helpers. On Node, Bun, and Deno it auto-loads the matching `.env` files for that environment. The helpers, the `Environment` enum, and per-environment file selection all live on [Environment](/docs/environment).

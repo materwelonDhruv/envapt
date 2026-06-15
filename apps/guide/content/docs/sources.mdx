@@ -3,7 +3,7 @@ title: Sources
 description: Bind an environment source with useSource, and what the Node, Worker, and manual providers read.
 ---
 
-An environment source is the object envapt reads variables from. On Node, Bun, and Deno a source is bound for you on import, reading `process.env` and the `.env` file cascade. On Cloudflare Workers and in the browser there is none of that, so you bind a source yourself with `Envapter.useSource(...)` and read with the same typed API.
+A source is the object envapt reads variables from. On Node, Bun, and Deno one is bound automatically on import, reading `process.env` and the `.env` file cascade. On Cloudflare Workers and in the browser you bind a source yourself with `Envapter.useSource(...)`, then read with the same typed API.
 
 <Callout type="info">
     On Node, Bun, and Deno you never call `useSource`. The Node entry binds a source that reads a clone of `process.env`
@@ -50,6 +50,8 @@ const poolSize = Envapter.getNumber('DB_POOL_SIZE', 10);
 ```
 
 An optional `supportsFiles` flag marks a source as backing the file-only config APIs. Only `NodeEnvSource` sets it, which is why the `.env` cascade and `envPaths` work on Node and nowhere else.
+
+For fetching that secrets object from 1Password, Vault, Doppler, AWS Secrets Manager, and others, see [Using secret stores](/docs/secret-stores).
 
 ## When nothing is bound
 
