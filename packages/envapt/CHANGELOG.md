@@ -1,5 +1,11 @@
 # envapt
 
+## 6.0.1
+
+### Patch Changes
+
+- 40c3e4b: Reword the package description to lead with typed config from any source rather than .env loading, because that's what envapt is about and the .env cascade is just one feature of the default Node source.
+
 ## 6.0.0
 
 ### Major Changes
