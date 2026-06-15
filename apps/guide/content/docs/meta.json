@@ -14,6 +14,7 @@
         "---Configuration---",
         "configuration",
         "sources",
+        "secret-stores",
         "workers",
         "browser",
         "env-file-syntax",

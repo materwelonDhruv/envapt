@@ -28,10 +28,10 @@ export default function HomePage(): ReactNode {
     return (
         <main className="flex flex-1 flex-col">
             <Hero />
+            <AnyRuntime />
             <TwoWays />
             <ConverterShowcase />
             <EnvLoading />
-            <AnyRuntime />
             <ClosingCta />
         </main>
     );

@@ -1,9 +1,9 @@
 ---
 title: Configuration
-description: Choose which .env files load, mirror values back to process.env, and turn on debug logging.
+description: Control which files load on Node, mirror values back to process.env, and turn on debug logging.
 ---
 
-envapt reads from `process.env` plus the `.env` files it loads. Static settings on `Envapter` control which files load, whether loaded values reach `process.env`, and how much envapt logs.
+On Node, Bun, and Deno the default source reads `process.env` plus the `.env` files it loads. Static settings on `Envapter` control which files load, whether loaded values reach `process.env`, and how much envapt logs. They apply only while a Node source is active, on Workers and in the browser you bind a [source](/docs/sources) instead.
 
 ```ts twoslash
 import { Envapter } from 'envapt';

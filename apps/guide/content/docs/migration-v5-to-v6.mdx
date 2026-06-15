@@ -25,7 +25,7 @@ The sugar decorators `@EnvNum`, `@EnvStr`, `@EnvBool`, `@EnvUrl`, and `@EnvTime`
 ## Behavior changes to watch
 
 <Callout type="danger">
-    This change compiles without edits but runs differently than v5.1. Check it before upgrading.
+    This change compiles without edits but runs differently than v5. Check it before upgrading.
 </Callout>
 
 - **`NODE_ENV=test` resolves to `Environment.Test`.** `Envapter.isTest` returns true under a test runner, and `isDevelopment` returns false where it returned true on v5.1 and earlier. Vite's `MODE=test` maps the same way. This first shipped by mistake in the 5.2.0 minor, which is deprecated on npm. If you branch on `isDevelopment` inside tests, switch to `isTest` or set the environment explicitly. See [Environment](/docs/environment).

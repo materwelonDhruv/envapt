@@ -24,16 +24,17 @@ export function Hero(): ReactNode {
             <div className="relative mx-auto grid max-w-295 grid-cols-1 items-center gap-12 px-6 md:grid-cols-[1.05fr_1fr]">
                 <div className="min-w-0">
                     <p className="mb-4 font-mono text-[13px] tracking-wide text-(--ev-eyebrow)">
-                        {'// the apt way to handle env'}
+                        {'// the apt way to read config'}
                     </p>
                     <h1 className="mb-5 text-4xl leading-[1.04] font-semibold tracking-tight text-balance md:text-5xl">
                         Typed config,
                         <br />
-                        straight from <span className="text-(--ev-link)">.env</span>.
+                        from <span className="text-(--ev-link)">any source</span>.
                     </h1>
                     <p className="mb-7 max-w-110 text-lg/relaxed text-fd-muted-foreground">
-                        Read environment variables as real types. Zero runtime dependencies. Zod/Valibot/Arktype
-                        validation.
+                        Read config as real types from <code className="font-mono text-[0.92em]">process.env</code>, a
+                        Workers binding, a browser bundle, or any object you bind. Zero runtime dependencies.
+                        Zod/Valibot/Arktype validation.
                     </p>
                     <div className="flex flex-wrap gap-3">
                         <BaseButton href="/docs/quick-start" variant="solid">

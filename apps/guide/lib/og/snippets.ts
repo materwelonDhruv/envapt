@@ -11,7 +11,7 @@ export const OG_SNIPPETS: Record<string, OgSnippet | undefined> = {
     index: {
         filename: 'config.ts',
         lang: 'ts',
-        code: `// envapt - typed env vars, zero deps
+        code: `// envapt - typed config, zero deps
 import { Envapter, Converters } from 'envapt';
 
 const url = Envapter.getUsing(
@@ -40,7 +40,7 @@ const db = Envapter.get(
     environment: {
         filename: 'env.ts',
         lang: 'ts',
-        code: `// Environment - per-mode .env cascade
+        code: `// Environment - switch mode and branch on it
 Envapter.environment = 'production';
 const level = Envapter.isProduction
   ? 'warn'
@@ -62,7 +62,7 @@ class Config {
         filename: 'cache.ts',
         lang: 'ts',
         code: `// Converters - read a duration as milliseconds
-// CACHE_TTL=15m in .env
+// CACHE_TTL=15m in your config
 const ttl = Envapter.getUsing(
   'CACHE_TTL', Converters.Time
 ); // 900000 (ms)`
@@ -155,6 +155,16 @@ TLS_KEY="line one\\nline two"`
         code: `// Sources - any readVars() object is a source
 const source = { readVars: () => secrets };
 Envapter.useSource(source);
+const db = Envapter.getUsing(
+  'DATABASE_URL', Converters.Url
+);`
+    },
+    'secret-stores': {
+        filename: 'boot.ts',
+        lang: 'ts',
+        code: `// Secret stores - fetch, bind, read typed
+const secrets = await fetchFromStore();
+Envapter.useSource({ readVars: () => secrets });
 const db = Envapter.getUsing(
   'DATABASE_URL', Converters.Url
 );`

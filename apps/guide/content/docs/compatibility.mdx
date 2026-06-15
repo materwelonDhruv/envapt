@@ -3,7 +3,7 @@ title: Compatibility
 description: Runtime support, engine versions, module formats, per-runtime builds, and how decorators behave across runtimes.
 ---
 
-envapt runs on Node, Bun, and Deno with the same API and zero runtime dependencies. It also runs on Cloudflare Workers (workerd) and in the browser, where you bind an environment source yourself and there is no `.env` cascade. The functional reader API works on every runtime with no build step. The `@Envapt` decorator is TypeScript-only and has per-runtime requirements, covered below.
+envapt runs on Node, Bun, and Deno with the same API and zero runtime dependencies. It also runs on Cloudflare Workers (workerd) and in the browser, where you bind the source yourself (`WorkerEnvSource` or `ManualEnvSource`) and read with the same typed API. The functional reader API works on every runtime with no build step. The `@Envapt` decorator is TypeScript-only and has per-runtime requirements, covered below.
 
 ## Engine versions
 

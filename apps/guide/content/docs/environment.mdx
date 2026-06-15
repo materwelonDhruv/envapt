@@ -1,9 +1,9 @@
 ---
 title: Environment
-description: Detect the current runtime environment and auto-load the matching .env files for it.
+description: Detect the current runtime environment and branch on it, and auto-load the matching .env files on Node.
 ---
 
-envapt detects which environment it's running in and loads the matching `.env` files for it. The `isProduction` / `isStaging` / `isDevelopment` / `isTest` helpers read that same value.
+envapt detects which environment it's running in and exposes it through the `isProduction` / `isStaging` / `isDevelopment` / `isTest` helpers, which work on every runtime. On Node, Bun, and Deno it also loads the matching `.env` files for that environment.
 
 ## Detecting the environment
 

@@ -1,6 +1,6 @@
 ---
 title: Workers
-description: Bind a WorkerEnvSource from the env binding once at module load, with no .env files on workerd.
+description: Bind a WorkerEnvSource from the Cloudflare env object once at module load, then read typed config with the same API as everywhere else.
 ---
 
 On Cloudflare Workers (workerd) there is no filesystem and no ambient `process.env`. Your configuration is the `env` object the runtime exposes. Bind a `WorkerEnvSource` from it once, then read with the same typed API as everywhere else.

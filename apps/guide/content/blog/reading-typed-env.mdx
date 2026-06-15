@@ -1,6 +1,6 @@
 ---
-title: Reading typed config from .env in TypeScript
-description: Read env vars as numbers, URLs, durations, and schema-validated values in TypeScript, with fallbacks that narrow the type and any Standard Schema validator you already use.
+title: Reading typed config in TypeScript
+description: Read config from any source as numbers, URLs, durations, and schema-validated values in TypeScript, with fallbacks that narrow the type and any Standard Schema validator you already use.
 author: Dhruv
 date: '2026-06-01'
 ---
@@ -11,7 +11,7 @@ That line shows up in a lot of config files, and it has two bugs hiding in it.
 
 Misspell `PORT` in your `.env` and you don't get an error, you get `3000`, and you find out in production. Want to set `PORT=0` on purpose? You can't: `Number('0') || 3000` is `3000` too. The `|| fallback` can't tell "missing" from "zero," and `process.env` hands you `string | undefined` regardless, so every read sits one coercion away from a quiet bug.
 
-I got tired of writing that coercion by hand and keeping it correct, so I built envapt. On Node, Bun, and Deno it reads `process.env` and your `.env` files; off Node the source is pluggable, so the same reads work on Cloudflare Workers and in the browser.
+I got tired of writing that coercion by hand and keeping it correct, so I built envapt. It reads from whatever source you bind. On Node, Bun, and Deno that is `process.env` and your `.env` files, bound on import. Off Node the source is pluggable, so the same reads work on Cloudflare Workers, in the browser, or over a secrets object you fetched at boot.
 
 ## The typed read
 
@@ -54,7 +54,7 @@ const ttl = Envapter.getUsing('CACHE_TTL', Converters.Time, '5m'); // "5m" -> 30
 //    ^?
 ```
 
-`Converters.Url` runs the value through `new URL`, so a non-absolute URL takes the fallback instead of slipping through as a string. `Converters.array({ of: Converters.Url })` splits on the delimiter and converts each element, so the type is `URL[]`, not the `string[]` you'd `.split(',')` your way to. `Converters.Time` reads `5m` and returns `300000`, which means a timeout in your `.env` reads the way you'd write it in code rather than as a pile of zeroes you have to count.
+`Converters.Url` runs the value through `new URL`, so a non-absolute URL takes the fallback instead of slipping through as a string. `Converters.array({ of: Converters.Url })` splits on the delimiter and converts each element, so the type is `URL[]`, not the `string[]` you'd `.split(',')` your way to. `Converters.Time` reads `5m` and returns `300000`, which means a timeout in config reads the way you'd write it in code rather than as a pile of zeroes you have to count.
 
 The built-in tokens cover number, integer, float, boolean, bigint, symbol, JSON, URL, RegExp, Date, duration, and arrays. When none of them fit, `getWith` takes a plain `(raw, fallback) => T`:
 
@@ -152,15 +152,15 @@ t3-env centralizes: you declare every variable up front in one `createEnv` call,
 
 On Node, Bun, and Deno, envapt reads `process.env` and the `.env` cascade with no setup. On Cloudflare Workers and in the browser there is no filesystem, so you bind the source yourself: a `WorkerEnvSource` over the `env` binding in a Worker, a `ManualEnvSource` over the config your bundler injects in the browser. The typed reads, converters, and validators are identical across all of them; the `.env` cascade and the file-only config APIs are the part that stays on Node.
 
-## Loading the .env file
+## Loading a .env file on Node
 
-For local development you still want a `.env` file. On Node that's usually `dotenv`. envapt parses `.env` itself, so it loads the file without adding a dependency:
+For local development on Node you likely still want a `.env` file. envapt parses it itself, so it loads the file without adding a `dotenv` dependency:
 
 ```ts twoslash
 import 'envapt/config';
 ```
 
-That import is a drop-in for `dotenv/config`. It reads the cascade and mirrors the result into `process.env`. The cascade is per-environment and the most-specific file wins:
+That import reads the cascade and mirrors the result into `process.env`, the same way `dotenv/config` does. The cascade is per-environment and the most-specific file wins:
 
 ```dotenv
 .env.production.local
@@ -173,4 +173,4 @@ That import is a drop-in for `dotenv/config`. It reads the cascade and mirrors t
 
 ## So, finally
 
-What envapt gives you is the combination: a fallback that narrows the type and tells missing from zero, converters for the shapes that aren't strings, and validation through the schema you already wrote rather than the one a helper chose for you. If that's the shape of your config problem, the docs and the v4-to-v5 migration are at [envapt.materwelon.dev](https://envapt.materwelon.dev), it's on [npm](https://www.npmjs.com/package/envapt) and [JSR](https://jsr.io/@materwelon/envapt), and the source is on [GitHub](https://github.com/materwelonDhruv/envapt). Please feel free to ask questions, report bugs, or suggest features in the repo! I'm always open to feedback and contributions.
+What envapt gives you is typed reads from any source (`process.env`, a Worker binding, a browser bundle, or a secrets object you supply), a fallback that narrows the type and tells missing from zero, converters for the shapes that aren't strings, and validation through the schema you already wrote rather than the one a helper chose for you. If that's the shape of your problem, it's on [npm](https://www.npmjs.com/package/envapt) and [JSR](https://jsr.io/@materwelon/envapt), and the source is on [GitHub](https://github.com/materwelonDhruv/envapt). Please feel free to ask questions, report bugs, or suggest features in the repo! I'm always open to feedback and contributions.

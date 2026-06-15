@@ -8,7 +8,7 @@ export function ClosingCta(): ReactNode {
             <div className="ev-hero-grid pointer-events-none absolute inset-0" aria-hidden="true" />
             <div className="relative mx-auto max-w-295 px-6 text-center">
                 <h2 className="mb-3 text-2xl font-semibold tracking-tight text-balance md:text-[2rem]">
-                    Read environment variables as real types.
+                    Read config from any source, fully typed.
                 </h2>
                 <p className="mb-7 text-lg text-fd-muted-foreground">
                     Zero runtime dependencies. Zod/Valibot/Arktype validation.

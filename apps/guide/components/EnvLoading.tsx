@@ -9,13 +9,13 @@ const RESOLVED = `Envapter.get('DATABASE_URL');
 export function EnvLoading(): ReactNode {
     return (
         <Section
-            eyebrow="// .env, loaded"
+            eyebrow="// node source"
             title={
                 <>
-                    Loads your .env, not just <span className="text-(--ev-link)">process.env</span>.
+                    The default Node source loads <span className="text-(--ev-link)">.env</span>.
                 </>
             }
-            lead="In production, envapt reads .env.production.local, then .env.production, then .env.local, then .env. Values from higher files win; missing files are skipped."
+            lead="When the Node source is active, envapt reads .env.production.local, then .env.production, then .env.local, then .env in production. Values from higher files win, missing files are skipped. Bind another source and the cascade steps aside."
         >
             <div className="flex flex-col gap-6 lg:flex-row lg:items-center">
                 <div className="min-w-0 lg:w-3/5">
@@ -49,7 +49,7 @@ export function EnvLoading(): ReactNode {
                     · zero dependencies
                 </p>
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-                    <span className="shrink-0 text-[14px] text-fd-muted-foreground">Coming from dotenv?</span>
+                    <span className="shrink-0 text-[14px] text-fd-muted-foreground">Need values on process.env?</span>
                     <div className="overflow-hidden rounded-md border border-fd-border">
                         <Code code="import 'envapt/config';" lang="ts" dense />
                     </div>

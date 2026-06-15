@@ -30,7 +30,7 @@ export function defaultCard(): ReactElement {
                 <BrandLockup glyphSize={48} wordmarkHeight={42} gap={16} fill={OG.white} />
                 <div style={{ display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'center', gap: 22 }}>
                     <div style={{ fontFamily: 'JetBrains Mono', fontSize: 23, color: OG.gold }}>
-                        {'// the apt way to handle env'}
+                        {'// the apt way to read config'}
                     </div>
                     <div
                         style={{
@@ -43,13 +43,13 @@ export function defaultCard(): ReactElement {
                     >
                         <div style={{ display: 'flex' }}>Typed config,</div>
                         <div style={{ display: 'flex' }}>
-                            <span>straight from</span>
-                            <span style={{ color: OG.brand, marginLeft: 14 }}>.env</span>
+                            <span>from</span>
+                            <span style={{ color: OG.brand, marginLeft: 14 }}>any source</span>
                         </div>
                     </div>
                     <div style={{ fontSize: 29, color: OG.muted, lineHeight: 1.42, maxWidth: 880 }}>
-                        Read environment variables as real types. Zero runtime dependencies, plus zod/valibot/arktype
-                        validation, and much more.
+                        Read config as real types from process.env, a Workers binding, a browser bundle, or any object
+                        you bind. Zero runtime dependencies, plus zod/valibot/arktype validation.
                     </div>
                     <div style={{ display: 'flex', gap: 12, fontFamily: 'JetBrains Mono', fontSize: 27 }}>
                         <span style={{ color: OG.teal }}>$</span>
