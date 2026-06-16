@@ -15,8 +15,8 @@ export default createConfig({
             }
         },
         {
-            // intentionally broken code the compiler-API test reads at runtime, so it is excluded from tsconfig and skipped here
-            ignores: ['tests/type-error-fixtures/**']
+            // intentionally-broken fixtures the compiler-API test reads, and tsc-emit build output
+            ignores: ['tests/type-error-fixtures/**', 'tests/tsc-emit/out/**']
         },
         {
             // integration suites import the built dist/ off the node_modules resolver, so the linter

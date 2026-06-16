@@ -19,6 +19,7 @@
         "tests/type-error-fixtures/**",
         "tests/workers/**",
         "tests/browser/**",
-        "tests/consumer-build/**"
+        "tests/consumer-build/**",
+        "tests/tsc-emit/**"
     ]
 }

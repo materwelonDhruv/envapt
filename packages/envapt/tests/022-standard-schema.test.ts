@@ -272,17 +272,17 @@ describe('Standard Schema adapter (v5)', () => {
     describe('@Envapt({ schema }) decorator: happy path', () => {
         class ZodConfig {
             @Envapt('PORT', { schema: z.coerce.number().int().min(1024).max(65535) })
-            declare static readonly port: number;
+            static readonly port: number;
         }
 
         class ValibotConfig {
             @Envapt('LOG_LEVEL', { schema: v.picklist(['debug', 'info', 'warn']) })
-            declare static readonly logLevel: 'debug' | 'info' | 'warn';
+            static readonly logLevel: 'debug' | 'info' | 'warn';
         }
 
         class HandRolledConfig {
             @Envapt('LOG_LEVEL', { schema: handRolledUpper })
-            declare static readonly upper: string;
+            static readonly upper: string;
         }
 
         it('zod: validated value reaches the property', () => {
@@ -301,17 +301,17 @@ describe('Standard Schema adapter (v5)', () => {
     describe('@Envapt({ schema }) decorator: missing + fallback', () => {
         class WithFallback {
             @Envapt('NEVER_SET', { schema: z.coerce.number(), fallback: 9999 })
-            declare static readonly value: number;
+            static readonly value: number;
         }
 
         class WithoutFallback {
             @Envapt('NEVER_SET', { schema: z.coerce.number() })
-            declare static readonly value: number;
+            static readonly value: number;
         }
 
         class WithRequired {
             @Envapt('NEVER_SET', { schema: z.coerce.number(), required: true })
-            declare static readonly value: number;
+            static readonly value: number;
         }
 
         it('returns the fallback when env is missing (no schema run)', () => {
@@ -334,7 +334,7 @@ describe('Standard Schema adapter (v5)', () => {
     describe('@Envapt({ schema }) decorator: validation failure', () => {
         class InvalidPort {
             @Envapt('INVALID_PORT', { schema: z.coerce.number().int() })
-            declare static readonly port: number;
+            static readonly port: number;
         }
 
         it('throws SchemaValidationFailed at first access', () => {
@@ -354,7 +354,7 @@ describe('Standard Schema adapter (v5)', () => {
                         schema: z.coerce.number(),
                         converter: Number
                     } as unknown as { schema: typeof z.coerce.number extends () => infer R ? R : never })
-                    declare static readonly port: number;
+                    static readonly port: number;
                 }
                 void Bad;
             };
@@ -370,7 +370,7 @@ describe('Standard Schema adapter (v5)', () => {
                         // fixture: passing a non-StandardSchema value to exercise the shape guard -- justified
                         schema: { not: 'a schema' } as unknown as StandardSchemaV1
                     })
-                    declare static readonly port: number;
+                    static readonly port: number;
                 }
                 void Bad;
             };
@@ -386,7 +386,7 @@ describe('Standard Schema adapter (v5)', () => {
                         // fixture: null squeezes past `!== undefined` and hits the value-is-null branch -- justified
                         schema: null as unknown as StandardSchemaV1
                     })
-                    declare static readonly port: number;
+                    static readonly port: number;
                 }
                 void Bad;
             };
@@ -402,7 +402,7 @@ describe('Standard Schema adapter (v5)', () => {
                         // fixture: slot-is-null branch of the shape guard -- justified
                         schema: { '~standard': null } as unknown as StandardSchemaV1
                     })
-                    declare static readonly port: number;
+                    static readonly port: number;
                 }
                 void Bad;
             };

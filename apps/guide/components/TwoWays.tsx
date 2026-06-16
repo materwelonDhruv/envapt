@@ -15,7 +15,7 @@ const DECORATOR = `import { EnvNum } from 'envapt';
 
 class Config {
   @EnvNum('PORT', 3000)
-  declare static readonly port: number;
+  static readonly port: number;
 }`;
 
 export function TwoWays(): ReactNode {

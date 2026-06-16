@@ -52,10 +52,10 @@ const level = Envapter.isProduction
         code: `// Decorators - bind env vars to typed fields
 class Config {
   @EnvUrl('DATABASE_URL')
-  declare static readonly db: URL;
+  static readonly db: URL;
 
   @EnvTime('CACHE_TTL', '15m')
-  declare static readonly cacheTtl: number;
+  static readonly cacheTtl: number;
 }`
     },
     converters: {

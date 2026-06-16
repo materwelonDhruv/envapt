@@ -126,7 +126,7 @@ import type { Foo } from 'pkg'; // not import('pkg').Foo
 - **Verify paths** with `pwd` and `ls` when hitting "No such file or directory."
 - **Use package `scripts`** for common tasks; add and document new scripts when needed.
 - **Prefer changing file extension to `.txt`** to preserve files marked for deletion (preserves git history).
-- **Run `pnpm prePush`** before pushing — it runs `build && tc && lint && lint:md && test` and is what husky's pre-push hook gates on.
+- **Run `pnpm prePush`** before pushing. It runs `tc && lint && lint:md && test`, the full build runs in CI rather than the hook. This is what husky's pre-push hook gates on.
 - **For changes to `packages/envapt/**`**, add a `changeset` (`pnpm cs`) so the release pipeline can publish the new version and changelog entry. `pnpm cs:status` shows pending changesets.
 
 ---
@@ -172,7 +172,7 @@ import type { Foo } from 'pkg'; // not import('pkg').Foo
 
 envapt uses `experimentalDecorators: true` (see `.vscode/experimental-decorators.md` for the ecosystem audit). The `@Envapt` decorator pattern mutates the prototype via `Object.defineProperty(target, propKey, { get })`. Constraints:
 
-- **Users declare with `declare public/static readonly`** — no field initializer. This dodges the `useDefineForClassFields: true` footgun. Document this prominently in any new decorator example.
+- **Static fields use plain `static readonly`, instance fields use `declare readonly`, both with no field initializer.** A `declare static` field reads `undefined` under tsc (the decorator lands on the prototype, off the static read path), and a plain instance field is clobbered by the `useDefineForClassFields` constructor assignment. Document this in any new decorator example.
 - **The classic 3-arg API (`@Envapt('KEY', fb, Converter)`) is deprecated as of v5** and will be removed in v6. New code uses the modern options-object form: `@Envapt('KEY', { converter, fallback })`.
 - **Sugar decorators** (`@EnvNum`, `@EnvUrl`, `@EnvTime`, etc.) added in v5 are thin factories that delegate to `createPropertyDecorator`. Keep them minimal — don't add per-type validation logic; that belongs in the converter.
 
@@ -192,7 +192,7 @@ pnpm test
 Before pushing:
 
 ```sh
-pnpm prePush              # build && tc && lint && lint:md && test
+pnpm prePush              # tc && lint && lint:md && test
 ```
 
 **The only acceptable outcomes:**

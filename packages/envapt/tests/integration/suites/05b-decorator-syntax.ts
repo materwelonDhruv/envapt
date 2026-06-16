@@ -8,13 +8,13 @@ import { Envapt, Envapter } from '../../../dist/node/index.mjs';
 // Pairs with the runtime-helper test in 05-decorator.mjs.
 class Config {
     @Envapt('BASIC_KEY', { fallback: 'default' })
-    declare static readonly BASIC_KEY: string;
+    static readonly BASIC_KEY: string;
 
     @Envapt('NUMBER_KEY', { fallback: 0, converter: Number })
-    declare static readonly NUMBER_KEY: number;
+    static readonly NUMBER_KEY: number;
 
     @Envapt('MISSING_DECORATOR_KEY', { fallback: 'fb-value' })
-    declare static readonly MISSING_DECORATOR_KEY: string;
+    static readonly MISSING_DECORATOR_KEY: string;
 }
 
 export default function decoratorSyntax(): void {

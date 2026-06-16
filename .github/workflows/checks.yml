@@ -56,5 +56,7 @@ jobs:
               run: pnpm lint
             - name: Run tests
               run: pnpm test
+            - name: Run tsc-emit decorator guard
+              run: pnpm --filter envapt test:tsc-emit
             - name: Run audit
               run: pnpm audit --audit-level=high
