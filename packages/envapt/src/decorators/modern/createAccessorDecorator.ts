@@ -1,5 +1,5 @@
 import { EnvaptError, EnvaptErrorCodes } from '../../Error';
-import { resolveDecoratorValue } from '../resolveDecoratorValue';
+import { decoratorCacheKey, resolveDecoratorValue } from '../resolveDecoratorValue';
 
 import type { EnvKeyInput } from '../../types';
 import type { DecoratorConfig } from '../resolveDecoratorValue';
@@ -13,9 +13,12 @@ export function createAccessorDecorator<TFallback>(key: EnvKeyInput, config: Dec
 
         return {
             get(this: This): Value {
-                // `this` is the constructor for a static accessor and the instance if not that, so read the name off each
-                const className = context.static ? (this as { name: string }).name : (this as object).constructor.name;
-                const cacheKey = `${className}.${propKey}`;
+                const self = this as object;
+                // derive static-ness from `this` (the class is a function, an instance is not) rather than
+                // context.static, which some transformers (oxc) leave unset, collapsing every owner to Function
+                const isStatic = typeof self === 'function';
+                const owner = isStatic ? self : self.constructor;
+                const cacheKey = decoratorCacheKey(owner, isStatic, propKey);
                 return resolveDecoratorValue(key, config, cacheKey) as Value;
             },
             set(): void {

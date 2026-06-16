@@ -1,4 +1,4 @@
-import { resolveDecoratorValue } from './resolveDecoratorValue';
+import { decoratorCacheKey, resolveDecoratorValue } from './resolveDecoratorValue';
 import { EnvaptError, EnvaptErrorCodes } from '../Error';
 
 import type { DecoratorConfig } from './resolveDecoratorValue';
@@ -10,9 +10,10 @@ export function createPropertyDecorator<TFallback>(
 ): PropertyDecorator {
     return function (target: object, prop: string | symbol): void {
         const propKey = String(prop);
-        // Distinguishing constructor (static) from prototype (instance) keeps same-named static and instance properties from colliding in the cache.
-        const className = typeof target === 'function' ? target.name : target.constructor.name;
-        const cacheKey = `${className}.${propKey}`;
+        const isStatic = typeof target === 'function';
+        // owner is the constructor either way: target itself for a static member, target.constructor for an instance one
+        const owner = isStatic ? target : target.constructor;
+        const cacheKey = decoratorCacheKey(owner, isStatic, propKey);
 
         Object.defineProperty(target, propKey, {
             get: function () {
