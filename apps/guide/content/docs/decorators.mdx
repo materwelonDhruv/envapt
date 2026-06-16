@@ -94,6 +94,26 @@ class Config {
 
 With no `converter` and no `fallback`, the property resolves to the raw string or `null`.
 
+## The field type is checked
+
+The decorated field's declared type must hold the converter's output, or tsc rejects it. The field can be wider than the output, never narrower.
+
+```ts twoslash
+import { EnvNum } from 'envapt';
+// ---cut---
+class Config {
+    // with a fallback, the output is number
+    @EnvNum('PORT', 3000)
+    static accessor port: number;
+
+    // without a fallback the value can be missing, so the output is number | null
+    @EnvNum('TIMEOUT')
+    static accessor timeout: number | null;
+}
+```
+
+A no-fallback read adds `| null` to the output, `fallback: undefined` adds `| undefined`, and `required: true` adds neither. A field that cannot hold the output fails to compile with `[envapt] field type must hold the converter output`. The same check applies to the legacy decorators.
+
 ## Shorthand decorators
 
 `@EnvNum`, `@EnvStr`, `@EnvBool`, `@EnvUrl`, and `@EnvTime` are shorthands for `@Envapt` with a fixed converter. The call site is the key and an optional fallback.

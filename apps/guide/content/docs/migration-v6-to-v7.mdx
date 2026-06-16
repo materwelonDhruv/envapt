@@ -50,3 +50,7 @@ Only the decorators move. `Envapter`, `Converters`, the sources, and the types s
 ## Decorated properties are read-only
 
 Assigning to a decorated property now throws `EnvaptError`. On v6 the legacy decorator installed only a getter, so an assignment was a silent no-op in sloppy mode or a native `TypeError` in strict mode. Both the default and legacy forms throw the clearer error in v7.
+
+## Decorated fields are typechecked
+
+The decorator checks the decorated field's declared type against the converter's output. A field that cannot hold the value is a compile error, `[envapt] field type must hold the converter output`. A no-fallback read can be `null`, so a field that compiled as `static readonly port: number` for `@EnvNum('PORT')` on v6 now needs `number | null` (or `static accessor port: number | null` in the modern form). This check applies to both the modern and legacy decorators.

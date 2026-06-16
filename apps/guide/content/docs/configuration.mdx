@@ -70,7 +70,7 @@ Envapter.baseDir = __dirname;
 
 ## Mirroring to process.env
 
-By default a loaded value lives only in envapt's cache. Set `syncProcessEnv` to mirror the keys envapt loaded back into `process.env`, so other libraries that read `process.env` directly see them.
+By default a loaded value stays in envapt's cache. Set `syncProcessEnv` to mirror the keys envapt loaded back into `process.env`, so other libraries that read `process.env` directly get them.
 
 ```ts twoslash
 import { Envapter } from 'envapt';

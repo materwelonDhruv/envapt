@@ -51,6 +51,6 @@ const beta = Envapter.getBoolean('VITE_ENABLE_BETA', false); // boolean
 
 ## Decorators
 
-The default `@Envapt` accessor decorators need no `experimentalDecorators` flag. The legacy decorators (`envapt/legacy`) need it set in your build.
+The default `@Envapt` accessor decorators work in the browser build, the legacy `envapt/legacy` form needs a compile step.
 
 For the providers and the contract see [Sources](/docs/sources).

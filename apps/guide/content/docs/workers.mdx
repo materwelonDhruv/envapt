@@ -94,6 +94,6 @@ There is no `.env` cascade, no custom profiles, and no file-only config APIs (`e
 
 ## Decorators
 
-The default `@Envapt` accessor decorators need no `experimentalDecorators` flag. The legacy decorators (`envapt/legacy`) need it set in your build. A decorated property caches its value on first read, and Cloudflare `env` scalars are stable per isolate, so the cached value matches the binding.
+A decorated property caches its value on first read, and Cloudflare `env` scalars are stable per isolate, so the cached value matches the binding. The default accessor decorators work on Workers, the legacy `envapt/legacy` form needs a compile step.
 
 Configure Worker `vars` and bindings through Cloudflare's [environment variables](https://developers.cloudflare.com/workers/configuration/environment-variables/) docs. For the providers and the contract see [Sources](/docs/sources).
