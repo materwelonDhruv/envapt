@@ -92,7 +92,7 @@ export const apiToken = Envapter.get('API_TOKEN');
 Bind a value to a class field with a TC39 accessor decorator. No `experimentalDecorators` flag, and it runs on Bun and Deno from `.ts` directly.
 
 ```ts
-import { Envapt, Converters } from 'envapt';
+import { EnvNum, Converters } from 'envapt';
 
 class Config {
     @EnvNum('PORT', 3000)
