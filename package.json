@@ -47,7 +47,7 @@
         "@seedcord/eslint-config": "catalog:dev",
         "@seedcord/tsconfig": "^2.0.0",
         "@types/node": "catalog:dev",
-        "@vitest/coverage-v8": "4.1.7",
+        "@vitest/coverage-v8": "4.1.9",
         "eslint": "catalog:dev",
         "husky": "^9.1.7",
         "knip": "^6.16.1",
@@ -60,7 +60,7 @@
         "turbo": "^2.9.18",
         "typescript": "catalog:dev",
         "vite": "^8.0.16",
-        "vitest": "4.1.7"
+        "vitest": "4.1.9"
     },
     "packageManager": "pnpm@11.5.0"
 }

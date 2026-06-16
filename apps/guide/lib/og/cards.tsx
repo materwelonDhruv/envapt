@@ -26,17 +26,19 @@ export function defaultCard(): ReactElement {
     return (
         <OgFrame>
             <CornerAccent size={92} />
-            <div style={{ display: 'flex', flexDirection: 'column', flex: 1, padding: '64px 72px' }}>
-                <BrandLockup glyphSize={48} wordmarkHeight={42} gap={16} fill={OG.white} />
-                <div style={{ display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'center', gap: 22 }}>
-                    <div style={{ fontFamily: 'JetBrains Mono', fontSize: 23, color: OG.gold }}>
+            <div style={{ display: 'flex', flexDirection: 'column', flex: 1, padding: '50px 72px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 22 }}>
+                    <BrandLockup glyphSize={50} wordmarkHeight={44} gap={16} fill={OG.white} />
+                    <div style={{ fontFamily: 'JetBrains Mono', fontSize: 24, color: OG.gold }}>
                         {'// the apt way to read config'}
                     </div>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'center', gap: 30 }}>
                     <div
                         style={{
                             display: 'flex',
                             flexDirection: 'column',
-                            fontSize: 74,
+                            fontSize: 78,
                             fontWeight: 600,
                             lineHeight: 1.04
                         }}
@@ -47,20 +49,22 @@ export function defaultCard(): ReactElement {
                             <span style={{ color: OG.brand, marginLeft: 14 }}>any source</span>
                         </div>
                     </div>
-                    <div style={{ fontSize: 29, color: OG.muted, lineHeight: 1.42, maxWidth: 880 }}>
+                    <div style={{ fontSize: 30, color: OG.muted, lineHeight: 1.45, maxWidth: 920 }}>
                         Read config as real types from process.env, a Workers binding, a browser bundle, or any object
                         you bind. Zero runtime dependencies, plus zod/valibot/arktype validation.
                     </div>
-                    <div style={{ display: 'flex', gap: 12, fontFamily: 'JetBrains Mono', fontSize: 27 }}>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ display: 'flex', gap: 12, fontFamily: 'JetBrains Mono', fontSize: 28 }}>
                         <span style={{ color: OG.teal }}>$</span>
                         <span style={{ color: OG.white }}>npm i envapt</span>
                     </div>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
                     <div
                         style={{
                             height: 3,
                             borderRadius: 2,
+                            marginTop: 20,
+                            marginBottom: 14,
                             backgroundImage: `linear-gradient(90deg, ${OG.brand}, rgba(222,110,57,0))`
                         }}
                     />
@@ -70,7 +74,7 @@ export function defaultCard(): ReactElement {
                             alignItems: 'center',
                             justifyContent: 'space-between',
                             fontFamily: 'JetBrains Mono',
-                            fontSize: 21
+                            fontSize: 22
                         }}
                     >
                         <div style={{ display: 'flex', gap: 22, color: OG.muted }}>
