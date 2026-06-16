@@ -10,7 +10,15 @@ export function createAccessorDecorator<TFallback>(key: EnvKeyInput, config: Dec
         _target: ClassAccessorDecoratorTarget<This, Value>,
         context: ClassAccessorDecoratorContext<This, Value>
     ): ClassAccessorDecoratorResult<This, Value> {
-        const propKey = String(context.name);
+        const name: string | symbol | undefined = context.name;
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- a broken Stage 3 transform can leave context.name unset, which would collapse every accessor to one cache key
+        if (name === undefined) {
+            throw new EnvaptError(
+                EnvaptErrorCodes.InvalidUserDefinedConfig,
+                'The runtime did not provide the accessor name to @Envapt, this Stage 3 decorator transform is unsupported.'
+            );
+        }
+        const propKey = String(name);
 
         return {
             get(this: This): Value {
