@@ -1,0 +1,52 @@
+---
+title: Migration (v6 to v7)
+description: Moving from envapt v6 to v7. The default decorators are now TC39 Stage 3 accessors, and the legacy decorators move to envapt/legacy.
+---
+
+v7 is a major release. The decorator surface changed. Everything else (the `Envapter` readers, converters, sources, and types) is unchanged and stays on `envapt`.
+
+## Decorators are now TC39 accessor decorators
+
+The default `@Envapt` import, and the sugar decorators, is now a TC39 Stage 3 accessor decorator. It needs no `experimentalDecorators` flag and runs on any runtime, including Bun and Deno executing a `.ts` file directly.
+
+Declare the field with the `accessor` keyword. Static fields use `static accessor x: T`, instance fields use `accessor x!: T` with the definite-assignment `!`.
+
+```ts
+// v6 (legacy form)
+import { Envapt, Converters } from 'envapt';
+
+class Config {
+    @Envapt('PORT', { converter: Converters.Number, fallback: 3000 })
+    static readonly port: number;
+}
+
+// v7 default (accessor form, no experimentalDecorators)
+import { Envapt, Converters } from 'envapt';
+
+class Config {
+    @Envapt('PORT', { converter: Converters.Number, fallback: 3000 })
+    static accessor port: number;
+}
+```
+
+For an instance field, the change is from `declare readonly x: T` to `accessor x!: T`.
+
+## Keeping the legacy decorators
+
+If you cannot switch to the accessor form yet, the v6 decorators move to the `envapt/legacy` subpath. They keep the `static readonly` / `declare readonly` form and still need `experimentalDecorators`.
+
+```ts
+// keep the v6 behavior
+import { Envapt, Converters } from 'envapt/legacy';
+
+class Config {
+    @Envapt('PORT', { converter: Converters.Number, fallback: 3000 })
+    static readonly port: number;
+}
+```
+
+Only the decorators move. `Envapter`, `Converters`, the sources, and the types stay on `envapt`. A module that imports decorators only from `envapt/legacy` must also `import 'envapt'` once so the runtime source binds.
+
+## Decorated properties are read-only
+
+Assigning to a decorated property now throws `EnvaptError`. On v6 the legacy decorator installed only a getter, so an assignment was a silent no-op in sloppy mode or a native `TypeError` in strict mode. Both the default and legacy forms throw the clearer error in v7.

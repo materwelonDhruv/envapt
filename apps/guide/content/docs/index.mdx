@@ -20,8 +20,8 @@ Read values functionally with [`Envapter`](/docs/envapter), or bind them to clas
 import { Envapt, Converters } from 'envapt';
 // ---cut---
 class Config {
-    @Envapt('REDIS_URL', { converter: Converters.Url, fallback: new URL('redis://localhost:6379') })
-    static readonly redisUrl: URL;
+    @EnvUrl('REDIS_URL', new URL('redis://localhost:6379'))
+    static accessor redisUrl: URL;
 }
 ```
 

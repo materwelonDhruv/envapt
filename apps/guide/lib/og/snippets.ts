@@ -52,10 +52,10 @@ const level = Envapter.isProduction
         code: `// Decorators - bind env vars to typed fields
 class Config {
   @EnvUrl('DATABASE_URL')
-  static readonly db: URL;
+  static accessor db: URL;
 
   @EnvTime('CACHE_TTL', '15m')
-  static readonly cacheTtl: number;
+  static accessor cacheTtl: number;
 }`
     },
     converters: {
@@ -139,10 +139,21 @@ TLS_KEY="line one\\nline two"`
 // v6
 @EnvNum('PORT', 8080)`
     },
+    'migration-v6-to-v7': {
+        filename: 'config.ts',
+        lang: 'ts',
+        code: `// Migration - decorators are TC39 accessors in v7
+// v6 - still exported via 'envapt/legacy'
+@Envapt('PORT', { fallback: 3000 })
+static readonly port: number;
+// v7 - now exported via 'envapt'
+@Envapt('PORT', { fallback: 3000 })
+static accessor port: number;`
+    },
     compatibility: {
         filename: 'tsconfig.json',
         lang: 'jsonc',
-        code: `// Compatibility - decorators need this flag
+        code: `// Compatibility - legacy decorators need this flag
 {
   "compilerOptions": {
     "experimentalDecorators": true

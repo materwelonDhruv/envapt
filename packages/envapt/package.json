@@ -2,7 +2,7 @@
     "name": "envapt",
     "type": "module",
     "version": "6.0.2",
-    "description": "Type-safe config for TypeScript. Read typed values from any source, process.env, .env files, Cloudflare Workers bindings, browser bundles, or any object you supply. Zero runtime dependencies, one API across Node, Bun, Deno, Workers, and the browser. Decorators, converters, and Standard Schema (zod/valibot/arktype) validation.",
+    "description": "Type-safe config for TypeScript. Read typed values from any source, process.env, .env files, Cloudflare Workers bindings, browser bundles, or any object you supply. Zero runtime dependencies, one API across Node, Bun, Deno, Workers, and the browser. TC39 accessor decorators (legacy decorators at envapt/legacy), converters, and Standard Schema (zod/valibot/arktype) validation.",
     "types": "./dist/node/index.d.mts",
     "exports": {
         ".": {
