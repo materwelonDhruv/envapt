@@ -34,18 +34,9 @@ body:
   - type: input
     id: runtime
     attributes:
-        label: Runtime, environment, or platform
-        description: Node, Deno, Bun version and package manager. Or Browser / Cloudflare Workers with relevant environment details.
+        label: Runtime and version
+        description: Node, Bun, or Deno version and package manager, or Browser / Cloudflare Workers. Add the OS only if you think it is relevant.
         placeholder: 'Node 24.11.1, pnpm 10.19'
-    validations:
-        required: true
-
-  - type: input
-    id: platform
-    attributes:
-        label: Platform
-        description: Operating system and whether this is inside a container
-        placeholder: 'macOS Sequoia, bare metal'
     validations:
         required: true
 
