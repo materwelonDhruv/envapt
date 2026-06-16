@@ -56,7 +56,7 @@ You're ready to start working when all these succeed!
     - Also check out [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
     - Check out [How to Write a Good Commit Message](https://chris.beams.io/posts/git-commit/)
 
-3. **Add a changeset** - For any changes made to the project, add a changeset file per commit:
+3. **Add a changeset** - For changes to the published package under `packages/envapt/**`, add a changeset.
 
     ```bash
     pnpm cs add
@@ -110,6 +110,7 @@ Pull requests that do not pass CI will not be reviewed in detail.
 - `pnpm --filter envapt test:workers`, the workerd suite on real workerd via `@cloudflare/vitest-pool-workers`
 - `pnpm --filter envapt test:browser`, the browser suite in headless Chromium (one-time `pnpm --filter envapt exec playwright install chromium`)
 - `pnpm --filter envapt test:consumer-build`, bundles `envapt` with esbuild for the browser and workerd conditions and asserts no `node:` built-ins leak in
+- `pnpm --filter envapt test:tsc-emit`, compiles a decorated class with tsc and runs it, guarding that static field reads resolve under tsc emit (the default suite runs on OXC and would miss it)
 - `pnpm --filter envapt test:all`, builds once then runs every suite in parallel, skipping the browser suite when Chromium is absent
 
 Build the package before running the workerd or browser suite on its own, or use `test:all`, which builds first. CI runs all of them as parallel jobs.

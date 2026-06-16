@@ -100,7 +100,7 @@ const timeout = Envapter.parse('TIMEOUT_MS', z.coerce.number(), 30000);
 
 ## If you'd rather have a config class
 
-The same reads bind to a class field with a decorator. The field is declared with `declare` and no initializer, and you need `experimentalDecorators` in your `tsconfig.json`:
+The same reads bind to a class field with a decorator. Static fields use a plain `static readonly` with no initializer, instance fields use `declare readonly`, and you need `experimentalDecorators` in your `tsconfig.json`.
 
 ```ts twoslash
 import { z } from 'zod/v4';
@@ -108,22 +108,22 @@ import { Envapt, Converters } from 'envapt';
 // ---cut---
 class Config {
     @Envapt('PORT', { converter: Converters.Number, fallback: 3000 })
-    declare static readonly port: number;
+    static readonly port: number;
 
     @Envapt('LOG_LEVEL', { schema: z.enum(['debug', 'info', 'warn']) })
-    declare static readonly logLevel: 'debug' | 'info' | 'warn';
+    static readonly logLevel: 'debug' | 'info' | 'warn';
 }
 ```
 
-The `declare` and the missing initializer are load-bearing. A real field declaration under `useDefineForClassFields` emits a constructor assignment that overwrites the decorator's getter with `undefined`, so the property reads back as nothing. `declare` tells the compiler the field exists without emitting that assignment. For the common types there's sugar that takes the key and an optional fallback:
+The declaration form is load-bearing and differs by field kind. Instance fields need `declare` and no initializer, since under `useDefineForClassFields` a real field emits a constructor assignment that overwrites the decorator's getter with `undefined`. Static fields are the reverse, a plain `static readonly` with no `declare`, since a `declare static` member is erased and the decorator lands on the prototype where a static read never finds it. For the common types there's sugar that takes the key and an optional fallback.
 
 ```ts twoslash
 import { EnvNum, EnvUrl, EnvTime } from 'envapt';
 // ---cut---
 class Config {
-    @EnvNum('PORT', 3000) declare static readonly port: number;
-    @EnvUrl('APP_URL', new URL('http://localhost:3000')) declare static readonly appUrl: URL;
-    @EnvTime('CACHE_TTL', '5m') declare static readonly ttl: number; // ms
+    @EnvNum('PORT', 3000) static readonly port: number;
+    @EnvUrl('APP_URL', new URL('http://localhost:3000')) static readonly appUrl: URL;
+    @EnvTime('CACHE_TTL', '5m') static readonly ttl: number; // ms
 }
 ```
 

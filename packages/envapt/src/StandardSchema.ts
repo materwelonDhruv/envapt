@@ -54,7 +54,7 @@ export namespace StandardSchemaV1 {
 
 /**
  * Envapt-side alias for {@link StandardSchemaV1.InferOutput}. Re-exported under a friendlier
- * name so consumers writing `declare static readonly x: InferSchemaOutput<typeof mySchema>`
+ * name so consumers writing `static readonly x: InferSchemaOutput<typeof mySchema>`
  * don't need the namespace path.
  * @public
  */

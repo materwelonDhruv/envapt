@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+        "target": "ES2022",
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext",
+        "experimentalDecorators": true,
+        "useDefineForClassFields": true,
+        "lib": ["ESNext", "Decorators.Legacy"],
+        "types": ["node"],
+        "strict": true,
+        "skipLibCheck": true,
+        "outDir": "out"
+    },
+    "include": ["fixture.mts"]
+}

@@ -1,6 +1,6 @@
 ---
 name: envapt
-description: Type-safe environment variable access for TypeScript and JavaScript with the envapt library. Use when a project imports from 'envapt', 'envapt/config', 'envapt/workerd', or 'envapt/browser', reads process.env, loads .env files, runs on Cloudflare Workers or in the browser, migrates off dotenv, or the user mentions envapt, Envapter, or @Envapt. Covers the functional Envapter reader API (get/getNumber/getBoolean/getUsing/parse/require) as the portable default, the @Envapt and @EnvNum/@EnvStr/@EnvBool/@EnvUrl/@EnvTime decorators, built-in and custom converters, Standard Schema (zod/valibot/arktype) validation, the .env cascade and baseDir, the pluggable EnvSource API (useSource with WorkerEnvSource and ManualEnvSource) for Cloudflare Workers and the browser, the Bun decorator limitation (bun#27575) and the declare-readonly requirement.
+description: Type-safe config reading and environment variable access for TypeScript and JavaScript with the envapt library. Use when a project imports from 'envapt', 'envapt/config', 'envapt/workerd', or 'envapt/browser', reads process.env or any object as a source, loads .env files, runs on Cloudflare Workers or in the browser, migrates off dotenv, or the user mentions envapt, Envapter, or @Envapt. Covers the functional Envapter reader API (get/getNumber/getBoolean/getUsing/parse/require) as the portable default, the @Envapt and @EnvNum/@EnvStr/@EnvBool/@EnvUrl/@EnvTime decorators, built-in and custom converters, Standard Schema (zod/valibot/arktype) validation, the .env cascade and baseDir, the pluggable EnvSource API (useSource with WorkerEnvSource and ManualEnvSource) for Cloudflare Workers and the browser, the Bun decorator limitation (bun#27575) and the static-vs-instance field declaration rule.
 ---
 
 # envapt
@@ -69,19 +69,21 @@ import { Envapt, Converters } from 'envapt';
 
 class Config {
     @Envapt('PORT', { converter: Converters.Number, fallback: 3000 })
-    declare static readonly port: number;
+    static readonly port: number;
 
     @Envapt('DATABASE_URL', { converter: Converters.Url, required: true })
-    declare static readonly databaseUrl: URL;
+    static readonly databaseUrl: URL;
 }
 ```
 
 ### Two rules that bite if you miss them
 
-1. **Declare the property with `declare` and no initializer.** `@Envapt` installs a getter via
-   `Object.defineProperty`. Under `useDefineForClassFields` (on by default for modern targets) a real
-   field declaration emits a constructor assignment that overwrites the getter with `undefined`. Write
-   `declare readonly x: T`, never `readonly x: T = ...` and never omit `declare`.
+1. **Declare static and instance fields differently.** `@Envapt` installs a getter via
+   `Object.defineProperty`. Static fields use a plain `static readonly x: T` (no `declare`, no
+   initializer), since a `declare static` member is erased and tsc puts the decorator on the prototype,
+   off the static read path. Instance fields use `declare readonly x: T` (no initializer), since under
+   `useDefineForClassFields` a real field declaration emits a constructor assignment that overwrites the
+   getter with `undefined`.
 2. **Enable `experimentalDecorators`** in `tsconfig.json` (and `deno.json` on Deno):
    `{ "compilerOptions": { "experimentalDecorators": true } }`.
 
@@ -103,10 +105,10 @@ site is the key plus an optional fallback (typed to the converter). They take a 
 import { EnvNum, EnvBool, EnvUrl, EnvTime } from 'envapt';
 
 class Config {
-    @EnvNum('PORT', 3000) declare static readonly port: number;
-    @EnvBool('DEBUG', false) declare static readonly debug: boolean;
-    @EnvUrl('APP_URL', new URL('http://localhost:3000')) declare static readonly url: URL; // fallback is a URL, not a string
-    @EnvTime('CACHE_TTL', '15m') declare static readonly cacheTtl: number; // resolves to milliseconds
+    @EnvNum('PORT', 3000) static readonly port: number;
+    @EnvBool('DEBUG', false) static readonly debug: boolean;
+    @EnvUrl('APP_URL', new URL('http://localhost:3000')) static readonly url: URL; // fallback is a URL, not a string
+    @EnvTime('CACHE_TTL', '15m') static readonly cacheTtl: number; // resolves to milliseconds
 }
 ```
 
@@ -244,7 +246,7 @@ envapt loads `.env` **and** returns typed, validated values from one API, with n
 
 | Gotcha                      | Rule                                                                                                                                                   |
 | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Decorator reads `undefined` | Use `declare readonly x: T` with no initializer (the `useDefineForClassFields` footgun)                                                                |
+| Decorator reads `undefined` | Static fields use `static readonly x: T`, instance fields use `declare readonly x: T`, both with no initializer                                        |
 | Decorator broken on Bun     | `@Envapt` does not work on Bun-direct `.ts` (bun#27575); use the functional API                                                                        |
 | `@EnvUrl` fallback          | It's a `URL` instance, not a string: `new URL('...')`                                                                                                  |
 | `Time` / `@EnvTime`         | Resolves to milliseconds; fallback is a ms number or a time string (`'15m'`)                                                                           |
@@ -264,9 +266,9 @@ custom functions, `schema`, or `required`). When you see it, migrate to the opti
 
 ```ts
 // old
-@Envapt('PORT', 3000, Number) declare static readonly port: number;
+@Envapt('PORT', 3000, Number) static readonly port: number;
 // new
-@Envapt('PORT', { converter: Converters.Number, fallback: 3000 }) declare static readonly port: number;
+@Envapt('PORT', { converter: Converters.Number, fallback: 3000 }) static readonly port: number;
 ```
 
 </details>

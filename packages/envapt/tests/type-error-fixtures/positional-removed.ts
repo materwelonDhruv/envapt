@@ -5,5 +5,5 @@ import { Envapt } from '../../src';
 // TS2769 and 021-type-error-messages starts failing.
 export class PositionalRemoved {
     @Envapt('HOST', 'localhost')
-    declare static readonly host: string;
+    static readonly host: string;
 }

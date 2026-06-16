@@ -1,7 +1,7 @@
 {
     "name": "envapt",
     "type": "module",
-    "version": "6.0.1",
+    "version": "6.0.2",
     "description": "Type-safe config for TypeScript. Read typed values from any source, process.env, .env files, Cloudflare Workers bindings, browser bundles, or any object you supply. Zero runtime dependencies, one API across Node, Bun, Deno, Workers, and the browser. Decorators, converters, and Standard Schema (zod/valibot/arktype) validation.",
     "types": "./dist/node/index.d.mts",
     "exports": {
@@ -90,6 +90,7 @@
         "test:workers": "tsc --noEmit -p tests/workers/tsconfig.json && vitest run --config vitest.workers.config.ts",
         "test:browser": "tsc --noEmit -p tests/browser/tsconfig.json && vitest run --config vitest.browser.config.ts",
         "test:consumer-build": "node tests/consumer-build/run.mjs",
+        "test:tsc-emit": "node tests/tsc-emit/run.mjs",
         "test:all": "node ../../scripts/test-all.mjs",
         "coverage": "pnpm run test --coverage",
         "cs": "changeset",

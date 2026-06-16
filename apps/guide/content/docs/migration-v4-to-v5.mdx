@@ -77,7 +77,7 @@ The classic positional form is deprecated in v5 and removed in v6. Use the optio
 @Envapt('PORT', { converter: Converters.Number, fallback: 8080 })
 ```
 
-Declare decorated properties with `declare` and no initializer. This was always the correct pattern; v5 documents it explicitly. See [Decorators](/docs/decorators).
+Decorated fields need the right declaration form. Static fields use a plain `static readonly`, instance fields use `declare readonly`, both with no initializer. See [Decorators](/docs/decorators#declaring-decorated-fields).
 
 ## Node version
 
