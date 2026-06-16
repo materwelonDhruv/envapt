@@ -1,5 +1,24 @@
 # envapt
 
+## 7.0.0-next.0
+
+### Major Changes
+
+- da55055: **BREAKING:** This should have been done long ago, but all the legacy decorators (`@Envapt` and the sugar decorators) now correctly typecheck the field they are decorating. Say, for example you had `@EnvNum(PORT)` on a field, but the field was typed as `number`, you would now get an error that says `'{ '[envapt] field type must hold the converter output': number | null; }'` because without a fallback, the field would be assigned a `null` value if the environment variable is not set. And of course, this also means completely incorrectly typed fields will also not compile anymore. This was the intended behavior so it should be a minor, but because of how many of my own tests it broke, I'm releasing it as a major.
+- da55055: **BREAKING.** Modern (TC39 Stage 3) decorators are now the default.
+
+    `@Envapt` and the sugar decorators (`@EnvNum`, `@EnvStr`, `@EnvBool`, `@EnvUrl`, `@EnvTime`) imported from `envapt` are now Stage 3 accessor decorators. Decorate with the `accessor` keyword, `static accessor port: number` for a static field and `accessor port!: number` for an instance field. They need no `experimentalDecorators` flag and work on any runtime, including Bun and Deno running `.ts` directly.
+
+    The legacy (experimentalDecorators) decorators move to a subpath. Change `import { Envapt } from 'envapt'` to `import { Envapt } from 'envapt/legacy'` to keep the old `static readonly` / `declare readonly` form, which still requires `experimentalDecorators: true`. Everything else (`Envapter`, `Converters`, sources, and types) stays on `envapt`.
+
+### Minor Changes
+
+- da55055: **BREAKING:** Legacy decorated properties now throw a clear error when you assign to them. `@Envapt` and the sugar decorators (from `envapt/legacy`) install a setter that throws `EnvaptError` with code `InvalidUserDefinedConfig`, because the value resolves from the environment and is read-only. Before, the property had only a getter, so an assignment was a silent no-op in sloppy mode and a native `TypeError` in strict mode. The modern decorators on `envapt` behave the same way.
+
+### Patch Changes
+
+- da55055: Fix decorator value caching so a resolved `undefined` (from `fallback: undefined` or a converter that returns `undefined`) is cached once instead of re-resolving on every property access. The modern accessor decorator now throws `EnvaptError` when the runtime's Stage 3 transform does not provide the accessor name, rather than collapsing every accessor to one cache key.
+
 ## 6.0.2
 
 ### Patch Changes

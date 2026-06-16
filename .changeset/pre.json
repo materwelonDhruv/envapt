@@ -5,5 +5,10 @@
     "@envapt/guide": "1.0.0",
     "envapt": "6.0.1"
   },
-  "changesets": []
+  "changesets": [
+    "decorator-cache-undefined",
+    "goofy-cases-kiss",
+    "legacy-decorators-read-only",
+    "modern-stage3-decorators"
+  ]
 }
