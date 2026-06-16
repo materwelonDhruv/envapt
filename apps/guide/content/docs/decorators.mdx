@@ -10,10 +10,10 @@ import { Envapt, Converters } from 'envapt';
 // ---cut---
 class Config {
     @Envapt('PORT', { converter: Converters.Number, fallback: 3000 })
-    declare static readonly port: number;
+    static readonly port: number;
 
     @Envapt('DEBUG', { converter: Converters.Boolean, fallback: false })
-    declare static readonly debug: boolean;
+    static readonly debug: boolean;
 }
 
 Config.port;
@@ -22,15 +22,23 @@ Config.port;
 
 The value is read and converted once, on first access, then cached.
 
-## Declare the property, never initialize it
+## Declaring decorated fields
 
-Always declare a decorated property with `declare` and no initializer.
+The right form depends on whether the field is static or instance.
 
-`@Envapt` installs a getter on the class with `Object.defineProperty`. Under `useDefineForClassFields` (on by default for modern targets), a real field declaration emits an assignment in the constructor that overwrites that getter with `undefined`. The `declare` keyword makes the property type-only, so it emits nothing and the getter survives.
+- **Static** fields use a plain `static readonly x: T`, with no `declare` and no initializer.
+- **Instance** fields use `declare readonly x: T`, with no initializer.
 
-<Callout type="danger">
-    A decorated property with an initializer or without `declare` reads back as `undefined` at runtime: the emitted
-    field clobbers envapt's getter. Write `declare readonly x: T`, never `readonly x: T = ...`.
+`@Envapt` installs a getter with `Object.defineProperty`, and two compiler behaviors decide where that getter has to sit.
+
+For an instance field, `useDefineForClassFields` (on by default for modern targets) emits a per-instance assignment in the constructor that would overwrite the getter with `undefined`. `declare` makes the field type-only, so nothing is emitted and the getter survives.
+
+For a static field the reverse holds. A `declare static` member is erased, so tsc emits the decorator against the prototype and a static read never reaches the getter, returning `undefined`. A plain `static readonly` emits a real static member, so the decorator lands on the constructor where the static read finds it.
+
+<Callout type="warn">
+    Match the form to the field. Use `static readonly x: T` for static and `declare readonly x: T` for instance. A
+    `declare static` field reads back as `undefined` under tsc (esbuild, swc, oxc, bun, and deno are unaffected). A plain
+    instance field, or any initializer, also reads back as `undefined` because the emitted field clobbers the getter.
 </Callout>
 
 You also need `experimentalDecorators` enabled.
@@ -55,15 +63,15 @@ import { Envapt, Converters } from 'envapt';
 class Config {
     // duration token: a time-string fallback is coerced to milliseconds
     @Envapt('CACHE_TTL', { converter: Converters.Time, fallback: '15m' })
-    declare static readonly cacheTtl: number;
+    static readonly cacheTtl: number;
 
     // array token
     @Envapt('ALLOWED_ORIGINS', { converter: Converters.array({ of: Converters.String }), fallback: [] })
-    declare static readonly origins: string[];
+    static readonly origins: string[];
 
     // custom function: returns a shape the array builder can't, here a deduped Set
     @Envapt('TRUSTED_IPS', { converter: (raw) => new Set((raw ?? '').split(',').filter(Boolean)) })
-    declare static readonly trustedIps: Set<string>;
+    static readonly trustedIps: Set<string>;
 }
 ```
 
@@ -78,25 +86,25 @@ import { EnvNum, EnvStr, EnvBool, EnvUrl, EnvTime } from 'envapt';
 // ---cut---
 class Config {
     @EnvNum('PORT', 3000)
-    declare static readonly port: number;
+    static readonly port: number;
 
     @EnvStr('AWS_REGION', 'us-east-1')
-    declare static readonly region: string;
+    static readonly region: string;
 
     @EnvBool('DEBUG', false)
-    declare static readonly debug: boolean;
+    static readonly debug: boolean;
 
     @EnvUrl('APP_URL', new URL('http://localhost:3000'))
-    declare static readonly url: URL;
+    static readonly url: URL;
 
     @EnvTime('CACHE_TTL', '15m')
-    declare static readonly cacheTtl: number;
+    static readonly cacheTtl: number;
 }
 ```
 
 The second argument is the fallback, typed to the converter: `@EnvUrl` takes a `URL`, `@EnvTime` takes a millisecond number or a time string, the rest take their primitive. Omit it and the property resolves to the converted value or `null`. The key can also be an [ordered list](#ordered-keys).
 
-These install the same getter as `@Envapt`, so the [`declare` rule](#declare-the-property-never-initialize-it) applies. They take a fallback only: for `required`, a `schema`, an array, or a custom function, use `@Envapt` with the options object.
+These install the same getter as `@Envapt`, so the same [declaration rule](#declaring-decorated-fields) applies. They take a fallback only. For `required`, a `schema`, an array, or a custom function, use `@Envapt` with the options object.
 
 ## Required values
 
@@ -107,7 +115,7 @@ import { Envapt, Converters } from 'envapt';
 // ---cut---
 class Config {
     @Envapt('DATABASE_URL', { converter: Converters.Url, required: true })
-    declare static readonly databaseUrl: URL;
+    static readonly databaseUrl: URL;
 }
 ```
 
@@ -128,7 +136,7 @@ import { Envapt } from 'envapt';
 // ---cut---
 class Config {
     @Envapt('STRIPE_SECRET_KEY', { schema: z.string().startsWith('sk_') })
-    declare static readonly stripeKey: string;
+    static readonly stripeKey: string;
 }
 ```
 
@@ -144,7 +152,7 @@ import { Envapt, Converters } from 'envapt';
 class Config {
     // CANARY_URL if set, otherwise APP_URL
     @Envapt(['CANARY_URL', 'APP_URL'], { converter: Converters.Url })
-    declare static readonly url: URL | null;
+    static readonly url: URL | null;
 }
 ```
 

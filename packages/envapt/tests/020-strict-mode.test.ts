@@ -104,34 +104,34 @@ describe('Strict mode + required (v5)', () => {
     describe('Decorator @Envapt({ required: true })', () => {
         class RequiredOk {
             @Envapt('API_KEY', { required: true })
-            declare static readonly key: string;
+            static readonly key: string;
         }
 
         class RequiredMissing {
             @Envapt('NEVER_SET_KEY', { required: true })
-            declare static readonly key: string;
+            static readonly key: string;
         }
 
         class RequiredEmpty {
             @Envapt('EMPTY_VALUE', { required: true })
-            declare static readonly key: string;
+            static readonly key: string;
         }
 
         class RequiredWhitespace {
             @Envapt('WHITESPACE_ONLY', { required: true })
-            declare static readonly key: string;
+            static readonly key: string;
         }
 
         class RequiredWithConverter {
             @Envapt('DATABASE_URL', { converter: Converters.Url, required: true })
-            declare static readonly url: URL;
+            static readonly url: URL;
         }
 
         // Exercises the `Array.isArray(key)` arm of `formatKeyForError`; both keys must be
         // absent so the throw path runs.
         class RequiredArrayKeyAllMissing {
             @Envapt(['NEVER_SET_KEY', 'ALSO_NEVER_SET'], { required: true })
-            declare static readonly key: string;
+            static readonly key: string;
         }
 
         it('returns the value when the env variable is set', () => {
@@ -185,7 +185,7 @@ describe('Strict mode + required (v5)', () => {
                         // intentionally bad combo, runtime should reject -- justified
                         fallback: 'should-not-be-here'
                     } as unknown as { required: true })
-                    declare static readonly key: string;
+                    static readonly key: string;
                 }
                 void Bad;
             };
@@ -358,7 +358,7 @@ describe('Strict mode + required (v5)', () => {
                 class Bad {
                     // @ts-expect-error `required: true` and `fallback` are mutually exclusive
                     @Envapt('PORT', { converter: Converters.Number, required: true, fallback: 3000 })
-                    declare static readonly port: number;
+                    static readonly port: number;
                 }
                 void Bad;
             })

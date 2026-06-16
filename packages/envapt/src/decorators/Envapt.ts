@@ -72,7 +72,7 @@ export function Envapt<TFallback>(
  *     converter: (raw) => Buffer.from(raw ?? '', 'base64'),
  *     required: true
  *   })
- *   declare static readonly jwtSecret: Buffer;
+ *   static readonly jwtSecret: Buffer;
  * }
  * ```
  */
@@ -124,7 +124,7 @@ export function Envapt<TReturnType>(
  *   static readonly allowedOrigins: string[];
  *
  *   \@Envapt('DATABASE_URL', { converter: Converters.Url, required: true })
- *   declare static readonly databaseUrl: URL;
+ *   static readonly databaseUrl: URL;
  * }
  * ```
  */
@@ -173,7 +173,7 @@ export function Envapt<TConstructor extends PrimitiveConstructor>(
  * ```ts
  * class Config extends Envapter {
  *   \@Envapt('API_KEY', { required: true })
- *   declare static readonly apiKey: string;
+ *   static readonly apiKey: string;
  * }
  * ```
  */

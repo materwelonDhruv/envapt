@@ -37,11 +37,11 @@ import { Envapt, Converters } from 'envapt';
 // ---cut---
 class Config {
     @Envapt('PORT', { converter: Converters.Number, fallback: 3000 })
-    declare static readonly port: number;
+    static readonly port: number;
 }
 ```
 
-Decorators need `experimentalDecorators` enabled, and the property declared with `declare` and no initializer:
+Decorators need `experimentalDecorators` enabled.
 
 ```json title="tsconfig.json"
 {
@@ -52,9 +52,9 @@ Decorators need `experimentalDecorators` enabled, and the property declared with
 ```
 
 <Callout type="warn">
-    Declare the property with `declare` and no initializer. A real field declaration (or an initializer) emits an
-    assignment that overwrites envapt's getter, so the property reads back as `undefined` at runtime. See
-    [Decorators](/docs/decorators#declare-the-property-never-initialize-it).
+    Static fields use `static readonly x: T`, instance fields use `declare readonly x: T`, both with no initializer. The
+    wrong form reads back as `undefined` at runtime. See
+    [Decorators](/docs/decorators#declaring-decorated-fields).
 </Callout>
 
 ## Mirror loaded values to process.env

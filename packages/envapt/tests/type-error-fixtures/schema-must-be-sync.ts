@@ -13,5 +13,5 @@ declare const asyncSchema: StandardSchemaV1<string, string> & {
 
 export class AsyncSchemaUser {
     @Envapt('VALUE', { schema: asyncSchema })
-    declare static readonly value: string;
+    static readonly value: string;
 }

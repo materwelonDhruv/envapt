@@ -96,7 +96,7 @@ import { Envapt, Converters } from 'envapt';
 
 class Config {
     @Envapt('PORT', { converter: Converters.Number, fallback: 3000 })
-    declare static readonly port: number;
+    static readonly port: number;
 }
 ```
 

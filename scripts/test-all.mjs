@@ -25,7 +25,8 @@ const slices = [
     ['unit', ['--filter', 'envapt', 'test']],
     ['integration', ['--filter', 'envapt', 'test:integration']],
     ['workerd', ['--filter', 'envapt', 'test:workers']],
-    ['consumer-build', ['--filter', 'envapt', 'test:consumer-build']]
+    ['consumer-build', ['--filter', 'envapt', 'test:consumer-build']],
+    ['tsc-emit', ['--filter', 'envapt', 'test:tsc-emit']]
 ];
 if (hasChromium) slices.push(['browser', ['--filter', 'envapt', 'test:browser']]);
 
