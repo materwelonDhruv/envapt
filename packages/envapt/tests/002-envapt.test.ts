@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 
 import { Converters, Envapter, type JsonValue } from '../src';
+import { EnvaptError } from '../src/infra/Error';
 import { Envapt } from '../src/legacy';
 
 describe('Envapt', () => {
@@ -390,6 +391,18 @@ describe('Envapt', () => {
         it('should return the string "42" for both testVar and testVarWithConverter', () => {
             expect(MultiEnv.testVarWithConverter).to.equal('42');
             expect(MultiEnv.testVar).to.equal('42');
+        });
+    });
+
+    describe('read-only enforcement', () => {
+        class ReadOnlyConfig {
+            @Envapt('PORT', { fallback: 3000 })
+            public static readonly port: number;
+        }
+
+        it('throws an EnvaptError when assigning to a decorated property', () => {
+            // pragmatic cast to a mutable view so the assignment compiles, the decorator installs a throwing setter
+            expect(() => ((ReadOnlyConfig as { port: number }).port = 9999)).to.throw(EnvaptError, 'read-only');
         });
     });
 });
