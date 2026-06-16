@@ -49,7 +49,7 @@ Only the decorators move. `Envapter`, `Converters`, the sources, and the types s
 
 ## Decorated properties are read-only
 
-Assigning to a decorated property now throws `EnvaptError`. On v6 the legacy decorator installed only a getter, so an assignment was a silent no-op in sloppy mode or a native `TypeError` in strict mode. Both the default and legacy forms throw the clearer error in v7.
+Assigning to a decorated property now throws `EnvaptError`. Till v6 the legacy decorator installed only a getter, so an assignment was a silent no-op in sloppy mode or a native `TypeError` in strict mode. Both the default and legacy forms throw the clearer error in v7.
 
 ## Decorated fields are typechecked
 

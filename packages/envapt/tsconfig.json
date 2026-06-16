@@ -21,6 +21,7 @@
         "tests/browser/**",
         "tests/consumer-build/**",
         "tests/tsc-emit/**",
-        "tests/stage3-emit/**"
+        "tests/stage3-emit/**",
+        "tests/integration/modern-decorator-check.ts"
     ]
 }
