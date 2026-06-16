@@ -370,7 +370,7 @@ describe('Standard Schema adapter (v5)', () => {
                         // fixture: passing a non-StandardSchema value to exercise the shape guard -- justified
                         schema: { not: 'a schema' } as unknown as StandardSchemaV1
                     })
-                    static readonly port: number;
+                    static readonly port: unknown;
                 }
                 void Bad;
             };
@@ -386,7 +386,7 @@ describe('Standard Schema adapter (v5)', () => {
                         // fixture: null squeezes past `!== undefined` and hits the value-is-null branch -- justified
                         schema: null as unknown as StandardSchemaV1
                     })
-                    static readonly port: number;
+                    static readonly port: unknown;
                 }
                 void Bad;
             };
@@ -402,7 +402,7 @@ describe('Standard Schema adapter (v5)', () => {
                         // fixture: slot-is-null branch of the shape guard -- justified
                         schema: { '~standard': null } as unknown as StandardSchemaV1
                     })
-                    static readonly port: number;
+                    static readonly port: unknown;
                 }
                 void Bad;
             };

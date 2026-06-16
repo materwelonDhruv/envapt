@@ -2,7 +2,7 @@ import { resolve } from 'node:path';
 
 import { beforeAll, describe, expect, it } from 'vitest';
 
-import { Converters, Envapt, Envapter } from '../src';
+import { Converters, Envapt, Envapter, type JsonValue } from '../src';
 
 describe('Envapt', () => {
     beforeAll(() => (Envapter.envPaths = resolve(`${import.meta.dirname}/.env.envapt-test`)));
@@ -100,7 +100,7 @@ describe('Envapt', () => {
             public static readonly testStringAsSymbol: symbol;
 
             @Envapt('TEST_VAR', { fallback: undefined })
-            public static readonly testVar: string;
+            public static readonly testVar: string | undefined;
 
             @Envapt('NONEXISTENT_VAR_WITH_FALLBACK_STRING', { fallback: 'default-value' })
             public static readonly nonexistentVarWithFallbackString: string;
@@ -115,13 +115,13 @@ describe('Envapt', () => {
                 fallback: undefined,
                 converter: Converters.Time
             })
-            public static readonly undefinedFallbackWithConverter: string;
+            public static readonly undefinedFallbackWithConverter: number | undefined;
 
             @Envapt('TEST_VAR_UNDEFINED_FALLBACK_WITH_CONVERTER', {
                 fallback: undefined,
                 converter: Converters.array({ of: Converters.Time, delimiter: ',' })
             })
-            public static readonly undefinedFallbackWithArrayConverter: string;
+            public static readonly undefinedFallbackWithArrayConverter: number[] | undefined;
         }
 
         it('should use String converter override despite number fallback', () => {
@@ -236,22 +236,22 @@ describe('Envapt', () => {
     describe('built-in converters showcase', () => {
         class BuiltInConverterShowcase {
             @Envapt('DATABASE_CONFIG', { converter: Converters.Json })
-            static readonly databaseConfig: object;
+            static readonly databaseConfig: JsonValue;
 
             @Envapt('API_ENDPOINTS', { converter: Converters.array({ delimiter: ';' }) })
-            static readonly apiEndpoints: string[];
+            static readonly apiEndpoints: string[] | null;
 
             @Envapt('CORS_ORIGINS', { converter: Converters.array({ of: Converters.Url, delimiter: '|' }) })
-            static readonly corsOrigins: URL[];
+            static readonly corsOrigins: URL[] | null;
 
             @Envapt('SERVICE_TAGS', { converter: Converters.array({ delimiter: ' ' }) })
-            static readonly serviceTags: string[];
+            static readonly serviceTags: string[] | null;
 
             @Envapt('ENABLED_FEATURES', { converter: Converters.Boolean })
-            static readonly enabledFeatures: boolean;
+            static readonly enabledFeatures: boolean | null;
 
             @Envapt('API_TIMEOUT', { converter: Converters.Integer })
-            static readonly apiTimeout: number;
+            static readonly apiTimeout: number | null;
         }
 
         it('should parse JSON configuration', () => {
@@ -268,15 +268,15 @@ describe('Envapt', () => {
 
         it('should parse pipe-delimited URL arrays', () => {
             expect(BuiltInConverterShowcase.corsOrigins).to.be.an('array');
-            expect(BuiltInConverterShowcase.corsOrigins.length).to.equal(3);
+            expect(BuiltInConverterShowcase.corsOrigins?.length).to.equal(3);
 
-            expect(BuiltInConverterShowcase.corsOrigins[0]).to.be.instanceOf(URL);
-            expect(BuiltInConverterShowcase.corsOrigins[1]).to.be.instanceOf(URL);
-            expect(BuiltInConverterShowcase.corsOrigins[2]).to.be.instanceOf(URL);
+            expect(BuiltInConverterShowcase.corsOrigins?.[0]).to.be.instanceOf(URL);
+            expect(BuiltInConverterShowcase.corsOrigins?.[1]).to.be.instanceOf(URL);
+            expect(BuiltInConverterShowcase.corsOrigins?.[2]).to.be.instanceOf(URL);
 
-            expect(BuiltInConverterShowcase.corsOrigins[0]?.href).to.equal('http://localhost:3000/');
-            expect(BuiltInConverterShowcase.corsOrigins[1]?.href).to.equal('https://app.example.com/');
-            expect(BuiltInConverterShowcase.corsOrigins[2]?.href).to.equal('https://staging.example.com/');
+            expect(BuiltInConverterShowcase.corsOrigins?.[0]?.href).to.equal('http://localhost:3000/');
+            expect(BuiltInConverterShowcase.corsOrigins?.[1]?.href).to.equal('https://app.example.com/');
+            expect(BuiltInConverterShowcase.corsOrigins?.[2]?.href).to.equal('https://staging.example.com/');
         });
 
         it('should parse space-delimited arrays', () => {
@@ -295,16 +295,16 @@ describe('Envapt', () => {
     describe('multi-line variables', () => {
         class MultiLineEnv {
             @Envapt('MULTI_LINE_VAR')
-            public static readonly multiLineVar: string;
+            public static readonly multiLineVar: string | null;
 
             @Envapt('MULTI_LINE_VAR_ESCAPED')
-            public static readonly multiLineVarEscaped: string;
+            public static readonly multiLineVarEscaped: string | null;
 
             @Envapt('MULTI_LINE_WITH_BACKSLASHN')
-            public static readonly multiLineWithBackslashN: string;
+            public static readonly multiLineWithBackslashN: string | null;
 
             @Envapt('MULTI_LINE_NUMBER', { converter: Converters.Number })
-            public static readonly multiLineNumber: number;
+            public static readonly multiLineNumber: number | null;
         }
 
         it('should handle multi-line variables correctly', () => {

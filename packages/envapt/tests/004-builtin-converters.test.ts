@@ -2,7 +2,7 @@ import { resolve } from 'node:path';
 
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { Converters, Envapt, Envapter } from '../src';
+import { Converters, Envapt, Envapter, type JsonValue } from '../src';
 
 describe('Built-in Converters', () => {
     beforeEach(() => (Envapter.envPaths = resolve(`${import.meta.dirname}/.env.builtin-test`)));
@@ -148,16 +148,16 @@ describe('Built-in Converters', () => {
     describe('json converter', () => {
         class JsonTest {
             @Envapt('TEST_JSON_OBJECT', { converter: Converters.Json, fallback: {} })
-            static readonly jsonObject: object;
+            static readonly jsonObject: JsonValue;
 
             @Envapt('TEST_JSON_ARRAY', { converter: Converters.Json, fallback: [] })
-            static readonly jsonArray: unknown[];
+            static readonly jsonArray: JsonValue;
 
             @Envapt('TEST_JSON_INVALID', { converter: Converters.Json, fallback: { error: 'fallback' } })
-            static readonly jsonInvalid: object;
+            static readonly jsonInvalid: JsonValue;
 
             @Envapt('NONEXISTENT_JSON', { converter: Converters.Json, fallback: { default: true } })
-            static readonly nonexistentJson: object;
+            static readonly nonexistentJson: JsonValue;
         }
 
         it('should parse valid JSON objects', () => {
@@ -180,7 +180,7 @@ describe('Built-in Converters', () => {
     describe('url converter', () => {
         class UrlTest {
             @Envapt('TEST_URL_VALID', { converter: Converters.Url })
-            static readonly validUrl: URL;
+            static readonly validUrl: URL | null;
 
             @Envapt('TEST_URL_INVALID', { converter: Converters.Url, fallback: new URL('http://fallback.com') })
             static readonly invalidUrl: URL;
@@ -191,7 +191,7 @@ describe('Built-in Converters', () => {
 
         it('should parse valid URLs', () => {
             expect(UrlTest.validUrl).to.be.instanceOf(URL);
-            expect(UrlTest.validUrl.href).to.equal('https://api.example.com/v1');
+            expect(UrlTest.validUrl?.href).to.equal('https://api.example.com/v1');
         });
 
         it('should use fallback for invalid URLs', () => {
@@ -208,19 +208,19 @@ describe('Built-in Converters', () => {
     describe('regexp converter', () => {
         class RegexpTest {
             @Envapt('TEST_REGEXP_SIMPLE', { converter: Converters.Regexp })
-            static readonly simpleRegexp: RegExp;
+            static readonly simpleRegexp: RegExp | null;
 
             @Envapt('TEST_REGEXP_WITH_FLAGS', { converter: Converters.Regexp })
-            static readonly regexpWithFlags: RegExp;
+            static readonly regexpWithFlags: RegExp | null;
 
             @Envapt('TEST_REGEXP_EMAIL', { converter: Converters.Regexp })
-            static readonly emailRegexp: RegExp;
+            static readonly emailRegexp: RegExp | null;
 
             @Envapt('TEST_REGEXP_URL_PATTERN', { converter: Converters.Regexp })
-            static readonly urlRegexp: RegExp;
+            static readonly urlRegexp: RegExp | null;
 
             @Envapt('TEST_REGEXP_PHONE', { converter: Converters.Regexp })
-            static readonly phoneRegexp: RegExp;
+            static readonly phoneRegexp: RegExp | null;
 
             @Envapt('TEST_REGEXP_INVALID', { converter: Converters.Regexp, fallback: /fallback/i })
             static readonly invalidRegexp: RegExp;
@@ -231,74 +231,74 @@ describe('Built-in Converters', () => {
 
         it('should parse simple regexp', () => {
             expect(RegexpTest.simpleRegexp).to.be.instanceOf(RegExp);
-            expect(RegexpTest.simpleRegexp.source).to.equal('\\d+');
-            expect(RegexpTest.simpleRegexp.flags).to.equal('');
+            expect(RegexpTest.simpleRegexp?.source).to.equal('\\d+');
+            expect(RegexpTest.simpleRegexp?.flags).to.equal('');
 
             // Test actual regex functionality
-            expect(RegexpTest.simpleRegexp.test('123')).to.be.true;
-            expect(RegexpTest.simpleRegexp.test('abc')).to.be.false;
-            expect(RegexpTest.simpleRegexp.test('42')).to.be.true;
+            expect(RegexpTest.simpleRegexp?.test('123')).to.be.true;
+            expect(RegexpTest.simpleRegexp?.test('abc')).to.be.false;
+            expect(RegexpTest.simpleRegexp?.test('42')).to.be.true;
         });
 
         it('should parse regexp with flags', () => {
             expect(RegexpTest.regexpWithFlags).to.be.instanceOf(RegExp);
-            expect(RegexpTest.regexpWithFlags.source).to.equal('[a-z]+');
-            expect(RegexpTest.regexpWithFlags.flags).to.equal('gi');
+            expect(RegexpTest.regexpWithFlags?.source).to.equal('[a-z]+');
+            expect(RegexpTest.regexpWithFlags?.flags).to.equal('gi');
 
             // Reset regex state before each test due to global flag
-            RegexpTest.regexpWithFlags.lastIndex = 0;
-            expect(RegexpTest.regexpWithFlags.test('hello')).to.be.true;
+            RegexpTest.regexpWithFlags!.lastIndex = 0;
+            expect(RegexpTest.regexpWithFlags?.test('hello')).to.be.true;
 
-            RegexpTest.regexpWithFlags.lastIndex = 0;
-            expect(RegexpTest.regexpWithFlags.test('WORLD')).to.be.true; // case insensitive with 'i' flag
+            RegexpTest.regexpWithFlags!.lastIndex = 0;
+            expect(RegexpTest.regexpWithFlags?.test('WORLD')).to.be.true; // case insensitive with 'i' flag
 
-            RegexpTest.regexpWithFlags.lastIndex = 0;
-            expect(RegexpTest.regexpWithFlags.test('123')).to.be.false;
+            RegexpTest.regexpWithFlags!.lastIndex = 0;
+            expect(RegexpTest.regexpWithFlags?.test('123')).to.be.false;
 
             // Test case insensitive behavior specifically
-            RegexpTest.regexpWithFlags.lastIndex = 0;
-            expect(RegexpTest.regexpWithFlags.test('ABC')).to.be.true; // uppercase letters should match due to 'i' flag
+            RegexpTest.regexpWithFlags!.lastIndex = 0;
+            expect(RegexpTest.regexpWithFlags?.test('ABC')).to.be.true; // uppercase letters should match due to 'i' flag
 
-            RegexpTest.regexpWithFlags.lastIndex = 0;
-            expect(RegexpTest.regexpWithFlags.test('MixedCase')).to.be.true;
+            RegexpTest.regexpWithFlags!.lastIndex = 0;
+            expect(RegexpTest.regexpWithFlags?.test('MixedCase')).to.be.true;
         });
 
         it('should parse complex email regexp', () => {
             expect(RegexpTest.emailRegexp).to.be.instanceOf(RegExp);
-            expect(RegexpTest.emailRegexp.flags).to.equal('i');
+            expect(RegexpTest.emailRegexp?.flags).to.equal('i');
 
             // Test actual email validation functionality
-            expect(RegexpTest.emailRegexp.test('user@example.com')).to.be.true;
-            expect(RegexpTest.emailRegexp.test('test.email+tag@domain.co.uk')).to.be.true;
-            expect(RegexpTest.emailRegexp.test('user123@subdomain.example.org')).to.be.true;
-            expect(RegexpTest.emailRegexp.test('invalid.email')).to.be.false;
-            expect(RegexpTest.emailRegexp.test('@domain.com')).to.be.false;
-            expect(RegexpTest.emailRegexp.test('user@')).to.be.false;
+            expect(RegexpTest.emailRegexp?.test('user@example.com')).to.be.true;
+            expect(RegexpTest.emailRegexp?.test('test.email+tag@domain.co.uk')).to.be.true;
+            expect(RegexpTest.emailRegexp?.test('user123@subdomain.example.org')).to.be.true;
+            expect(RegexpTest.emailRegexp?.test('invalid.email')).to.be.false;
+            expect(RegexpTest.emailRegexp?.test('@domain.com')).to.be.false;
+            expect(RegexpTest.emailRegexp?.test('user@')).to.be.false;
         });
 
         it('should parse complex URL regexp', () => {
             expect(RegexpTest.urlRegexp).to.be.instanceOf(RegExp);
 
             // Test actual URL validation functionality
-            expect(RegexpTest.urlRegexp.test('https://www.example.com')).to.be.true;
-            expect(RegexpTest.urlRegexp.test('http://api.test.co')).to.be.true;
-            expect(RegexpTest.urlRegexp.test('https://subdomain.example.org/path/to/resource')).to.be.true;
-            expect(RegexpTest.urlRegexp.test('ftp://example.com')).to.be.false;
-            expect(RegexpTest.urlRegexp.test('not-a-url')).to.be.false;
-            expect(RegexpTest.urlRegexp.test('http://')).to.be.false;
+            expect(RegexpTest.urlRegexp?.test('https://www.example.com')).to.be.true;
+            expect(RegexpTest.urlRegexp?.test('http://api.test.co')).to.be.true;
+            expect(RegexpTest.urlRegexp?.test('https://subdomain.example.org/path/to/resource')).to.be.true;
+            expect(RegexpTest.urlRegexp?.test('ftp://example.com')).to.be.false;
+            expect(RegexpTest.urlRegexp?.test('not-a-url')).to.be.false;
+            expect(RegexpTest.urlRegexp?.test('http://')).to.be.false;
         });
 
         it('should parse complex phone regexp', () => {
             expect(RegexpTest.phoneRegexp).to.be.instanceOf(RegExp);
 
             // Test actual phone number validation functionality
-            expect(RegexpTest.phoneRegexp.test('(555) 123-4567')).to.be.true;
-            expect(RegexpTest.phoneRegexp.test('555-123-4567')).to.be.true;
-            expect(RegexpTest.phoneRegexp.test('555.123.4567')).to.be.true;
-            expect(RegexpTest.phoneRegexp.test('+1 555 123 4567')).to.be.true;
-            expect(RegexpTest.phoneRegexp.test('5551234567')).to.be.true;
-            expect(RegexpTest.phoneRegexp.test('123-45-6789')).to.be.false; // wrong format
-            expect(RegexpTest.phoneRegexp.test('555-12-34567')).to.be.false; // wrong grouping
+            expect(RegexpTest.phoneRegexp?.test('(555) 123-4567')).to.be.true;
+            expect(RegexpTest.phoneRegexp?.test('555-123-4567')).to.be.true;
+            expect(RegexpTest.phoneRegexp?.test('555.123.4567')).to.be.true;
+            expect(RegexpTest.phoneRegexp?.test('+1 555 123 4567')).to.be.true;
+            expect(RegexpTest.phoneRegexp?.test('5551234567')).to.be.true;
+            expect(RegexpTest.phoneRegexp?.test('123-45-6789')).to.be.false; // wrong format
+            expect(RegexpTest.phoneRegexp?.test('555-12-34567')).to.be.false; // wrong grouping
         });
 
         it('should use fallback for invalid regexp', () => {
@@ -325,10 +325,10 @@ describe('Built-in Converters', () => {
     describe('date converter', () => {
         class DateTest {
             @Envapt('TEST_DATE_ISO', { converter: Converters.Date })
-            static readonly isoDate: Date;
+            static readonly isoDate: Date | null;
 
             @Envapt('TEST_DATE_TIMESTAMP', { converter: Converters.Date })
-            static readonly timestampDate: Date;
+            static readonly timestampDate: Date | null;
 
             @Envapt('TEST_DATE_INVALID', { converter: Converters.Date, fallback: new Date('2023-01-01') })
             static readonly invalidDate: Date;
@@ -348,15 +348,15 @@ describe('Built-in Converters', () => {
 
         it('should parse ISO date strings', () => {
             expect(DateTest.isoDate).to.be.instanceOf(Date);
-            expect(DateTest.isoDate.getUTCFullYear()).to.equal(2023);
-            expect(DateTest.isoDate.getUTCMonth()).to.equal(11); // December (0-indexed)
-            expect(DateTest.isoDate.getUTCDate()).to.equal(25);
+            expect(DateTest.isoDate?.getUTCFullYear()).to.equal(2023);
+            expect(DateTest.isoDate?.getUTCMonth()).to.equal(11); // December (0-indexed)
+            expect(DateTest.isoDate?.getUTCDate()).to.equal(25);
         });
 
         it('should parse timestamp dates', () => {
             expect(DateTest.timestampDate).to.be.instanceOf(Date);
             // 1640995200000 is 2022-01-01T00:00:00.000Z
-            expect(DateTest.timestampDate.getUTCFullYear()).to.equal(2022);
+            expect(DateTest.timestampDate?.getUTCFullYear()).to.equal(2022);
         });
 
         it('should use fallback for invalid dates', () => {

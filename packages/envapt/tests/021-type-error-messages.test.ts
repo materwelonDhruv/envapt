@@ -118,5 +118,20 @@ describe('TS error message verification (compiler API)', () => {
                 expect(has1240, joinedMessages(diagnostics)).to.be.true;
             }
         );
+
+        it('rejects mismatched field types across the @Envapt overloads', { timeout: FIXTURE_TIMEOUT_MS }, () => {
+            const diagnostics = compileFixture('envapt-overloads-mismatch.ts');
+            const fieldErrors = diagnostics.filter((d) => d.code === 1240);
+            expect(fieldErrors.length, joinedMessages(diagnostics)).to.be.greaterThanOrEqual(6);
+        });
+
+        it(
+            'accepts correct and wider field types across the @Envapt overloads',
+            { timeout: FIXTURE_TIMEOUT_MS },
+            () => {
+                const diagnostics = compileFixture('envapt-overloads-clean.ts');
+                expect(diagnostics, joinedMessages(diagnostics)).to.have.lengthOf(0);
+            }
+        );
     });
 });

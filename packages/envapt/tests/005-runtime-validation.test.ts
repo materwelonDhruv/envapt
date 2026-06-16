@@ -106,7 +106,7 @@ describe('Runtime Validation', () => {
                 converter: Converters.array(),
                 fallback: 'not-an-array'
             })
-            static readonly invalidArrayFallback: string[];
+            static readonly invalidArrayFallback: string | undefined;
 
             @Envapt('NONEXISTENT_ARRAY_VAR', {
                 converter: Converters.array()
@@ -136,7 +136,7 @@ describe('Runtime Validation', () => {
                 // @ts-expect-error custom-converter function doesn't fit a BuiltInConverter slot once TFallback narrows to number
                 converter: (_raw, fallback) => String(fallback)
             })
-            static readonly customConverterInconsistentFallbackType: string;
+            static readonly customConverterInconsistentFallbackType: string | undefined;
         }
 
         it('should throw on invalid passed converter', () => {
@@ -273,21 +273,21 @@ describe('Runtime Validation', () => {
                 converter: Converters.array({ of: Converters.String }),
                 fallback: ['string', 42, 'another-string']
             })
-            static readonly arrayWithMixedTypeElements: string[];
+            static readonly arrayWithMixedTypeElements: string | undefined;
 
             @Envapt('NONEXISTENT_ARRAY_VAR', {
                 // @ts-expect-error fallback element types don't match the declared `of` token
                 converter: Converters.array({ of: Converters.Number }),
                 fallback: ['not-a-number', 'also-not-a-number']
             })
-            static readonly arrayWithWrongElementType: number[];
+            static readonly arrayWithWrongElementType: string | undefined;
 
             @Envapt('NONEXISTENT_ARRAY_VAR', {
                 // @ts-expect-error default `Converters.array()` returns string[]; `42` and `true` are not strings
                 converter: Converters.array(),
                 fallback: ['string', 42, true]
             })
-            static readonly defaultArrayWithMixedTypes: string[];
+            static readonly defaultArrayWithMixedTypes: string | undefined;
 
             @Envapt('NONEXISTENT_ARRAY_VAR', {
                 converter: Converters.array({ of: Converters.String }),

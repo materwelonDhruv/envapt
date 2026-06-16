@@ -7,9 +7,11 @@ import type { InferSchemaOutput, StandardSchemaV1 } from '../StandardSchema';
 import type {
     BuiltInConverter,
     ConverterFunction,
-    EnvKeyInput,
     EnvaptConverter,
+    EnvaptFieldDecorator,
+    EnvKeyInput,
     InferConverterFallbackType,
+    InferConverterReturnType,
     InferPrimitiveReturnType,
     PrimitiveConstructor,
     SchemaConstraint
@@ -45,12 +47,16 @@ import type {
  * }
  * ```
  */
+export function Envapt(
+    key: EnvKeyInput,
+    options: { fallback: undefined; converter?: undefined }
+): EnvaptFieldDecorator<string | undefined>;
 export function Envapt<TFallback>(
     key: EnvKeyInput,
     options:
         | { converter: (raw: string | undefined, fallback: TFallback) => TFallback; fallback: TFallback }
         | { fallback: TFallback; converter?: undefined }
-): PropertyDecorator;
+): EnvaptFieldDecorator<TFallback>;
 
 /**
  * Usage 2: Custom converter function without fallback. Either omit `required` (returns the
@@ -81,7 +87,7 @@ export function Envapt<TReturnType>(
     options:
         | { converter: ConverterFunction<TReturnType>; required?: false }
         | { converter: ConverterFunction<TReturnType>; required: true }
-): PropertyDecorator;
+): EnvaptFieldDecorator<TReturnType>;
 
 /**
  * Usage 3: Built-in or array converter with optional fallback OR `required: true`.
@@ -131,9 +137,17 @@ export function Envapt<TReturnType>(
 export function Envapt<TConverter extends BuiltInConverter | ArrayOf>(
     key: EnvKeyInput,
     options:
-        | { converter: TConverter; fallback?: InferConverterFallbackType<TConverter> | undefined; required?: false }
+        | { converter: TConverter; fallback: InferConverterFallbackType<TConverter>; required?: false }
         | { converter: TConverter; required: true }
-): PropertyDecorator;
+): EnvaptFieldDecorator<InferConverterReturnType<TConverter>>;
+export function Envapt<TConverter extends BuiltInConverter | ArrayOf>(
+    key: EnvKeyInput,
+    options: { converter: TConverter; fallback: undefined; required?: false }
+): EnvaptFieldDecorator<InferConverterReturnType<TConverter> | undefined>;
+export function Envapt<TConverter extends BuiltInConverter | ArrayOf>(
+    key: EnvKeyInput,
+    options: { converter: TConverter; required?: false }
+): EnvaptFieldDecorator<InferConverterReturnType<TConverter> | null>;
 
 /**
  * Usage 4: Primitive constructor with optional fallback
@@ -156,9 +170,17 @@ export function Envapt<TConverter extends BuiltInConverter | ArrayOf>(
 export function Envapt<TConstructor extends PrimitiveConstructor>(
     key: EnvKeyInput,
     options:
-        | { converter: TConstructor; fallback?: InferPrimitiveReturnType<TConstructor>; required?: false }
+        | { converter: TConstructor; fallback: InferPrimitiveReturnType<TConstructor>; required?: false }
         | { converter: TConstructor; required: true }
-): PropertyDecorator;
+): EnvaptFieldDecorator<InferPrimitiveReturnType<TConstructor>>;
+export function Envapt<TConstructor extends PrimitiveConstructor>(
+    key: EnvKeyInput,
+    options: { converter: TConstructor; fallback: undefined; required?: false }
+): EnvaptFieldDecorator<InferPrimitiveReturnType<TConstructor> | undefined>;
+export function Envapt<TConstructor extends PrimitiveConstructor>(
+    key: EnvKeyInput,
+    options: { converter: TConstructor; required?: false }
+): EnvaptFieldDecorator<InferPrimitiveReturnType<TConstructor> | null>;
 
 /**
  * Usage 5: Required, no converter (raw string). Throws `MissingEnvValue` on first access if
@@ -177,7 +199,7 @@ export function Envapt<TConstructor extends PrimitiveConstructor>(
  * }
  * ```
  */
-export function Envapt(key: EnvKeyInput, options: { required: true }): PropertyDecorator;
+export function Envapt(key: EnvKeyInput, options: { required: true }): EnvaptFieldDecorator<string>;
 
 /**
  * No-fallback form. The property resolves from env or `null`.
@@ -193,8 +215,7 @@ export function Envapt(key: EnvKeyInput, options: { required: true }): PropertyD
  * }
  * ```
  */
-// eslint-disable-next-line @typescript-eslint/naming-convention
-export function Envapt<_TReturnType = string | null>(key: EnvKeyInput): PropertyDecorator;
+export function Envapt(key: EnvKeyInput): EnvaptFieldDecorator<string | null>;
 
 /**
  * Usage 6: Standard Schema v1 adapter (zod, valibot, arktype, hand-rolled). Synchronous
@@ -209,12 +230,12 @@ export function Envapt<Schema extends StandardSchemaV1>(
     options:
         | { schema: SchemaConstraint<Schema>; fallback?: InferSchemaOutput<Schema>; required?: false }
         | { schema: SchemaConstraint<Schema>; required: true }
-): PropertyDecorator;
+): EnvaptFieldDecorator<InferSchemaOutput<Schema>>;
 
 /**
  * Instance/Static Property decorator that automatically loads and converts environment variables.
  */
-export function Envapt<TFallback = unknown>(key: EnvKeyInput, options?: unknown): PropertyDecorator {
+export function Envapt<TFallback = unknown>(key: EnvKeyInput, options?: unknown): EnvaptFieldDecorator<unknown> {
     let fallback: TFallback | undefined;
     let actualConverter: EnvaptConverter<TFallback> | undefined;
     let actualSchema: StandardSchemaV1 | undefined;
@@ -274,5 +295,5 @@ export function Envapt<TFallback = unknown>(key: EnvKeyInput, options?: unknown)
         hasFallback,
         required,
         schema: actualSchema
-    });
+    }) as EnvaptFieldDecorator<unknown>;
 }
