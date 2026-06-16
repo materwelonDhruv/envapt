@@ -1,8 +1,8 @@
-import { createPropertyDecorator } from './createPropertyDecorator';
-import { Converters } from '../converters';
+import { Converters } from '../../converters';
+import { createPropertyDecorator } from '../createPropertyDecorator';
 
-import type { ConverterToken } from '../converters';
-import type { EnvaptFieldDecorator, EnvKeyInput, TimeFallback } from '../types';
+import type { ConverterToken } from '../../converters';
+import type { EnvaptFieldDecorator, EnvKeyInput, TimeFallback } from '../../types';
 
 function sugar<TFallback>(
     converter: ConverterToken,
@@ -52,7 +52,7 @@ export function EnvStr(key: EnvKeyInput, fallback?: string): EnvaptFieldDecorato
 
 /**
  * Shorthand for `@Envapt(key, { converter: Converters.Time, fallback })`. The fallback is a
- * millisecond number or a time string (`'15m'`); the resolved value is always milliseconds.
+ * millisecond number or a time string (`'15m'`), and the resolved value is always milliseconds.
  * @public
  */
 export function EnvTime(key: EnvKeyInput, fallback: TimeFallback): EnvaptFieldDecorator<number>;
