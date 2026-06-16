@@ -101,4 +101,22 @@ describe('TS error message verification (compiler API)', () => {
             expect(joinedMessages(diagnostics)).to.include('No overload matches this call');
         });
     });
+
+    describe('legacy decorator constrains the declared field type to the converter output', () => {
+        it('rejects a field whose type cannot hold the converter output', { timeout: FIXTURE_TIMEOUT_MS }, () => {
+            const diagnostics = compileFixture('field-type-mismatch.ts');
+            const has1240 = diagnostics.some((d) => d.code === 1240);
+            expect(has1240, joinedMessages(diagnostics)).to.be.true;
+        });
+
+        it(
+            'rejects a non-null field for a no-fallback decorator (the value can be null)',
+            { timeout: FIXTURE_TIMEOUT_MS },
+            () => {
+                const diagnostics = compileFixture('field-type-no-fallback.ts');
+                const has1240 = diagnostics.some((d) => d.code === 1240);
+                expect(has1240, joinedMessages(diagnostics)).to.be.true;
+            }
+        );
+    });
 });
