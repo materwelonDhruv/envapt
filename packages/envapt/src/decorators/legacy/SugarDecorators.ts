@@ -1,5 +1,5 @@
+import { createPropertyDecorator } from './createPropertyDecorator';
 import { Converters } from '../../converters';
-import { createPropertyDecorator } from '../createPropertyDecorator';
 
 import type { ConverterToken } from '../../converters';
 import type { EnvaptFieldDecorator, EnvKeyInput, TimeFallback } from '../../types';

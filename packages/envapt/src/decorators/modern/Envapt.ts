@@ -2,7 +2,7 @@ import { createAccessorDecorator } from './createAccessorDecorator';
 import { parseEnvaptOptions } from '../parseEnvaptOptions';
 
 import type { ArrayOf } from '../../converters';
-import type { InferSchemaOutput, StandardSchemaV1 } from '../../StandardSchema';
+import type { InferSchemaOutput, StandardSchemaV1 } from '../../infra/StandardSchema';
 import type {
     BuiltInConverter,
     ConverterFunction,

@@ -1,4 +1,4 @@
-import { EnvaptError, EnvaptErrorCodes } from '../../Error';
+import { EnvaptError, EnvaptErrorCodes } from '../../infra/Error';
 import { decoratorCacheKey, resolveDecoratorValue } from '../resolveDecoratorValue';
 
 import type { EnvKeyInput } from '../../types';

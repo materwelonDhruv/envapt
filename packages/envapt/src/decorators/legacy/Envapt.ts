@@ -1,8 +1,8 @@
-import { createPropertyDecorator } from '../createPropertyDecorator';
+import { createPropertyDecorator } from './createPropertyDecorator';
 import { parseEnvaptOptions } from '../parseEnvaptOptions';
 
 import type { ArrayOf } from '../../converters';
-import type { InferSchemaOutput, StandardSchemaV1 } from '../../StandardSchema';
+import type { InferSchemaOutput, StandardSchemaV1 } from '../../infra/StandardSchema';
 import type {
     BuiltInConverter,
     ConverterFunction,

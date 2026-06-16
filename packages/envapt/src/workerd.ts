@@ -1,4 +1,4 @@
-import { installFileApiStubs } from './installFileApiStubs';
+import { installFileApiStubs } from './engine/installFileApiStubs';
 
 export * from './browser';
 

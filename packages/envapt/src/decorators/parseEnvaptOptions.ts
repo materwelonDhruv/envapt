@@ -1,11 +1,10 @@
-import { EnvaptError, EnvaptErrorCodes } from '../Error';
-import { Validator } from '../Validators';
+import { Validator } from '../engine/Validators';
+import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
 
 import type { DecoratorConfig } from './resolveDecoratorValue';
-import type { StandardSchemaV1 } from '../StandardSchema';
+import type { StandardSchemaV1 } from '../infra/StandardSchema';
 import type { EnvaptConverter } from '../types';
 
-// shared by legacy and modern @Envapt so both surfaces validate options identically
 export function parseEnvaptOptions<TFallback>(options: unknown): DecoratorConfig<TFallback> {
     let fallback: TFallback | undefined;
     let converter: EnvaptConverter<TFallback> | undefined;

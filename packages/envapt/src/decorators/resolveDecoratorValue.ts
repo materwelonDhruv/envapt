@@ -1,9 +1,9 @@
 import { ValueConverter } from '../converters';
 import { EnvaptCache } from '../core';
-import { Envapter } from '../Envapter';
-import { EnvaptError, EnvaptErrorCodes } from '../Error';
+import { Envapter } from '../engine/Envapter';
+import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
 
-import type { StandardSchemaV1 } from '../StandardSchema';
+import type { StandardSchemaV1 } from '../infra/StandardSchema';
 import type { EnvaptConverter, EnvKeyInput } from '../types';
 
 export interface DecoratorConfig<TFallback> {
@@ -21,8 +21,8 @@ function formatKeyForError(key: EnvKeyInput): string {
 const classIds = new WeakMap<object, number>();
 let nextClassId = 0;
 
-// Cache key per (class identity, static-vs-instance, property). Keying on the constructor object, not
-// its name, keeps two same-named classes, and a same-named static/instance pair, in separate slots.
+// keyed on the constructor object, not its name, so two same-named classes (and a same-named
+// static/instance pair) stay in separate cache slots
 export function decoratorCacheKey(owner: object, isStatic: boolean, prop: string): string {
     let id = classIds.get(owner);
     if (id === undefined) {
@@ -32,8 +32,6 @@ export function decoratorCacheKey(owner: object, isStatic: boolean, prop: string
     return `${id}.${isStatic ? 'static' : 'instance'}.${prop}`;
 }
 
-// shared by both decorator installers so the required-check, dispatch, and cache stay in one place
-// each installer passes `cacheKey` since the class name is reached differently per decorator API
 export function resolveDecoratorValue<TFallback>(
     key: EnvKeyInput,
     config: DecoratorConfig<TFallback>,

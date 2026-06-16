@@ -1,4 +1,4 @@
-import type { StandardSchemaV1 } from '../StandardSchema';
+import type { StandardSchemaV1 } from '../infra/StandardSchema';
 
 // The brand makes `Err<>` unsatisfiable from user code: a `unique symbol` key cannot be
 // produced externally, so the literal message string can't be copy-pasted to bypass the type.

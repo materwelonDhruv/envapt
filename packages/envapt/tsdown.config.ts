@@ -18,7 +18,7 @@ export default defineConfig([
     // shims injects __dirname/process for the node:* sources.
     {
         ...shared,
-        entry: { index: 'src/index.ts', config: 'src/config.ts' },
+        entry: { index: 'src/index.ts', config: 'src/config.ts', legacy: 'src/legacy.ts' },
         format: ['esm', 'cjs'],
         platform: 'node',
         shims: true,
@@ -27,7 +27,7 @@ export default defineConfig([
     // fixedExtension forces .mjs (it only defaults on for platform:node).
     {
         ...shared,
-        entry: { index: 'src/workerd.ts' },
+        entry: { index: 'src/workerd.ts', legacy: 'src/legacy.ts' },
         format: ['esm'],
         platform: 'neutral',
         shims: false,
@@ -36,7 +36,7 @@ export default defineConfig([
     },
     {
         ...shared,
-        entry: { index: 'src/browser.ts' },
+        entry: { index: 'src/browser.ts', legacy: 'src/legacy.ts' },
         format: ['esm'],
         platform: 'browser',
         shims: false,

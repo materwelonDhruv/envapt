@@ -1,8 +1,8 @@
-import { EnvaptError, EnvaptErrorCodes } from '../Error';
 import { PrimitiveMethods } from './PrimitiveMethods';
+import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
 
 import type { ArrayOf } from '../converters';
-import type { InferSchemaOutput, StandardSchemaV1 } from '../StandardSchema';
+import type { InferSchemaOutput, StandardSchemaV1 } from '../infra/StandardSchema';
 import type {
     AdvancedConverterReturn,
     BuiltInConverter,

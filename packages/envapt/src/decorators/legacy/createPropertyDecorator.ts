@@ -1,8 +1,8 @@
-import { decoratorCacheKey, resolveDecoratorValue } from './resolveDecoratorValue';
-import { EnvaptError, EnvaptErrorCodes } from '../Error';
+import { EnvaptError, EnvaptErrorCodes } from '../../infra/Error';
+import { decoratorCacheKey, resolveDecoratorValue } from '../resolveDecoratorValue';
 
-import type { DecoratorConfig } from './resolveDecoratorValue';
-import type { EnvKeyInput } from '../types';
+import type { EnvKeyInput } from '../../types';
+import type { DecoratorConfig } from '../resolveDecoratorValue';
 
 export function createPropertyDecorator<TFallback>(
     key: EnvKeyInput,
@@ -11,7 +11,6 @@ export function createPropertyDecorator<TFallback>(
     return function (target: object, prop: string | symbol): void {
         const propKey = String(prop);
         const isStatic = typeof target === 'function';
-        // owner is the constructor either way: target itself for a static member, target.constructor for an instance one
         const owner = isStatic ? target : target.constructor;
         const cacheKey = decoratorCacheKey(owner, isStatic, propKey);
 
