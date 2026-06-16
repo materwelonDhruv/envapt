@@ -1,6 +1,6 @@
-import { debugWarn } from '../Debug';
-import { EnvaptError, EnvaptErrorCodes } from '../Error';
 import { EnvapterBase } from './EnvapterBase';
+import { debugWarn } from '../infra/Debug';
+import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
 
 import type { EnvProfile, ProfilesConfig } from '../types';
 

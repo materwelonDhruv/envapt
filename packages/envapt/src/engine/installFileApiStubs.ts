@@ -1,5 +1,5 @@
 import { Envapter } from './Envapter';
-import { EnvaptError, EnvaptErrorCodes } from './Error';
+import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
 
 const FILE_ONLY_APIS = ['envPaths', 'baseDir', 'envFileOptions', 'configureProfiles', 'resetProfiles'] as const;
 

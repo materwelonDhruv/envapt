@@ -1,0 +1,21 @@
+{
+    "$schema": "https://json.schemastore.org/tsconfig.json",
+    "compilerOptions": {
+        "target": "ES2024",
+        "module": "esnext",
+        "moduleResolution": "bundler",
+        "lib": ["ESNext", "Decorators.Legacy"],
+        "experimentalDecorators": false,
+        "emitDecoratorMetadata": false,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "strict": true,
+        "noImplicitAny": true,
+        "noEmit": true,
+        "isolatedModules": true,
+        "resolveJsonModule": true,
+        "allowImportingTsExtensions": false,
+        "types": ["node"]
+    },
+    "include": ["*.ts"]
+}

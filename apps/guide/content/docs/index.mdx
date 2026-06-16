@@ -17,11 +17,11 @@ const redisUrl = Envapter.getUsing('REDIS_URL', Converters.Url, new URL('redis:/
 Read values functionally with [`Envapter`](/docs/envapter), or bind them to class fields with the [`@Envapt`](/docs/decorators) decorator. Both share the same parsing, converters, and cache.
 
 ```ts twoslash
-import { Envapt, Converters } from 'envapt';
+import { EnvUrl } from 'envapt';
 // ---cut---
 class Config {
-    @Envapt('REDIS_URL', { converter: Converters.Url, fallback: new URL('redis://localhost:6379') })
-    static readonly redisUrl: URL;
+    @EnvUrl('REDIS_URL', new URL('redis://localhost:6379'))
+    static accessor redisUrl: URL;
 }
 ```
 

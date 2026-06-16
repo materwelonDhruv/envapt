@@ -1,14 +1,14 @@
 import process from 'node:process';
 
-import { EnvapterBase } from './core/EnvapterBase';
-import { EnvironmentMethods } from './core/EnvironmentMethods';
 import { Envapter } from './Envapter';
-import { setRuntimeSink } from './runtime';
-import { NodeEnvSource } from './sources/NodeEnvSource';
 import { Validator } from './Validators';
+import { EnvapterBase } from '../core/EnvapterBase';
+import { EnvironmentMethods } from '../core/EnvironmentMethods';
+import { setRuntimeSink } from '../infra/runtime';
+import { NodeEnvSource } from '../sources/NodeEnvSource';
 
-import type { EnvFileOptions } from './Dotenv';
-import type { ProfilesConfig } from './types';
+import type { EnvFileOptions } from '../infra/Dotenv';
+import type { ProfilesConfig } from '../types';
 
 /**
  * The Node/Bun/Deno facade: {@link Envapter} plus the filesystem-only configuration APIs (`.env`

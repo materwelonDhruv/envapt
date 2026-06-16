@@ -7,7 +7,7 @@ import { pathToFileURL } from 'node:url';
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { Envapter, EnvaptErrorCodes, Environment } from '../src';
-import { EnvaptError } from '../src/Error';
+import { EnvaptError } from '../src/infra/Error';
 
 // Monorepo case: cwd is the repo root, not the package dir, so a cwd-relative `.env` lookup
 // misses the package's file. `baseDir` anchors resolution to the package dir regardless of cwd.

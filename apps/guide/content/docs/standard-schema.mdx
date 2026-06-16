@@ -21,7 +21,7 @@ import { Envapt, Envapter } from 'envapt';
 // ---cut---
 class Config extends Envapter {
     @Envapt('LOG_LEVEL', { schema: z.enum(['debug', 'info', 'warn', 'error']) })
-    static readonly logLevel: 'debug' | 'info' | 'warn' | 'error';
+    static accessor logLevel: 'debug' | 'info' | 'warn' | 'error';
 }
 ```
 

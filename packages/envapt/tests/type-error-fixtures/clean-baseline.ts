@@ -1,4 +1,5 @@
-import { Converters, Envapt } from '../../src';
+import { Converters } from '../../src';
+import { Envapt } from '../../src/legacy';
 
 export class CleanBaseline {
     @Envapt('PORT', { converter: Converters.Number, fallback: 3000 })

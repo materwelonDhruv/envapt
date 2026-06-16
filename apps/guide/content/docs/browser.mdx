@@ -49,8 +49,8 @@ const beta = Envapter.getBoolean('VITE_ENABLE_BETA', false); // boolean
 
 `ManualEnvSource` snapshots its object at construction, so mutating that object afterward does not change what envapt reads. There is no `.env` cascade and no file-only config APIs in the browser; calling one throws, as does reading before you bind a source. See [Sources](/docs/sources) and [Errors](/docs/errors).
 
-## Decorators need a build step
+## Decorators
 
-`@Envapt` and the sugar decorators need a compile step (`experimentalDecorators`), the same as on Node and Workers; the functional API does not.
+The default `@Envapt` accessor decorators work in the browser build, the legacy `envapt/legacy` form needs a compile step.
 
 For the providers and the contract see [Sources](/docs/sources).

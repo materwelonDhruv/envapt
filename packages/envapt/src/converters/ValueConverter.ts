@@ -1,9 +1,9 @@
 import { BuiltInConverters } from './BuiltInConverters';
-import { EnvaptError, EnvaptErrorCodes } from '../Error';
-import { Validator } from '../Validators';
+import { Validator } from '../engine/Validators';
+import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
 
 import type { ArrayOf } from './Converters';
-import type { StandardSchemaV1 } from '../StandardSchema';
+import type { StandardSchemaV1 } from '../infra/StandardSchema';
 import type { BuiltInConverter, EnvKeyInput, EnvaptConverter, PrimitiveConstructor } from '../types';
 import type { EnvapterService } from '../types/Env';
 

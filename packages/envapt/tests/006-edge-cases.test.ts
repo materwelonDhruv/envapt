@@ -2,7 +2,8 @@ import { resolve } from 'node:path';
 
 import { beforeAll, describe, expect, it } from 'vitest';
 
-import { Converters, Envapt, Envapter } from '../src';
+import { Converters, Envapter } from '../src';
+import { Envapt } from '../src/legacy';
 
 import type { JsonValue } from '../src';
 
@@ -76,22 +77,22 @@ describe('Edge Cases', () => {
     describe('Template resolution edge cases', () => {
         class TemplateEdgeCases {
             @Envapt('NONEXISTENT_TEMPLATE')
-            static readonly nonexistentTemplate: string;
+            static readonly nonexistentTemplate: string | null;
 
             @Envapt('EMPTY_TEMPLATE')
-            static readonly emptyTemplate: string;
+            static readonly emptyTemplate: string | null;
 
             @Envapt('CIRCULAR_TEMPLATE')
-            static readonly circularTemplate: string;
+            static readonly circularTemplate: string | null;
 
             @Envapt('CIRCULAR_A')
-            static readonly circularA: string;
+            static readonly circularA: string | null;
 
             @Envapt('CIRCULAR_B')
-            static readonly circularB: string;
+            static readonly circularB: string | null;
 
             @Envapt('MULTI_TYPE_TEMPLATE')
-            static readonly multiTypeTemplate: string;
+            static readonly multiTypeTemplate: string | null;
         }
 
         it('should handle nonexistent template variables', () => {

@@ -1,8 +1,8 @@
 import { BuiltInConverters, ValueConverter } from '../converters';
-import { debugWarn } from '../Debug';
-import { TemplateResolver } from '../TemplateResolver';
 import { EnvapterBase } from './EnvapterBase';
 import { EnvironmentMethods } from './EnvironmentMethods';
+import { TemplateResolver } from '../engine/TemplateResolver';
+import { debugWarn } from '../infra/Debug';
 
 import type { ConditionalReturn, EnvKeyInput } from '../types';
 import type { EnvapterService } from '../types/Env';

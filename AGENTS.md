@@ -170,11 +170,13 @@ import type { Foo } from 'pkg'; // not import('pkg').Foo
 
 ## Decorator API conventions
 
-envapt uses `experimentalDecorators: true` (see `.vscode/experimental-decorators.md` for the ecosystem audit). The `@Envapt` decorator pattern mutates the prototype via `Object.defineProperty(target, propKey, { get })`. Constraints:
+The default decorators (`@Envapt` and the sugar decorators on `envapt`) are modern TC39 Stage 3 accessor decorators. They use `experimentalDecorators: false` (the default) and are installed through `decorators/modern/createAccessorDecorator`, which returns a `ClassAccessorDecoratorResult` with a resolving `get` and a throwing `set`. The legacy decorators move to the `envapt/legacy` subpath.
 
-- **Static fields use plain `static readonly`, instance fields use `declare readonly`, both with no field initializer.** A `declare static` field reads `undefined` under tsc (the decorator lands on the prototype, off the static read path), and a plain instance field is clobbered by the `useDefineForClassFields` constructor assignment. Document this in any new decorator example.
-- **The classic 3-arg API (`@Envapt('KEY', fb, Converter)`) is deprecated as of v5** and will be removed in v6. New code uses the modern options-object form: `@Envapt('KEY', { converter, fallback })`.
-- **Sugar decorators** (`@EnvNum`, `@EnvUrl`, `@EnvTime`, etc.) added in v5 are thin factories that delegate to `createPropertyDecorator`. Keep them minimal — don't add per-type validation logic; that belongs in the converter.
+- **Declare modern fields with the `accessor` keyword.** Static fields use `static accessor x: T`, instance fields use `accessor x!: T` with the definite-assignment `!`, no `readonly`, no `declare`, no initializer. Document this in any new modern decorator example.
+- **Legacy decorators (`envapt/legacy`) need `experimentalDecorators: true`** and keep the property-decorator form, installed through `decorators/legacy/createPropertyDecorator` with `Object.defineProperty`. Static fields use a plain `static readonly x: T`, instance fields use `declare readonly x: T`, both with no initializer. A `declare static` field reads `undefined` under tsc (the decorator lands on the prototype, off the static read path), and a plain instance field is clobbered by the `useDefineForClassFields` constructor assignment.
+- **Both forms typecheck the decorated field against the converter output.** A field that cannot hold the value fails to compile with `[envapt] field type must hold the converter output` (the branded types in `types/Decorator.ts`). A decorated property is read-only, assigning to it throws `EnvaptError`.
+- **The positional 3-arg API (`@Envapt('KEY', fb, Converter)`) was removed in v6.** Use the options-object form, `@Envapt('KEY', { converter, fallback })`.
+- **Sugar decorators** (`@EnvNum`, `@EnvUrl`, `@EnvTime`, etc.) are thin factories, the modern ones delegate to `createAccessorDecorator` and the legacy ones to `createPropertyDecorator`. Keep them minimal, no per-type validation logic, that belongs in the converter.
 
 ---
 

@@ -3,7 +3,7 @@ title: Compatibility
 description: Runtime support, engine versions, module formats, per-runtime builds, and how decorators behave across runtimes.
 ---
 
-envapt runs on Node, Bun, and Deno with the same API and zero runtime dependencies. It also runs on Cloudflare Workers (workerd) and in the browser, where you bind the source yourself (`WorkerEnvSource` or `ManualEnvSource`) and read with the same typed API. The functional reader API works on every runtime with no build step. The `@Envapt` decorator is TypeScript-only and has per-runtime requirements, covered below.
+envapt runs on Node, Bun, and Deno with the same API and zero runtime dependencies. It also runs on Cloudflare Workers (workerd) and in the browser, where you bind the source yourself (`WorkerEnvSource` or `ManualEnvSource`) and read with the same typed API. The functional reader API works on every runtime with no build step. The default `@Envapt` accessor decorators need no flag either, the legacy `envapt/legacy` decorators have per-runtime requirements covered below.
 
 ## Engine versions
 
@@ -43,25 +43,21 @@ On Workers and the browser, import from `envapt/workerd` and `envapt/browser`. T
 
 ## Decorators per runtime
 
-`@Envapt` is a legacy TypeScript decorator, so it needs `experimentalDecorators`. The functional API does not, so if you cannot enable the flag on a given runtime, the readers still work.
+The default `@Envapt` import is a TC39 (Stage 3) accessor decorator. It needs no `experimentalDecorators` flag and works on every runtime, including Bun and Deno running a `.ts` file directly.
 
-**Node.** Transpile with your usual toolchain (`tsc`, `tsx`, and so on) with:
+The legacy decorators at `envapt/legacy` are the older TypeScript decorators, so they need `experimentalDecorators`. The functional API needs no flag on any runtime.
 
-```json title="tsconfig.json"
+**Node and Deno.** The default accessor decorators work with no configuration. The legacy form needs the flag set in `tsconfig.json` on Node or `deno.json` on Deno.
+
+```json title="tsconfig.json / deno.json"
 { "compilerOptions": { "experimentalDecorators": true } }
 ```
 
-**Deno.** Enable the same flag in `deno.json`:
-
-```json title="deno.json"
-{ "compilerOptions": { "experimentalDecorators": true } }
-```
-
-**Bun.** The functional API works when you run a `.ts` file directly. The decorator does not.
+**Bun.** The functional API and the default accessor decorators both work when you run a `.ts` file directly. Only the legacy form does not.
 
 <Callout type="danger">
     Bun emits TC39 (Stage 3) decorators and ignores `experimentalDecorators`
-    ([bun#27575](https://github.com/oven-sh/bun/issues/27575)), so `@Envapt` does not work when you run a `.ts` entry
-    through Bun directly. The functional API (`Envapter.get`, `getNumber`, and the rest) is unaffected. To use the
-    decorator on Bun, precompile with `tsc`, tsdown, or Vite and run the compiled JavaScript.
+    ([bun#27575](https://github.com/oven-sh/bun/issues/27575)), so the legacy `envapt/legacy` decorators do not work when
+    you run a `.ts` entry through Bun directly. The default accessor decorators on `envapt` are themselves Stage 3, so
+    they work. To use the legacy form on Bun, precompile with `tsc`, tsdown, or Vite and run the compiled JavaScript.
 </Callout>

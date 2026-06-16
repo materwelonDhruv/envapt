@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { Converters, Envapter, EnvaptErrorCodes, ManualEnvSource, NodeEnvSource, WorkerEnvSource } from '../src';
 import { EnvapterBase } from '../src/core/EnvapterBase';
-import { EnvaptError } from '../src/Error';
+import { EnvaptError } from '../src/infra/Error';
 import { UnboundEnvSource } from '../src/sources/UnboundEnvSource';
 
 describe('Source portability (v5.2)', () => {

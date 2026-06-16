@@ -2,7 +2,8 @@ import { resolve } from 'node:path';
 
 import { afterEach, beforeAll, describe, expect, expectTypeOf, it } from 'vitest';
 
-import { EnvBool, EnvNum, EnvStr, EnvTime, EnvUrl, Envapter } from '../src';
+import { Envapter } from '../src';
+import { EnvBool, EnvNum, EnvStr, EnvTime, EnvUrl } from '../src/legacy';
 
 import type { TimeFallback } from '../src';
 

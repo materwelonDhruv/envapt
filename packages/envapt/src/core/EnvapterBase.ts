@@ -1,12 +1,12 @@
-import { debugVerbose, getDebugLevel, setDebugLevel } from '../Debug';
-import { loadDotenv } from '../Dotenv';
-import { EnvaptError, EnvaptErrorCodes } from '../Error';
-import { bindRuntimeFromSource } from '../runtime';
+import { Validator } from '../engine/Validators';
+import { debugVerbose, getDebugLevel, setDebugLevel } from '../infra/Debug';
+import { loadDotenv } from '../infra/Dotenv';
+import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
+import { bindRuntimeFromSource } from '../infra/runtime';
 import { UnboundEnvSource } from '../sources/UnboundEnvSource';
-import { Validator } from '../Validators';
 
-import type { DebugLevel } from '../Debug';
-import type { EnvFileOptions } from '../Dotenv';
+import type { DebugLevel } from '../infra/Debug';
+import type { EnvFileOptions } from '../infra/Dotenv';
 import type { EnvKeyInput, EnvSource, FileEnvSource } from '../types';
 
 /** @internal */

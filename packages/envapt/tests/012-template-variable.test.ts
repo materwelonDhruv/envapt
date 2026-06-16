@@ -2,7 +2,8 @@ import { resolve } from 'node:path';
 
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { Converters, Envapt, Envapter } from '../src';
+import { Converters, Envapter, type JsonValue } from '../src';
+import { Envapt } from '../src/legacy';
 
 describe('template variable resolution', () => {
     beforeEach(() => (Envapter.envPaths = resolve(`${import.meta.dirname}/.env.builtin-test`)));
@@ -48,7 +49,7 @@ describe('template variable resolution', () => {
 
         // JSON converter with templates
         @Envapt('TEST_JSON_OBJECT_TEMPLATE', { converter: Converters.Json, fallback: {} })
-        static readonly jsonObjectTemplate: object;
+        static readonly jsonObjectTemplate: JsonValue;
 
         // URL converter with templates
         @Envapt('TEST_URL_TEMPLATE', { converter: Converters.Url, fallback: new URL('http://fallback.com') })

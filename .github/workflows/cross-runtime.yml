@@ -73,6 +73,7 @@ jobs:
                   name: envapt-dist-and-suites
                   path: packages/envapt/
             - run: bun packages/envapt/tests/integration/run.mjs
+            - run: bun packages/envapt/tests/integration/modern-decorator-check.ts
 
     test-deno:
         name: deno / ubuntu
@@ -88,6 +89,7 @@ jobs:
                   name: envapt-dist-and-suites
                   path: packages/envapt/
             - run: deno run -A --config packages/envapt/tests/integration/deno.json packages/envapt/tests/integration/run.mjs
+            - run: deno run -A --no-config packages/envapt/tests/integration/modern-decorator-check.ts
 
     test-workerd:
         name: workerd

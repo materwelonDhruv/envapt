@@ -5,10 +5,11 @@ import * as v from 'valibot';
 import { afterEach, beforeAll, describe, expect, expectTypeOf, it } from 'vitest';
 import { z } from 'zod/v4';
 
-import { Envapt, Envapter, EnvaptErrorCodes } from '../src';
-import { EnvaptError } from '../src/Error';
+import { Envapter, EnvaptErrorCodes } from '../src';
+import { EnvaptError } from '../src/infra/Error';
+import { Envapt } from '../src/legacy';
 
-import type { StandardSchemaV1 } from '../src/StandardSchema';
+import type { StandardSchemaV1 } from '../src/infra/StandardSchema';
 
 // Hand-rolled implementation proves the adapter has zero library dependence.
 const handRolledUpper: StandardSchemaV1<string, string> = {
@@ -370,7 +371,7 @@ describe('Standard Schema adapter (v5)', () => {
                         // fixture: passing a non-StandardSchema value to exercise the shape guard -- justified
                         schema: { not: 'a schema' } as unknown as StandardSchemaV1
                     })
-                    static readonly port: number;
+                    static readonly port: unknown;
                 }
                 void Bad;
             };
@@ -386,7 +387,7 @@ describe('Standard Schema adapter (v5)', () => {
                         // fixture: null squeezes past `!== undefined` and hits the value-is-null branch -- justified
                         schema: null as unknown as StandardSchemaV1
                     })
-                    static readonly port: number;
+                    static readonly port: unknown;
                 }
                 void Bad;
             };
@@ -402,7 +403,7 @@ describe('Standard Schema adapter (v5)', () => {
                         // fixture: slot-is-null branch of the shape guard -- justified
                         schema: { '~standard': null } as unknown as StandardSchemaV1
                     })
-                    static readonly port: number;
+                    static readonly port: unknown;
                 }
                 void Bad;
             };
