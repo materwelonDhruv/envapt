@@ -4,6 +4,7 @@ import { decoratorCacheKey, resolveDecoratorValue } from '../resolveDecoratorVal
 import type { EnvKeyInput } from '../../types';
 import type { DecoratorConfig } from '../resolveDecoratorValue';
 
+/* v8 ignore start -- @preserve oxc (vitest's transform) breaks modern accessor decorators (context.name unset), so the tsc stage3-emit harness covers these, not vitest */
 export function createAccessorDecorator<TFallback>(key: EnvKeyInput, config: DecoratorConfig<TFallback>) {
     return function <This, Value>(
         _target: ClassAccessorDecoratorTarget<This, Value>,
@@ -30,3 +31,4 @@ export function createAccessorDecorator<TFallback>(key: EnvKeyInput, config: Dec
         };
     };
 }
+/* v8 ignore stop */

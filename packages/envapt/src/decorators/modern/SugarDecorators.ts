@@ -4,6 +4,7 @@ import { Converters } from '../../converters';
 import type { ConverterToken } from '../../converters';
 import type { EnvaptAccessorDecorator, EnvKeyInput, TimeFallback } from '../../types';
 
+/* v8 ignore start -- @preserve oxc (vitest's transform) breaks modern accessor decorators (context.name unset), so the tsc stage3-emit harness covers these, not vitest */
 function sugar<TFallback>(
     converter: ConverterToken,
     key: EnvKeyInput,
@@ -71,3 +72,4 @@ export function EnvUrl(key: EnvKeyInput): EnvaptAccessorDecorator<URL | null>;
 export function EnvUrl(key: EnvKeyInput, fallback?: URL): EnvaptAccessorDecorator<URL | null> {
     return sugar(Converters.Url, key, fallback);
 }
+/* v8 ignore stop */
