@@ -156,6 +156,7 @@ describe('TS error message verification (compiler API)', () => {
                     diagnostics.some((d) => d.code === 1240),
                     joinedMessages(diagnostics)
                 ).to.be.true;
+                expect(joinedMessages(diagnostics)).to.include('[envapt] field type must hold the converter output');
             }
         );
 
@@ -163,6 +164,7 @@ describe('TS error message verification (compiler API)', () => {
             const diagnostics = compileFixture('modern/accessor-overloads-mismatch.ts', MODERN_CONFIG);
             const fieldErrors = diagnostics.filter((d) => d.code === 1240);
             expect(fieldErrors.length, joinedMessages(diagnostics)).to.be.greaterThanOrEqual(6);
+            expect(joinedMessages(diagnostics)).to.include('[envapt] field type must hold the converter output');
         });
 
         it(

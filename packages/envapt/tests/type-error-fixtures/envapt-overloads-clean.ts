@@ -1,4 +1,5 @@
-import { Converters, Envapt } from '../../src';
+import { Converters } from '../../src';
+import { Envapt } from '../../src/legacy';
 
 // Correct declarations across the overloads, including no-fallback `| null` and a deliberately wider
 // field, must all compile cleanly.

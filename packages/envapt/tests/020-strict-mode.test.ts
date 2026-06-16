@@ -2,8 +2,9 @@ import { resolve } from 'node:path';
 
 import { afterEach, beforeAll, describe, expect, expectTypeOf, it } from 'vitest';
 
-import { Converters, Envapt, Envapter, EnvaptErrorCodes } from '../src';
-import { EnvaptError } from '../src/Error';
+import { Converters, Envapter, EnvaptErrorCodes } from '../src';
+import { EnvaptError } from '../src/infra/Error';
+import { Envapt } from '../src/legacy';
 
 describe('Strict mode + required (v5)', () => {
     beforeAll(() => {

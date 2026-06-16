@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 
 import { FIXTURE_PATH } from './_helpers.mjs';
-import { Envapt, Envapter } from '../../../dist/node/index.mjs';
+import { Envapter } from '../../../dist/node/index.mjs';
+import { Envapt } from '../../../dist/node/legacy.mjs';
 
 // `.mjs` has no `@Envapt` syntax. Calling the decorator as a function exercises
 // the same install path tsdown-emitted user code hits at runtime.

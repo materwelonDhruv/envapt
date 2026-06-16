@@ -2,7 +2,8 @@ import { resolve } from 'node:path';
 
 import { beforeAll, describe, expect, it } from 'vitest';
 
-import { Converters, Envapt, Envapter } from '../src';
+import { Converters, Envapter } from '../src';
+import { Envapt } from '../src/legacy';
 
 describe('BigInt and Symbol Support', () => {
     beforeAll(() => (Envapter.envPaths = resolve(import.meta.dirname, '.env.bigint-symbol-test')));

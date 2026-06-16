@@ -1,4 +1,5 @@
-import { Converters, Envapt } from '../../src';
+import { Converters } from '../../src';
+import { Envapt } from '../../src/legacy';
 
 // Every decorated field below declares a type that cannot hold the converter output, so each must
 // fail to compile (one diagnostic per field).

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { Envapt, EnvaptError } from '../src';
+import { EnvaptError } from '../src';
+import { Envapt } from '../src/legacy';
 
 // The positional `@Envapt(key, fallback, converter)` form was removed in v6. The type overloads
 // reject it, so this guards the runtime path a caller still reaches through a cast or plain JS.

@@ -1,6 +1,6 @@
-import { Envapt } from '../../src';
+import { Envapt } from '../../src/legacy';
 
-import type { StandardSchemaV1 } from '../../src/StandardSchema';
+import type { StandardSchemaV1 } from '../../src/infra/StandardSchema';
 
 // Schema whose `~standard.validate` is explicitly typed as returning Promise<Result>.
 // Reproduces the shape an async-only schema library would expose. The `SchemaConstraint`

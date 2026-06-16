@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { Envapt, Envapter } from '../src';
+import { Envapter } from '../src';
+import { Envapt } from '../src/legacy';
 
 // Testing what happens when env paths aren't explicitly set AND no .env file exists
 // Basically, it should work regardless.

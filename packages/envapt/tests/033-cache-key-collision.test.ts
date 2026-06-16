@@ -2,7 +2,8 @@ import { resolve } from 'node:path';
 
 import { beforeAll, describe, expect, it } from 'vitest';
 
-import { EnvNum, Envapter } from '../src';
+import { Envapter } from '../src';
+import { EnvNum } from '../src/legacy';
 
 describe('legacy decorator cache keys', () => {
     beforeAll(() => (Envapter.envPaths = resolve(import.meta.dirname, '.env.cache-keys')));

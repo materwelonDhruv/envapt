@@ -16,7 +16,7 @@ export default createConfig({
         },
         {
             // intentionally-broken fixtures the compiler-API test reads, and tsc-emit build output
-            ignores: ['tests/type-error-fixtures/**', 'tests/tsc-emit/out/**']
+            ignores: ['tests/type-error-fixtures/**', 'tests/tsc-emit/out/**', 'tests/stage3-emit/out/**']
         },
         {
             // integration suites import the built dist/ off the node_modules resolver, so the linter

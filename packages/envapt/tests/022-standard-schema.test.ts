@@ -5,10 +5,11 @@ import * as v from 'valibot';
 import { afterEach, beforeAll, describe, expect, expectTypeOf, it } from 'vitest';
 import { z } from 'zod/v4';
 
-import { Envapt, Envapter, EnvaptErrorCodes } from '../src';
-import { EnvaptError } from '../src/Error';
+import { Envapter, EnvaptErrorCodes } from '../src';
+import { EnvaptError } from '../src/infra/Error';
+import { Envapt } from '../src/legacy';
 
-import type { StandardSchemaV1 } from '../src/StandardSchema';
+import type { StandardSchemaV1 } from '../src/infra/StandardSchema';
 
 // Hand-rolled implementation proves the adapter has zero library dependence.
 const handRolledUpper: StandardSchemaV1<string, string> = {

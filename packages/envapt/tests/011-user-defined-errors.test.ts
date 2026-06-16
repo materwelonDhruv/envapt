@@ -2,7 +2,8 @@ import { resolve } from 'node:path';
 
 import { beforeAll, describe, expect, it } from 'vitest';
 
-import { Envapt, Envapter } from '../src';
+import { Envapter } from '../src';
+import { Envapt } from '../src/legacy';
 
 describe('User-defined errors', () => {
     beforeAll(() => (Envapter.envPaths = resolve(`${import.meta.dirname}/.env.user-defined-errors`)));

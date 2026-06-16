@@ -2,7 +2,8 @@ import { resolve } from 'node:path';
 
 import { beforeAll, describe, expect, it } from 'vitest';
 
-import { Converters, Envapt, Envapter, Environment, type JsonValue } from '../src';
+import { Converters, Envapter, Environment, type JsonValue } from '../src';
+import { Envapt } from '../src/legacy';
 
 describe('Instance Properties with @Envapt', () => {
     beforeAll(() => {

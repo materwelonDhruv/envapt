@@ -2,7 +2,8 @@ import { resolve } from 'node:path';
 
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { Converters, Envapt, Envapter, type JsonValue } from '../src';
+import { Converters, Envapter, type JsonValue } from '../src';
+import { Envapt } from '../src/legacy';
 
 describe('template variable resolution', () => {
     beforeEach(() => (Envapter.envPaths = resolve(`${import.meta.dirname}/.env.builtin-test`)));

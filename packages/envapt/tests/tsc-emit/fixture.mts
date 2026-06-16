@@ -1,4 +1,6 @@
-import { EnvNum, EnvStr } from 'envapt';
+// envapt/legacy ships only the decorators, so importing the main entry is what binds NodeEnvSource
+import 'envapt';
+import { EnvNum, EnvStr } from 'envapt/legacy';
 
 class Config {
     // tsc emits a real static member here, so the decorator lands on the constructor where the static

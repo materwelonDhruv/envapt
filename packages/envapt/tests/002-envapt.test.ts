@@ -2,7 +2,8 @@ import { resolve } from 'node:path';
 
 import { beforeAll, describe, expect, it } from 'vitest';
 
-import { Converters, Envapt, Envapter, type JsonValue } from '../src';
+import { Converters, Envapter, type JsonValue } from '../src';
+import { Envapt } from '../src/legacy';
 
 describe('Envapt', () => {
     beforeAll(() => (Envapter.envPaths = resolve(`${import.meta.dirname}/.env.envapt-test`)));
