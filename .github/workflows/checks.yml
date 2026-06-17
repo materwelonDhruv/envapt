@@ -56,6 +56,8 @@ jobs:
               run: pnpm lint
             - name: Run tests
               run: pnpm test
+            - name: Run exports-dedup guard
+              run: pnpm --filter envapt test:exports-dedup
             - name: Run tsc-emit decorator guard
               run: pnpm --filter envapt test:tsc-emit
             - name: Run stage3-emit decorator guard

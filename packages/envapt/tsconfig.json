@@ -20,6 +20,7 @@
         "tests/workers/**",
         "tests/browser/**",
         "tests/consumer-build/**",
+        "tests/exports-dedup/**",
         "tests/tsc-emit/**",
         "tests/stage3-emit/**",
         "tests/integration/modern-decorator-check.ts"
