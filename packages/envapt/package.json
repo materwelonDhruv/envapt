@@ -3,82 +3,82 @@
     "type": "module",
     "version": "7.0.0-next.0",
     "description": "Type-safe config for TypeScript. Read typed values from any source, process.env, .env files, Cloudflare Workers bindings, browser bundles, or any object you supply. Zero runtime dependencies, one API across Node, Bun, Deno, Workers, and the browser. TC39 accessor decorators (legacy decorators at envapt/legacy), converters, and Standard Schema (zod/valibot/arktype) validation.",
-    "types": "./dist/node/index.d.mts",
+    "types": "./dist/types/index.d.mts",
     "exports": {
         ".": {
             "workerd": {
-                "types": "./dist/workerd/index.d.mts",
+                "types": "./dist/types/index.portable.d.mts",
                 "default": "./dist/workerd/index.mjs"
             },
             "browser": {
-                "types": "./dist/browser/index.d.mts",
+                "types": "./dist/types/index.portable.d.mts",
                 "default": "./dist/browser/index.mjs"
             },
             "node": {
                 "import": {
-                    "types": "./dist/node/index.d.mts",
+                    "types": "./dist/types/index.d.mts",
                     "default": "./dist/node/index.mjs"
                 },
                 "require": {
-                    "types": "./dist/node/index.d.cts",
+                    "types": "./dist/types/index.d.mts",
                     "default": "./dist/node/index.cjs"
                 }
             },
             "default": {
                 "import": {
-                    "types": "./dist/node/index.d.mts",
+                    "types": "./dist/types/index.d.mts",
                     "default": "./dist/node/index.mjs"
                 },
                 "require": {
-                    "types": "./dist/node/index.d.cts",
+                    "types": "./dist/types/index.d.mts",
                     "default": "./dist/node/index.cjs"
                 }
             }
         },
         "./workerd": {
-            "types": "./dist/workerd/index.d.mts",
+            "types": "./dist/types/index.portable.d.mts",
             "default": "./dist/workerd/index.mjs"
         },
         "./browser": {
-            "types": "./dist/browser/index.d.mts",
+            "types": "./dist/types/index.portable.d.mts",
             "default": "./dist/browser/index.mjs"
         },
         "./config": {
             "import": {
-                "types": "./dist/node/config.d.mts",
+                "types": "./dist/types/config.d.mts",
                 "default": "./dist/node/config.mjs"
             },
             "require": {
-                "types": "./dist/node/config.d.cts",
+                "types": "./dist/types/config.d.mts",
                 "default": "./dist/node/config.cjs"
             }
         },
         "./legacy": {
             "workerd": {
-                "types": "./dist/workerd/legacy.d.mts",
+                "types": "./dist/types/legacy.d.mts",
                 "default": "./dist/workerd/legacy.mjs"
             },
             "browser": {
-                "types": "./dist/browser/legacy.d.mts",
+                "types": "./dist/types/legacy.d.mts",
                 "default": "./dist/browser/legacy.mjs"
             },
             "node": {
                 "import": {
-                    "types": "./dist/node/legacy.d.mts",
+                    "types": "./dist/types/legacy.d.mts",
                     "default": "./dist/node/legacy.mjs"
                 },
                 "require": {
-                    "types": "./dist/node/legacy.d.cts",
+                    "types": "./dist/types/legacy.d.mts",
                     "default": "./dist/node/legacy.cjs"
                 }
             },
             "default": {
                 "import": {
-                    "types": "./dist/node/legacy.d.mts",
+                    "types": "./dist/types/legacy.d.mts",
                     "default": "./dist/node/legacy.mjs"
                 },
                 "require": {
-                    "types": "./dist/node/legacy.d.cts",
+                    "types": "./dist/types/legacy.d.mts",
                     "default": "./dist/node/legacy.cjs"
                 }
             }
@@ -91,7 +91,10 @@
         "./dist/workerd/index.mjs"
     ],
     "files": [
-        "dist",
+        "dist/**/*.mjs",
+        "dist/**/*.cjs",
+        "dist/**/*.map",
+        "dist/types",
         "NOTICE.md",
         "LICENSE",
         "README.md",
@@ -120,6 +123,7 @@
         "test:workers": "tsc --noEmit -p tests/workers/tsconfig.json && vitest run --config vitest.workers.config.ts",
         "test:browser": "tsc --noEmit -p tests/browser/tsconfig.json && vitest run --config vitest.browser.config.ts",
         "test:consumer-build": "node tests/consumer-build/run.mjs",
+        "test:exports-dedup": "node tests/exports-dedup/run.mjs",
         "test:tsc-emit": "node tests/tsc-emit/run.mjs",
         "test:stage3-emit": "node tests/stage3-emit/run.mjs",
         "test:all": "node ../../scripts/test-all.mjs",
