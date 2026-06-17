@@ -91,7 +91,10 @@
         "./dist/workerd/index.mjs"
     ],
     "files": [
-        "dist",
+        "dist/**/*.mjs",
+        "dist/**/*.cjs",
+        "dist/**/*.map",
+        "dist/types",
         "NOTICE.md",
         "LICENSE",
         "README.md",
