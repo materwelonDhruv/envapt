@@ -10,6 +10,7 @@
     "dedupe-runtime-type-exports",
     "goofy-cases-kiss",
     "legacy-decorators-read-only",
-    "modern-stage3-decorators"
+    "modern-stage3-decorators",
+    "tree-shake-portable-entries"
   ]
 }
