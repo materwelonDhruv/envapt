@@ -7,6 +7,7 @@
   },
   "changesets": [
     "decorator-cache-undefined",
+    "dedupe-runtime-type-exports",
     "goofy-cases-kiss",
     "legacy-decorators-read-only",
     "modern-stage3-decorators"
