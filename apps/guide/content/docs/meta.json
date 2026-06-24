@@ -21,6 +21,7 @@
         "---Reference---",
         "compatibility",
         "migration-v4-to-v5",
-        "migration-v5-to-v6"
+        "migration-v5-to-v6",
+        "migration-v6-to-v7"
     ]
 }

@@ -2,7 +2,8 @@ import { resolve } from 'node:path';
 
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 
-import { Converters, Envapt, Envapter, Environment } from '../src';
+import { Converters, Envapter, Environment } from '../src';
+import { Envapt } from '../src/legacy';
 
 describe('Envapter', () => {
     beforeAll(() => {

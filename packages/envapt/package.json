@@ -1,67 +1,98 @@
 {
     "name": "envapt",
     "type": "module",
-    "version": "6.0.2",
-    "description": "Type-safe config for TypeScript. Read typed values from any source, process.env, .env files, Cloudflare Workers bindings, browser bundles, or any object you supply. Zero runtime dependencies, one API across Node, Bun, Deno, Workers, and the browser. Decorators, converters, and Standard Schema (zod/valibot/arktype) validation.",
-    "types": "./dist/node/index.d.mts",
+    "version": "7.0.0",
+    "description": "Type-safe config for TypeScript. Read typed values from any source, process.env, .env files, Cloudflare Workers bindings, browser bundles, or any object you supply. Zero runtime dependencies, one API across Node, Bun, Deno, Workers, and the browser. TC39 accessor decorators (legacy decorators at envapt/legacy), converters, and Standard Schema (zod/valibot/arktype) validation.",
+    "types": "./dist/types/index.d.mts",
     "exports": {
         ".": {
             "workerd": {
-                "types": "./dist/workerd/index.d.mts",
+                "types": "./dist/types/index.portable.d.mts",
                 "default": "./dist/workerd/index.mjs"
             },
             "browser": {
-                "types": "./dist/browser/index.d.mts",
+                "types": "./dist/types/index.portable.d.mts",
                 "default": "./dist/browser/index.mjs"
             },
             "node": {
                 "import": {
-                    "types": "./dist/node/index.d.mts",
+                    "types": "./dist/types/index.d.mts",
                     "default": "./dist/node/index.mjs"
                 },
                 "require": {
-                    "types": "./dist/node/index.d.cts",
+                    "types": "./dist/types/index.d.mts",
                     "default": "./dist/node/index.cjs"
                 }
             },
             "default": {
                 "import": {
-                    "types": "./dist/node/index.d.mts",
+                    "types": "./dist/types/index.d.mts",
                     "default": "./dist/node/index.mjs"
                 },
                 "require": {
-                    "types": "./dist/node/index.d.cts",
+                    "types": "./dist/types/index.d.mts",
                     "default": "./dist/node/index.cjs"
                 }
             }
         },
         "./workerd": {
-            "types": "./dist/workerd/index.d.mts",
+            "types": "./dist/types/index.portable.d.mts",
             "default": "./dist/workerd/index.mjs"
         },
         "./browser": {
-            "types": "./dist/browser/index.d.mts",
+            "types": "./dist/types/index.portable.d.mts",
             "default": "./dist/browser/index.mjs"
         },
         "./config": {
             "import": {
-                "types": "./dist/node/config.d.mts",
+                "types": "./dist/types/config.d.mts",
                 "default": "./dist/node/config.mjs"
             },
             "require": {
-                "types": "./dist/node/config.d.cts",
+                "types": "./dist/types/config.d.mts",
                 "default": "./dist/node/config.cjs"
+            }
+        },
+        "./legacy": {
+            "workerd": {
+                "types": "./dist/types/legacy.d.mts",
+                "default": "./dist/workerd/legacy.mjs"
+            },
+            "browser": {
+                "types": "./dist/types/legacy.d.mts",
+                "default": "./dist/browser/legacy.mjs"
+            },
+            "node": {
+                "import": {
+                    "types": "./dist/types/legacy.d.mts",
+                    "default": "./dist/node/legacy.mjs"
+                },
+                "require": {
+                    "types": "./dist/types/legacy.d.mts",
+                    "default": "./dist/node/legacy.cjs"
+                }
+            },
+            "default": {
+                "import": {
+                    "types": "./dist/types/legacy.d.mts",
+                    "default": "./dist/node/legacy.mjs"
+                },
+                "require": {
+                    "types": "./dist/types/legacy.d.mts",
+                    "default": "./dist/node/legacy.cjs"
+                }
             }
         }
     },
     "sideEffects": [
         "./dist/node/config.cjs",
-        "./dist/node/config.mjs",
-        "./dist/browser/index.mjs",
-        "./dist/workerd/index.mjs"
+        "./dist/node/config.mjs"
     ],
     "files": [
-        "dist",
+        "dist/**/*.mjs",
+        "dist/**/*.cjs",
+        "dist/**/*.map",
+        "dist/types",
         "NOTICE.md",
         "LICENSE",
         "README.md",
@@ -90,7 +121,10 @@
         "test:workers": "tsc --noEmit -p tests/workers/tsconfig.json && vitest run --config vitest.workers.config.ts",
         "test:browser": "tsc --noEmit -p tests/browser/tsconfig.json && vitest run --config vitest.browser.config.ts",
         "test:consumer-build": "node tests/consumer-build/run.mjs",
+        "test:tree-shaking": "node tests/tree-shaking/run.mjs",
+        "test:exports-dedup": "node tests/exports-dedup/run.mjs",
         "test:tsc-emit": "node tests/tsc-emit/run.mjs",
+        "test:stage3-emit": "node tests/stage3-emit/run.mjs",
         "test:all": "node ../../scripts/test-all.mjs",
         "coverage": "pnpm run test --coverage",
         "cs": "changeset",
@@ -139,13 +173,13 @@
         "provenance": true
     },
     "devDependencies": {
-        "@cloudflare/vitest-pool-workers": "0.16.14",
-        "@cloudflare/workers-types": "^4.20260613.1",
+        "@cloudflare/vitest-pool-workers": "0.16.19",
+        "@cloudflare/workers-types": "^4.20260623.1",
         "@vitest/browser": "4.1.9",
         "@vitest/browser-playwright": "4.1.9",
-        "arktype": "^2.2.0",
+        "arktype": "^2.2.1",
         "esbuild": "^0.28.1",
-        "playwright": "1.60.0",
+        "playwright": "1.61.0",
         "valibot": "^1.4.1",
         "zod": "catalog:dev"
     }

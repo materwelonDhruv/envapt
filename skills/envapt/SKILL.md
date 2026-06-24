@@ -1,6 +1,6 @@
 ---
 name: envapt
-description: Type-safe config reading and environment variable access for TypeScript and JavaScript with the envapt library. Use when a project imports from 'envapt', 'envapt/config', 'envapt/workerd', or 'envapt/browser', reads process.env or any object as a source, loads .env files, runs on Cloudflare Workers or in the browser, migrates off dotenv, or the user mentions envapt, Envapter, or @Envapt. Covers the functional Envapter reader API (get/getNumber/getBoolean/getUsing/parse/require) as the portable default, the @Envapt and @EnvNum/@EnvStr/@EnvBool/@EnvUrl/@EnvTime decorators, built-in and custom converters, Standard Schema (zod/valibot/arktype) validation, the .env cascade and baseDir, the pluggable EnvSource API (useSource with WorkerEnvSource and ManualEnvSource) for Cloudflare Workers and the browser, the Bun decorator limitation (bun#27575) and the static-vs-instance field declaration rule.
+description: Type-safe config reading and environment variable access for TypeScript and JavaScript with the envapt library. Use when a project imports from 'envapt', 'envapt/config', 'envapt/workerd', or 'envapt/browser', reads process.env or any object as a source, loads .env files, runs on Cloudflare Workers or in the browser, migrates off dotenv, or the user mentions envapt, Envapter, or @Envapt. Covers the functional Envapter reader API (get/getNumber/getBoolean/getUsing/parse/require) as the portable default, the @Envapt and @EnvNum/@EnvStr/@EnvBool/@EnvUrl/@EnvTime decorators (modern TC39 accessor form on 'envapt', legacy experimentalDecorators form on 'envapt/legacy'), built-in and custom converters, Standard Schema (zod/valibot/arktype) validation, the .env cascade and baseDir, the pluggable EnvSource API (useSource with WorkerEnvSource and ManualEnvSource) for Cloudflare Workers and the browser, the accessor field declaration rule, and the legacy-only Bun decorator limitation (bun#27575).
 ---
 
 # envapt
@@ -23,13 +23,14 @@ preference.
 - **Default to the functional `Envapter` readers.** They work in JS and TS with no build step and no
   compiler flags, on every runtime envapt supports (Node, Bun, Deno, Cloudflare Workers, the browser).
   Off Node you bind a source first (see the Runtimes and sources section below).
-- **Use the `@Envapt` decorators only when** the project is TypeScript, already leans decorator-style
-  (existing `@`-decorators, `experimentalDecorators` in `tsconfig.json`/`deno.json`, a stack like NestJS
-  or TypeORM), and has a build/transpile step.
-- **Hard override, no exceptions:** if the project runs a `.ts` entry **directly on Bun** with no
-  precompile (`tsc`/tsdown/Vite), never use the decorator, `@Envapt`. Bun emits TC39 decorators and ignores
-  `experimentalDecorators` ([bun#27575](https://github.com/oven-sh/bun/issues/27575)), so a decorated
-  property reads back `undefined` at runtime. Use the functional readers instead.
+- **The `@Envapt` decorators are TypeScript-only.** The default import is a TC39 Stage 3 accessor
+  decorator, so it needs no `experimentalDecorators` flag and runs on any runtime that handles Stage 3
+  decorators, including Bun and Deno executing a `.ts` file directly. Reach for it on a TS project that
+  wants config on typed fields.
+- **Legacy decorators live at `envapt/legacy`.** Use them only when the project already runs on
+  `experimentalDecorators`. They keep the old `static readonly` / `declare readonly` form and do NOT work
+  on a `.ts` entry run directly on Bun ([bun#27575](https://github.com/oven-sh/bun/issues/27575)), so
+  prefer the default accessor form or the functional readers there.
 
 ## Functional API (the portable default)
 
@@ -61,31 +62,32 @@ Envapter.getUsing('PORT', { converter: Converters.Number, required: true }); // 
 
 ## Decorators
 
-`@Envapt` binds a class property to a variable. The class does **not** need to extend anything; extend
-`Envapter` only to also get the reader methods on the same class.
+`@Envapt` binds a class property to a variable. The default import is a TC39 Stage 3 accessor decorator,
+declared with the `accessor` keyword. The class does **not** need to extend anything, extend `Envapter`
+only to also get the reader methods on the same class.
 
 ```ts
 import { Envapt, Converters } from 'envapt';
 
 class Config {
     @Envapt('PORT', { converter: Converters.Number, fallback: 3000 })
-    static readonly port: number;
+    static accessor port: number;
 
     @Envapt('DATABASE_URL', { converter: Converters.Url, required: true })
-    static readonly databaseUrl: URL;
+    static accessor databaseUrl: URL;
 }
 ```
 
-### Two rules that bite if you miss them
+### Field declaration
 
-1. **Declare static and instance fields differently.** `@Envapt` installs a getter via
-   `Object.defineProperty`. Static fields use a plain `static readonly x: T` (no `declare`, no
-   initializer), since a `declare static` member is erased and tsc puts the decorator on the prototype,
-   off the static read path. Instance fields use `declare readonly x: T` (no initializer), since under
-   `useDefineForClassFields` a real field declaration emits a constructor assignment that overwrites the
-   getter with `undefined`.
-2. **Enable `experimentalDecorators`** in `tsconfig.json` (and `deno.json` on Deno):
-   `{ "compilerOptions": { "experimentalDecorators": true } }`.
+Declare the field with the `accessor` keyword. Static fields use `static accessor x: T`, instance fields
+use `accessor x!: T` with the definite-assignment `!`. No `readonly`, no `declare`, no initializer, and no
+`experimentalDecorators` flag. The accessor is read-only, assigning to it throws `EnvaptError`.
+
+The legacy form (`envapt/legacy`) differs. Static fields use a plain `static readonly x: T` and instance
+fields use `declare readonly x: T` (both no initializer), and `experimentalDecorators` must be on in
+`tsconfig.json` (and `deno.json` on Deno). A module that imports decorators only from `envapt/legacy` must
+also `import 'envapt'` once so the runtime source binds.
 
 ### Options object
 
@@ -105,10 +107,10 @@ site is the key plus an optional fallback (typed to the converter). They take a 
 import { EnvNum, EnvBool, EnvUrl, EnvTime } from 'envapt';
 
 class Config {
-    @EnvNum('PORT', 3000) static readonly port: number;
-    @EnvBool('DEBUG', false) static readonly debug: boolean;
-    @EnvUrl('APP_URL', new URL('http://localhost:3000')) static readonly url: URL; // fallback is a URL, not a string
-    @EnvTime('CACHE_TTL', '15m') static readonly cacheTtl: number; // resolves to milliseconds
+    @EnvNum('PORT', 3000) static accessor port: number;
+    @EnvBool('DEBUG', false) static accessor debug: boolean;
+    @EnvUrl('APP_URL', new URL('http://localhost:3000')) static accessor url: URL; // fallback is a URL, not a string
+    @EnvTime('CACHE_TTL', '15m') static accessor cacheTtl: number; // resolves to milliseconds
 }
 ```
 
@@ -246,8 +248,8 @@ envapt loads `.env` **and** returns typed, validated values from one API, with n
 
 | Gotcha                      | Rule                                                                                                                                                   |
 | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Decorator reads `undefined` | Static fields use `static readonly x: T`, instance fields use `declare readonly x: T`, both with no initializer                                        |
-| Decorator broken on Bun     | `@Envapt` does not work on Bun-direct `.ts` (bun#27575); use the functional API                                                                        |
+| Wrong decorator field form  | Modern uses `static accessor x: T` / `accessor x!: T`. Legacy (`envapt/legacy`) uses `static readonly x: T` / `declare readonly x: T`, both no initializer                                        |
+| Legacy decorator on Bun     | The `envapt/legacy` form reads `undefined` on Bun-direct `.ts` (bun#27575). The default accessor decorators on `envapt` work there                                                                        |
 | `@EnvUrl` fallback          | It's a `URL` instance, not a string: `new URL('...')`                                                                                                  |
 | `Time` / `@EnvTime`         | Resolves to milliseconds; fallback is a ms number or a time string (`'15m'`)                                                                           |
 | Schema fallback             | A fallback is returned as-is; only present env values pass through the schema                                                                          |
@@ -268,14 +270,32 @@ custom functions, `schema`, or `required`). When you see it, migrate to the opti
 // old
 @Envapt('PORT', 3000, Number) static readonly port: number;
 // new
-@Envapt('PORT', { converter: Converters.Number, fallback: 3000 }) static readonly port: number;
+@Envapt('PORT', { converter: Converters.Number, fallback: 3000 }) static accessor port: number;
+```
+
+</details>
+
+<details>
+<summary>Pre-v7 legacy decorator field form (<code>static readonly</code> / <code>declare readonly</code>)</summary>
+
+Pre-v7 code imports `@Envapt` from `envapt` and declares fields with `static readonly` / `declare readonly`.
+In v7 the default `envapt` decorators are TC39 accessors. Migrate the fields to `static accessor x: T` /
+`accessor x!: T`, or keep the old form by importing from `envapt/legacy` (which still needs
+`experimentalDecorators`).
+
+```ts
+// pre-v7 (now the legacy form, still on envapt/legacy)
+@Envapt('PORT', { fallback: 3000 }) static readonly port: number;
+// v7 default
+@Envapt('PORT', { fallback: 3000 }) static accessor port: number;
 ```
 
 </details>
 
 ---
 
-**Guardrail:** if a project runs `.ts` directly on Bun with no precompile step, never recommend
-`@Envapt`, it reads `undefined` at runtime (bun#27575). Use the functional `Envapter` readers.
+**Guardrail:** on a `.ts` entry run directly on Bun with no precompile, the legacy `envapt/legacy`
+decorators read `undefined` at runtime (bun#27575). The default accessor decorators on `envapt` work
+there, or use the functional `Envapter` readers.
 
 Full reference (every converter, method, and option): <https://envapt.materwelon.dev>

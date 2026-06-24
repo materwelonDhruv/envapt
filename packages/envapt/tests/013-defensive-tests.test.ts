@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { BuiltInConverters, Converters, ValueConverter } from '../src/converters';
-import { Envapter } from '../src/Envapter';
-import { EnvaptError, EnvaptErrorCodes } from '../src/Error';
-import { TemplateResolver } from '../src/TemplateResolver';
-import { Validator } from '../src/Validators';
+import { Envapter } from '../src/engine/Envapter';
+import { TemplateResolver } from '../src/engine/TemplateResolver';
+import { Validator } from '../src/engine/Validators';
+import { EnvaptError, EnvaptErrorCodes } from '../src/infra/Error';
 
 import type { BuiltInConverter, EnvKeyInput, PrimitiveConstructor } from '../src/types';
 import type { EnvapterService } from '../src/types/Env';

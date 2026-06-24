@@ -4,8 +4,8 @@ import process from 'node:process';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { Envapter, EnvaptErrorCodes } from '../src';
-import { resetDebugForTesting } from '../src/Debug';
-import { EnvaptError } from '../src/Error';
+import { resetDebugForTesting } from '../src/infra/Debug';
+import { EnvaptError } from '../src/infra/Error';
 
 const FIXTURE_KEYS = ['SYNC_KEY_A', 'SYNC_KEY_B', 'SYNC_KEY_COLLISION'] as const;
 const FIXTURE_PATH = resolve(import.meta.dirname, '.env.sync-process-env');

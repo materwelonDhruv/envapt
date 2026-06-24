@@ -1,13 +1,13 @@
 // Import the converter modules directly, not via the `./converters` barrel: that barrel pulls in
 // ValueConverter, which imports this Validator, so a barrel import here would cycle.
-import { isArrayOf } from './converters/Converters';
-import { ListOfBuiltInConverters, BuiltInConverterTypeCheckers } from './converters/ListOfBuiltInConverters';
-import { EnvaptError, EnvaptErrorCodes } from './Error';
+import { isArrayOf } from '../converters/Converters';
+import { ListOfBuiltInConverters, BuiltInConverterTypeCheckers } from '../converters/ListOfBuiltInConverters';
+import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
 
-import type { ArrayOf, ConverterToken } from './converters/Converters';
-import type { EnvFileOptions } from './Dotenv';
-import type { StandardSchemaV1 } from './StandardSchema';
-import type { BuiltInConverter, ConverterFunction, EnvaptConverter } from './types';
+import type { ArrayOf, ConverterToken } from '../converters/Converters';
+import type { EnvFileOptions } from '../infra/Dotenv';
+import type { StandardSchemaV1 } from '../infra/StandardSchema';
+import type { BuiltInConverter, ConverterFunction, EnvaptConverter } from '../types';
 
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class -- cohesive dispatch of stateless type guards, same shape as BuiltInConverters
 export class Validator {

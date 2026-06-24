@@ -1,4 +1,4 @@
-import { EnvaptError, EnvaptErrorCodes } from '../Error';
+import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
 
 import type { BareEnvSource } from '../types';
 

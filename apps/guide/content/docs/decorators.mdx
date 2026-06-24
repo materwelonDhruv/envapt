@@ -1,19 +1,21 @@
 ---
 title: Decorators
-description: Bind a class property to an environment variable with the @Envapt decorator, the class-based alternative to the Envapter readers.
+description: Bind a class property to an environment variable with the @Envapt decorator. Modern TC39 accessor decorators by default, legacy decorators at envapt/legacy.
 ---
 
-`@Envapt` binds a class property to an environment variable. It's the class-based counterpart to the [`Envapter`](/docs/envapter) readers: the same parsing, converters, and cache, declared as typed fields instead of method calls.
+`@Envapt` binds a class property to an environment variable. It's the class-based counterpart to the [`Envapter`](/docs/envapter) readers, the same parsing, converters, and cache, declared as typed fields instead of method calls.
+
+The default import is a TC39 Stage 3 accessor decorator. Declare the field with the `accessor` keyword.
 
 ```ts twoslash
 import { Envapt, Converters } from 'envapt';
 // ---cut---
 class Config {
     @Envapt('PORT', { converter: Converters.Number, fallback: 3000 })
-    static readonly port: number;
+    static accessor port: number;
 
     @Envapt('DEBUG', { converter: Converters.Boolean, fallback: false })
-    static readonly debug: boolean;
+    static accessor debug: boolean;
 }
 
 Config.port;
@@ -26,22 +28,37 @@ The value is read and converted once, on first access, then cached.
 
 The right form depends on whether the field is static or instance.
 
+- **Static** fields use `static accessor x: T`.
+- **Instance** fields use `accessor x!: T`, with the `!` for definite assignment.
+
+No `readonly`, no `declare`, no initializer, and no `experimentalDecorators` flag. This form runs on any runtime that understands Stage 3 decorators, including Bun and Deno executing a `.ts` file directly.
+
+<Callout>
+    The accessor is read-only. It resolves from the environment, and assigning to it throws `EnvaptError`.
+</Callout>
+
+### Legacy decorators
+
+If your project already runs on `experimentalDecorators`, import the legacy decorators from `envapt/legacy`. They keep the property-decorator form, a getter installed with `Object.defineProperty`.
+
 - **Static** fields use a plain `static readonly x: T`, with no `declare` and no initializer.
 - **Instance** fields use `declare readonly x: T`, with no initializer.
 
-`@Envapt` installs a getter with `Object.defineProperty`, and two compiler behaviors decide where that getter has to sit.
+```ts
+import { Envapt, Converters } from 'envapt/legacy';
 
-For an instance field, `useDefineForClassFields` (on by default for modern targets) emits a per-instance assignment in the constructor that would overwrite the getter with `undefined`. `declare` makes the field type-only, so nothing is emitted and the getter survives.
+class Config {
+    @Envapt('PORT', { converter: Converters.Number, fallback: 3000 })
+    static readonly port: number;
 
-For a static field the reverse holds. A `declare static` member is erased, so tsc emits the decorator against the prototype and a static read never reaches the getter, returning `undefined`. A plain `static readonly` emits a real static member, so the decorator lands on the constructor where the static read finds it.
+    @Envapt('SESSION_TTL', { converter: Converters.Time, fallback: '15m' })
+    declare readonly sessionTtl: number;
+}
+```
 
-<Callout type="warn">
-    Match the form to the field. Use `static readonly x: T` for static and `declare readonly x: T` for instance. A
-    `declare static` field reads back as `undefined` under tsc (esbuild, swc, oxc, bun, and deno are unaffected). A plain
-    instance field, or any initializer, also reads back as `undefined` because the emitted field clobbers the getter.
-</Callout>
+Two compiler behaviors decide where the getter sits. For an instance field, `useDefineForClassFields` (on by default for modern targets) emits a per-instance assignment in the constructor that would overwrite the getter with `undefined`, so `declare` makes the field type-only and the getter survives. For a static field the reverse holds, a `declare static` member is erased so the static read never reaches the getter, so a plain `static readonly` keeps the decorator on the constructor where the read finds it.
 
-You also need `experimentalDecorators` enabled.
+The legacy form needs `experimentalDecorators` enabled.
 
 ```json title="tsconfig.json"
 {
@@ -51,11 +68,11 @@ You also need `experimentalDecorators` enabled.
 }
 ```
 
-Runtime-specific decorator notes (Bun running a `.ts` entry directly, Deno's flag) live on [Compatibility](/docs/compatibility).
+A module that imports decorators only from `envapt/legacy` must also `import 'envapt'` once so the runtime source binds. Runtime-specific notes (Bun running a `.ts` entry directly, Deno's flag) are in [Compatibility](/docs/compatibility).
 
 ## Converters
 
-The `converter` option takes the same values as [`getUsing`/`getWith`](/docs/converters): a built-in token, a primitive constructor, a custom function, or `Converters.array(...)`. A `fallback` removes `undefined` from the value and must match the converter's type.
+The `converter` option takes the same values as [`getUsing`/`getWith`](/docs/converters), a built-in token, a primitive constructor, a custom function, or `Converters.array(...)`. A `fallback` removes `undefined` from the value and must match the converter's type.
 
 ```ts twoslash
 import { Envapt, Converters } from 'envapt';
@@ -63,19 +80,39 @@ import { Envapt, Converters } from 'envapt';
 class Config {
     // duration token: a time-string fallback is coerced to milliseconds
     @Envapt('CACHE_TTL', { converter: Converters.Time, fallback: '15m' })
-    static readonly cacheTtl: number;
+    static accessor cacheTtl: number;
 
     // array token
     @Envapt('ALLOWED_ORIGINS', { converter: Converters.array({ of: Converters.String }), fallback: [] })
-    static readonly origins: string[];
+    static accessor origins: string[];
 
     // custom function: returns a shape the array builder can't, here a deduped Set
     @Envapt('TRUSTED_IPS', { converter: (raw) => new Set((raw ?? '').split(',').filter(Boolean)) })
-    static readonly trustedIps: Set<string>;
+    static accessor trustedIps: Set<string>;
 }
 ```
 
 With no `converter` and no `fallback`, the property resolves to the raw string or `null`.
+
+## The field type is checked
+
+The decorated field's declared type must hold the converter's output, or tsc rejects it. The field can be wider than the output, never narrower.
+
+```ts twoslash
+import { EnvNum } from 'envapt';
+// ---cut---
+class Config {
+    // with a fallback, the output is number
+    @EnvNum('PORT', 3000)
+    static accessor port: number;
+
+    // without a fallback the value can be missing, so the output is number | null
+    @EnvNum('TIMEOUT')
+    static accessor timeout: number | null;
+}
+```
+
+A no-fallback read adds `| null` to the output, `fallback: undefined` adds `| undefined`, and `required: true` adds neither. A field that cannot hold the output fails to compile with `[envapt] field type must hold the converter output`. The same check applies to the legacy decorators.
 
 ## Shorthand decorators
 
@@ -86,25 +123,25 @@ import { EnvNum, EnvStr, EnvBool, EnvUrl, EnvTime } from 'envapt';
 // ---cut---
 class Config {
     @EnvNum('PORT', 3000)
-    static readonly port: number;
+    static accessor port: number;
 
     @EnvStr('AWS_REGION', 'us-east-1')
-    static readonly region: string;
+    static accessor region: string;
 
     @EnvBool('DEBUG', false)
-    static readonly debug: boolean;
+    static accessor debug: boolean;
 
     @EnvUrl('APP_URL', new URL('http://localhost:3000'))
-    static readonly url: URL;
+    static accessor url: URL;
 
     @EnvTime('CACHE_TTL', '15m')
-    static readonly cacheTtl: number;
+    static accessor cacheTtl: number;
 }
 ```
 
-The second argument is the fallback, typed to the converter: `@EnvUrl` takes a `URL`, `@EnvTime` takes a millisecond number or a time string, the rest take their primitive. Omit it and the property resolves to the converted value or `null`. The key can also be an [ordered list](#ordered-keys).
+The second argument is the fallback, typed to the converter, `@EnvUrl` takes a `URL`, `@EnvTime` takes a millisecond number or a time string, the rest take their primitive. Omit it and the property resolves to the converted value or `null`. The key can also be an [ordered list](#ordered-keys).
 
-These install the same getter as `@Envapt`, so the same [declaration rule](#declaring-decorated-fields) applies. They take a fallback only. For `required`, a `schema`, an array, or a custom function, use `@Envapt` with the options object.
+These are accessor decorators like `@Envapt`, so the same [declaration rule](#declaring-decorated-fields) applies. They take a fallback only. For `required`, a `schema`, an array, or a custom function, use `@Envapt` with the options object.
 
 ## Required values
 
@@ -115,7 +152,7 @@ import { Envapt, Converters } from 'envapt';
 // ---cut---
 class Config {
     @Envapt('DATABASE_URL', { converter: Converters.Url, required: true })
-    static readonly databaseUrl: URL;
+    static accessor databaseUrl: URL;
 }
 ```
 
@@ -136,7 +173,7 @@ import { Envapt } from 'envapt';
 // ---cut---
 class Config {
     @Envapt('STRIPE_SECRET_KEY', { schema: z.string().startsWith('sk_') })
-    static readonly stripeKey: string;
+    static accessor stripeKey: string;
 }
 ```
 
@@ -152,13 +189,13 @@ import { Envapt, Converters } from 'envapt';
 class Config {
     // CANARY_URL if set, otherwise APP_URL
     @Envapt(['CANARY_URL', 'APP_URL'], { converter: Converters.Url })
-    static readonly url: URL | null;
+    static accessor url: URL | null;
 }
 ```
 
 ## Static and instance properties
 
-`@Envapt` works on both static and instance properties, and the class does not need to extend anything. The cache is keyed per `ClassName.property`, so a static and an instance property of the same name never collide.
+`@Envapt` works on both static and instance properties, and the class does not need to extend anything. The cache is keyed per class and property, so a static and an instance property of the same name never collide.
 
 Extend `Envapter` when you also want the reader methods on the same class:
 
@@ -167,7 +204,7 @@ import { Envapt, Converters, Envapter } from 'envapt';
 // ---cut---
 class Config extends Envapter {
     @Envapt('PORT', { converter: Converters.Number, fallback: 3000 })
-    declare readonly port: number;
+    accessor port!: number;
 
     // mix decorator fields with reader calls
     readonly region = this.get('AWS_REGION', 'us-east-1');
@@ -178,4 +215,4 @@ config.port;
 //     ^?
 ```
 
-A misconfigured options object throws `EnvaptError` as the decorator is applied, before any property access: `required` together with a `fallback`, or a non-`StandardSchemaV1` value passed as `schema`. See [Errors](/docs/errors) for the codes.
+A misconfigured options object throws `EnvaptError` as the decorator is applied, before any property access, `required` together with a `fallback`, or a non-`StandardSchemaV1` value passed as `schema`. See [Errors](/docs/errors) for the codes.

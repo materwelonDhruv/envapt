@@ -5,6 +5,11 @@ description: Moving from envapt v5 to v6, the removed positional decorator form 
 
 v6 is a major release. This page lists what changed from v5 and how to update. The code change is one removed decorator form. Read [Behavior changes to watch](#behavior-changes-to-watch) for a runtime shift that compiles cleanly but runs differently.
 
+<Callout>
+    Upgrading further? v7 makes the decorators TC39 accessor decorators by default. See [Migration (v6 to
+    v7)](/docs/migration-v6-to-v7).
+</Callout>
+
 ## Decorators
 
 The positional `@Envapt('KEY', fallback, converter)` form, deprecated in v5, is removed. Use the options object, or a [sugar decorator](/docs/decorators) for the common case. The no-argument `@Envapt('KEY')` form is unchanged.

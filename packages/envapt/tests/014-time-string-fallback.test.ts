@@ -2,7 +2,8 @@ import { resolve } from 'node:path';
 
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { Converters, Envapt, EnvaptError, EnvaptErrorCodes, Envapter } from '../src';
+import { Converters, EnvaptError, EnvaptErrorCodes, Envapter } from '../src';
+import { Envapt } from '../src/legacy';
 
 import type { TimeFallback } from '../src';
 

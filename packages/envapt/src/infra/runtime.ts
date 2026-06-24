@@ -1,4 +1,4 @@
-import type { EnvSource } from './types';
+import type { EnvSource } from '../types';
 
 // EnvapterBase imports Debug; importing it back would cycle, so the source/sink are injected via the setters below.
 /* v8 ignore start -- @preserve replaced at load on Node; the Node suite never runs these defaults */

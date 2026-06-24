@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 
 import { NodeEnvSource } from '../src';
-import { loadDotenv, parseDotenv } from '../src/Dotenv';
+import { loadDotenv, parseDotenv } from '../src/infra/Dotenv';
 
 // loadDotenv takes an injected reader; reuse the library's Node reader rather than re-implementing fs.
 const reader = new NodeEnvSource();

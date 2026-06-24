@@ -92,8 +92,8 @@ const flags = Envapter.getUsing('FEATURE_FLAGS', Converters.Json); // parsed bac
 
 There is no `.env` cascade, no custom profiles, and no file-only config APIs (`envPaths`, `baseDir`, `configureProfiles`, and the rest) on workerd; calling one throws. Bind the source before your first read. See [Sources](/docs/sources) for what happens otherwise and [Errors](/docs/errors) for the codes.
 
-## Decorators need a build step
+## Decorators
 
-`@Envapt` and the sugar decorators need a compile step (`experimentalDecorators`), the same as on Node; the functional API does not. A decorated property caches its value on first read, and Cloudflare `env` scalars are stable per isolate, so the cached value matches the binding.
+A decorated property caches its value on first read, and Cloudflare `env` scalars are stable per isolate, so the cached value matches the binding. The default accessor decorators work on Workers, the legacy `envapt/legacy` form needs a compile step.
 
 Configure Worker `vars` and bindings through Cloudflare's [environment variables](https://developers.cloudflare.com/workers/configuration/environment-variables/) docs. For the providers and the contract see [Sources](/docs/sources).

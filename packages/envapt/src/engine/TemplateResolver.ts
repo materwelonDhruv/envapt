@@ -1,7 +1,7 @@
-import { debugWarn } from './Debug';
-import { EnvaptError, EnvaptErrorCodes } from './Error';
+import { debugWarn } from '../infra/Debug';
+import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
 
-import type { EnvapterService } from './types/Env';
+import type { EnvapterService } from '../types/Env';
 
 /**
  * Resolve `${VAR}` template references in environment values, guarding against circular

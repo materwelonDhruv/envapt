@@ -26,7 +26,10 @@ const slices = [
     ['integration', ['--filter', 'envapt', 'test:integration']],
     ['workerd', ['--filter', 'envapt', 'test:workers']],
     ['consumer-build', ['--filter', 'envapt', 'test:consumer-build']],
-    ['tsc-emit', ['--filter', 'envapt', 'test:tsc-emit']]
+    ['tree-shaking', ['--filter', 'envapt', 'test:tree-shaking']],
+    ['exports-dedup', ['--filter', 'envapt', 'test:exports-dedup']],
+    ['tsc-emit', ['--filter', 'envapt', 'test:tsc-emit']],
+    ['stage3-emit', ['--filter', 'envapt', 'test:stage3-emit']]
 ];
 if (hasChromium) slices.push(['browser', ['--filter', 'envapt', 'test:browser']]);
 

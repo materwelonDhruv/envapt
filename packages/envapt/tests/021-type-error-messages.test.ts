@@ -28,12 +28,14 @@ interface ParsedDiagnostic {
     message: string;
 }
 
-function compileFixture(fixtureRelativePath: string): ParsedDiagnostic[] {
+function compileFixture(
+    fixtureRelativePath: string,
+    configFileName: string = resolve(PROJECT_ROOT, 'tsconfig.json')
+): ParsedDiagnostic[] {
     const fixturePath = resolve(FIXTURE_DIR, fixtureRelativePath);
 
-    const configFileName = resolve(PROJECT_ROOT, 'tsconfig.json');
     const configFile = ts.readConfigFile(configFileName, (path) => readFileSync(path, 'utf8'));
-    const parsed = ts.parseJsonConfigFileContent(configFile.config, ts.sys, PROJECT_ROOT);
+    const parsed = ts.parseJsonConfigFileContent(configFile.config, ts.sys, dirname(configFileName));
 
     const program = ts.createProgram({
         rootNames: [fixturePath],
@@ -100,5 +102,78 @@ describe('TS error message verification (compiler API)', () => {
             expect(has2769, joinedMessages(diagnostics)).to.be.true;
             expect(joinedMessages(diagnostics)).to.include('No overload matches this call');
         });
+    });
+
+    describe('legacy decorator constrains the declared field type to the converter output', () => {
+        it('rejects a field whose type cannot hold the converter output', { timeout: FIXTURE_TIMEOUT_MS }, () => {
+            const diagnostics = compileFixture('field-type-mismatch.ts');
+            const has1240 = diagnostics.some((d) => d.code === 1240);
+            expect(has1240, joinedMessages(diagnostics)).to.be.true;
+        });
+
+        it(
+            'rejects a non-null field for a no-fallback decorator (the value can be null)',
+            { timeout: FIXTURE_TIMEOUT_MS },
+            () => {
+                const diagnostics = compileFixture('field-type-no-fallback.ts');
+                const has1240 = diagnostics.some((d) => d.code === 1240);
+                expect(has1240, joinedMessages(diagnostics)).to.be.true;
+            }
+        );
+
+        it('rejects mismatched field types across the @Envapt overloads', { timeout: FIXTURE_TIMEOUT_MS }, () => {
+            const diagnostics = compileFixture('envapt-overloads-mismatch.ts');
+            const fieldErrors = diagnostics.filter((d) => d.code === 1240);
+            expect(fieldErrors.length, joinedMessages(diagnostics)).to.be.greaterThanOrEqual(6);
+        });
+
+        it(
+            'accepts correct and wider field types across the @Envapt overloads',
+            { timeout: FIXTURE_TIMEOUT_MS },
+            () => {
+                const diagnostics = compileFixture('envapt-overloads-clean.ts');
+                expect(diagnostics, joinedMessages(diagnostics)).to.have.lengthOf(0);
+            }
+        );
+    });
+
+    describe('modern accessor decorator constrains the declared field type to the converter output', () => {
+        const MODERN_CONFIG = resolve(FIXTURE_DIR, 'modern/tsconfig.json');
+
+        it('rejects an accessor whose type cannot hold the converter output', { timeout: FIXTURE_TIMEOUT_MS }, () => {
+            const diagnostics = compileFixture('modern/accessor-field-type-mismatch.ts', MODERN_CONFIG);
+            const has1240 = diagnostics.some((d) => d.code === 1240);
+            expect(has1240, joinedMessages(diagnostics)).to.be.true;
+            expect(joinedMessages(diagnostics)).to.include('[envapt] field type must hold the converter output');
+        });
+
+        it(
+            'rejects a non-null accessor for a no-fallback decorator (the value can be null)',
+            { timeout: FIXTURE_TIMEOUT_MS },
+            () => {
+                const diagnostics = compileFixture('modern/accessor-field-type-no-fallback.ts', MODERN_CONFIG);
+                expect(
+                    diagnostics.some((d) => d.code === 1240),
+                    joinedMessages(diagnostics)
+                ).to.be.true;
+                expect(joinedMessages(diagnostics)).to.include('[envapt] field type must hold the converter output');
+            }
+        );
+
+        it('rejects mismatched accessor types across the @Envapt overloads', { timeout: FIXTURE_TIMEOUT_MS }, () => {
+            const diagnostics = compileFixture('modern/accessor-overloads-mismatch.ts', MODERN_CONFIG);
+            const fieldErrors = diagnostics.filter((d) => d.code === 1240);
+            expect(fieldErrors.length, joinedMessages(diagnostics)).to.be.greaterThanOrEqual(6);
+            expect(joinedMessages(diagnostics)).to.include('[envapt] field type must hold the converter output');
+        });
+
+        it(
+            'accepts correct and wider accessor types across the @Envapt overloads',
+            { timeout: FIXTURE_TIMEOUT_MS },
+            () => {
+                const diagnostics = compileFixture('modern/accessor-overloads-clean.ts', MODERN_CONFIG);
+                expect(diagnostics, joinedMessages(diagnostics)).to.have.lengthOf(0);
+            }
+        );
     });
 });

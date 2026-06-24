@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 
-import { EnvaptError, EnvaptErrorCodes } from '../Error';
+import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
 
 import type { ArrayOf, CustomElementConverter } from './Converters';
 import type {

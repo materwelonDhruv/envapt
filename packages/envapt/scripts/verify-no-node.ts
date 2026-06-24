@@ -129,7 +129,7 @@ async function stubProof(): Promise<void> {
     process.stdout.write('verify-no-node: workerd + browser file-API stubs throw FileApiUnsupported (306).\n');
 }
 
-// Generated at runtime, not checked in: it imports built artifacts absent at `tc` time. A dts
+// Generated at runtime, not checked in. It imports built artifacts absent at `tc` time. A dts
 // regression that re-adds a file API leaves a fixture suppression unused, so tsc errors.
 function omissionProof(): void {
     const localRequire = createRequire(import.meta.url);
@@ -139,11 +139,11 @@ function omissionProof(): void {
     const omit = (alias: string, api: string): string =>
         `// @ts-expect-error ${api} is omitted from the portable Envapter\nvoid ${alias}.${api};`;
     const body = [
-        `import { Envapter as B } from ${JSON.stringify(join(DIST, 'browser', 'index.mjs'))};`,
-        `import { Envapter as W } from ${JSON.stringify(join(DIST, 'workerd', 'index.mjs'))};`,
-        ...FILE_APIS.map((api) => omit('B', api)),
-        omit('W', 'resetProfiles'),
-        'void B.useSource;'
+        `import { Envapter as P } from ${JSON.stringify(join(DIST, 'types', 'index.portable.mjs'))};`,
+        `import { Envapter as N } from ${JSON.stringify(join(DIST, 'types', 'index.mjs'))};`,
+        ...FILE_APIS.map((api) => omit('P', api)),
+        'void P.useSource;',
+        ...FILE_APIS.map((api) => `void N.${api};`)
     ].join('\n');
     writeFileSync(fixture, `${body}\n`);
     try {
@@ -177,7 +177,28 @@ function omissionProof(): void {
     );
 }
 
+// The public types are all emitted to dist/types, shims-free, so no entry carries a node:* import. A
+// leak here would reach portable consumers without appearing in the workerd/browser grep above.
+function typesNodeFreeProof(): void {
+    const violations: string[] = [];
+    for (const file of walk(join(DIST, 'types'))) {
+        if (!isDeclaration(file)) continue;
+        readFileSync(file, 'utf8')
+            .split('\n')
+            .forEach((line, i) => {
+                if (NODE_SPECIFIER.test(line)) violations.push(`${file}:${i + 1} node: specifier -> ${line.trim()}`);
+            });
+    }
+    if (violations.length > 0) {
+        fail(
+            `verify-no-node: ${violations.length} node coupling(s) in dist/types declarations:\n  ${violations.join('\n  ')}`
+        );
+    }
+    process.stdout.write('verify-no-node: dist/types declarations are node-free.\n');
+}
+
 selfTest();
 grepGate();
+typesNodeFreeProof();
 await stubProof();
 omissionProof();

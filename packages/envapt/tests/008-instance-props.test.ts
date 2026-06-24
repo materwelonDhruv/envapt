@@ -2,7 +2,8 @@ import { resolve } from 'node:path';
 
 import { beforeAll, describe, expect, it } from 'vitest';
 
-import { Converters, Envapt, Envapter, Environment } from '../src';
+import { Converters, Envapter, Environment, type JsonValue } from '../src';
+import { Envapt } from '../src/legacy';
 
 describe('Instance Properties with @Envapt', () => {
     beforeAll(() => {
@@ -11,9 +12,9 @@ describe('Instance Properties with @Envapt', () => {
 
     describe('basic instance properties', () => {
         class BasicInstanceProperties extends Envapter {
-            @Envapt('INSTANCE_PROP_1') declare instanceProp1: string;
+            @Envapt('INSTANCE_PROP_1') declare instanceProp1: string | null;
 
-            @Envapt('INSTANCE_PROP_2') declare instanceProp2: string;
+            @Envapt('INSTANCE_PROP_2') declare instanceProp2: string | null;
 
             @Envapt('INSTANCE_PROP_3_TEMPLATED', { fallback: 'default3' })
             declare instanceProp3: string;
@@ -91,7 +92,7 @@ describe('Instance Properties with @Envapt', () => {
             declare readonly arrayProp: string[];
 
             @Envapt('INSTANCE_JSON', { converter: Converters.Json, fallback: {} })
-            declare readonly jsonProp: object;
+            declare readonly jsonProp: JsonValue;
 
             @Envapt('INSTANCE_URL', { converter: Converters.Url, fallback: new URL('http://localhost') })
             declare readonly urlProp: URL;
