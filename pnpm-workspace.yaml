@@ -14,7 +14,7 @@ allowBuilds:
 
 catalogs:
   dev:
-    '@seedcord/eslint-config': 1.4.0
+    '@seedcord/eslint-config': 1.4.2
     '@types/node': 25.9.3
     prettier: 3.8.4
     eslint: 9.39.2
@@ -55,3 +55,6 @@ minimumReleaseAgeExclude:
   - '@vitest/spy@4.1.9'
   - '@vitest/utils@4.1.9'
   - vitest@4.1.9
+  - '@cloudflare/vitest-pool-workers@0.16.19'
+  - miniflare@4.20260623.0
+  - wrangler@4.104.0

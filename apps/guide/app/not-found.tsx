@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { BaseButton } from '@/components/BaseButton';
 
 import type { ReactNode } from 'react';
 
@@ -8,12 +8,9 @@ export default function NotFound(): ReactNode {
             <p className="font-mono text-sm text-(--ev-gold)">404</p>
             <h1 className="font-sans text-3xl font-semibold tracking-tight">Page not found</h1>
             <p className="text-fd-muted-foreground">That key resolved to nothing.</p>
-            <Link
-                href="/"
-                className="mt-2 rounded-lg bg-(--ev-brand) px-4 py-2 font-mono text-sm font-semibold text-(--ev-on-brand)"
-            >
+            <BaseButton href="/" variant="solid" className="mt-2">
                 Back home
-            </Link>
+            </BaseButton>
         </main>
     );
 }
