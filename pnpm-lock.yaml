@@ -26,7 +26,7 @@ catalogs:
       version: 4.4.3
 
 overrides:
-  eslint-plugin-import>minimatch: ^3.1.5
+  eslint-plugin-import>minimatch: ^10.2.5
   '@eslint/eslintrc>minimatch': ^3.1.5
   '@typescript-eslint/eslint-plugin>minimatch': ^9.0.7
   '@typescript-eslint/utils>minimatch': ^9.0.7
@@ -10387,7 +10387,7 @@ snapshots:
       hasown: 2.0.4
       is-core-module: 2.16.2
       is-glob: 4.0.3
-      minimatch: 3.1.5
+      minimatch: 10.2.5
       object.fromentries: 2.0.8
       object.groupby: 1.0.3
       object.values: 1.2.1
@@ -10416,7 +10416,7 @@ snapshots:
       hasown: 2.0.4
       is-core-module: 2.16.2
       is-glob: 4.0.3
-      minimatch: 3.1.5
+      minimatch: 10.2.5
       object.fromentries: 2.0.8
       object.groupby: 1.0.3
       object.values: 1.2.1

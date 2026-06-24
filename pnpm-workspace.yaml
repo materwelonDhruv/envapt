@@ -27,7 +27,7 @@ catalogs:
 overrides:
   # `eslint-plugin-import` and `@eslint/eslintrc` use minimatch v3 default-import style;
   # pin to latest patched 3.x (3.1.5+ covers CVE) so the plugins keep working.
-  eslint-plugin-import>minimatch: '^3.1.5'
+  eslint-plugin-import>minimatch: '^10.2.5'
   '@eslint/eslintrc>minimatch': '^3.1.5'
   # Modern consumers use minimatch v9; pin to the patched 9.0.7+.
   '@typescript-eslint/eslint-plugin>minimatch': '^9.0.7'
