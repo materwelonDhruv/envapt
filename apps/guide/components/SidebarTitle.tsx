@@ -2,10 +2,16 @@
 'use client';
 
 import { BrandLockup } from '@/components/BrandLockup';
+import { VersionBadge } from '@/components/VersionBadge';
 
 import type { ReactNode } from 'react';
 
-// Render no anchor: fumadocs wraps `nav.title` in its own home Link, and a nested <a> breaks hydration.
+// fumadocs wraps `nav.title` in its own home Link, so a nested <a> breaks hydration
 export function SidebarTitle(): ReactNode {
-    return <BrandLockup glyphSize={20} wordmarkHeight={18} />;
+    return (
+        <span className="flex items-start gap-1">
+            <BrandLockup glyphSize={20} wordmarkHeight={18} />
+            <VersionBadge />
+        </span>
+    );
 }

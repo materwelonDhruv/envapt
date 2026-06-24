@@ -45,11 +45,16 @@ export async function generateMetadata(props: { params: Promise<{ slug?: string[
     const page = source.getPage(params.slug);
     if (!page) notFound();
     const url = canonicalUrl(page.url);
-    const ogImage = `/docs-og/${[...(params.slug ?? []), 'image.png'].join('/')}`;
+    const slug = params.slug ?? [];
+    const ogImage = `/docs-og/${[...slug, 'image.png'].join('/')}`;
+    const markdownUrl = slug.length ? new URL(`/llms/docs/${slug.join('/')}`, SITE_URL).toString() : undefined;
     return {
         title: page.data.title,
         description: page.data.description,
-        alternates: { canonical: url },
+        alternates: {
+            canonical: url,
+            types: markdownUrl ? { 'text/markdown': markdownUrl } : undefined
+        },
         openGraph: { type: 'article', siteName: SITE_NAME, url, locale: 'en_US', images: ogImage }
     };
 }

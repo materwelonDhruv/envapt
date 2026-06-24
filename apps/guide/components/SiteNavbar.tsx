@@ -6,7 +6,9 @@ import { useState } from 'react';
 
 import { BrandLockup } from '@/components/BrandLockup';
 import { NavControls } from '@/components/NavControls';
+import { VersionBadge } from '@/components/VersionBadge';
 import { cn } from '@/lib/cn';
+import { NPM_URL } from '@/lib/site';
 
 import type { ComponentProps, ReactNode } from 'react';
 
@@ -22,7 +24,7 @@ const NAV_LINKS = [
 export function SiteNavbar(props: ComponentProps<'header'>): ReactNode {
     const pathname = usePathname();
     const [menuOpen, setMenuOpen] = useState(false);
-    // On docs pages the sidebar carries the wordmark, so the navbar drops its own branding.
+    // On docs pages the sidebar has the wordmark, so the navbar doesn't need it
     const isDocs = pathname.startsWith('/docs');
 
     return (
@@ -33,9 +35,12 @@ export function SiteNavbar(props: ComponentProps<'header'>): ReactNode {
                 style={{ height: 'var(--fd-nav-height)' }}
             >
                 {!isDocs && (
-                    <Link href="/" className="flex shrink-0 items-center">
-                        <BrandLockup glyphSize={26} wordmarkHeight={19} gap={10} />
-                    </Link>
+                    <div className="flex shrink-0 items-start gap-1">
+                        <Link href="/" className="flex items-center">
+                            <BrandLockup glyphSize={26} wordmarkHeight={19} gap={10} />
+                        </Link>
+                        <VersionBadge href={NPM_URL} />
+                    </div>
                 )}
 
                 <nav className="hidden items-center gap-6 font-mono text-[13px] lg:flex">
