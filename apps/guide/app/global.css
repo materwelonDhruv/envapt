@@ -12,7 +12,7 @@
     --font-mono: var(--font-jetbrains), ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 }
 
-/* Brand tokens are mode-aware, so they live as CSS vars (overridden under .dark) rather than in @theme, which can't switch on theme. */
+/* brand tokens are CSS vars (overridden under .dark) because @theme can't switch on theme */
 :root {
     --ev-bg: #ece6db;
     --ev-link: #bc4f13;
@@ -24,7 +24,7 @@
     --ev-grid: rgba(60, 40, 20, 0.06);
     --ev-panel: #fffdf9;
     --ev-gutter: #c3b9a6;
-    /* Eyebrow gold darkened for AA on the light paper background; bright gold returns under .dark. */
+    /* darkened for AA on the light paper, bright gold returns under .dark */
     --ev-eyebrow: #8a5b12;
     --ev-dot-red: #e35d28;
     --ev-dot-amber: #f7cc88;
@@ -42,9 +42,7 @@
     --color-fd-primary: #bc4f13;
 }
 
-/* Light-only warm surface palette derived from --ev-bg, so the sidebar, cards, code blocks,
-   popovers and borders share the warm tone instead of fumadocs' cool neutral grays. Scoped to
-   :not(.dark) so it never out-specifies fumadocs' dark theme. */
+/* :not(.dark) so these light-mode overrides never out-specify fumadocs' dark theme */
 :root:not(.dark) {
     --color-fd-background: var(--ev-bg);
     --color-fd-muted: color-mix(in oklab, var(--ev-bg), #fff 6%);
@@ -73,13 +71,12 @@
     --color-fd-primary: #c76435;
 }
 
-/* Mirrored into fumadocs' --fd-header-height via the layout: variant so the docs grid offsets sticky content below the navbar. */
+/* SiteNavbar reads this for its header height */
 :root {
     --fd-nav-height: 60px;
 }
 
-/* Smooth in-page scrolling for ToC anchor clicks (reset to auto under reduced-motion below).
-   scroll-padding clears the sticky bars: ~0 on desktop (no top bar), header + toc-popover on mobile. */
+/* scroll-padding-top clears the sticky bars, ~0 on desktop (no top bar), header + toc-popover on mobile */
 html {
     scroll-behavior: smooth;
     scroll-padding-top: calc(var(--fd-docs-row-2, 0px) + var(--fd-toc-popover-height, 0px) + 1rem);
@@ -104,8 +101,7 @@ html {
     filter: drop-shadow(-1px 1px 1px rgb(0 0 0 / 0.28));
 }
 
-/* Shiki landing snippets: dual-theme token colors from ayu (same as docs MDX blocks); background
-   and padding reset so code renders inside CodeCard's own panel. */
+/* transparent bg overrides shiki's own so snippets sit on CodeCard's panel */
 .ev-snippet .shiki {
     margin: 0;
     background: transparent !important;
@@ -129,7 +125,7 @@ html.dark .ev-snippet .shiki span {
     color: var(--shiki-dark);
 }
 
-/* Section scroll-in entrance, driven by components/Reveal.tsx toggling data-shown. */
+/* components/Reveal.tsx toggles data-shown */
 .ev-reveal {
     opacity: 0;
     transform: translateY(10px);
@@ -165,7 +161,12 @@ html.dark .ev-snippet .shiki span {
     margin-inline-start: 0.5rem;
 }
 
-/* Twoslash hover popover: wrap long TSDoc @example code instead of forcing a horizontal scroll. */
+/* fumadocs defaults tabbed code (package-install) to bg-fd-secondary, override to match the fd-card blocks */
+[role='tabpanel'] > figure.shiki {
+    background-color: var(--color-fd-card);
+}
+
+/* wrap long TSDoc @example code in twoslash popovers so it doesn't scroll horizontally */
 .twoslash-popup-container {
     max-width: min(90vw, 560px);
 }
