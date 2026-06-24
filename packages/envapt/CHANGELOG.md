@@ -1,5 +1,11 @@
 # envapt
 
+## 7.0.0-next.3
+
+### Patch Changes
+
+- 54c8ecc: Bump dev dependencies.
+
 ## 7.0.0-next.2
 
 ### Patch Changes
