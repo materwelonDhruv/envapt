@@ -6,18 +6,34 @@ import type { NextConfig } from 'next';
 
 const withMDX = createMDX();
 
-// need to read from package.json because build happens before publish
-const { version } = JSON.parse(readFileSync(new URL('../../packages/envapt/package.json', import.meta.url), 'utf8'));
+const { version: localVersion } = JSON.parse(
+    readFileSync(new URL('../../packages/envapt/package.json', import.meta.url), 'utf8')
+) as { version: string };
 
-const config: NextConfig = {
-    output: 'export',
-    trailingSlash: true,
-    images: { unoptimized: true },
-    reactStrictMode: true,
-    env: { NEXT_PUBLIC_ENVAPT_VERSION: version },
-    // typescript + twoslash run at build time only (in transformerTwoslash); keep them out of the bundle
-    serverExternalPackages: ['typescript', 'twoslash']
-    // root custom domain (envapt.materwelon.dev) => no basePath / assetPrefix
-};
+// next site shows the npm next tag, prod shows latest. baked so React renders it, an edge injection gets clobbered by hydration. falls back to package.json
+async function badgeVersion(): Promise<string> {
+    const tag = process.env.NEXT_PUBLIC_SITE_URL?.includes('next-envapt') ? 'next' : 'latest';
+    try {
+        const res = await fetch('https://registry.npmjs.org/-/package/envapt/dist-tags');
+        if (!res.ok) return localVersion;
+        const tags = (await res.json()) as Record<string, string>;
+        return tags[tag] ?? localVersion;
+    } catch {
+        return localVersion;
+    }
+}
 
-export default withMDX(config);
+async function nextConfig(): Promise<NextConfig> {
+    const config: NextConfig = {
+        output: 'export',
+        trailingSlash: true,
+        images: { unoptimized: true },
+        reactStrictMode: true,
+        env: { NEXT_PUBLIC_ENVAPT_VERSION: await badgeVersion() },
+        // typescript + twoslash run at build time only (in transformerTwoslash); keep them out of the bundle
+        serverExternalPackages: ['typescript', 'twoslash']
+    };
+    return withMDX(config);
+}
+
+export default nextConfig;

@@ -14,16 +14,10 @@ export function VersionBadge({ href }: VersionBadgeProps): ReactNode {
 
     const label = `v${ENVAPT_VERSION}`;
 
-    if (!href)
-        return (
-            <span data-envapt-version className={MARK}>
-                {label}
-            </span>
-        );
+    if (!href) return <span className={MARK}>{label}</span>;
 
     return (
         <a
-            data-envapt-version
             href={href}
             target="_blank"
             rel="noreferrer"
