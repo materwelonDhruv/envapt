@@ -4,7 +4,9 @@ import fs from 'node:fs';
 import { resolve } from 'node:path';
 import process from 'node:process';
 
-const repoRoot = resolve(import.meta.dirname, '..');
+import { publishGuardError } from './release-guards';
+
+const repoRoot = resolve(import.meta.dirname, '..', '..');
 
 const readPre = (): { mode: string; tag: string | undefined } => {
     const preJsonPath = resolve(repoRoot, '.changeset/pre.json');
@@ -14,8 +16,6 @@ const readPre = (): { mode: string; tag: string | undefined } => {
     const tag = typeof preJson.tag === 'string' ? preJson.tag : undefined;
     return { mode, tag };
 };
-
-const isPrerelease = (version: string): boolean => /^\d+\.\d+\.\d+-/.test(version);
 
 const hasPendingChangesets = (): boolean => {
     const changesetDir = resolve(repoRoot, '.changeset');
@@ -75,38 +75,17 @@ const { mode, tag } = readPre();
 const { name, version } = readEnvaptPackage();
 console.log(`branch=${branch} pre-mode=${mode} tag=${tag ?? '(none)'} version=${version}`);
 
-// both the tag and the version are asserted so neither a stray pre tag nor a forgotten `pre exit`
-// can ship a prerelease to the `latest` channel
-if (branch === 'next') {
-    if (mode !== 'pre') {
-        console.error(
-            `::error::next must be in changeset pre-mode (pre.json mode=pre); got '${mode}'. Refusing to publish.`
-        );
-        process.exit(1);
-    }
-    if (!tag || tag === 'latest') {
-        console.error(
-            `::error::next pre-mode tag must be a dedicated prerelease channel, never 'latest'; got '${tag ?? '(none)'}'. Refusing to publish.`
-        );
-        process.exit(1);
-    }
-}
-if (branch === 'main') {
-    if (mode === 'pre') {
-        console.error('::error::main must not be in pre-mode. Refusing to publish a prerelease to the latest tag.');
-        process.exit(1);
-    }
-    if (isPrerelease(version)) {
-        console.error(
-            `::error::main version '${version}' is a prerelease. Run \`changeset pre exit\` before merging to main. Refusing to publish a prerelease to the latest tag.`
-        );
-        process.exit(1);
-    }
-}
-
 const pendingChangesets = hasPendingChangesets();
 const needsPublish = !isVersionPublished(name, version);
 const run = pendingChangesets || needsPublish;
+
+// stop a publish when the branch, pre mode, tag, and version don't match up, so a release can't land
+// on the wrong tag. only when a publish is really about to run, since CI versions later. see release-guards.ts
+const guardError = publishGuardError(branch, mode, tag, version, { pendingChangesets, needsPublish });
+if (guardError) {
+    console.error(`::error::${guardError} Refusing to publish.`);
+    process.exit(1);
+}
 
 console.log(`pendingChangesets=${pendingChangesets} needsPublish=${needsPublish} (${name}@${version}) run=${run}`);
 setOutput('run', String(run));

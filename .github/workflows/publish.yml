@@ -40,7 +40,7 @@ jobs:
               uses: ./.github/actions/setup
             - name: Release preflight
               id: preflight
-              run: pnpm tsx scripts/release-preflight.ts
+              run: pnpm tsx scripts/release/release-preflight.ts
               env:
                   GITHUB_REF_NAME: ${{ github.ref_name }}
 

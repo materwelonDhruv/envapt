@@ -58,7 +58,7 @@ const syncVersion = (denoConfigPath: string, label: string, packageVersion: stri
     }
 };
 
-const repoRoot = resolve(import.meta.dirname, '..');
+const repoRoot = resolve(import.meta.dirname, '..', '..');
 const rootPackageJsonPath = resolve(repoRoot, 'package.json');
 const rootVersion = getPackageVersion(rootPackageJsonPath, 'repository root');
 
