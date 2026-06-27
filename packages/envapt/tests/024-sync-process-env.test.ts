@@ -147,6 +147,33 @@ describe('syncProcessEnv (v5)', () => {
         });
     });
 
+    describe('template resolution', () => {
+        const TPL_PATH = resolve(import.meta.dirname, '.env.sync-template');
+        const TPL_KEYS = ['SYNC_TPL_BASE', 'SYNC_TPL_DERIVED'] as const;
+
+        function cleanTplKeys(): void {
+            for (const k of TPL_KEYS) Reflect.deleteProperty(process.env, k);
+        }
+
+        beforeEach(() => {
+            Envapter.syncProcessEnv = false;
+            cleanTplKeys();
+            Envapter.envPaths = TPL_PATH;
+        });
+
+        afterEach(() => {
+            Envapter.syncProcessEnv = false;
+            cleanTplKeys();
+            Envapter.envPaths = FIXTURE_PATH;
+        });
+
+        it('mirrors the resolved value, matching Envapter.get', () => {
+            Envapter.syncProcessEnv = true;
+            expect(Envapter.get('SYNC_TPL_DERIVED')).to.equal('base-secret');
+            expect(process.env.SYNC_TPL_DERIVED).to.equal('base-secret');
+        });
+    });
+
     describe('verbose debug logging', () => {
         it('emits per-key and summary mirror lines when verbose', () => {
             Envapter.debug = 'verbose';

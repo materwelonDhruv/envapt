@@ -73,10 +73,12 @@ export class NodeEnvapter extends Envapter {
         this.refreshCache();
     }
 
+    /** The configured base directory, or `undefined` when relative paths resolve against the working directory. */
     static get baseDir(): string | undefined {
         return EnvapterBase._baseDir;
     }
 
+    /** Set the env file loader options (`encoding`, `override`). Refreshes the cache. */
     static set envFileOptions(config: EnvFileOptions) {
         Validator.validateEnvFileOptions(config);
         EnvapterBase._userDefinedEnvFileOptions = config;
@@ -84,7 +86,7 @@ export class NodeEnvapter extends Envapter {
     }
 
     /**
-     * Get current dotenv configuration options
+     * Get current env file loader options
      */
     static get envFileOptions(): EnvFileOptions {
         return EnvapterBase._userDefinedEnvFileOptions;

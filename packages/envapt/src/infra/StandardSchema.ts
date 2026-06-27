@@ -10,6 +10,7 @@
  * @public
  */
 export interface StandardSchemaV1<Input = unknown, Output = Input> {
+    /** The Standard Schema entry point holding the validator and the inferred input/output types. */
     readonly '~standard': StandardSchemaV1.Props<Input, Output>;
 }
 

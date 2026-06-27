@@ -1,4 +1,5 @@
 import { PrimitiveMethods } from './PrimitiveMethods';
+import { debugWarn } from '../infra/Debug';
 import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
 
 import type { ArrayOf } from '../converters';
@@ -96,6 +97,7 @@ export class AdvancedMethods extends PrimitiveMethods {
         // Otherwise route through the parser so asymmetric fallback types (TimeFallback,
         // TimeFallback[] for `of: time` arrays) get coerced to the declared return type.
         if (this.treatAsMissing(value) && fallback === undefined) {
+            debugWarn(`${resolvedKey} is missing or empty`);
             return undefined as AdvancedConverterReturn<TConverter, TFallback>;
         }
 
@@ -169,7 +171,10 @@ export class AdvancedMethods extends PrimitiveMethods {
 
         // Check if variable exists first, for consistency with primitive methods
         const { key: resolvedKey, value } = this.resolveKeyInput(key);
-        if (this.treatAsMissing(value)) return fallback as ConditionalReturn<TReturnType, TFallback>;
+        if (this.treatAsMissing(value)) {
+            debugWarn(`${resolvedKey} is missing or empty`);
+            return fallback as ConditionalReturn<TReturnType, TFallback>;
+        }
 
         const hasFallback = fallback !== undefined;
         // Convert the converter to match the expected signature via unknown
