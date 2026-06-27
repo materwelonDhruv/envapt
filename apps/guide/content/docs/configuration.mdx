@@ -80,6 +80,8 @@ Envapter.syncProcessEnv = true;
 
 Only keys envapt's loader wrote are mirrored, so collisions follow `envFileOptions.override`: with the default `false`, a pre-existing `process.env` value is preserved.
 
+Mirrored values are resolved first, so `${VAR}` templates are expanded before they reach `process.env` and match what `Envapter.get` returns.
+
 <Callout type="warn">
     Mirroring is one-way. Turning `syncProcessEnv` back to `false` does not remove keys already written; they stay in
     `process.env` until the process exits.
@@ -96,10 +98,16 @@ Envapter.debug = 'verbose';
 ```
 
 - `warn`: signals that may indicate misconfiguration: failed file reads, unresolved templates in non-strict mode, and fallback values used in place of a missing variable.
-- `verbose`: adds every loaded file, per-file key counts, per-key load lines, effective paths, and cache rebuilds.
+- `verbose`: adds the base directory, every loaded file, per-file key counts, per-key load lines, effective paths, and cache rebuilds.
 
 You can also set the level without code through the `ENVAPT_DEBUG` environment variable. envapt reads it on first access; an explicit `Envapter.debug` assignment overrides it.
 
 ```dotenv
 ENVAPT_DEBUG=verbose
 ```
+
+<Callout type="info">
+    `import 'envapt/config'` loads at import time. Set `ENVAPT_DEBUG=verbose` before the import to see
+    that load logged. An `Envapter.debug` assignment in code runs after the load, so it is too late to
+    log it.
+</Callout>
