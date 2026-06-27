@@ -16,7 +16,7 @@ runs:
         run: |
             set -euo pipefail
 
-                        OUTPUT=$(pnpm tsx scripts/release-metadata.ts)
+                        OUTPUT=$(pnpm tsx scripts/release/release-metadata.ts)
                         TITLE=$(printf '%s\n' "$OUTPUT" | grep '^title=' | head -n1 | cut -d'=' -f2-)
 
                         if [ -z "$TITLE" ]; then

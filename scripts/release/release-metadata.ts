@@ -3,7 +3,7 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { promisify } from 'node:util';
 
-const root = path.resolve(import.meta.dirname, '..');
+const root = path.resolve(import.meta.dirname, '..', '..');
 const execFileAsync = promisify(execFile);
 const HEX_RADIX = 16;
 const DEBUG_ENV_VAR = 'RELEASE_METADATA_DEBUG';
