@@ -7,8 +7,11 @@ import type { Environment } from '../core/EnvironmentMethods';
  * @public
  */
 interface EnvaptOptions<TFallback = string> {
+    /** Value returned when the variable is missing or empty. Mutually exclusive with `required: true`. */
     fallback?: TFallback;
+    /** Converter applied to the raw string. A built-in token, an `ArrayOf` token, or a custom function. */
     converter?: EnvaptConverter<TFallback>;
+    /** When `true`, a missing or empty value throws instead of returning a fallback. */
     required?: boolean;
 }
 

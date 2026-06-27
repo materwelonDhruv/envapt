@@ -10,13 +10,16 @@ import type { BareEnvSource } from '../types';
  * @public
  */
 export class ManualEnvSource implements BareEnvSource {
+    /** Always `false`. With no filesystem, the `.env` cascade and file APIs do not apply. */
     readonly supportsFiles = false;
     private readonly vars: Record<string, string>;
 
+    /** Seed the source from `vars`. Non-string values are JSON-stringified so the converters still apply. */
     constructor(vars: Record<string, unknown>) {
         this.vars = coerceToStringRecord(vars);
     }
 
+    /** Returns a snapshot clone of the provided object as plain strings. */
     readVars(): Record<string, string> {
         return { ...this.vars };
     }

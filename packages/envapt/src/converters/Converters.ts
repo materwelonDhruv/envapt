@@ -40,8 +40,11 @@ export type ArrayElement = Exclude<ConverterToken, 'json' | 'regexp'> | CustomEl
  * @public
  */
 export interface ArrayOf<TElement extends ArrayElement = ArrayElement> {
+    /** Runtime discriminant marking this token as an array converter. Don't use directly. */
     readonly __envaptKind: 'array';
+    /** The element converter applied to each split slot. */
     readonly of: TElement;
+    /** The string the raw value is split on. */
     readonly delimiter: string;
 }
 

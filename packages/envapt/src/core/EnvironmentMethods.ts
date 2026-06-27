@@ -6,12 +6,23 @@ import type { EnvProfile, ProfilesConfig } from '../types';
 
 /**
  * Environment types supported by Envapter
+ *
+ * The following keys are checked in order until the first with a non-empty value is found, or defaulting to development if none are set:
+ * - `ENVIRONMENT`
+ * - `ENV`
+ * - `NODE_ENV`
+ * - `MODE`
+ *
  * @public
  */
 export enum Environment {
+    /** The default when no environment variable names a known environment. */
     Development,
+    /** Selected when an environment variable reads `staging`. */
     Staging,
+    /** Selected when an environment variable reads `production`. */
     Production,
+    /** Selected when an environment variable reads `test`. */
     Test
 }
 
