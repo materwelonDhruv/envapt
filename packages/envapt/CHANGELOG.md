@@ -1,5 +1,15 @@
 # envapt
 
+## 7.0.1-next.0
+
+### Patch Changes
+
+- 8f4cac8: Fixed: `syncProcessEnv` and `import 'envapt/config'` now mirror template-resolved values to `process.env`, matching `Envapter.get`.
+
+    Also, verbose debug logging reports the base directory in use now.
+
+- 8f4cac8: `Envapter.debug = 'warn'` now logs whenever a read hits a missing or empty variable, including reads with no fallback and reads through `getUsing`, `getWith`, and `parse`. Previously only a read that fell back to a provided default logged, so a bare `Envapter.get('MISSING')` was silent.
+
 ## 7.0.0
 
 ### Major Changes
