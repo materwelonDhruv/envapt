@@ -33,6 +33,10 @@ export class PrimitiveMethods extends EnvironmentMethods implements EnvapterServ
         return EnvapterBase.strict;
     }
 
+    protected static override resolveForMirror(key: string, value: string): string {
+        return this.templateResolver.resolveTemplate(key, value);
+    }
+
     private static _get<EnvVarReturnType, DefaultType extends EnvVarReturnType | undefined = undefined>(
         key: EnvKeyInput,
         type: Primitive,

@@ -132,11 +132,18 @@ export abstract class EnvapterBase {
             const value = EnvaptCache.get(key);
             /* v8 ignore next -- @preserve loader only writes strings; defensive against future cache contents */
             if (typeof value !== 'string') continue;
-            mirrored[key] = value;
+            mirrored[key] = this.resolveForMirror(key, value);
             debugVerbose(`mirrored ${key} to the ambient environment`);
         }
         source.writeVars(mirrored);
         debugVerbose(`mirrored ${EnvapterBase._dotenvAddedKeys.size} keys to the ambient environment`);
+    }
+
+    // The template resolver is defined in PrimitiveMethods, and EnvapterBase can't call it without an
+    // import cycle, so the mirror expands ${VAR} through this override.
+    protected static resolveForMirror(_key: string, value: string): string {
+        /* v8 ignore next -- @preserve overridden by PrimitiveMethods on every concrete class */
+        return value;
     }
 
     // Default returns the explicit `_envPaths`; EnvironmentMethods overrides to layer the dotenv-flow
@@ -182,6 +189,7 @@ export abstract class EnvapterBase {
             // Sources without a filesystem (injected objects on the browser or Workers) skip the
             // .env cascade, profiles, and envPaths; only the readVars() snapshot populates the cache.
             if (source.supportsFiles) {
+                debugVerbose(`base dir: ${EnvapterBase._baseDir ?? 'working directory'}`);
                 // Outside the try below so a missing configured profile path surfaces its EnvaptError; only dotenv parse errors stay caught.
                 const effectivePaths = this.resolveEffectivePaths();
                 debugVerbose(

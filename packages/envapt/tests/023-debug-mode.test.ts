@@ -212,6 +212,35 @@ describe('Debug mode (v5)', () => {
             }
         });
 
+        it('logs the configured base dir during cache rebuild', () => {
+            Envapter.debug = 'verbose';
+            const capture = captureStderr();
+            try {
+                Envapter.baseDir = import.meta.dirname;
+                const dir = Envapter.baseDir;
+                const line = capture.lines.find((l) => l.includes('base dir'));
+                expect(line, 'expected a base dir line').to.exist;
+                expect(line).to.include(dir);
+            } finally {
+                capture.restore();
+                Envapter.baseDir = undefined;
+            }
+        });
+
+        it('reports the working directory when no base dir is set', () => {
+            Envapter.debug = 'verbose';
+            Envapter.baseDir = undefined;
+            const capture = captureStderr();
+            try {
+                Envapter.envPaths = resolve(import.meta.dirname, '.env.debug-mode');
+                const line = capture.lines.find((l) => l.includes('base dir'));
+                expect(line, 'expected a base dir line').to.exist;
+                expect(line).to.include('working directory');
+            } finally {
+                capture.restore();
+            }
+        });
+
         it('still emits warn-level lines (fallback used)', () => {
             Envapter.debug = 'verbose';
             const capture = captureStderr();
