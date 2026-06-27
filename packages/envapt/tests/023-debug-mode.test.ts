@@ -8,7 +8,12 @@ import { resetDebugForTesting } from '../src/infra/Debug';
 import { loadDotenv } from '../src/infra/Dotenv';
 import { EnvaptError } from '../src/infra/Error';
 
-import type { DebugLevel } from '../src';
+import type { DebugLevel, StandardSchemaV1 } from '../src';
+
+// Minimal inline Standard Schema (avoids a zod/valibot dep just to exercise the parse warn path).
+const passThroughSchema: StandardSchemaV1<string, string> = {
+    '~standard': { version: 1, vendor: 'test', validate: (v) => ({ value: v as string }) }
+};
 
 // loadDotenv takes an injected reader; reuse the library's Node reader rather than re-implementing fs.
 const reader = new NodeEnvSource();
@@ -110,6 +115,58 @@ describe('Debug mode (v5)', () => {
                 expect(line).to.exist;
                 expect(line).to.include('NEVER_SET_KEY');
                 expect(line).to.include('fallback');
+            } finally {
+                capture.restore();
+            }
+        });
+
+        it('logs a missing key even without a fallback', () => {
+            Envapter.debug = 'warn';
+            const capture = captureStderr();
+            try {
+                Envapter.get('NEVER_SET_KEY');
+                const line = capture.lines.find((l) => l.includes('NEVER_SET_KEY'));
+                expect(line, 'expected a not-found warn').to.exist;
+                expect(line).to.include('not found');
+            } finally {
+                capture.restore();
+            }
+        });
+
+        it('logs a missing key read through getUsing (no fallback)', () => {
+            Envapter.debug = 'warn';
+            const capture = captureStderr();
+            try {
+                Envapter.getUsing('NEVER_SET_KEY', 'number');
+                const line = capture.lines.find((l) => l.includes('NEVER_SET_KEY'));
+                expect(line, 'expected a not-found warn from getUsing').to.exist;
+                expect(line).to.include('not found');
+            } finally {
+                capture.restore();
+            }
+        });
+
+        it('logs a missing key read through getWith (with fallback)', () => {
+            Envapter.debug = 'warn';
+            const capture = captureStderr();
+            try {
+                Envapter.getWith('NEVER_SET_KEY', (raw) => raw, 'fb');
+                const line = capture.lines.find((l) => l.includes('NEVER_SET_KEY'));
+                expect(line, 'expected a not-found warn from getWith').to.exist;
+                expect(line).to.include('not found');
+            } finally {
+                capture.restore();
+            }
+        });
+
+        it('logs a missing key read through parse (with fallback)', () => {
+            Envapter.debug = 'warn';
+            const capture = captureStderr();
+            try {
+                Envapter.parse('NEVER_SET_KEY', passThroughSchema, 'fb');
+                const line = capture.lines.find((l) => l.includes('NEVER_SET_KEY'));
+                expect(line, 'expected a not-found warn from parse').to.exist;
+                expect(line).to.include('not found');
             } finally {
                 capture.restore();
             }
@@ -236,6 +293,18 @@ describe('Debug mode (v5)', () => {
                 const line = capture.lines.find((l) => l.includes('base dir'));
                 expect(line, 'expected a base dir line').to.exist;
                 expect(line).to.include('working directory');
+            } finally {
+                capture.restore();
+            }
+        });
+
+        it('includes the missing-key warn at verbose level too', () => {
+            Envapter.debug = 'verbose';
+            const capture = captureStderr();
+            try {
+                Envapter.get('NEVER_SET_KEY');
+                const line = capture.lines.find((l) => l.includes('NEVER_SET_KEY') && l.includes('not found'));
+                expect(line, 'expected the not-found warn at verbose level').to.exist;
             } finally {
                 capture.restore();
             }

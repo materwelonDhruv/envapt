@@ -97,7 +97,7 @@ import { Envapter } from 'envapt';
 Envapter.debug = 'verbose';
 ```
 
-- `warn`: signals that may indicate misconfiguration: failed file reads, unresolved templates in non-strict mode, and fallback values used in place of a missing variable.
+- `warn`: signals that may indicate misconfiguration: failed file reads, unresolved templates in non-strict mode, and any read of a missing or empty variable (whether it returns a fallback or `undefined`).
 - `verbose`: adds the base directory, every loaded file, per-file key counts, per-key load lines, effective paths, and cache rebuilds.
 
 You can also set the level without code through the `ENVAPT_DEBUG` environment variable. envapt reads it on first access; an explicit `Envapter.debug` assignment overrides it.
