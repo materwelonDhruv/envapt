@@ -33,6 +33,10 @@ export class PrimitiveMethods extends EnvironmentMethods implements EnvapterServ
         return EnvapterBase.strict;
     }
 
+    protected static override resolveForMirror(key: string, value: string): string {
+        return this.templateResolver.resolveTemplate(key, value);
+    }
+
     private static _get<EnvVarReturnType, DefaultType extends EnvVarReturnType | undefined = undefined>(
         key: EnvKeyInput,
         type: Primitive,
@@ -40,7 +44,8 @@ export class PrimitiveMethods extends EnvironmentMethods implements EnvapterServ
     ): ConditionalReturn<EnvVarReturnType, DefaultType> {
         const { key: resolvedKey, value } = this.resolveKeyInput(key);
         if (this.treatAsMissing(value)) {
-            if (def !== undefined) debugWarn(`${resolvedKey} not found, using fallback ${String(def)}`);
+            if (def !== undefined) debugWarn(`${resolvedKey} is missing or empty, using fallback ${String(def)}`);
+            else debugWarn(`${resolvedKey} is missing or empty`);
             return def as ConditionalReturn<EnvVarReturnType, DefaultType>;
         }
         const rawVal = value as string | number | boolean | undefined;

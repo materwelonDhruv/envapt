@@ -8,7 +8,12 @@ import { resetDebugForTesting } from '../src/infra/Debug';
 import { loadDotenv } from '../src/infra/Dotenv';
 import { EnvaptError } from '../src/infra/Error';
 
-import type { DebugLevel } from '../src';
+import type { DebugLevel, StandardSchemaV1 } from '../src';
+
+// Minimal inline Standard Schema (avoids a zod/valibot dep just to exercise the parse warn path).
+const passThroughSchema: StandardSchemaV1<string, string> = {
+    '~standard': { version: 1, vendor: 'test', validate: (v) => ({ value: v as string }) }
+};
 
 // loadDotenv takes an injected reader; reuse the library's Node reader rather than re-implementing fs.
 const reader = new NodeEnvSource();
@@ -115,6 +120,75 @@ describe('Debug mode (v5)', () => {
             }
         });
 
+        it('logs a missing key even without a fallback', () => {
+            Envapter.debug = 'warn';
+            const capture = captureStderr();
+            try {
+                Envapter.get('NEVER_SET_KEY');
+                const line = capture.lines.find((l) => l.includes('NEVER_SET_KEY'));
+                expect(line, 'expected a not-found warn').to.exist;
+                expect(line).to.include('missing or empty');
+            } finally {
+                capture.restore();
+            }
+        });
+
+        it('logs a missing key read through getUsing (no fallback)', () => {
+            Envapter.debug = 'warn';
+            const capture = captureStderr();
+            try {
+                Envapter.getUsing('NEVER_SET_KEY', 'number');
+                const line = capture.lines.find((l) => l.includes('NEVER_SET_KEY'));
+                expect(line, 'expected a not-found warn from getUsing').to.exist;
+                expect(line).to.include('missing or empty');
+            } finally {
+                capture.restore();
+            }
+        });
+
+        it('logs a missing key read through getWith (with fallback)', () => {
+            Envapter.debug = 'warn';
+            const capture = captureStderr();
+            try {
+                Envapter.getWith('NEVER_SET_KEY', (raw) => raw, 'fb');
+                const line = capture.lines.find((l) => l.includes('NEVER_SET_KEY'));
+                expect(line, 'expected a not-found warn from getWith').to.exist;
+                expect(line).to.include('missing or empty');
+            } finally {
+                capture.restore();
+            }
+        });
+
+        it('logs a missing key read through parse (with fallback)', () => {
+            Envapter.debug = 'warn';
+            const capture = captureStderr();
+            try {
+                Envapter.parse('NEVER_SET_KEY', passThroughSchema, 'fb');
+                const line = capture.lines.find((l) => l.includes('NEVER_SET_KEY'));
+                expect(line, 'expected a not-found warn from parse').to.exist;
+                expect(line).to.include('missing or empty');
+            } finally {
+                capture.restore();
+            }
+        });
+
+        it('reports a present-but-empty var as missing or empty', () => {
+            Envapter.debug = 'warn';
+            process.env.EMPTY_KEY_X = '';
+            Envapter.envPaths = resolve(import.meta.dirname, '.env.debug-mode'); // rebuild so the empty var is snapshotted
+            const capture = captureStderr();
+            try {
+                Envapter.get('EMPTY_KEY_X');
+                const line = capture.lines.find((l) => l.includes('EMPTY_KEY_X'));
+                expect(line, 'expected a missing-or-empty warn').to.exist;
+                expect(line).to.include('missing or empty');
+            } finally {
+                capture.restore();
+                Reflect.deleteProperty(process.env, 'EMPTY_KEY_X');
+                Envapter.envPaths = resolve(import.meta.dirname, '.env.debug-mode');
+            }
+        });
+
         it('does NOT log when a key is found in the env (no fallback path)', () => {
             Envapter.debug = 'warn';
             const capture = captureStderr();
@@ -207,6 +281,47 @@ describe('Debug mode (v5)', () => {
             try {
                 Envapter.envPaths = resolve(import.meta.dirname, '.env.debug-mode');
                 expect(capture.lines.some((l) => l.includes('-> KNOWN_KEY'))).to.equal(true);
+            } finally {
+                capture.restore();
+            }
+        });
+
+        it('logs the configured base dir during cache rebuild', () => {
+            Envapter.debug = 'verbose';
+            const capture = captureStderr();
+            try {
+                Envapter.baseDir = import.meta.dirname;
+                const dir = Envapter.baseDir;
+                const line = capture.lines.find((l) => l.includes('base dir'));
+                expect(line, 'expected a base dir line').to.exist;
+                expect(line).to.include(dir);
+            } finally {
+                capture.restore();
+                Envapter.baseDir = undefined;
+            }
+        });
+
+        it('reports the working directory when no base dir is set', () => {
+            Envapter.debug = 'verbose';
+            Envapter.baseDir = undefined;
+            const capture = captureStderr();
+            try {
+                Envapter.envPaths = resolve(import.meta.dirname, '.env.debug-mode');
+                const line = capture.lines.find((l) => l.includes('base dir'));
+                expect(line, 'expected a base dir line').to.exist;
+                expect(line).to.include('working directory');
+            } finally {
+                capture.restore();
+            }
+        });
+
+        it('includes the missing-key warn at verbose level too', () => {
+            Envapter.debug = 'verbose';
+            const capture = captureStderr();
+            try {
+                Envapter.get('NEVER_SET_KEY');
+                const line = capture.lines.find((l) => l.includes('NEVER_SET_KEY') && l.includes('missing or empty'));
+                expect(line, 'expected the missing-or-empty warn at verbose level').to.exist;
             } finally {
                 capture.restore();
             }

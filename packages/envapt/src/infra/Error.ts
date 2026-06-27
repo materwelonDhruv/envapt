@@ -1,6 +1,10 @@
 /* eslint-disable no-magic-numbers */
 import type { StandardSchemaV1 } from './StandardSchema';
 
+/**
+ * Numeric codes carried by {@link EnvaptError.code}, grouped by fallback (1xx), converter (2xx),
+ * and configuration (3xx) failures.
+ */
 export enum EnvaptErrorCodes {
     // Fallback related errors
     /** Thrown when an invalid fallback value is provided */
@@ -66,6 +70,7 @@ interface EnvaptErrorOptions {
  * ```
  */
 export class EnvaptError extends Error {
+    /** The {@link EnvaptErrorCodes} value identifying what failed. */
     public readonly code: EnvaptErrorCodes;
     /**
      * Populated only for {@link EnvaptErrorCodes.SchemaValidationFailed} (208). For every other
@@ -74,6 +79,7 @@ export class EnvaptError extends Error {
      */
     public readonly issues: readonly StandardSchemaV1.Issue[] | undefined;
 
+    /** Create an error carrying an {@link EnvaptErrorCodes} code, a message, and optional `cause` / `issues`. */
     constructor(code: EnvaptErrorCodes, message: string, options?: EnvaptErrorOptions) {
         super(message, options?.cause !== undefined ? { cause: options.cause } : undefined);
         this.name = `EnvaptError [${code}]`;

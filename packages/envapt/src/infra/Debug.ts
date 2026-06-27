@@ -3,10 +3,10 @@ import { readRuntimeEnv, writeRuntimeLine } from './runtime';
 
 /**
  * Debug log levels for {@link Envapter.debug}. `silent` (default) emits nothing.
- * `warn` covers signals that might indicate misconfiguration: failed file reads,
- * unresolved templates (when not strict), fallback values used in place of missing
- * env. `verbose` adds every loaded file, per-file key count, per-key load lines, and
- * effective-paths / cache-rebuild notices.
+ * `warn` covers signals that might indicate misconfiguration, failed file reads,
+ * unresolved templates (when not strict), and any read of a missing or empty variable
+ * (whether it returns a fallback or `undefined`). `verbose` adds every loaded file,
+ * per-file key count, per-key load lines, and effective-paths / cache-rebuild notices.
  * @public
  */
 export type DebugLevel = 'silent' | 'warn' | 'verbose';

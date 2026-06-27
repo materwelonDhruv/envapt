@@ -5,5 +5,8 @@
     "@envapt/guide": "1.0.0",
     "envapt": "7.0.0"
   },
-  "changesets": []
+  "changesets": [
+    "process-env-template-sync",
+    "warn-on-missing-reads"
+  ]
 }
