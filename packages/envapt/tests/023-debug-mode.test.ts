@@ -127,7 +127,7 @@ describe('Debug mode (v5)', () => {
                 Envapter.get('NEVER_SET_KEY');
                 const line = capture.lines.find((l) => l.includes('NEVER_SET_KEY'));
                 expect(line, 'expected a not-found warn').to.exist;
-                expect(line).to.include('not found');
+                expect(line).to.include('missing or empty');
             } finally {
                 capture.restore();
             }
@@ -140,7 +140,7 @@ describe('Debug mode (v5)', () => {
                 Envapter.getUsing('NEVER_SET_KEY', 'number');
                 const line = capture.lines.find((l) => l.includes('NEVER_SET_KEY'));
                 expect(line, 'expected a not-found warn from getUsing').to.exist;
-                expect(line).to.include('not found');
+                expect(line).to.include('missing or empty');
             } finally {
                 capture.restore();
             }
@@ -153,7 +153,7 @@ describe('Debug mode (v5)', () => {
                 Envapter.getWith('NEVER_SET_KEY', (raw) => raw, 'fb');
                 const line = capture.lines.find((l) => l.includes('NEVER_SET_KEY'));
                 expect(line, 'expected a not-found warn from getWith').to.exist;
-                expect(line).to.include('not found');
+                expect(line).to.include('missing or empty');
             } finally {
                 capture.restore();
             }
@@ -166,9 +166,26 @@ describe('Debug mode (v5)', () => {
                 Envapter.parse('NEVER_SET_KEY', passThroughSchema, 'fb');
                 const line = capture.lines.find((l) => l.includes('NEVER_SET_KEY'));
                 expect(line, 'expected a not-found warn from parse').to.exist;
-                expect(line).to.include('not found');
+                expect(line).to.include('missing or empty');
             } finally {
                 capture.restore();
+            }
+        });
+
+        it('reports a present-but-empty var as missing or empty', () => {
+            Envapter.debug = 'warn';
+            process.env.EMPTY_KEY_X = '';
+            Envapter.envPaths = resolve(import.meta.dirname, '.env.debug-mode'); // rebuild so the empty var is snapshotted
+            const capture = captureStderr();
+            try {
+                Envapter.get('EMPTY_KEY_X');
+                const line = capture.lines.find((l) => l.includes('EMPTY_KEY_X'));
+                expect(line, 'expected a missing-or-empty warn').to.exist;
+                expect(line).to.include('missing or empty');
+            } finally {
+                capture.restore();
+                Reflect.deleteProperty(process.env, 'EMPTY_KEY_X');
+                Envapter.envPaths = resolve(import.meta.dirname, '.env.debug-mode');
             }
         });
 
@@ -303,8 +320,8 @@ describe('Debug mode (v5)', () => {
             const capture = captureStderr();
             try {
                 Envapter.get('NEVER_SET_KEY');
-                const line = capture.lines.find((l) => l.includes('NEVER_SET_KEY') && l.includes('not found'));
-                expect(line, 'expected the not-found warn at verbose level').to.exist;
+                const line = capture.lines.find((l) => l.includes('NEVER_SET_KEY') && l.includes('missing or empty'));
+                expect(line, 'expected the missing-or-empty warn at verbose level').to.exist;
             } finally {
                 capture.restore();
             }

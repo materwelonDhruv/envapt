@@ -44,8 +44,8 @@ export class PrimitiveMethods extends EnvironmentMethods implements EnvapterServ
     ): ConditionalReturn<EnvVarReturnType, DefaultType> {
         const { key: resolvedKey, value } = this.resolveKeyInput(key);
         if (this.treatAsMissing(value)) {
-            if (def !== undefined) debugWarn(`${resolvedKey} not found, using fallback ${String(def)}`);
-            else debugWarn(`${resolvedKey} not found`);
+            if (def !== undefined) debugWarn(`${resolvedKey} is missing or empty, using fallback ${String(def)}`);
+            else debugWarn(`${resolvedKey} is missing or empty`);
             return def as ConditionalReturn<EnvVarReturnType, DefaultType>;
         }
         const rawVal = value as string | number | boolean | undefined;

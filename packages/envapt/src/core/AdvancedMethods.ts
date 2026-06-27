@@ -97,7 +97,7 @@ export class AdvancedMethods extends PrimitiveMethods {
         // Otherwise route through the parser so asymmetric fallback types (TimeFallback,
         // TimeFallback[] for `of: time` arrays) get coerced to the declared return type.
         if (this.treatAsMissing(value) && fallback === undefined) {
-            debugWarn(`${resolvedKey} not found`);
+            debugWarn(`${resolvedKey} is missing or empty`);
             return undefined as AdvancedConverterReturn<TConverter, TFallback>;
         }
 
@@ -172,7 +172,7 @@ export class AdvancedMethods extends PrimitiveMethods {
         // Check if variable exists first, for consistency with primitive methods
         const { key: resolvedKey, value } = this.resolveKeyInput(key);
         if (this.treatAsMissing(value)) {
-            debugWarn(`${resolvedKey} not found`);
+            debugWarn(`${resolvedKey} is missing or empty`);
             return fallback as ConditionalReturn<TReturnType, TFallback>;
         }
 
