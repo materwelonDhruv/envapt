@@ -18,7 +18,7 @@
         "fmt:check": "turbo fmt:check",
         "tc": "turbo tc",
         "test": "turbo test",
-        "test:scripts": "vitest run scripts/",
+        "test:scripts": "vitest run scripts/ --coverage.enabled=false",
         "coverage": "turbo coverage",
         "prePush": "pnpm tc && pnpm lint && pnpm lint:md && pnpm test && pnpm test:scripts",
         "lint-staged": "lint-staged",
