@@ -86,11 +86,11 @@ I use a very strict ESLint config accompanied by Prettier to keep code consisten
 
 ## AI-generated code
 
-AI tools are fine, I use them too. The bar is just the same as any other code. You have to actually understand what you're submitting and review it properly before it goes up. Don't send a PR with code you couldn't explain or debug yourself, and if a someone (most prolly me) asks why something works, "the AI wrote it" isn't an answer.
+AI tools are fine, I use them too. The bar is just the same as any other code. You have to actually understand what you're submitting and review it properly before it goes up. Don't send a PR with code you couldn't explain or debug yourself, and if someone (most probably me) asks why something is the way it is, "the AI wrote it" isn't an answer.
 
 Same for anything you write in the repo. Issues, PR descriptions, and review replies/comments should come from **you**, the person who read and understood the change. I want to talk through it with the human doing the work.
 
-AI code also has a habit of looking correct while missing edge cases, so the test and coverage rules above matter even more here. Preferrably use test-driven development when using AI.
+AI code also has a habit of looking correct while missing edge cases, so the test and coverage rules above matter even more here. Preferably use test-driven development when using AI.
 
 ## CI and checks
 
