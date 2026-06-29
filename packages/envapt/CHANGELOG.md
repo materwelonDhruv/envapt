@@ -1,5 +1,11 @@
 # envapt
 
+## 7.0.2-next.0
+
+### Patch Changes
+
+- 5719aa6: fix malformed CJS output (tsdown shim banner leaked ESM syntax into every .cjs)
+
 ## 7.0.1
 
 ### Patch Changes

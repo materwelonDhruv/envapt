@@ -1,0 +1,11 @@
+{
+  "mode": "pre",
+  "tag": "next",
+  "initialVersions": {
+    "@envapt/guide": "1.0.0",
+    "envapt": "7.0.1"
+  },
+  "changesets": [
+    "cjs-esm-banner-fix"
+  ]
+}
