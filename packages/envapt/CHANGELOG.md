@@ -1,5 +1,11 @@
 # envapt
 
+## 7.0.3
+
+### Patch Changes
+
+- deprecate the envapt/workerd and envapt/browser subpaths. both still work but now log a deprecation warning on import. import directly from `envapt` instead. removed in v8.
+
 ## 7.0.2
 
 ### Patch Changes

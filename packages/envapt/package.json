@@ -1,7 +1,7 @@
 {
     "name": "envapt",
     "type": "module",
-    "version": "7.0.2",
+    "version": "7.0.3",
     "description": "Type-safe config for TypeScript. Read typed values from any source, process.env, .env files, Cloudflare Workers bindings, browser bundles, or any object you supply. Zero runtime dependencies, one API across Node, Bun, Deno, Workers, and the browser. TC39 accessor decorators (legacy decorators at envapt/legacy), converters, and Standard Schema (zod/valibot/arktype) validation.",
     "types": "./dist/types/index.d.mts",
     "exports": {
@@ -36,12 +36,12 @@
             }
         },
         "./workerd": {
-            "types": "./dist/types/index.portable.d.mts",
-            "default": "./dist/workerd/index.mjs"
+            "types": "./aliases/workerd.d.mts",
+            "default": "./aliases/workerd.mjs"
         },
         "./browser": {
-            "types": "./dist/types/index.portable.d.mts",
-            "default": "./dist/browser/index.mjs"
+            "types": "./aliases/browser.d.mts",
+            "default": "./aliases/browser.mjs"
         },
         "./config": {
             "import": {
@@ -86,13 +86,16 @@
     },
     "sideEffects": [
         "./dist/node/config.cjs",
-        "./dist/node/config.mjs"
+        "./dist/node/config.mjs",
+        "./aliases/workerd.mjs",
+        "./aliases/browser.mjs"
     ],
     "files": [
         "dist/**/*.mjs",
         "dist/**/*.cjs",
         "dist/**/*.map",
         "dist/types",
+        "aliases",
         "NOTICE.md",
         "LICENSE",
         "README.md",
