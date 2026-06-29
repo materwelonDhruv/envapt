@@ -34,7 +34,7 @@
         "cs:publish": "changeset publish",
         "cs:status": "changeset status",
         "release": "pnpm run build && pnpm run cs:publish",
-        "release:version": "changeset version && pnpm tsx scripts/release/bump-jsr.ts",
+        "release:version": "changeset version && pnpm tsx scripts/release/bump-jsr.ts && pnpm tsx scripts/release/prune-changelog.ts",
         "prepublishOnly": "pnpm run clean && pnpm run build",
         "bump:deps:pkgs": "for dir in packages/*/; do echo \"Updating $dir...\"; (cd \"$dir\" && pnpm update --latest); done",
         "bump:deps:apps": "for dir in apps/*/; do echo \"Updating $dir...\"; (cd \"$dir\" && pnpm update --latest); done",
