@@ -5,5 +5,7 @@
     "@envapt/guide": "1.0.0",
     "envapt": "7.0.1"
   },
-  "changesets": []
+  "changesets": [
+    "cjs-esm-banner-fix"
+  ]
 }

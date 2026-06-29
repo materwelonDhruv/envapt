@@ -17,13 +17,11 @@ const shared = {
 // Each runtime build emits its own sibling dts so the deep-import tests resolve against the exact built
 // JS. package.json points every `types` at the single dist/types tree below, not at these.
 export default defineConfig([
-    // shims injects __dirname/process for the node:* sources.
     {
         ...shared,
         entry: { index: 'src/index.ts', config: 'src/config.ts', legacy: 'src/legacy.ts' },
         format: ['esm', 'cjs'],
         platform: 'node',
-        shims: true,
         outDir: 'dist/node'
     },
     // fixedExtension forces .mjs (it only defaults on for platform:node).

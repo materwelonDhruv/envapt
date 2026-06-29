@@ -28,6 +28,7 @@ const slices = [
     ['consumer-build', ['--filter', 'envapt', 'test:consumer-build']],
     ['tree-shaking', ['--filter', 'envapt', 'test:tree-shaking']],
     ['exports-dedup', ['--filter', 'envapt', 'test:exports-dedup']],
+    ['cjs-validity', ['--filter', 'envapt', 'test:cjs-validity']],
     ['tsc-emit', ['--filter', 'envapt', 'test:tsc-emit']],
     ['stage3-emit', ['--filter', 'envapt', 'test:stage3-emit']]
 ];
