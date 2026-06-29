@@ -1,22 +1,12 @@
 # envapt
 
-## 7.0.2-next.0
+## 7.0.2
 
 ### Patch Changes
 
-- 5719aa6: fix malformed CJS output (tsdown shim banner leaked ESM syntax into every .cjs)
+- 2cf58a0: fix malformed CJS output (tsdown shim banner leaked ESM syntax into every .cjs)
 
 ## 7.0.1
-
-### Patch Changes
-
-- 8f4cac8: Fixed: `syncProcessEnv` and `import 'envapt/config'` now mirror template-resolved values to `process.env`, matching `Envapter.get`.
-
-    Also, verbose debug logging reports the base directory in use now.
-
-- 8f4cac8: `Envapter.debug = 'warn'` now logs whenever a read hits a missing or empty variable, including reads with no fallback and reads through `getUsing`, `getWith`, and `parse`. Previously only a read that fell back to a provided default logged, so a bare `Envapter.get('MISSING')` was silent.
-
-## 7.0.1-next.0
 
 ### Patch Changes
 
@@ -47,43 +37,6 @@
 - da55055: Fix decorator value caching so a resolved `undefined` (from `fallback: undefined` or a converter that returns `undefined`) is cached once instead of re-resolving on every property access. The modern accessor decorator now throws `EnvaptError` when the runtime's Stage 3 transform does not provide the accessor name, rather than collapsing every accessor to one cache key.
 - 0bbcc85: Editor auto-import now suggests each public name once instead of once per runtime build. The published type declarations are emitted as a single shared tree that the Node, Workers, and browser entry points all re-export, so `Envapt`, `Envapter`, the converters, and the rest resolve to one declaration. The Workers and browser entries still expose the portable `Envapter` without the file-only APIs. The package no longer ships the redundant per-runtime declaration trees, so the install is smaller.
 - 5384199: The `envapt/browser` and `envapt/workerd` builds are now side-effect-free, so a bundler can drop the parts of envapt a consumer never imports. Importing a single export such as `EnvaptError` or `Converters` from the portable builds now ships about 1.3 kB instead of about 22 kB. The filesystem-only APIs (`envPaths`, `baseDir`, `envFileOptions`, `configureProfiles`, `resetProfiles`) still throw `EnvaptError` on the browser and Workers builds, their stubs moved onto the portable `Envapter` class so they install only when that class is used.
-
-## 7.0.0-next.3
-
-### Patch Changes
-
-- 54c8ecc: Bump dev dependencies.
-
-## 7.0.0-next.2
-
-### Patch Changes
-
-- 5384199: The `envapt/browser` and `envapt/workerd` builds are now side-effect-free, so a bundler can drop the parts of envapt a consumer never imports. Importing a single export such as `EnvaptError` or `Converters` from the portable builds now ships about 1.3 kB instead of about 22 kB. The filesystem-only APIs (`envPaths`, `baseDir`, `envFileOptions`, `configureProfiles`, `resetProfiles`) still throw `EnvaptError` on the browser and Workers builds, their stubs moved onto the portable `Envapter` class so they install only when that class is used.
-
-## 7.0.0-next.1
-
-### Patch Changes
-
-- 0bbcc85: Editor auto-import now suggests each public name once instead of once per runtime build. The published type declarations are emitted as a single shared tree that the Node, Workers, and browser entry points all re-export, so `Envapt`, `Envapter`, the converters, and the rest resolve to one declaration. The Workers and browser entries still expose the portable `Envapter` without the file-only APIs. The package no longer ships the redundant per-runtime declaration trees, so the install is smaller.
-
-## 7.0.0-next.0
-
-### Major Changes
-
-- da55055: **BREAKING:** This should have been done long ago, but all the legacy decorators (`@Envapt` and the sugar decorators) now correctly typecheck the field they are decorating. Say, for example you had `@EnvNum(PORT)` on a field, but the field was typed as `number`, you would now get an error that says `'{ '[envapt] field type must hold the converter output': number | null; }'` because without a fallback, the field would be assigned a `null` value if the environment variable is not set. And of course, this also means completely incorrectly typed fields will also not compile anymore. This was the intended behavior so it should be a minor, but because of how many of my own tests it broke, I'm releasing it as a major.
-- da55055: **BREAKING.** Modern (TC39 Stage 3) decorators are now the default.
-
-    `@Envapt` and the sugar decorators (`@EnvNum`, `@EnvStr`, `@EnvBool`, `@EnvUrl`, `@EnvTime`) imported from `envapt` are now Stage 3 accessor decorators. Decorate with the `accessor` keyword, `static accessor port: number` for a static field and `accessor port!: number` for an instance field. They need no `experimentalDecorators` flag and work on any runtime, including Bun and Deno running `.ts` directly.
-
-    The legacy (experimentalDecorators) decorators move to a subpath. Change `import { Envapt } from 'envapt'` to `import { Envapt } from 'envapt/legacy'` to keep the old `static readonly` / `declare readonly` form, which still requires `experimentalDecorators: true`. Everything else (`Envapter`, `Converters`, sources, and types) stays on `envapt`.
-
-### Minor Changes
-
-- da55055: **BREAKING:** Legacy decorated properties now throw a clear error when you assign to them. `@Envapt` and the sugar decorators (from `envapt/legacy`) install a setter that throws `EnvaptError` with code `InvalidUserDefinedConfig`, because the value resolves from the environment and is read-only. Before, the property had only a getter, so an assignment was a silent no-op in sloppy mode and a native `TypeError` in strict mode. The modern decorators on `envapt` behave the same way.
-
-### Patch Changes
-
-- da55055: Fix decorator value caching so a resolved `undefined` (from `fallback: undefined` or a converter that returns `undefined`) is cached once instead of re-resolving on every property access. The modern accessor decorator now throws `EnvaptError` when the runtime's Stage 3 transform does not provide the accessor name, rather than collapsing every accessor to one cache key.
 
 ## 6.0.2
 
@@ -147,58 +100,6 @@
     A fallback like `'1.5h'` previously threw `MalformedTimeFallback` even though the `TimeFallback` type (`` `${number}${TimeUnit}` ``) accepts it at compile time. Raw env values already allowed decimals, so the restriction only applied to fallbacks, which was inconsistent. A string fallback still requires an explicit unit (a unitless number is a number fallback), but `'1.5h'` now resolves to `5400000`.
 
 - b8e26dd: Move the build and lint toolchain to TypeScript 6.0. No public API or runtime change.
-
-## 5.2.0-next.2
-
-### Patch Changes
-
-- bad5f6b: update package.json desc and engines/os
-
-## 5.2.0-next.1
-
-### Patch Changes
-
-- b8e26dd: Move the build and lint toolchain to TypeScript 6.0. No public API or runtime change.
-
-## 5.2.0-next.0
-
-### Minor Changes
-
-- e506a6d: `Envapter` now detects the test environment and reads Vite's `MODE`.
-    - `Environment.Test` and `Envapter.isTest` are added. `NODE_ENV=test` (and Vite's `MODE=test`) now resolve to `Environment.Test`, where they previously fell through to `Development`. As a result, `isDevelopment` is no longer `true` under a test runner that sets `NODE_ENV=test`.
-    - `MODE` joins the detection chain, after `ENVIRONMENT`, `ENV`, and `NODE_ENV`. Vite-family browser builds expose `import.meta.env.MODE` but none of the others, so `new ManualEnvSource(import.meta.env)` now sets the environment from `MODE`.
-    - Environment names match case-insensitively. Previously `staging` was matched case-sensitively, so `STAGING` or `Staging` fell through to `Development`; `production` was already case-insensitive.
-    - When no environment key is set, or its value is unrecognized, detection defaults to `Development` and emits a debug warning (visible with `Envapter.debug = 'warn'`).
-
-- e506a6d: envapt now runs on the browser and Cloudflare Workers, not only Node. The engine reads variables through a pluggable `EnvSource` instead of reading `process.env` directly, so the same `Envapter` and `@Envapt` API works against an injected object or a Workers binding.
-
-    `Envapter.useSource(source)` binds the source; the bound source then backs every read, the `.env` cascade, and `Envapter.syncProcessEnv`. Built-in sources, all exported from `envapt`:
-    - `NodeEnvSource`: a `process.env` snapshot plus the `.env` cascade. Bound automatically on Node, Bun, and Deno, so you do not call `useSource` yourself.
-    - `WorkerEnvSource`: reads a Cloudflare Workers `env` binding. Non-string bindings are JSON-stringified so the converters still apply.
-    - `ManualEnvSource`: reads any object you pass in, snapshotted at construction, with non-string values JSON-stringified like `WorkerEnvSource`. Pass `import.meta.env` or a bundler-injected object directly on the browser, or a plain object in tests.
-
-    ```ts
-    import { Envapter, ManualEnvSource } from 'envapt';
-
-    Envapter.useSource(new ManualEnvSource({ PORT: '3000', FLAG: 'true' }));
-    Envapter.getNumber('PORT'); // 3000
-    ```
-
-    The core imports no `node:*` module: `node:fs`, `node:path`, `node:process`, and `node:url` are confined to `NodeEnvSource`. envapt ships a build per runtime, so a Workers or browser bundle pulls in no Node built-ins, and workerd needs no `nodejs_compat` flag. Bare `envapt` resolves the right build through the `exports` conditions, and the dedicated `envapt/workerd` and `envapt/browser` entries add the matching types, which omit the file-only APIs so a stray call is a compile error rather than a runtime `FileApiUnsupported`.
-
-    Two new `EnvaptErrorCodes` replace silent no-ops with a thrown error:
-    - `NoSourceBound` (307): thrown on the first read when no source is bound.
-    - `FileApiUnsupported` (306): thrown when `envPaths`, `baseDir`, or `configureProfiles` is called on a source without a filesystem.
-
-    `EnvSource` is a union of `BareEnvSource` (no filesystem) and `FileEnvSource` (which requires `readFile`, `resolvePath`, `normalizeBaseDir`, and `writeVars` together), so a custom source has either the full file API or none of it.
-
-    On Node, the `.env` cascade now loads when envapt is first imported rather than on the first variable read.
-
-### Patch Changes
-
-- e506a6d: `Converters.Time` string fallbacks now accept decimals, matching raw env values.
-
-    A fallback like `'1.5h'` previously threw `MalformedTimeFallback` even though the `TimeFallback` type (`` `${number}${TimeUnit}` ``) accepts it at compile time. Raw env values already allowed decimals, so the restriction only applied to fallbacks, which was inconsistent. A string fallback still requires an explicit unit (a unitless number is a number fallback), but `'1.5h'` now resolves to `5400000`.
 
 ## 5.1.1
 
