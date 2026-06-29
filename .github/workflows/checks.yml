@@ -58,6 +58,8 @@ jobs:
               run: pnpm test
             - name: Run exports-dedup guard
               run: pnpm --filter envapt test:exports-dedup
+            - name: Run cjs-validity guard
+              run: pnpm --filter envapt test:cjs-validity
             - name: Run tsc-emit decorator guard
               run: pnpm --filter envapt test:tsc-emit
             - name: Run stage3-emit decorator guard
