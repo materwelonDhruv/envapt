@@ -5,6 +5,7 @@ on:
         branches: [main, next]
         paths:
             - 'apps/guide/**'
+            - 'packages/envapt/package.json'
             - '.github/workflows/deploy-guide.yml'
     pull_request:
         paths:
