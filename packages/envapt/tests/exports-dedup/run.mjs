@@ -4,8 +4,9 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
-import process from 'node:process';
 import { fileURLToPath } from 'node:url';
+
+import { createGate } from '../_guard.mjs';
 
 const require = createRequire(import.meta.url);
 const ts = require('typescript');
@@ -64,23 +65,15 @@ function exportOrigins(files) {
     return origins;
 }
 
-const violations = [];
+const gate = createGate('exports-dedup');
 for (const [group, files] of Object.entries(groups)) {
     for (const [name, origins] of exportOrigins(files)) {
         if (origins.size > 1 && !ALLOWED_TO_DIFFER.has(name)) {
-            violations.push(
+            gate.fail(
                 `${group}: "${name}" resolves to ${origins.size} declarations:\n    ${[...origins].map((f) => f.replace(`${pkgDir}/`, '')).join('\n    ')}`
             );
         }
     }
 }
 
-if (violations.length > 0) {
-    process.stderr.write(
-        `exports-dedup: ${violations.length} name(s) duplicate across runtime entry points:\n  ${violations.join('\n  ')}\n`
-    );
-    process.exit(1);
-}
-process.stdout.write(
-    'exports-dedup: every public name resolves to a single declaration across runtime entry points.\n'
-);
+gate.done('every public name resolves to a single declaration across runtime entry points.');

@@ -168,6 +168,7 @@
         "test:consumer-build": "node tests/consumer-build/run.mjs",
         "test:tree-shaking": "node tests/tree-shaking/run.mjs",
         "test:exports-dedup": "node tests/exports-dedup/run.mjs",
+        "test:resolution-matrix": "node tests/resolution-matrix/run.mjs",
         "test:cjs-validity": "node tests/cjs-validity/run.mjs",
         "test:tsc-emit": "node tests/tsc-emit/run.mjs",
         "test:stage3-emit": "node tests/stage3-emit/run.mjs",

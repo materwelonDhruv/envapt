@@ -4,7 +4,10 @@ import { fileURLToPath } from 'node:url';
 
 import * as esbuild from 'esbuild';
 
+import { createGate } from '../_guard.mjs';
+
 const resolveDir = dirname(fileURLToPath(import.meta.url));
+const gate = createGate('consumer-build');
 
 const program = (specifier) =>
     `import { Envapter, WorkerEnvSource, ManualEnvSource, Converters } from '${specifier}';` +
@@ -21,7 +24,6 @@ const cases = [
     { name: "import 'envapt' (react-native)", specifier: 'envapt', platform: 'neutral', conditions: ['react-native'] }
 ];
 
-let failures = 0;
 for (const testCase of cases) {
     try {
         const result = await esbuild.build({
@@ -35,16 +37,10 @@ for (const testCase of cases) {
         });
         const output = result.outputFiles[0].text;
         assert.ok(!/["']node:[a-z]/.test(output), `${testCase.name}: bundle contains a node: specifier`);
-        process.stdout.write(`consumer-build ${testCase.name}: OK (${output.length} bytes, node-free)\n`);
+        gate.pass(`${testCase.name}: OK (${output.length} bytes, node-free)`);
     } catch (err) {
-        failures += 1;
-        process.stderr.write(`consumer-build ${testCase.name}: FAIL\n`);
-        process.stderr.write(`${err instanceof Error ? err.message : String(err)}\n`);
+        gate.fail(`${testCase.name}: ${err instanceof Error ? err.message : String(err)}`);
     }
 }
 
-if (failures > 0) {
-    process.stderr.write(`consumer-build: ${failures} bundle(s) pulled in node built-ins\n`);
-    process.exit(1);
-}
-process.stdout.write('consumer-build: every resolved bundle is node-free\n');
+gate.done('every resolved bundle is node-free');
