@@ -1,5 +1,5 @@
-// Build gate. A public name must resolve to a single declaration across the runtime entry points, so
-// an editor offers one auto-import per name, not one per runtime build.
+// Build gate. A public name must resolve to a single declaration across the runtime entry points so
+// an editor offers a single auto-import per name across the runtime builds.
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -27,11 +27,7 @@ function collectTypesFiles(entry, out = new Set()) {
 }
 
 const groups = {
-    index: collectTypesFiles({
-        a: pkg.exports['.'],
-        b: pkg.exports['./workerd'],
-        c: pkg.exports['./browser']
-    }),
+    index: collectTypesFiles(pkg.exports['.']),
     legacy: collectTypesFiles(pkg.exports['./legacy'])
 };
 

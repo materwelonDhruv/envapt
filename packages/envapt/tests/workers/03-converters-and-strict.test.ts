@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { Converters, Envapter, EnvaptError, EnvaptErrorCodes, ManualEnvSource } from '../../dist/workerd/index.mjs';
+import { Converters, Envapter, EnvaptError, EnvaptErrorCodes, ManualEnvSource } from '../../dist/portable/index.mjs';
 
 afterEach(() => {
     Envapter.strict = false;

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { Converters, Envapter, ManualEnvSource } from '../../dist/browser/index.mjs';
+import { Converters, Envapter, ManualEnvSource } from '../../dist/portable/index.mjs';
 
 describe('envapt in the browser', () => {
     beforeEach(() => {

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { Envapter, EnvaptError, EnvaptErrorCodes, ManualEnvSource } from '../../dist/browser/index.mjs';
+import { Envapter, EnvaptError, EnvaptErrorCodes, ManualEnvSource } from '../../dist/portable/index.mjs';
 
 afterEach(() => {
     Envapter.strict = false;

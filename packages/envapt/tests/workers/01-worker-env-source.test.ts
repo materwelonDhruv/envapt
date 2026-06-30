@@ -1,7 +1,7 @@
 import { env } from 'cloudflare:workers';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { Converters, Envapter, WorkerEnvSource } from '../../dist/workerd/index.mjs';
+import { Converters, Envapter, WorkerEnvSource } from '../../dist/portable/index.mjs';
 
 describe('WorkerEnvSource on workerd', () => {
     beforeEach(() => {

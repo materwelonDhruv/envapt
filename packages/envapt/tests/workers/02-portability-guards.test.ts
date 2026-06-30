@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { Envapter, EnvaptError, EnvaptErrorCodes, ManualEnvSource } from '../../dist/workerd/index.mjs';
+import { Envapter, EnvaptError, EnvaptErrorCodes, ManualEnvSource } from '../../dist/portable/index.mjs';
 
 describe('portable build guards on workerd', () => {
     it('throws FileApiUnsupported (306) when a filesystem API is used', () => {

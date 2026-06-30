@@ -10,13 +10,15 @@ const program = (specifier) =>
     `import { Envapter, WorkerEnvSource, ManualEnvSource, Converters } from '${specifier}';` +
     `globalThis.__envapt = [Envapter, WorkerEnvSource, ManualEnvSource, Converters];`;
 
-// the browser/neutral platform makes esbuild hard-fail on any unresolved node built-in, so a clean
-// build is the real proof the resolved bundle is node-free and the output check below is a backup
+// the browser/neutral platform makes esbuild fail the build on any unresolved node built-in, so a
+// clean build proves the resolved bundle is node-free, the output check below is a backup
 const cases = [
     { name: "import 'envapt' (browser)", specifier: 'envapt', platform: 'browser', conditions: [] },
     { name: "import 'envapt' (workerd)", specifier: 'envapt', platform: 'neutral', conditions: ['workerd'] },
-    { name: "import 'envapt/browser'", specifier: 'envapt/browser', platform: 'browser', conditions: [] },
-    { name: "import 'envapt/workerd'", specifier: 'envapt/workerd', platform: 'neutral', conditions: ['workerd'] }
+    { name: "import 'envapt' (edge-light)", specifier: 'envapt', platform: 'neutral', conditions: ['edge-light'] },
+    { name: "import 'envapt' (fastly)", specifier: 'envapt', platform: 'neutral', conditions: ['fastly'] },
+    { name: "import 'envapt' (worker)", specifier: 'envapt', platform: 'neutral', conditions: ['worker'] },
+    { name: "import 'envapt' (react-native)", specifier: 'envapt', platform: 'neutral', conditions: ['react-native'] }
 ];
 
 let failures = 0;

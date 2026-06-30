@@ -8,11 +8,37 @@
         ".": {
             "workerd": {
                 "types": "./dist/types/index.portable.d.mts",
-                "default": "./dist/workerd/index.mjs"
+                "default": "./dist/portable/index.mjs"
+            },
+            "edge-light": {
+                "types": "./dist/types/index.portable.d.mts",
+                "default": "./dist/portable/index.mjs"
+            },
+            "fastly": {
+                "types": "./dist/types/index.portable.d.mts",
+                "default": "./dist/portable/index.mjs"
+            },
+            "worker": {
+                "types": "./dist/types/index.portable.d.mts",
+                "default": "./dist/portable/index.mjs"
             },
             "browser": {
                 "types": "./dist/types/index.portable.d.mts",
-                "default": "./dist/browser/index.mjs"
+                "default": "./dist/portable/index.mjs"
+            },
+            "react-native": {
+                "types": "./dist/types/index.portable.d.mts",
+                "default": "./dist/portable/index.mjs"
+            },
+            "deno": {
+                "import": {
+                    "types": "./dist/types/index.d.mts",
+                    "default": "./dist/node/index.mjs"
+                },
+                "require": {
+                    "types": "./dist/types/index.d.mts",
+                    "default": "./dist/node/index.cjs"
+                }
             },
             "node": {
                 "import": {
@@ -34,14 +60,6 @@
                     "default": "./dist/node/index.cjs"
                 }
             }
-        },
-        "./workerd": {
-            "types": "./aliases/workerd.d.mts",
-            "default": "./aliases/workerd.mjs"
-        },
-        "./browser": {
-            "types": "./aliases/browser.d.mts",
-            "default": "./aliases/browser.mjs"
         },
         "./config": {
             "import": {
@@ -56,11 +74,37 @@
         "./legacy": {
             "workerd": {
                 "types": "./dist/types/legacy.d.mts",
-                "default": "./dist/workerd/legacy.mjs"
+                "default": "./dist/portable/legacy.mjs"
+            },
+            "edge-light": {
+                "types": "./dist/types/legacy.d.mts",
+                "default": "./dist/portable/legacy.mjs"
+            },
+            "fastly": {
+                "types": "./dist/types/legacy.d.mts",
+                "default": "./dist/portable/legacy.mjs"
+            },
+            "worker": {
+                "types": "./dist/types/legacy.d.mts",
+                "default": "./dist/portable/legacy.mjs"
             },
             "browser": {
                 "types": "./dist/types/legacy.d.mts",
-                "default": "./dist/browser/legacy.mjs"
+                "default": "./dist/portable/legacy.mjs"
+            },
+            "react-native": {
+                "types": "./dist/types/legacy.d.mts",
+                "default": "./dist/portable/legacy.mjs"
+            },
+            "deno": {
+                "import": {
+                    "types": "./dist/types/legacy.d.mts",
+                    "default": "./dist/node/legacy.mjs"
+                },
+                "require": {
+                    "types": "./dist/types/legacy.d.mts",
+                    "default": "./dist/node/legacy.cjs"
+                }
             },
             "node": {
                 "import": {
@@ -82,20 +126,18 @@
                     "default": "./dist/node/legacy.cjs"
                 }
             }
-        }
+        },
+        "./package.json": "./package.json"
     },
     "sideEffects": [
         "./dist/node/config.cjs",
-        "./dist/node/config.mjs",
-        "./aliases/workerd.mjs",
-        "./aliases/browser.mjs"
+        "./dist/node/config.mjs"
     ],
     "files": [
         "dist/**/*.mjs",
         "dist/**/*.cjs",
         "dist/**/*.map",
         "dist/types",
-        "aliases",
         "NOTICE.md",
         "LICENSE",
         "README.md",

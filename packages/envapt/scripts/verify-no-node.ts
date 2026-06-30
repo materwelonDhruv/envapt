@@ -1,4 +1,4 @@
-// Build gate: the portable (workerd + browser) builds must stay node-free and keep the file-API guards.
+// Build gate, the portable build must stay node-free and keep the file-API guards.
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -8,12 +8,12 @@ import { dirname, extname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const DIST = join(dirname(fileURLToPath(import.meta.url)), '..', 'dist');
-const TARGETS = ['workerd', 'browser'] as const;
+const TARGETS = ['portable'] as const;
 const FILE_APIS = ['envPaths', 'baseDir', 'envFileOptions', 'configureProfiles', 'resetProfiles'] as const;
 
-// `from "node:fs"`, `import("node:url")`, `require("node:path")`; the quotes keep prose `node:fs` out.
+// `from "node:fs"`, `import("node:url")`, `require("node:path")`, the quotes keep prose `node:fs` out.
 const NODE_SPECIFIER = /['"]node:[\w/.-]+['"]/;
-// `processEnv` has no dot so it stays clean; import.meta.url/.env are web-standard, intentionally unmatched.
+// `processEnv` has no dot so it stays clean, import.meta.url/.env are web-standard and intentionally unmatched.
 const RUNTIME_NODE =
     /\bprocess\.\w+|\bBuffer\b|\b__dirname\b|\b__filename\b|globalThis\.process|import\.meta\.(?:dirname|filename)|\b(?:readFileSync|writeFileSync|existsSync|accessSync|fileURLToPath)\b/;
 
@@ -74,7 +74,7 @@ function isCode(file: string): boolean {
     return ['.mjs', '.cjs', '.js'].includes(extname(file));
 }
 
-// Declaration files skip RUNTIME_NODE: TSDoc prose legitimately mentions `process.env`/`node:fs`.
+// Declaration files skip RUNTIME_NODE because TSDoc prose legitimately mentions `process.env`/`node:fs`.
 // Runtime files are safe to full-scan because the build minifies them (no comments survive).
 function grepGate(): void {
     const violations: string[] = [];
@@ -96,13 +96,13 @@ function grepGate(): void {
         }
     }
     if (violations.length > 0) {
-        fail(`verify-no-node: ${violations.length} Node coupling(s) in workerd/browser:\n  ${violations.join('\n  ')}`);
+        fail(`verify-no-node: ${violations.length} Node coupling(s) in portable:\n  ${violations.join('\n  ')}`);
     }
-    process.stdout.write(`verify-no-node: ${scanned} workerd/browser files clean (no node:* / node globals).\n`);
+    process.stdout.write(`verify-no-node: ${scanned} portable files clean (no node:* / node globals).\n`);
 }
 
 // Guards against an entry shipping without the stubs (e.g. a re-exported side effect tree-shaken away),
-// which would silently no-op the file APIs for JS callers that bypass the types.
+// which would no-op the file APIs for JS callers that bypass the types.
 async function stubProof(): Promise<void> {
     for (const target of TARGETS) {
         const url = pathToFileURL(join(DIST, target, 'index.mjs')).href;
@@ -126,7 +126,7 @@ async function stubProof(): Promise<void> {
             );
         }
     }
-    process.stdout.write('verify-no-node: workerd + browser file-API stubs throw FileApiUnsupported (306).\n');
+    process.stdout.write('verify-no-node: portable file-API stubs throw FileApiUnsupported (306).\n');
 }
 
 // Generated at runtime, not checked in. It imports built artifacts absent at `tc` time. A dts
@@ -178,7 +178,7 @@ function omissionProof(): void {
 }
 
 // The public types are all emitted to dist/types, shims-free, so no entry carries a node:* import. A
-// leak here would reach portable consumers without appearing in the workerd/browser grep above.
+// leak here would reach portable consumers without appearing in the portable grep above.
 function typesNodeFreeProof(): void {
     const violations: string[] = [];
     for (const file of walk(join(DIST, 'types'))) {

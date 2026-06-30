@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { Envapter, ManualEnvSource } from '../../dist/browser/index.mjs';
+import { Envapter, ManualEnvSource } from '../../dist/portable/index.mjs';
 
 describe('browser config injection', () => {
     afterEach(() => {

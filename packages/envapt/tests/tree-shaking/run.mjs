@@ -15,8 +15,6 @@ const HEAVY_MARKERS = [/new URL\(/, /~standard/, /JSON\.parse/];
 const MAX_LEAF_BYTES = 4000;
 
 const cases = [
-    { name: 'envapt/browser leaf', specifier: 'envapt/browser', platform: 'browser', conditions: [] },
-    { name: 'envapt/workerd leaf', specifier: 'envapt/workerd', platform: 'neutral', conditions: ['workerd'] },
     { name: 'envapt leaf (browser)', specifier: 'envapt', platform: 'browser', conditions: [] },
     { name: 'envapt leaf (workerd)', specifier: 'envapt', platform: 'neutral', conditions: ['workerd'] }
 ];
