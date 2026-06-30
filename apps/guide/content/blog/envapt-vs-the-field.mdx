@@ -1,0 +1,60 @@
+---
+title: How envapt compares to other config tools
+description: An honest look at where envapt fits among dotenv, t3-env, envalid, env-var, and the rest. What it does that they do not, and where I would reach for one of them instead.
+author: Dhruv
+date: '2026-06-30'
+updated: '2026-06-30'
+---
+
+The figures below come from each tool's own docs and npm in late June 2026, and downloads move, so verify anything load-bearing before you settle on one.
+
+The field splits into two jobs. Loaders like the dotenv family read a `.env` file into `process.env` and stop there, no types. Validators like envalid, env-var, znv, and t3-env take what is already in the environment and hand back a typed, checked object. envapt does both, and it does the typing part on runtimes the others mostly do not reach. That last part is the reason it exists, and also where its honest tradeoff lives.
+
+## What envapt does that the others do not
+
+**One import, every runtime.** `import { Envapter } from 'envapt'` resolves a portable build on Cloudflare Workers, edge, the browser, and react-native, and the Node build on Node, Bun, and Deno, through the package export conditions. No other typed reader gives first-class typed reads across all of those from a single import. The honest caveat is that off Node the `.env`-loading half no-ops, so you bind the source yourself with `Envapter.useSource(...)` per non-Node target. t3-env has a real Workers path too, you point its `runtimeEnv` at the Workers `env` object, so this is a difference in ergonomics, not in whether it is possible.
+
+**Built-in converters and bring-your-own validation, at zero dependencies.** env-var is zero-dep with converters, but it takes no external schema and runs on Node and the browser only. t3-env is zero-dep with Standard Schema, but it ships no converters and no loader. envapt has the converters, the Standard Schema adapter, and the loader together, and adds nothing to your lockfile but itself.
+
+**Converter breadth without a validator.** number, int, float, boolean, bigint, symbol, JSON, URL, RegExp, Date, durations like `5m`, and typed arrays, none of which needs a schema library. env-var has comparable breadth. Most of the others expect you to bring a schema for anything past string, number, and boolean.
+
+**A fallback that tells missing from zero.** `Envapter.getNumber('PORT', 3000)` returns the fallback only when `PORT` is missing or unparseable, not when it is `0`. envalid and convict treat a default as always present, so that distinction never comes up there.
+
+**Built-in templating.** envapt expands `${VAR}` references inside values as it loads them, with circular-reference detection, so `DATABASE_URL=postgres://${DB_HOST}/${DB_NAME}` resolves on its own. This is the thing people add a second library (`dotenv-expand`) for. Among the others only some loaders do it (env-schema, dotenvx, dotenv-flow expand variables), and they hand you the result as an untyped string. envapt expands it and then types it.
+
+**A formal pluggable source.** envapt reads through an `EnvSource` interface, so the same API runs over `process.env`, `import.meta.env`, a Workers binding, or a store you fetched at boot. Several others (env-var, t3-env, znv, envin) also accept a custom object you build, so the difference is that envapt makes it one typed interface, not that the others are stuck on `process.env`.
+
+**Decorators or a functional API.** The functional API (`get`, `getNumber`, `getUsing`, `parse`) is the floor and needs nothing special. The decorators come in two forms, the modern TC39 accessor decorators (the default, `@Envapt`, `@EnvNum`) and a legacy `experimentalDecorators` form at `envapt/legacy`, so you can pick whichever your bundler handles. No other tool here ships a decorator API at all.
+
+**Per-field binding.** A variable lives on the field that uses it, not in one central schema object that every consumer imports. Adding or removing one touches one field.
+
+| Feature                                    | envapt | t3-env | envin | envalid | znv | env-var | env-schema | convict | dotenv | dotenvx |
+| ------------------------------------------ | :----: | :----: | :---: | :-----: | :-: | :-----: | :--------: | :-----: | :----: | :-----: |
+| Typed reads                                |   ✅   |   ✅   |  ✅   |   ✅    | ✅  |   ✅    |     ✅     |   🟡    |   ❌   |   ❌    |
+| Built-in coercion, no validator dep        |   ✅   |   ❌   |  ❌   |   ✅    | ❌  |   ✅    |     ✅     |   ✅    |   ❌   |   ❌    |
+| Bring-your-own validator (Standard Schema) |   ✅   |   ✅   |  ✅   |   ❌    | ❌  |   ❌    |     ❌     |   ❌    |   ❌   |   ❌    |
+| Runs anywhere                              |   ✅   |   🟡   |  🟡   |   ❌    | ❌  |   🟡    |     ❌     |   ❌    |   ❌   |   🟡    |
+| Loads `.env`                               |   ✅   |   ❌   |  🟡   |   ❌    | ❌  |   ❌    |     ✅     |   ❌    |   ✅   |   ✅    |
+| Cascade + per-env profiles                 |   ✅   |   ❌   |  ❌   |   ❌    | ❌  |   ❌    |     ❌     |   ❌    |   ❌   |   🟡    |
+| Templating `${VAR}`                        |   ✅   |   ❌   |  ❌   |   ❌    | ❌  |   ❌    |     ✅     |   ❌    |   ❌   |   ✅    |
+| Decorators                                 |   ✅   |   ❌   |  ❌   |   ❌    | ❌  |   ❌    |     ❌     |   ❌    |   ❌   |   ❌    |
+| Client/server split                        |   ❌   |   ✅   |  ✅   |   ❌    | ❌  |   ❌    |     ❌     |   ❌    |   ❌   |   ❌    |
+| Zero runtime deps                          |   ✅   |   ✅   |  ✅   |   🟡    | ✅  |   ✅    |     🟡     |   ❌    |   ✅   |   ❌    |
+
+✅ yes, 🟡 partial or manual, ❌ no. A few of the 🟡 cells. Off Node, t3-env, envin, env-var, and dotenvx all work, but you wire the source per target (t3-env's `runtimeEnv`, env-var's `from()`). envin loads `.env` only through its separate CLI. convict's typed reads come from community `@types`. dotenvx does the cascade by convention. The Standard-Schema tools ship zero deps but you bring a validator, and envalid and env-schema each carry one small dependency. Download counts and the longer tail of tools (@fastify/env, dotenv-flow, ts-dotenv) are in the prose below.
+
+## No tool fits every project though.
+
+Perhaps there are other places where envapt is not the right choice. _For now._
+
+**A Next.js app, or anywhere a server secret must never reach the client bundle.** t3-env and envin split server, client, and shared variables with a runtime guard and a required public prefix, and t3-env validates on `next build`. envapt has a browser build but no such split, so nothing stops a server-only read in client code.
+
+**You just need a `.env` in `process.env`, untyped.** dotenv or Node's own `--env-file` is simpler and has no learning curve. A typed-config library is more than that job needs.
+
+**Validation that spans variables.** if A then B is required, mutually exclusive keys, a range checked against another value. env-schema, or a Zod refine through t3-env or envin, expresses those. envapt validates one field's shape at a time.
+
+## The closest rivals
+
+If you are choosing between envapt and one other tool, it is most likely t3-env, envin, env-var, env-schema, or envalid. t3-env is the one I measure envapt against most, because it shares the Standard Schema idea and has the client/server split envapt does not.
+
+Check the numbers yourself, and if I have described one of these rivals unfairly, tell me in the [repo](https://github.com/materwelonDhruv/envapt) and I will fix it.

@@ -29,6 +29,7 @@ export default async function Page(props: { params: Promise<{ slug: string }> })
         headline: page.data.title,
         description: page.data.description,
         datePublished: page.data.date,
+        dateModified: page.data.updated,
         author: { '@type': 'Person', name: page.data.author },
         url,
         isPartOf: { '@type': 'WebSite', name: SITE_NAME, url: SITE_URL }
@@ -43,6 +44,7 @@ export default async function Page(props: { params: Promise<{ slug: string }> })
             <h1 className="mt-6 text-3xl font-semibold">{page.data.title}</h1>
             <p className="mt-2 font-mono text-sm text-fd-muted-foreground">
                 {formatDate(page.data.date)} · {page.data.author}
+                {page.data.updated !== page.data.date && <> · Updated {formatDate(page.data.updated)}</>}
             </p>
             <div className="mt-8">
                 <DocsBody>

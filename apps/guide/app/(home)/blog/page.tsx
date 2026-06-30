@@ -39,6 +39,12 @@ export default function BlogIndex(): ReactNode {
                             <time className="font-mono text-sm text-fd-muted-foreground">
                                 {formatDate(post.data.date)}
                             </time>
+                            {post.data.updated !== post.data.date && (
+                                <span className="font-mono text-sm text-fd-muted-foreground">
+                                    {' '}
+                                    · updated {formatDate(post.data.updated)}
+                                </span>
+                            )}
                             <h2 className="mt-1 text-xl font-medium group-hover:text-fd-primary">{post.data.title}</h2>
                             <p className="mt-1 text-fd-muted-foreground">{post.data.description}</p>
                         </Link>
