@@ -7,13 +7,13 @@ import { Section } from '@/components/Section';
 import type { ReactNode } from 'react';
 
 const WORKER = `import { env } from 'cloudflare:workers';
-import { Envapter, WorkerEnvSource } from 'envapt/workerd';
+import { Envapter, WorkerEnvSource } from 'envapt';
 
 Envapter.useSource(new WorkerEnvSource(env));
 
 const port = Envapter.getNumber('PORT', 3000);`;
 
-const BROWSER = `import { Envapter, ManualEnvSource } from 'envapt/browser';
+const BROWSER = `import { Envapter, ManualEnvSource } from 'envapt';
 
 // Vite replaces import.meta.env at build time
 Envapter.useSource(new ManualEnvSource(import.meta.env));

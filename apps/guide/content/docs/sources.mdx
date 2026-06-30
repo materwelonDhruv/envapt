@@ -57,11 +57,11 @@ For fetching that secrets object from 1Password, Vault, Doppler, AWS Secrets Man
 
 Reading a value before you call `useSource` throws `EnvaptError` with code `NoSourceBound`. It cannot happen on Node, where the source is bound on import.
 
-The file-only config APIs (`envPaths`, `baseDir`, `envFileOptions`, `configureProfiles`, `resetProfiles`) need a source that backs the filesystem. Calling one on a bare source throws `EnvaptError` with code `FileApiUnsupported`. See [Errors](/docs/errors) for both.
+The file-only config APIs need a source that backs the filesystem. On the portable build they warn and no-op by default, see [Compatibility](/docs/compatibility) for `fileApiMode`.
 
 <Callout type="warn">
-    Off Node there is no filesystem: the `.env` cascade and the file-only config APIs are absent. Pass your values
-    through `ManualEnvSource` or `WorkerEnvSource` instead.
+    On the portable build there is no filesystem, so pass your values through `ManualEnvSource` or `WorkerEnvSource`. An
+    unbound read throws `NoSourceBound`.
 </Callout>
 
 For the per-runtime flows see [Workers](/docs/workers) and [Browser](/docs/browser); the build selection is in [Compatibility](/docs/compatibility).

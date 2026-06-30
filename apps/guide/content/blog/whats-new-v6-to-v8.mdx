@@ -1,6 +1,6 @@
 ---
 title: What changed in envapt v6, v7, and v8
-description: Three majors of envapt, and the dogfooding that drove each one, from removing a decorator footgun to one universal import that reads config the same on Node and the edge.
+description: Three majors of envapt, and the dogfooding behind each one, from removing a decorator footgun to one universal import that reads config the same on Node and the edge.
 author: Dhruv
 date: '2026-06-30'
 updated: '2026-06-30'
@@ -10,12 +10,12 @@ Every change in envapt's last three majors started the same way. I hit something
 
 The biggest one is v8, and it came from [seedcord](https://github.com/seedcord/seedcord), a bot framework I maintain. seedcord lets you build Discord bots that run on gateway, server, and edge. You develop locally on Node with full HMR, then deploy straight to Cloudflare Workers. So its config gets read off a filesystem in dev and off a Workers binding in production. That split used to need more wiring than it should have. v8 makes it one import. Here is how v6 and v7 got there, and why v8 looks the way it does.
 
-## v6 removed an argument order that wasn't the best to maintain or use
+## v6 dropped the positional decorator arguments
 
 The old decorator took its fallback and converter by position.
 
 ```ts
-// v5: which one comes first again?
+// v5... which one comes first again?
 // And why are only primitives supported in this positional API?
 @Envapt('PORT', 3000, Converters.Number)
 static readonly port: number;
@@ -29,9 +29,9 @@ I wrote that line across a few services and got the order wrong often enough to 
 static accessor port: number;
 ```
 
-For converters without a sugar shortcut, the named form `@Envapt('PORT', { converter: Converters.Number, fallback: 3000 })` is what the positional one became, and the bare `@Envapt('KEY')` form never changed. v6 also wrote down a behavior that had shipped by accident in a 5.x minor, that `NODE_ENV=test` resolves to `Environment.Test` rather than falling through to development. It was already the behavior, so v6 documented it as intended and moved on.
+For converters without a sugar shortcut, the named form `@Envapt('PORT', { converter: Converters.Number, fallback: 3000 })` is what the positional one became, and the bare `@Envapt('KEY')` form never changed. v6 also wrote down a behavior that had shipped by accident in a 5.x minor, that `NODE_ENV=test` resolves to `Environment.Test` and does not fall through to development. It was already the behavior, so v6 documented it as intended and moved on.
 
-## v7 made the decorators actually run on Bun
+## v7 made the decorators run on Bun
 
 envapt's decorators were the legacy TypeScript kind, the ones that need `experimentalDecorators`. They did not work on Bun at all. Bun ignores that tsconfig flag and emits the TC39 Stage 3 form instead, so the call shapes never matched and the decorator just broke when you ran your `.ts` directly.
 
@@ -67,11 +67,11 @@ v8 collapses all of that into the bare import.
 import { Envapter } from 'envapt';
 ```
 
-The package export conditions resolve the right build per runtime. Workers, the browser, edge, and react-native get the portable build. Node, Bun, and Deno get the Node build. The edge runtimes that used to fall through now resolve the portable build on purpose. And seedcord wires in the Workers env binding as the source in the build step without the user needing to do anything. So envapt ended up being really useful in the development of a framework in itself, not just using it in an application.
+The package export conditions resolve the right build per runtime. Workers, the browser, edge, and react-native get the portable build. Node, Bun, and Deno get the Node build. The edge runtimes that used to fall through now resolve the portable build on purpose. And seedcord wires in the Workers env binding as the source in the build step without the user needing to do anything. So envapt turned out to help build a framework itself, well beyond reading config in an app.
 
 The file-only APIs changed too. Off Node they now warn once and do nothing by default, instead of throwing. So a config module that layers `.env` files in local dev and reads a Workers binding in production compiles and runs in both places, with no per-runtime branch in your code. In seedcord that turned the whole cross-runtime config story into the bare import plus one `useSource` in the Worker entry, and nothing else.
 
-Warning by default is not the reckless choice it might sound like. An unconfigured read still throws `NoSourceBound` on the first access, so a Worker that forgot to bind a source fails fast instead of serving wrong config quietly. If you want the old strict behavior back, `Envapter.fileApiMode = 'throw'` restores it. The default just stops punishing the setup that was correct all along, where a Worker binds its source and the filesystem APIs have nothing to do.
+Warning by default still catches the real mistake. An unconfigured read throws `NoSourceBound` on the first access, so a Worker that forgot to bind a source stops there. It never serves wrong config quietly. If you want the old strict behavior back, `Envapter.fileApiMode = 'throw'` restores it. The default stops treating the correct setup as an error, where a Worker binds its source and the filesystem APIs have nothing to do.
 
 ## That is the throughline
 

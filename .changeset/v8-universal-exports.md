@@ -1,0 +1,9 @@
+---
+'envapt': major
+---
+
+Collapse to one portable build and a single universal `envapt` import. Two breaking changes.
+
+1. `Envapter.fileApiMode` defaults to `'warn'`. On the portable build the file-only config APIs (`envPaths`, `baseDir`, `envFileOptions`, `configureProfiles`, `resetProfiles`) now warn once and no-op by default. Set `Envapter.fileApiMode = 'throw'` to restore the previous throwing behavior. An unconfigured read still throws `NoSourceBound` on first access.
+
+2. The `envapt/workerd` and `envapt/browser` subpaths are removed. Import from `envapt` everywhere. The package exports route Workers, the browser, and the edge runtimes (workerd, edge-light, fastly, worker, browser, react-native) to the portable build, and Node, Bun, and Deno to the node build. The portable types now include the file APIs, so config shared between dev and deploy compiles on every runtime.

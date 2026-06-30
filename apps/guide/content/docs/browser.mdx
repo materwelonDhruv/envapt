@@ -5,18 +5,17 @@ description: Seed a ManualEnvSource from the config your bundler injects, with n
 
 In the browser there is no filesystem and no `process.env`. Your bundler inlines configuration at build time, and you seed a `ManualEnvSource` from it, then read with the same typed API as everywhere else.
 
-Import the browser build from `envapt/browser`. It is node-free and omits the file-only config APIs from its type.
+Import from `envapt`. The package export conditions resolve a node-free portable build in the browser automatically, so the same import works in local dev and in the bundle.
 
-<Callout type="danger">
+<Callout type="info">
 
-Import from `envapt/browser`, not bare `envapt`. The `envapt/browser` entry omits the file-only config APIs (`envPaths`, `baseDir`, `configureProfiles`, and the rest) from its type, so a stray call is a compile error. Bare `envapt` leaves you on the Node types, where those APIs look available and instead throw `EnvaptError.FileApiUnsupported` at runtime. See [Errors](/docs/errors).
+The filesystem-only config APIs have nothing to do in the browser, so they warn and no-op by default. Readers work as normal. See [Compatibility](/docs/compatibility) for `fileApiMode` and [Errors](/docs/errors) for the codes.
 
 ```ts twoslash
-// @errors: 2339
-import { Envapter } from 'envapt/browser';
+import { Envapter } from 'envapt';
 
 Envapter.getBoolean('FEATURE_BETA', false); // readers work
-Envapter.baseDir = '/tmp'; // a file-only API is not on the type
+Envapter.baseDir = '/tmp'; // warns once and no-ops in the browser
 ```
 
 </Callout>
@@ -26,7 +25,7 @@ Envapter.baseDir = '/tmp'; // a file-only API is not on the type
 Bundlers replace build-time env references with string literals: Vite exposes them on `import.meta.env`, webpack through `DefinePlugin`. Pass that object to `ManualEnvSource`, then read the values typed.
 
 ```ts
-import { Envapter, ManualEnvSource, Converters } from 'envapt/browser';
+import { Envapter, ManualEnvSource, Converters } from 'envapt';
 
 Envapter.useSource(new ManualEnvSource(import.meta.env));
 
@@ -47,7 +46,7 @@ const beta = Envapter.getBoolean('VITE_ENABLE_BETA', false); // boolean
 
 ## No filesystem
 
-`ManualEnvSource` snapshots its object at construction, so mutating that object afterward does not change what envapt reads. There is no `.env` cascade and no file-only config APIs in the browser; calling one throws, as does reading before you bind a source. See [Sources](/docs/sources) and [Errors](/docs/errors).
+`ManualEnvSource` snapshots its object at construction, so mutating that object afterward does not change what envapt reads. There is no `.env` cascade in the browser, and reading before you bind a source throws `NoSourceBound`. See [Sources](/docs/sources).
 
 ## Decorators
 

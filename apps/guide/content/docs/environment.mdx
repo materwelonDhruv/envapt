@@ -89,7 +89,7 @@ So in production it reads `.env.production.local` → `.env.production` → `.en
 
 ## Custom profiles
 
-When your per-environment files live elsewhere, `configureProfiles` layers explicit paths on top of the cascade for the environments you name. Earlier paths in the array win. `configureProfiles` and `resetProfiles` read the filesystem, so they are not available off Node; see [Sources](/docs/sources).
+When your per-environment files live elsewhere, `configureProfiles` layers explicit paths on top of the cascade for the environments you name. Earlier paths in the array win. On the portable build these no-op by default, see [Compatibility](/docs/compatibility).
 
 ```ts twoslash
 import { Envapter, Environment } from 'envapt';

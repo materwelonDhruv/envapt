@@ -5,18 +5,17 @@ description: Bind a WorkerEnvSource from the Cloudflare env object once at modul
 
 On Cloudflare Workers (workerd) there is no filesystem and no ambient `process.env`. Your configuration is the `env` object the runtime exposes. Bind a `WorkerEnvSource` from it once, then read with the same typed API as everywhere else.
 
-Import the Workers build from `envapt/workerd`. It is node-free and omits the file-only config APIs from its type.
+Import from `envapt`. The package export conditions resolve a node-free portable build on Workers automatically, so the same import works in local dev and on the Worker.
 
-<Callout type="danger">
+<Callout type="info">
 
-Import from `envapt/workerd`, not bare `envapt`. The `envapt/workerd` entry omits the file-only config APIs (`envPaths`, `baseDir`, `configureProfiles`, and the rest) from its type, so a stray call is a compile error. Bare `envapt` leaves you on the Node types, where those APIs look available and instead throw `EnvaptError.FileApiUnsupported` at runtime. See [Errors](/docs/errors).
+The filesystem-only config APIs have nothing to do on Workers, so they warn and no-op by default. Readers work as normal. See [Compatibility](/docs/compatibility) for `fileApiMode` and [Errors](/docs/errors) for the codes.
 
 ```ts twoslash
-// @errors: 2339
-import { Envapter } from 'envapt/workerd';
+import { Envapter } from 'envapt';
 
 Envapter.getNumber('PORT', 3000); // readers work
-Envapter.envPaths = ['.env']; // a file-only API is not on the type
+Envapter.envPaths = ['.env']; // warns once and no-ops on Workers
 ```
 
 </Callout>
@@ -27,7 +26,7 @@ Env vars and secrets are readable at module scope through `cloudflare:workers`, 
 
 ```ts title="src/config.ts"
 import { env } from 'cloudflare:workers';
-import { Envapter, WorkerEnvSource, Converters } from 'envapt/workerd';
+import { Envapter, WorkerEnvSource, Converters } from 'envapt';
 
 Envapter.useSource(new WorkerEnvSource(env));
 Envapter.require('ORIGIN_URL', 'API_TOKEN');
@@ -64,7 +63,7 @@ export default {
 On an older compatibility date, or anywhere `env` is not importable at module scope, bind it at the top of the handler instead. The `env` is the same on every request, so the re-bind is idempotent.
 
 ```ts title="src/index.ts"
-import { Envapter, WorkerEnvSource, Converters } from 'envapt/workerd';
+import { Envapter, WorkerEnvSource, Converters } from 'envapt';
 
 export default {
     async fetch(request: Request, env: Record<string, unknown>): Promise<Response> {
@@ -80,7 +79,7 @@ export default {
 A Cloudflare `vars` entry can be JSON, not only a string. `WorkerEnvSource` JSON-stringifies any non-string binding so the converters parse it the same way. A binding whose value stringifies to `undefined` is dropped, and anything you read this way must be JSON-serializable.
 
 ```ts twoslash
-import { Envapter, WorkerEnvSource, Converters } from 'envapt/workerd';
+import { Envapter, WorkerEnvSource, Converters } from 'envapt';
 // ---cut---
 declare const env: { FEATURE_FLAGS: { beta: boolean } }; // a JSON `vars` binding
 Envapter.useSource(new WorkerEnvSource(env));
@@ -90,7 +89,7 @@ const flags = Envapter.getUsing('FEATURE_FLAGS', Converters.Json); // parsed bac
 
 ## No filesystem
 
-There is no `.env` cascade, no custom profiles, and no file-only config APIs (`envPaths`, `baseDir`, `configureProfiles`, and the rest) on workerd; calling one throws. Bind the source before your first read. See [Sources](/docs/sources) for what happens otherwise and [Errors](/docs/errors) for the codes.
+There is no `.env` cascade and no custom profiles on workerd. Bind the source before your first read, an unbound read throws `NoSourceBound`. See [Sources](/docs/sources).
 
 ## Decorators
 

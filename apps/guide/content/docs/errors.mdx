@@ -66,7 +66,7 @@ try {
 | 303  | `EnvFilesNotFound`         | A configured `.env` path (via `envPaths` or `configureProfiles`) doesn't exist.                                                                                                                                  |
 | 304  | `InvalidKeyInput`          | No key, a non-string key, or an empty-string key was passed.                                                                                                                                                     |
 | 305  | `MissingEnvValue`          | A required value is missing or empty: `require`, `{ required: true }`, a schema with no fallback, or an unresolved template under strict mode.                                                                   |
-| 306  | `FileApiUnsupported`       | A file-only API (`envPaths`, `baseDir`, `envFileOptions`, `configureProfiles`, `resetProfiles`) is used on a source with no filesystem, such as Cloudflare Workers or the browser. See [Sources](/docs/sources). |
+| 306  | `FileApiUnsupported`       | On the portable build: a file-only API (`envPaths`, `baseDir`, `envFileOptions`, `configureProfiles`, `resetProfiles`) is called and `Envapter.fileApiMode = 'throw'` (the default warns once and no-ops). On the node build: a non-filesystem source is bound and a file API is called. See [Sources](/docs/sources). |
 | 307  | `NoSourceBound`            | A value is read before a source is bound with `Envapter.useSource`. Cannot occur on Node, where the source is bound on import.                                                                                   |
 
 <Callout type="info">
