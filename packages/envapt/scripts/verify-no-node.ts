@@ -9,7 +9,9 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const DIST = join(dirname(fileURLToPath(import.meta.url)), '..', 'dist');
 const TARGETS = ['portable'] as const;
-const FILE_APIS = ['envPaths', 'baseDir', 'envFileOptions', 'configureProfiles', 'resetProfiles'] as const;
+const ACCESSOR_APIS = ['envPaths', 'baseDir', 'envFileOptions'] as const;
+const METHOD_APIS = ['configureProfiles', 'resetProfiles'] as const;
+const FILE_APIS = [...ACCESSOR_APIS, ...METHOD_APIS] as const;
 
 // `from "node:fs"`, `import("node:url")`, `require("node:path")`, the quotes keep prose `node:fs` out.
 const NODE_SPECIFIER = /['"]node:[\w/.-]+['"]/;
@@ -101,8 +103,7 @@ function grepGate(): void {
     process.stdout.write(`verify-no-node: ${scanned} portable files clean (no node:* / node globals).\n`);
 }
 
-// Guards against an entry shipping without the stubs (e.g. a re-exported side effect tree-shaken away),
-// which would no-op the file APIs for JS callers that bypass the types.
+// On the built artifact, warn mode no-ops and throw mode raises 306, for JS callers that bypass the types.
 async function stubProof(): Promise<void> {
     for (const target of TARGETS) {
         const url = pathToFileURL(join(DIST, target, 'index.mjs')).href;
@@ -111,38 +112,54 @@ async function stubProof(): Promise<void> {
         const { Envapter, EnvaptError } = mod;
         const code = mod.EnvaptErrorCodes.FileApiUnsupported;
         const is306 = (error: unknown): boolean => error instanceof EnvaptError && error.code === code;
-        for (const api of FILE_APIS) {
-            assert.throws(
-                () => Envapter[api],
-                is306,
-                `${target}: reading Envapter.${api} must throw FileApiUnsupported`
-            );
+
+        Envapter.fileApiMode = 'warn';
+        for (const api of ACCESSOR_APIS) {
+            assert.strictEqual(Envapter[api], undefined, `${target}: Envapter.${api} must read undefined under warn`);
+            assert.doesNotThrow(() => {
+                Envapter[api] = undefined;
+            }, `${target}: setting Envapter.${api} must no-op under warn`);
+        }
+        for (const api of METHOD_APIS) {
+            const method = Envapter[api] as () => void;
+            assert.doesNotThrow(() => method.call(Envapter), `${target}: Envapter.${api}() must no-op under warn`);
+        }
+
+        Envapter.fileApiMode = 'throw';
+        for (const api of ACCESSOR_APIS) {
+            assert.throws(() => Envapter[api], is306, `${target}: reading Envapter.${api} must throw under throw mode`);
             assert.throws(
                 () => {
                     Envapter[api] = undefined;
                 },
                 is306,
-                `${target}: setting Envapter.${api} must throw FileApiUnsupported`
+                `${target}: setting Envapter.${api} must throw under throw mode`
             );
         }
+        for (const api of METHOD_APIS) {
+            const method = Envapter[api] as () => void;
+            assert.throws(
+                () => method.call(Envapter),
+                is306,
+                `${target}: Envapter.${api}() must throw under throw mode`
+            );
+        }
+        Envapter.fileApiMode = 'warn';
     }
-    process.stdout.write('verify-no-node: portable file-API stubs throw FileApiUnsupported (306).\n');
+    process.stdout.write('verify-no-node: portable file APIs no-op under warn and throw 306 under throw.\n');
 }
 
-// Generated at runtime, not checked in. It imports built artifacts absent at `tc` time. A dts
-// regression that re-adds a file API leaves a fixture suppression unused, so tsc errors.
-function omissionProof(): void {
+// Generated at runtime because it imports built artifacts absent at `tc` time. A dts regression that drops
+// a file API from either surface makes a reference below fail to resolve, so tsc errors.
+function inclusionProof(): void {
     const localRequire = createRequire(import.meta.url);
     const tscPath = join(dirname(localRequire.resolve('typescript/package.json')), 'lib', 'tsc.js');
-    const dir = mkdtempSync(join(tmpdir(), 'envapt-omission-'));
+    const dir = mkdtempSync(join(tmpdir(), 'envapt-inclusion-'));
     const fixture = join(dir, 'check.mts');
-    const omit = (alias: string, api: string): string =>
-        `// @ts-expect-error ${api} is omitted from the portable Envapter\nvoid ${alias}.${api};`;
     const body = [
         `import { Envapter as P } from ${JSON.stringify(join(DIST, 'types', 'index.portable.mjs'))};`,
         `import { Envapter as N } from ${JSON.stringify(join(DIST, 'types', 'index.mjs'))};`,
-        ...FILE_APIS.map((api) => omit('P', api)),
-        'void P.useSource;',
+        ...FILE_APIS.map((api) => `void P.${api};`),
         ...FILE_APIS.map((api) => `void N.${api};`)
     ].join('\n');
     writeFileSync(fixture, `${body}\n`);
@@ -169,11 +186,13 @@ function omissionProof(): void {
         const detail =
             typeof error === 'object' && error !== null && 'stdout' in error ? String(error.stdout) : String(error);
         rmSync(dir, { recursive: true, force: true });
-        fail(`verify-no-node: dist type-omission proof failed (portable Envapter must omit the file APIs):\n${detail}`);
+        fail(
+            `verify-no-node: dist type-inclusion proof failed (portable and node Envapter must both expose the file APIs):\n${detail}`
+        );
     }
     rmSync(dir, { recursive: true, force: true });
     process.stdout.write(
-        'verify-no-node: dist type-omission proof passed (portable Envapter type omits the 5 file APIs).\n'
+        'verify-no-node: dist type-inclusion proof passed (portable + node Envapter types expose all 5 file APIs).\n'
     );
 }
 
@@ -201,4 +220,4 @@ selfTest();
 grepGate();
 typesNodeFreeProof();
 await stubProof();
-omissionProof();
+inclusionProof();

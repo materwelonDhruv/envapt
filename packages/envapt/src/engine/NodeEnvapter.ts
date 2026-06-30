@@ -12,9 +12,9 @@ import type { ProfilesConfig } from '../types';
 
 /**
  * The Node/Bun/Deno facade: {@link Envapter} plus the filesystem-only configuration APIs (`.env`
- * path selection, base directory, dotenv options, and per-environment profiles). The browser and
- * Workers builds export the base {@link Envapter} without these, so calling one where there is no
- * filesystem is a compile error (and a thrown {@link EnvaptError} when types are bypassed).
+ * path selection, base directory, dotenv options, and per-environment profiles). On the portable
+ * build (Workers, the browser, edge) these same APIs warn once and no-op by default, controlled by
+ * `Envapter.fileApiMode`.
  *
  * Writes target the state-owning class (`EnvapterBase`/`EnvironmentMethods`), not `this`: the engine
  * reads that state through `EnvapterBase`-anchored paths, so a subclass own-property would be invisible.
