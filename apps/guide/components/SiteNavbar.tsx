@@ -8,17 +8,14 @@ import { BrandLockup } from '@/components/BrandLockup';
 import { NavControls } from '@/components/NavControls';
 import { VersionBadge } from '@/components/VersionBadge';
 import { cn } from '@/lib/cn';
-import { NPM_URL } from '@/lib/site';
+import { CHANGELOG_URL, NPM_URL } from '@/lib/site';
 
 import type { ComponentProps, ReactNode } from 'react';
 
 const NAV_LINKS = [
-    { label: 'Introduction', href: '/docs/' },
-    { label: 'Quick Start', href: '/docs/quick-start' },
-    { label: 'Envapter', href: '/docs/envapter' },
-    { label: 'Decorators', href: '/docs/decorators' },
-    { label: 'Converters', href: '/docs/converters' },
-    { label: 'Blog', href: '/blog' }
+    { label: 'Docs', href: '/docs/', external: false },
+    { label: 'Changelog', href: CHANGELOG_URL, external: true },
+    { label: 'Blog', href: '/blog', external: false }
 ];
 
 export function SiteNavbar(props: ComponentProps<'header'>): ReactNode {
@@ -48,6 +45,7 @@ export function SiteNavbar(props: ComponentProps<'header'>): ReactNode {
                         <Link
                             key={link.label}
                             href={link.href}
+                            {...(link.external ? { target: '_blank', rel: 'noreferrer' } : {})}
                             className={cn(
                                 'text-fd-muted-foreground transition-colors hover:text-fd-foreground',
                                 pathname === link.href && 'text-(--ev-link)'
@@ -75,6 +73,7 @@ export function SiteNavbar(props: ComponentProps<'header'>): ReactNode {
                         <Link
                             key={link.label}
                             href={link.href}
+                            {...(link.external ? { target: '_blank', rel: 'noreferrer' } : {})}
                             tabIndex={menuOpen ? undefined : -1}
                             onClick={() => setMenuOpen(false)}
                             className={cn(

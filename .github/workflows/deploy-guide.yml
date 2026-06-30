@@ -43,6 +43,7 @@ jobs:
               run: pnpm build
               env:
                   NEXT_PUBLIC_SITE_URL: ${{ github.ref_name == 'next' && 'https://next-envapt.materwelon.dev' || 'https://envapt.materwelon.dev' }}
+                  NEXT_PUBLIC_CHANGELOG_REF: ${{ github.ref_name == 'next' && 'next' || 'main' }}
 
             - name: Deploy production
               if: github.event_name == 'push' && github.ref == 'refs/heads/main'
