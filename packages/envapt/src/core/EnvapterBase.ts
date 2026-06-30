@@ -7,7 +7,7 @@ import { UnboundEnvSource } from '../sources/UnboundEnvSource';
 
 import type { DebugLevel } from '../infra/Debug';
 import type { EnvFileOptions } from '../infra/Dotenv';
-import type { EnvKeyInput, EnvSource, FileEnvSource } from '../types';
+import type { EnvKeyInput, EnvSource, FileApiMode, FileEnvSource } from '../types';
 
 /** @internal */
 export const EnvaptCache = new Map<string, unknown>();
@@ -20,6 +20,7 @@ export abstract class EnvapterBase {
     protected static _userDefinedEnvFileOptions: EnvFileOptions = {};
     protected static _strict = false;
     protected static _syncProcessEnv = false;
+    protected static _fileApiMode: FileApiMode = 'warn';
     // Loader-written keys only (collisions skipped). Refilled on every cache rebuild.
     protected static _dotenvAddedKeys: Set<string> = new Set<string>();
     // Unbound by default so non-Node builds throw NoSourceBound on read until useSource() is called.
@@ -75,6 +76,22 @@ export abstract class EnvapterBase {
 
     static get syncProcessEnv(): boolean {
         return EnvapterBase._syncProcessEnv;
+    }
+
+    /**
+     * On the portable build, this controls the filesystem-only config APIs (`envPaths`, `baseDir`,
+     * `envFileOptions`, `configureProfiles`, `resetProfiles`). `'warn'` (the default) warns once and
+     * no-ops, `'throw'` throws {@link EnvaptError} `FileApiUnsupported`. The node build runs these
+     * APIs normally and this value has no effect there.
+     */
+    static set fileApiMode(mode: FileApiMode) {
+        Validator.validateFileApiMode(mode);
+        // anchored to EnvapterBase like _strict. no refreshCache, it only gates the portable stubs.
+        EnvapterBase._fileApiMode = mode;
+    }
+
+    static get fileApiMode(): FileApiMode {
+        return EnvapterBase._fileApiMode;
     }
 
     protected static treatAsMissing(value: string | undefined): boolean {

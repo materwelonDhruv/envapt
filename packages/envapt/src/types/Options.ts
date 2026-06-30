@@ -39,4 +39,12 @@ type ProfilesConfig = Partial<Record<Environment, EnvProfile>> & {
     useDefaults?: boolean;
 };
 
-export type { EnvaptOptions, EnvProfile, ProfilesConfig };
+/**
+ * How the portable build's filesystem-only config APIs behave when called. `'warn'` (the default)
+ * warns once and no-ops, `'throw'` throws `FileApiUnsupported`. The node build runs these APIs
+ * normally and is unaffected by this value.
+ * @public
+ */
+type FileApiMode = 'warn' | 'throw';
+
+export type { EnvaptOptions, EnvProfile, ProfilesConfig, FileApiMode };

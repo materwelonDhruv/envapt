@@ -7,7 +7,7 @@ import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
 import type { ArrayOf, ConverterToken } from '../converters/Converters';
 import type { EnvFileOptions } from '../infra/Dotenv';
 import type { StandardSchemaV1 } from '../infra/StandardSchema';
-import type { BuiltInConverter, ConverterFunction, EnvaptConverter } from '../types';
+import type { BuiltInConverter, ConverterFunction, EnvaptConverter, FileApiMode } from '../types';
 
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class -- cohesive dispatch of stateless type guards, same shape as BuiltInConverters
 export class Validator {
@@ -230,6 +230,16 @@ export class Validator {
             throw new EnvaptError(
                 EnvaptErrorCodes.InvalidUserDefinedConfig,
                 `Envapter.syncProcessEnv must be a boolean, got ${typeof value}.`
+            );
+        }
+    }
+
+    static validateFileApiMode(value: unknown): asserts value is FileApiMode {
+        if (value !== 'warn' && value !== 'throw') {
+            const got = typeof value === 'string' ? `'${value}'` : typeof value;
+            throw new EnvaptError(
+                EnvaptErrorCodes.InvalidUserDefinedConfig,
+                `Envapter.fileApiMode must be 'warn' or 'throw', got ${got}.`
             );
         }
     }
