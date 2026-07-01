@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { Envapter, EnvaptError, EnvaptErrorCodes, ManualEnvSource } from '../../dist/portable/index.mjs';
+import { Envapter, EnvaptError, EnvaptErrorCodes, PortableSource } from '../../dist/portable/index.mjs';
 
 describe('portable build guards on workerd', () => {
     afterEach(() => {
@@ -8,7 +8,7 @@ describe('portable build guards on workerd', () => {
     });
 
     it('no-ops a file API under the default warn mode', () => {
-        Envapter.useSource(new ManualEnvSource({ FOO: 'bar' }));
+        Envapter.useSource(new PortableSource({ FOO: 'bar' }));
         expect(() => (Envapter.baseDir = '/tmp')).not.toThrow();
         expect(Envapter.baseDir).toBeUndefined();
     });
@@ -24,8 +24,8 @@ describe('portable build guards on workerd', () => {
         }
     });
 
-    it('reads injected config from a ManualEnvSource', () => {
-        Envapter.useSource(new ManualEnvSource({ FLAG: 'true', COUNT: '42' }));
+    it('reads injected config from a PortableSource', () => {
+        Envapter.useSource(new PortableSource({ FLAG: 'true', COUNT: '42' }));
         expect(Envapter.getBoolean('FLAG')).toBe(true);
         expect(Envapter.getNumber('COUNT')).toBe(42);
     });

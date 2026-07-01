@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { Envapter, EnvaptError, EnvaptErrorCodes, ManualEnvSource } from '../../dist/portable/index.mjs';
+import { Envapter, EnvaptError, EnvaptErrorCodes, PortableSource } from '../../dist/portable/index.mjs';
 
 afterEach(() => {
     Envapter.strict = false;
@@ -9,7 +9,7 @@ afterEach(() => {
 
 describe('browser portability canaries', () => {
     it('a missing strict read throws EnvaptError, never a process ReferenceError', () => {
-        Envapter.useSource(new ManualEnvSource({ PRESENT: 'x' }));
+        Envapter.useSource(new PortableSource({ PRESENT: 'x' }));
         Envapter.strict = true;
         let err: unknown;
         try {
@@ -22,7 +22,7 @@ describe('browser portability canaries', () => {
     });
 
     it('routes debug output to console, not process.stderr', () => {
-        Envapter.useSource(new ManualEnvSource({ PRESENT: 'x' }));
+        Envapter.useSource(new PortableSource({ PRESENT: 'x' }));
         Envapter.debug = 'warn';
         const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
         Envapter.get('MISSING_VAR', 'fallback-value');

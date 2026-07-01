@@ -22,7 +22,7 @@ The field splits into two jobs. Loaders like the dotenv family read a `.env` fil
 
 **Built-in templating.** envapt expands `${VAR}` references inside values as it loads them, with circular-reference detection, so `DATABASE_URL=postgres://${DB_HOST}/${DB_NAME}` resolves on its own. This is the thing people add a second library (`dotenv-expand`) for. Among the others only some loaders do it (env-schema, dotenvx, dotenv-flow expand variables), and they hand you the result as an untyped string. envapt expands it and then types it.
 
-**A formal pluggable source.** envapt reads through an `EnvSource` interface, so the same API runs over `process.env`, `import.meta.env`, a Workers binding, or a store you fetched at boot. Several others (env-var, t3-env, znv, envin) also accept a custom object you build, so the difference is that envapt makes it one typed interface, not that the others are stuck on `process.env`.
+**A formal pluggable source.** envapt reads through an `Source` interface, so the same API runs over `process.env`, `import.meta.env`, a Workers binding, or a store you fetched at boot. Several others (env-var, t3-env, znv, envin) also accept a custom object you build, so the difference is that envapt makes it one typed interface, not that the others are stuck on `process.env`.
 
 **Decorators or a functional API.** The functional API (`get`, `getNumber`, `getUsing`, `parse`) is the floor and needs nothing special. The decorators come in two forms, the modern TC39 accessor decorators (the default, `@Envapt`, `@EnvNum`) and a legacy `experimentalDecorators` form at `envapt/legacy`, so you can pick whichever your bundler handles. No other tool here ships a decorator API at all.
 

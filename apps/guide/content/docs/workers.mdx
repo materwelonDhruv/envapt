@@ -1,9 +1,9 @@
 ---
 title: Workers
-description: Bind a WorkerEnvSource from the Cloudflare env object once at module load, then read typed config with the same API as everywhere else.
+description: Bind a PortableSource from the Cloudflare env object once at module load, then read typed config with the same API as everywhere else.
 ---
 
-On Cloudflare Workers (workerd) there is no filesystem and no ambient `process.env`. Your configuration is the `env` object the runtime exposes. Bind a `WorkerEnvSource` from it once, then read with the same typed API as everywhere else.
+On Cloudflare Workers (workerd) there is no filesystem and no ambient `process.env`. Your configuration is the `env` object the runtime exposes. Bind a `PortableSource` from it once, then read with the same typed API as everywhere else.
 
 Import from `envapt`. The package export conditions resolve a node-free portable build on Workers automatically, so the same import works in local dev and on the Worker.
 
@@ -26,9 +26,9 @@ Env vars and secrets are readable at module scope through `cloudflare:workers`, 
 
 ```ts title="src/config.ts"
 import { env } from 'cloudflare:workers';
-import { Envapter, WorkerEnvSource, Converters } from 'envapt';
+import { Envapter, PortableSource, Converters } from 'envapt';
 
-Envapter.useSource(new WorkerEnvSource(env));
+Envapter.useSource(new PortableSource(env));
 Envapter.require('ORIGIN_URL', 'API_TOKEN');
 
 export const config = {
@@ -63,11 +63,11 @@ export default {
 On an older compatibility date, or anywhere `env` is not importable at module scope, bind it at the top of the handler instead. The `env` is the same on every request, so the re-bind is idempotent.
 
 ```ts title="src/index.ts"
-import { Envapter, WorkerEnvSource, Converters } from 'envapt';
+import { Envapter, PortableSource, Converters } from 'envapt';
 
 export default {
     async fetch(request: Request, env: Record<string, unknown>): Promise<Response> {
-        Envapter.useSource(new WorkerEnvSource(env));
+        Envapter.useSource(new PortableSource(env));
         const origin = Envapter.getUsing('ORIGIN_URL', { converter: Converters.Url, required: true });
         return fetch(new URL(new URL(request.url).pathname, origin), request);
     }
@@ -76,13 +76,13 @@ export default {
 
 ## Non-string bindings
 
-A Cloudflare `vars` entry can be JSON, not only a string. `WorkerEnvSource` JSON-stringifies any non-string binding so the converters parse it the same way. A binding whose value stringifies to `undefined` is dropped, and anything you read this way must be JSON-serializable.
+A Cloudflare `vars` entry can be JSON, not only a string. `PortableSource` JSON-stringifies any non-string binding so the converters parse it the same way. A binding whose value stringifies to `undefined` is dropped, and anything you read this way must be JSON-serializable.
 
 ```ts twoslash
-import { Envapter, WorkerEnvSource, Converters } from 'envapt';
+import { Envapter, PortableSource, Converters } from 'envapt';
 // ---cut---
 declare const env: { FEATURE_FLAGS: { beta: boolean } }; // a JSON `vars` binding
-Envapter.useSource(new WorkerEnvSource(env));
+Envapter.useSource(new PortableSource(env));
 
 const flags = Envapter.getUsing('FEATURE_FLAGS', Converters.Json); // parsed back from the stringified binding
 ```

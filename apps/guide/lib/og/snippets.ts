@@ -186,7 +186,7 @@ const db = Envapter.getUsing(
         code: `// Workers - bind the env binding at module load
 import { env } from 'cloudflare:workers';
 
-Envapter.useSource(new WorkerEnvSource(env));
+Envapter.useSource(new PortableSource(env));
 const origin = Envapter.getUsing(
   'ORIGIN_URL', Converters.Url
 );`
@@ -196,7 +196,7 @@ const origin = Envapter.getUsing(
         lang: 'ts',
         code: `// Browser - seed your bundler's injected config
 Envapter.useSource(
-  new ManualEnvSource(import.meta.env)
+  new PortableSource(import.meta.env)
 );
 const api = Envapter.getUsing(
   'VITE_API_URL', Converters.Url

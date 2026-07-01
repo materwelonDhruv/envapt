@@ -75,14 +75,14 @@ const port = Envapter.getNumber('PORT', 3000);
 const origins = Envapter.getUsing('ALLOWED_ORIGINS', Converters.array(), []);
 ```
 
-On Cloudflare Workers, `env` is importable at module scope, so bind it once in a config module; in the
-browser, seed a `ManualEnvSource` from the object your bundler injects.
+On Cloudflare Workers, `env` is importable at module scope, so bind it once in a config module, and in
+the browser seed a `PortableSource` from the object your bundler injects.
 
 ```ts
 import { env } from 'cloudflare:workers';
-import { Envapter, WorkerEnvSource } from 'envapt';
+import { Envapter, PortableSource } from 'envapt';
 
-Envapter.useSource(new WorkerEnvSource(env));
+Envapter.useSource(new PortableSource(env));
 
 export const apiToken = Envapter.get('API_TOKEN');
 ```

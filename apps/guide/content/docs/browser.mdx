@@ -1,9 +1,9 @@
 ---
 title: Browser
-description: Seed a ManualEnvSource from the config your bundler injects, with no filesystem in the browser.
+description: Seed a PortableSource from the config your bundler injects, with no filesystem in the browser.
 ---
 
-In the browser there is no filesystem and no `process.env`. Your bundler inlines configuration at build time, and you seed a `ManualEnvSource` from it, then read with the same typed API as everywhere else.
+In the browser there is no filesystem and no `process.env`. Your bundler inlines configuration at build time, and you seed a `PortableSource` from it, then read with the same typed API as everywhere else.
 
 Import from `envapt`. The package export conditions resolve a node-free portable build in the browser automatically, so the same import works in local dev and in the bundle.
 
@@ -22,21 +22,21 @@ Envapter.baseDir = '/tmp'; // warns once and no-ops in the browser
 
 ## Seed from your bundler
 
-Bundlers replace build-time env references with string literals: Vite exposes them on `import.meta.env`, webpack through `DefinePlugin`. Pass that object to `ManualEnvSource`, then read the values typed.
+Bundlers replace build-time env references with string literals: Vite exposes them on `import.meta.env`, webpack through `DefinePlugin`. Pass that object to `PortableSource`, then read the values typed.
 
 ```ts
-import { Envapter, ManualEnvSource, Converters } from 'envapt';
+import { Envapter, PortableSource, Converters } from 'envapt';
 
-Envapter.useSource(new ManualEnvSource(import.meta.env));
+Envapter.useSource(new PortableSource(import.meta.env));
 
 const apiUrl = Envapter.getUsing('VITE_API_URL', Converters.Url); // URL, not a raw string
 const beta = Envapter.getBoolean('VITE_ENABLE_BETA', false); // boolean
 ```
 
-`import.meta.env.VITE_API_URL` is a string; `Envapter.getUsing('VITE_API_URL', Converters.Url)` returns a `URL`, and `getBoolean` returns a `boolean`. `ManualEnvSource` snapshots the object and JSON-stringifies non-string values, so you can read Vite's boolean `DEV` and `PROD` flags too.
+`import.meta.env.VITE_API_URL` is a string; `Envapter.getUsing('VITE_API_URL', Converters.Url)` returns a `URL`, and `getBoolean` returns a `boolean`. `PortableSource` snapshots the object and JSON-stringifies non-string values, so you can read Vite's boolean `DEV` and `PROD` flags too.
 
 <Callout type="warn">
-    Anything you seed into a browser `ManualEnvSource` ships in your client bundle. Pass public configuration only,
+    Anything you seed into a browser `PortableSource` ships in your client bundle. Pass public configuration only,
     never a secret or a server-side key.
 </Callout>
 
@@ -46,7 +46,7 @@ const beta = Envapter.getBoolean('VITE_ENABLE_BETA', false); // boolean
 
 ## No filesystem
 
-`ManualEnvSource` snapshots its object at construction, so mutating that object afterward does not change what envapt reads. There is no `.env` cascade in the browser, and reading before you bind a source throws `NoSourceBound`. See [Sources](/docs/sources).
+`PortableSource` snapshots its object at construction, so mutating that object afterward does not change what envapt reads. There is no `.env` cascade in the browser, and reading before you bind a source throws `NoSourceBound`. See [Sources](/docs/sources).
 
 ## Decorators
 

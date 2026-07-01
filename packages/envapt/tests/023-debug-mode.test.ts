@@ -3,7 +3,7 @@ import process from 'node:process';
 
 import { afterEach, beforeAll, beforeEach, describe, expect, expectTypeOf, it, vi } from 'vitest';
 
-import { Envapter, EnvaptErrorCodes, NodeEnvSource } from '../src';
+import { Envapter, EnvaptErrorCodes, FileSource } from '../src';
 import { resetDebugForTesting } from '../src/infra/Debug';
 import { loadDotenv } from '../src/infra/Dotenv';
 import { EnvaptError } from '../src/infra/Error';
@@ -16,7 +16,7 @@ const passThroughSchema: StandardSchemaV1<string, string> = {
 };
 
 // loadDotenv takes an injected reader; reuse the library's Node reader rather than re-implementing fs.
-const reader = new NodeEnvSource();
+const reader = new FileSource();
 const nodeReadFile = reader.readFile.bind(reader);
 
 interface StderrCapture {

@@ -5,7 +5,7 @@ import { Validator } from './Validators';
 import { EnvapterBase } from '../core/EnvapterBase';
 import { EnvironmentMethods } from '../core/EnvironmentMethods';
 import { setRuntimeSink } from '../infra/runtime';
-import { NodeEnvSource } from '../sources/NodeEnvSource';
+import { FileSource } from '../sources/FileSource';
 
 import type { EnvFileOptions } from '../infra/Dotenv';
 import type { ProfilesConfig } from '../types';
@@ -26,7 +26,7 @@ export class NodeEnvapter extends Envapter {
     // sideEffects entry. Depends on the es2022 native static-block emit; lowering the target defeats it.
     static {
         setRuntimeSink((line) => process.stderr.write(`${line}\n`));
-        NodeEnvapter.useSource(new NodeEnvSource());
+        NodeEnvapter.useSource(new FileSource());
     }
 
     /**

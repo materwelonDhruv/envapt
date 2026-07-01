@@ -3,7 +3,7 @@ title: Compatibility
 description: Runtime support, engine versions, module formats, the portable and node builds, and how decorators behave across runtimes.
 ---
 
-envapt runs on Node, Bun, and Deno with the same API and zero runtime dependencies. It also runs on Cloudflare Workers (workerd) and in the browser, where you bind the source yourself (`WorkerEnvSource` or `ManualEnvSource`) and read with the same typed API. The functional reader API works on every runtime with no build step. The default `@Envapt` accessor decorators need no flag either, the legacy `envapt/legacy` decorators have per-runtime requirements covered below.
+envapt runs on Node, Bun, and Deno with the same API and zero runtime dependencies. It also runs on Cloudflare Workers (workerd) and in the browser, where you bind the source yourself (a `PortableSource`) and read with the same typed API. The functional reader API works on every runtime with no build step. The default `@Envapt` accessor decorators need no flag either, the legacy `envapt/legacy` decorators have per-runtime requirements covered below.
 
 ## Engine versions
 
@@ -33,8 +33,8 @@ envapt ships both ESM and CommonJS with type definitions for each, so `import` a
 
 The package `exports` conditions select between two builds:
 
-- **The portable build** resolves from bare `envapt` on Workers, edge runtimes (`edge-light`, `fastly`, `worker`), the browser, and react-native. It contains no `node:` imports; bind a [`WorkerEnvSource`](/docs/sources) or [`ManualEnvSource`](/docs/sources) and read with the same typed API.
-- **The node build** also resolves from bare `envapt` on Node, Bun, and Deno. `NodeEnvSource` is bound on import, so it reads `process.env` and the `.env` cascade, and the file APIs work.
+- **The portable build** resolves from bare `envapt` on Workers, edge runtimes (`edge-light`, `fastly`, `worker`), the browser, and react-native. It contains no `node:` imports. Bind a [`PortableSource`](/docs/sources) and read with the same typed API.
+- **The node build** also resolves from bare `envapt` on Node, Bun, and Deno. `FileSource` is bound on import, so it reads `process.env` and the `.env` cascade, and the file APIs work.
 
 Bind a source before your first read on the portable build; see [Sources](/docs/sources).
 

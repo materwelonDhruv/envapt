@@ -12,21 +12,20 @@ A source is the object envapt reads variables from. On Node, Bun, and Deno one i
 
 ## The providers
 
-envapt ships three sources.
+envapt ships two sources.
 
-- `NodeEnvSource` is bound automatically on the Node entry and is Node-only. It reads a clone of `process.env` and the `.env` cascade.
-- `WorkerEnvSource` wraps the Cloudflare `env` binding. See [Workers](/docs/workers).
-- `ManualEnvSource` wraps any object you pass, like the config your bundler injects into a browser build, so you can pass `import.meta.env` directly. See [Browser](/docs/browser).
+- `FileSource` is bound automatically on the Node entry and is Node-only. It reads a clone of `process.env` and the `.env` cascade.
+- `PortableSource` wraps any object you pass, for every runtime without a filesystem. Pass the Cloudflare `env` binding on Workers (see [Workers](/docs/workers)), or the config your bundler injects into a browser build like `import.meta.env` (see [Browser](/docs/browser)).
 
-`WorkerEnvSource` and `ManualEnvSource` both snapshot the object at construction (so later mutation does not leak in) and JSON-stringify non-string values so the converters parse them the same way.
+`PortableSource` snapshots the object at construction (so later mutation does not leak in) and JSON-stringifies non-string values so the converters parse them the same way.
 
 You pass the source the object the runtime exposes, the Worker `env` binding or the bundler's injected config, not one you write out by hand. The value is the typed read on top:
 
 ```ts twoslash
-import { Envapter, WorkerEnvSource, Converters } from 'envapt';
+import { Envapter, PortableSource, Converters } from 'envapt';
 // ---cut---
 declare const env: Record<string, unknown>; // the Cloudflare env binding
-Envapter.useSource(new WorkerEnvSource(env));
+Envapter.useSource(new PortableSource(env));
 
 const upstream = Envapter.getUsing('UPSTREAM_URL', Converters.Url); // URL | undefined
 const cacheTtl = Envapter.getUsing('CACHE_TTL', Converters.Time, '5m'); // number (ms)
@@ -34,22 +33,22 @@ const cacheTtl = Envapter.getUsing('CACHE_TTL', Converters.Time, '5m'); // numbe
 
 ## Any object can be a source
 
-`EnvSource` is one required method, `readVars(): Record<string, string>`. Any object that satisfies it works, so you can adapt another config system, a secrets payload or an RPC response, without writing a provider.
+`Source` is one required method, `readVars(): Record<string, string>`. Any object that satisfies it works, so you can adapt another config system, a secrets payload or an RPC response, without writing a provider.
 
 ```ts twoslash
 import { Envapter, Converters } from 'envapt';
 
-import type { EnvSource } from 'envapt';
+import type { Source } from 'envapt';
 // ---cut---
 declare const secrets: Record<string, string>; // fetched from your secrets manager
-const source: EnvSource = { readVars: () => secrets };
+const source: Source = { readVars: () => secrets };
 Envapter.useSource(source);
 
 const apiBase = Envapter.getUsing('API_BASE_URL', Converters.Url);
 const poolSize = Envapter.getNumber('DB_POOL_SIZE', 10);
 ```
 
-An optional `supportsFiles` flag marks a source as backing the file-only config APIs. Only `NodeEnvSource` sets it, which is why the `.env` cascade and `envPaths` work on Node and nowhere else.
+An optional `supportsFiles` flag marks a source as backing the file-only config APIs. Only `FileSource` sets it, which is why the `.env` cascade and `envPaths` work on Node and nowhere else.
 
 For fetching that secrets object from 1Password, Vault, Doppler, AWS Secrets Manager, and others, see [Using secret stores](/docs/secret-stores).
 
@@ -60,8 +59,8 @@ Reading a value before you call `useSource` throws `EnvaptError` with code `NoSo
 The file-only config APIs need a source that backs the filesystem. On the portable build they warn and no-op by default, see [Compatibility](/docs/compatibility) for `fileApiMode`.
 
 <Callout type="warn">
-    On the portable build there is no filesystem, so pass your values through `ManualEnvSource` or `WorkerEnvSource`. An
-    unbound read throws `NoSourceBound`.
+    On the portable build there is no filesystem, so pass your values through `PortableSource`. An unbound read
+    throws `NoSourceBound`.
 </Callout>
 
 For the per-runtime flows see [Workers](/docs/workers) and [Browser](/docs/browser); the build selection is in [Compatibility](/docs/compatibility).

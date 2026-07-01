@@ -1,8 +1,10 @@
-// Shared by ManualEnvSource and WorkerEnvSource. The returned record is fresh, so a caller mutating its
-// object later can't leak into the source; non-string values are JSON-stringified.
-export function coerceToStringRecord(env: Record<string, unknown>): Record<string, string> {
+// Shared by PortableSource and its deprecated aliases. The returned record is fresh, so a caller
+// mutating its object later cannot leak into the source, and non-string values are JSON-stringified.
+export function coerceToStringRecord(env: object): Record<string, string> {
     const snapshot: Record<string, string> = {};
-    for (const [key, value] of Object.entries(env)) {
+    // `object` so a Cloudflare `Env` (an interface with no index signature) is accepted. cast to a record
+    // to read entries as `unknown` rather than `any`.
+    for (const [key, value] of Object.entries(env as Record<string, unknown>)) {
         if (typeof value === 'string') {
             snapshot[key] = value;
             continue;

@@ -1,9 +1,33 @@
 ---
 title: Migration (v7 to v8)
-description: Moving from envapt v7 to v8. One universal envapt import replaces the workerd and browser subpaths, and the portable file APIs warn instead of throwing by default.
+description: Moving from envapt v7 to v8. The source classes get shorter names, one universal envapt import replaces the workerd and browser subpaths, and the portable file APIs warn instead of throwing by default.
 ---
 
-v8 is a major release with two breaking changes. The `envapt/workerd` and `envapt/browser` subpaths are removed, and on the portable build the filesystem-only config APIs warn once and no-op by default instead of throwing. Everything else (the `Envapter` readers, converters, sources, decorators, and `envapt/legacy`) is unchanged.
+v8 is a major release with three breaking changes. The source classes are renamed, the `envapt/workerd` and `envapt/browser` subpaths are removed, and on the portable build the filesystem-only config APIs warn once and no-op by default instead of throwing. Everything else (the `Envapter` readers, converters, decorators, and `envapt/legacy`) is unchanged.
+
+## Source and type renames
+
+The source class names drop the `Env` infix. `PortableSource` is the one source for every runtime without a filesystem, and it replaces both `ManualEnvSource` and `WorkerEnvSource`, which were the same class. `FileSource` replaces `NodeEnvSource`, and the `Source` type replaces `EnvSource`.
+
+| v7 | v8 |
+| --- | --- |
+| `ManualEnvSource`, `WorkerEnvSource` | `PortableSource` |
+| `NodeEnvSource` | `FileSource` |
+| `EnvSource` (type) | `Source` |
+
+```ts
+// v7
+import { Envapter, ManualEnvSource } from 'envapt';
+
+Envapter.useSource(new ManualEnvSource(config));
+
+// v8
+import { Envapter, PortableSource } from 'envapt';
+
+Envapter.useSource(new PortableSource(config));
+```
+
+If you were already on v7.1, `PortableSource` and `Source` existed and `ManualEnvSource` / `WorkerEnvSource` / `EnvSource` were deprecated aliases, so v8 only removes the aliases. `NodeEnvSource` is renamed to `FileSource` in v8.
 
 ## One universal `envapt` import
 
@@ -15,8 +39,7 @@ import { Envapter, WorkerEnvSource } from 'envapt/workerd';
 import { Envapter, ManualEnvSource } from 'envapt/browser';
 
 // v8
-import { Envapter, WorkerEnvSource } from 'envapt';
-import { Envapter, ManualEnvSource } from 'envapt';
+import { Envapter, PortableSource } from 'envapt';
 ```
 
 The edge runtimes that used to fall through to the node build (Vercel Edge, Fastly) now resolve the portable build through the `edge-light`, `fastly`, and `worker` conditions. `envapt/config` and `envapt/legacy` are unchanged.

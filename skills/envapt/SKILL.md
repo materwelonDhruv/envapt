@@ -99,27 +99,27 @@ Custom converters have **two different shapes**:
 
 ## Runtimes and sources
 
-envapt reads through a pluggable `EnvSource`, and the build you import binds the right one. Import from `envapt` everywhere; the `exports` conditions select the build automatically.
+envapt reads through a pluggable `Source`, and the build you import binds the right one. Import from `envapt` everywhere; the `exports` conditions select the build automatically.
 
-- **Node, Bun, and Deno** (`import ... from 'envapt'`): a `NodeEnvSource` is bound automatically (a `process.env` snapshot plus the `.env` cascade). Nothing to wire up.
+- **Node, Bun, and Deno** (`import ... from 'envapt'`): a `FileSource` is bound automatically (a `process.env` snapshot plus the `.env` cascade). Nothing to wire up.
 - **Cloudflare Workers** (`import ... from 'envapt'`): bind the `env` binding yourself, once, before any read.
 
     ```ts
-    import { Envapter, WorkerEnvSource } from 'envapt';
+    import { Envapter, PortableSource } from 'envapt';
     import { env } from 'cloudflare:workers'; // or the `env` passed to fetch(request, env)
 
-    Envapter.useSource(new WorkerEnvSource(env)); // bind once at module load
+    Envapter.useSource(new PortableSource(env)); // bind once at module load
     ```
 
-- **Browser** (`import ... from 'envapt'`): seed a `ManualEnvSource` from the object your bundler injects.
+- **Browser** (`import ... from 'envapt'`): seed a `PortableSource` from the object your bundler injects.
 
     ```ts
-    import { Envapter, ManualEnvSource } from 'envapt';
+    import { Envapter, PortableSource } from 'envapt';
 
-    Envapter.useSource(new ManualEnvSource(import.meta.env)); // Vite; or a webpack DefinePlugin object
+    Envapter.useSource(new PortableSource(import.meta.env)); // Vite; or a webpack DefinePlugin object
     ```
 
-`WorkerEnvSource` and `ManualEnvSource` both snapshot the object and JSON-stringify non-string values, so you pass the runtime's object straight through. Any object with a `readVars(): Record<string, string>` method is a valid `EnvSource`.
+`PortableSource` snapshots the object and JSON-stringifies non-string values, so you pass the runtime's object straight through. Any object with a `readVars(): Record<string, string>` method is a valid `Source`.
 
 On the portable build (Workers, the browser, edge runtimes) there is no filesystem: the file-only config APIs (`envPaths`, `baseDir`, `envFileOptions`, `configureProfiles`, `resetProfiles`) warn once and no-op by default. Set `Envapter.fileApiMode = 'throw'` to make them throw `EnvaptError` `FileApiUnsupported` instead. A read before `useSource` throws `NoSourceBound` regardless of `fileApiMode`.
 
@@ -239,8 +239,7 @@ import { Envapter, WorkerEnvSource } from 'envapt/workerd';
 import { Envapter, ManualEnvSource } from 'envapt/browser';
 
 // v8
-import { Envapter, WorkerEnvSource } from 'envapt';
-import { Envapter, ManualEnvSource } from 'envapt';
+import { Envapter, PortableSource } from 'envapt';
 ```
 
 </details>

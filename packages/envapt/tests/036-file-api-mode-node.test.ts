@@ -2,7 +2,7 @@ import { resolve } from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { Envapter, EnvaptError, EnvaptErrorCodes, ManualEnvSource, NodeEnvSource } from '../src';
+import { Envapter, EnvaptError, EnvaptErrorCodes, PortableSource, FileSource } from '../src';
 
 import type { FileApiMode } from '../src';
 
@@ -12,7 +12,7 @@ const MODES: readonly FileApiMode[] = ['warn', 'throw'];
 describe('Envapter.fileApiMode (node build)', () => {
     afterEach(() => {
         Envapter.fileApiMode = 'warn';
-        Envapter.useSource(new NodeEnvSource());
+        Envapter.useSource(new FileSource());
         Envapter.resetProfiles();
     });
 
@@ -36,7 +36,7 @@ describe('Envapter.fileApiMode (node build)', () => {
 
     it('runs the node file APIs under both modes with a filesystem source', () => {
         for (const mode of MODES) {
-            Envapter.useSource(new NodeEnvSource());
+            Envapter.useSource(new FileSource());
             Envapter.fileApiMode = mode;
             Envapter.envPaths = extraFixture;
             expect(Envapter.envPaths).toEqual([extraFixture]);
@@ -46,7 +46,7 @@ describe('Envapter.fileApiMode (node build)', () => {
 
     it('throws FileApiUnsupported (306) on a bare source under both modes', () => {
         for (const mode of MODES) {
-            Envapter.useSource(new ManualEnvSource({ FOO: 'bar' }));
+            Envapter.useSource(new PortableSource({ FOO: 'bar' }));
             Envapter.fileApiMode = mode;
             expect(() => (Envapter.envPaths = '.env'))
                 .to.throw(EnvaptError)

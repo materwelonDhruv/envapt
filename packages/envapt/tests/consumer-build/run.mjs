@@ -10,8 +10,8 @@ const resolveDir = dirname(fileURLToPath(import.meta.url));
 const gate = createGate('consumer-build');
 
 const program = (specifier) =>
-    `import { Envapter, WorkerEnvSource, ManualEnvSource, Converters } from '${specifier}';` +
-    `globalThis.__envapt = [Envapter, WorkerEnvSource, ManualEnvSource, Converters];`;
+    `import { Envapter, PortableSource, Converters } from '${specifier}';` +
+    `globalThis.__envapt = [Envapter, PortableSource, Converters];`;
 
 // the browser/neutral platform makes esbuild fail the build on any unresolved node built-in, so a
 // clean build proves the resolved bundle is node-free, the output check below is a backup

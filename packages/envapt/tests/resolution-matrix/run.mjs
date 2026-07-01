@@ -129,13 +129,9 @@ async function namedExportResolves(named, conditions) {
 }
 
 for (const condition of PORTABLE_CONDITIONS) {
-    gate.check(
-        `discriminator NodeEnvSource [${condition}]`,
-        await namedExportResolves('NodeEnvSource', [condition]),
-        false
-    );
+    gate.check(`discriminator FileSource [${condition}]`, await namedExportResolves('FileSource', [condition]), false);
 }
-gate.check('discriminator NodeEnvSource [deno]', await namedExportResolves('NodeEnvSource', ['deno']), true);
-gate.check('discriminator NodeEnvSource []', await namedExportResolves('NodeEnvSource', []), true);
+gate.check('discriminator FileSource [deno]', await namedExportResolves('FileSource', ['deno']), true);
+gate.check('discriminator FileSource []', await namedExportResolves('FileSource', []), true);
 
 gate.done('every (moduleResolution x condition) cell resolved the right build and types.');
