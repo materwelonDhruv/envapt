@@ -1,74 +1,33 @@
-# Packages
-- name: pkg:envapt
-  color: ff6b6b
-  description: Changes related to the envapt package
-
-# Area labels
-- name: area:docs
-  color: 28a745
-  description: Documentation updates
-- name: area:tests
-  color: ffc107
-  description: Test updates
-- name: area:ci
-  color: 007bff
-  description: Continuous integration and automation changes
-- name: area:config
-  color: 6c757d
-  description: Repository configuration updates
-
-# Type labels
-- name: type:bug
-  color: dc3545
-  description: Bug fix
-- name: type:feature
-  color: 17a2b8
-  description: New feature or enhancement
-- name: type:chore
-  color: ffc107
-  description: Maintenance tasks
-- name: type:refactor
-  color: 6c757d
-  description: Refactoring work
-- name: type:docs
-  color: 28a745
-  description: Documentation only changes
-
-# Priority labels
-- name: priority:high
-  color: dc3545
-  description: Needs urgent attention
-- name: priority:medium
-  color: fd7e14
-  description: Address in the near future
-- name: priority:low
-  color: ffc107
-  description: Nice to have changes
-
-# Status labels
-- name: status:needs-triage
-  color: 6f42c1
-  description: Awaiting triage
-- name: status:blocked
-  color: dc3545
-  description: Blocked by another task or dependency
-
-# Other labels
+- name: '📦 envapt'
+  color: de6e39
+  description: the envapt library source
+- name: '📚 docs'
+  color: 8762bc
+  description: guide site and markdown docs
+- name: '🧪 tests'
+  color: 62bc80
+  description: test changes
+- name: '🤖 ci'
+  color: 6287bc
+  description: ci, workflows, and tooling config
+- name: '🩹 patch'
+  color: 59c58f
+  description: semver patch bump
+- name: '✨ minor'
+  color: c5a459
+  description: semver minor bump
+- name: '💥 major'
+  color: c55d59
+  description: semver major bump, breaking
+- name: '🐛 bug'
+  color: cf4a81
+  description: something is broken
+- name: '💡 feature'
+  color: 62bcbc
+  description: new feature or enhancement
+- name: '🔥 urgent'
+  color: d831a6
+  description: needs attention now
 - name: good first issue
-  color: 28a745
-  description: Great for newcomers to the project
-- name: help wanted
-  color: 17a2b8
-  description: Additional help is needed
-- name: discussion
-  color: 6f42c1
-  description: Requires further discussion
-- name: wontfix
-  color: 6c757d
-  description: Issue will not be addressed
-- name: invalid
-  color: dc3545
-  description: Issue is not valid
-- name: duplicate
-  color: ffc107
-  description: Issue is a duplicate of another
+  color: 7057ff
+  description: great for newcomers to the project
