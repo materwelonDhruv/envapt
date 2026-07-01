@@ -7,7 +7,7 @@ import { UnboundSource } from '../sources/UnboundSource';
 
 import type { DebugLevel } from '../infra/Debug';
 import type { EnvFileOptions } from '../infra/Dotenv';
-import type { EnvKeyInput, FileApiMode, FileBackedSource, Source } from '../types';
+import type { EnvKeyInput, FileApiMode, FileCapableSource, Source } from '../types';
 
 /** @internal */
 export const EnvaptCache = new Map<string, unknown>();
@@ -114,7 +114,7 @@ export abstract class EnvapterBase {
     // File-based config (envPaths/baseDir/configureProfiles) is meaningless without a filesystem, and
     // it throws instead of silently ignoring it on the browser or Workers. Narrows the source so callers
     // can reach the file capabilities (resolvePath/normalizeBaseDir) after the check.
-    protected static assertFileApiSupported(api: string, source: Source): asserts source is FileBackedSource {
+    protected static assertFileApiSupported(api: string, source: Source): asserts source is FileCapableSource {
         if (!source.supportsFiles) {
             throw new EnvaptError(
                 EnvaptErrorCodes.FileApiUnsupported,

@@ -3,17 +3,17 @@ title: Migration (v7 to v8)
 description: Moving from envapt v7 to v8. The source classes get shorter names, one universal envapt import replaces the workerd and browser subpaths, and the portable file APIs warn instead of throwing by default.
 ---
 
-v8 is a major release with three breaking changes. The source classes are renamed, the `envapt/workerd` and `envapt/browser` subpaths are removed, and on the portable build the filesystem-only config APIs warn once and no-op by default instead of throwing. Everything else (the `Envapter` readers, converters, decorators, and `envapt/legacy`) is unchanged.
+v8 is a major release with four breaking changes. The source classes are renamed, the `envapt/workerd` and `envapt/browser` subpaths are removed, the portable build's filesystem-only config APIs warn once and no-op by default instead of throwing, and the public type surface is trimmed. Everything else (the `Envapter` readers, converters, decorators, and `envapt/legacy`) is unchanged.
 
 ## Source and type renames
 
 The source class names drop the `Env` infix. `PortableSource` is the one source for every runtime without a filesystem, and it replaces both `ManualEnvSource` and `WorkerEnvSource`, which were the same class. `FileSource` replaces `NodeEnvSource`, and the `Source` type replaces `EnvSource`.
 
-| v7 | v8 |
-| --- | --- |
+| v7                                   | v8               |
+| ------------------------------------ | ---------------- |
 | `ManualEnvSource`, `WorkerEnvSource` | `PortableSource` |
-| `NodeEnvSource` | `FileSource` |
-| `EnvSource` (type) | `Source` |
+| `NodeEnvSource`                      | `FileSource`     |
+| `EnvSource` (type)                   | `Source`         |
 
 ```ts
 // v7
@@ -64,3 +64,12 @@ The safety net is unchanged. An unconfigured read still throws `NoSourceBound` o
 ## The portable types now include the file APIs
 
 Before v8 the portable build's types omitted the five file APIs, so calling one was a compile error. v8 drops that fence. The portable types include them, so a config module shared between your Node dev setup and a Workers deploy type-checks the same in both places. At runtime you get the warn-once and no-op above, or a throw under `fileApiMode = 'throw'`.
+
+## Trimmed public type exports
+
+v8 exports 15 types instead of 36. The internal machinery that leaked into v7's public surface is gone, the source shape interfaces (`BareEnvSource` / `FileEnvSource`), the decorator return types, the schema brands, the converter and inference helper types, `EnvKeyInput`, `ArrayOf` / `ArrayElement`, and the `InferSchemaInput` / `InferSchemaOutput` aliases. Inference on the readers and decorators is unchanged, since those types resolve at the call site.
+
+You only need a change here if you imported one of these by name.
+
+- A custom source typed against `BareEnvSource` / `FileEnvSource` uses the `Source` union instead.
+- A schema output type from `InferSchemaOutput<typeof schema>` uses your validator's own inference (`z.infer`, valibot's `InferOutput`, arktype's `.infer`) or `StandardSchemaV1.InferOutput`.
