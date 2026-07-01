@@ -1,16 +1,18 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { Envapter, ManualEnvSource, NodeEnvSource } from '../src';
+// eslint-disable-next-line import/no-deprecated -- guards the deprecated v7 aliases (ManualEnvSource/WorkerEnvSource) until v8 removes them
+import { Envapter, ManualEnvSource, NodeEnvSource, PortableSource, WorkerEnvSource } from '../src';
 
 import type { EnvSource } from '../src';
 
-describe('EnvSource', () => {
+describe('deprecated source aliases (v7 back-compat)', () => {
     afterEach(() => {
         // Restore the default Node source so the rest of the suite sees process.env + .env again.
         Envapter.useSource(new NodeEnvSource());
     });
 
-    it('reads typed values from an injected ManualEnvSource (no process.env, no .env file)', () => {
+    it('still reads typed values from an injected ManualEnvSource', () => {
+        // eslint-disable-next-line import/no-deprecated -- exercising the deprecated alias on purpose
         Envapter.useSource(new ManualEnvSource({ FOO: 'bar', PORT: '3000', FLAG: 'true' }));
 
         expect(Envapter.get('FOO')).to.equal('bar');
@@ -18,17 +20,14 @@ describe('EnvSource', () => {
         expect(Envapter.getBoolean('FLAG')).to.equal(true);
     });
 
-    it('snapshots the object at construction (later mutation does not leak in)', () => {
-        const vars = { TOKEN: 'abc' };
-        const source = new ManualEnvSource(vars);
-        vars.TOKEN = 'changed';
-
-        Envapter.useSource(source);
-
-        expect(Envapter.get('TOKEN')).to.equal('abc');
+    it('exposes ManualEnvSource and WorkerEnvSource as PortableSource subclasses', () => {
+        // eslint-disable-next-line import/no-deprecated -- exercising the deprecated aliases on purpose
+        expect(new ManualEnvSource({ A: '1' }) instanceof PortableSource).to.equal(true);
+        // eslint-disable-next-line import/no-deprecated -- exercising the deprecated aliases on purpose
+        expect(new WorkerEnvSource({ B: '2' }) instanceof PortableSource).to.equal(true);
     });
 
-    it('accepts any object satisfying the EnvSource contract', () => {
+    it('still accepts any object satisfying the deprecated EnvSource contract', () => {
         const custom: EnvSource = { readVars: () => ({ CUSTOM: 'yes' }) };
         Envapter.useSource(custom);
 

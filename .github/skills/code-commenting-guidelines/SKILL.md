@@ -55,6 +55,8 @@ user.displayName = payload.name;
 
 Once a comment earns its place, it should read like you explaining the code to someone next to you, not a telegram. Join cause and effect with the ordinary words you would use out loud, so, and, because, but, then, instead of clipping every thought into its own stiff fragment or stacking formal clauses. The punctuation ban from the `writing-voice` skill (no `;` `:` `—`) already pushes you here, and a connector word is almost always the replacement that reads best.
 
+Pick the connector that matches the real relation, and do not default to ", so". Use ", so" only for a genuine cause, ", and" for a neutral join, and a period for a plain sequence, because a reflexive ", so" invents a cause the code never had. This mirrors the writing-voice ", so" rule.
+
 Read the comment out loud. If it sounds like something you would say to a colleague at the keyboard, keep it. If it sounds like a spec sheet, you are probably missing the connector that ties the facts together.
 
 Stiff, clipped into fragments with no connective tissue:

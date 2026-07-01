@@ -1,6 +1,6 @@
 ---
 name: envapt
-description: Type-safe config reading and environment variable access for TypeScript and JavaScript with the envapt library. Use when a project imports from 'envapt', 'envapt/config', 'envapt/workerd', or 'envapt/browser', reads process.env or any object as a source, loads .env files, runs on Cloudflare Workers or in the browser, migrates off dotenv, or the user mentions envapt, Envapter, or @Envapt. Covers the functional Envapter reader API (get/getNumber/getBoolean/getUsing/parse/require) as the portable default, the @Envapt and @EnvNum/@EnvStr/@EnvBool/@EnvUrl/@EnvTime decorators (modern TC39 accessor form on 'envapt', legacy experimentalDecorators form on 'envapt/legacy'), built-in and custom converters, Standard Schema (zod/valibot/arktype) validation, the .env cascade and baseDir, the pluggable EnvSource API (useSource with WorkerEnvSource and ManualEnvSource) for Cloudflare Workers and the browser, the accessor field declaration rule, and the legacy-only Bun decorator limitation (bun#27575).
+description: Type-safe config reading and environment variable access for TypeScript and JavaScript with the envapt library. Use when a project imports from 'envapt', 'envapt/config', 'envapt/workerd', or 'envapt/browser', reads process.env or any object as a source, loads .env files, runs on Cloudflare Workers or in the browser, migrates off dotenv, or the user mentions envapt, Envapter, or @Envapt. Covers the functional Envapter reader API (get/getNumber/getBoolean/getUsing/parse/require) as the portable default, the @Envapt and @EnvNum/@EnvStr/@EnvBool/@EnvUrl/@EnvTime decorators (modern TC39 accessor form on 'envapt', legacy experimentalDecorators form on 'envapt/legacy'), built-in and custom converters, Standard Schema (zod/valibot/arktype) validation, the .env cascade and baseDir, the pluggable Source API (useSource with PortableSource, WorkerEnvSource, or ManualEnvSource) for Cloudflare Workers and the browser, the accessor field declaration rule, and the legacy-only Bun decorator limitation (bun#27575).
 ---
 
 # envapt
@@ -8,8 +8,8 @@ description: Type-safe config reading and environment variable access for TypeSc
 envapt reads environment variables as typed, validated values, with an optional `.env` cascade layered
 on top of `process.env`, and nothing in `dependencies` or `peerDependencies`. npm: `envapt`. JSR:
 `@materwelon/envapt`. Minimums: Node >=20, Bun >=1.3, Deno >=2.5. Ships ESM and CJS. It also runs on
-Cloudflare Workers (import from `envapt/workerd`) and in the browser (`envapt/browser`), where you bind
-a source yourself (see the Runtimes and sources section below).
+Cloudflare Workers and in the browser (import from `envapt`, whose export conditions resolve the portable
+build), where you bind a source yourself (see the Runtimes and sources section below).
 
 Use this skill when a file imports from `'envapt'`, `'envapt/config'`, `'envapt/workerd'`, or
 `'envapt/browser'`, reads `process.env`, loads a `.env`, runs on Workers or the browser, migrates off
@@ -137,38 +137,39 @@ Custom converters have **two different shapes**:
 
 ## Runtimes and sources
 
-envapt reads through a pluggable `EnvSource`, and the build you import binds the right one.
+envapt reads through a pluggable `Source`, and the build you import binds the right one.
 
 - **Node, Bun, Deno** (`import ... from 'envapt'`): a `NodeEnvSource` is bound automatically (a
   `process.env` snapshot plus the `.env` cascade). Nothing to wire up.
-- **Cloudflare Workers** (`import ... from 'envapt/workerd'`): bind the `env` binding yourself, once,
+- **Cloudflare Workers** (`import ... from 'envapt'`): bind the `env` binding yourself, once,
   before any read.
 
     ```ts
-    import { Envapter, WorkerEnvSource } from 'envapt/workerd';
+    import { Envapter, PortableSource } from 'envapt';
     import { env } from 'cloudflare:workers'; // or the `env` passed to fetch(request, env)
 
-    Envapter.useSource(new WorkerEnvSource(env)); // bind once at module load
+    Envapter.useSource(new PortableSource(env)); // bind once at module load
     ```
 
-- **Browser** (`import ... from 'envapt/browser'`): seed a `ManualEnvSource` from the object your
+- **Browser** (`import ... from 'envapt'`): seed a `PortableSource` from the object your
   bundler injects.
 
     ```ts
-    import { Envapter, ManualEnvSource } from 'envapt/browser';
+    import { Envapter, PortableSource } from 'envapt';
 
-    Envapter.useSource(new ManualEnvSource(import.meta.env)); // Vite; or a webpack DefinePlugin object
+    Envapter.useSource(new PortableSource(import.meta.env)); // Vite, or a webpack DefinePlugin object
     ```
 
-`WorkerEnvSource` and `ManualEnvSource` both snapshot the object and JSON-stringify non-string values,
-so you pass the runtime's object straight through. Any object with a `readVars(): Record<string, string>`
-method is a valid `EnvSource`.
+`PortableSource` snapshots the object and JSON-stringifies non-string values, so you pass the runtime's
+object straight through. Any object with a `readVars(): Record<string, string>` method is a valid `Source`.
+`WorkerEnvSource` and `ManualEnvSource` are deprecated aliases of `PortableSource`, removed in v8.
 
 Off Node there is no filesystem: the `.env` cascade and the file-only APIs (`envPaths`, `baseDir`,
 `envFileOptions`, `configureProfiles`, `resetProfiles`) are absent and throw `EnvaptError`
-`FileApiUnsupported`; a read before `useSource` throws `NoSourceBound`. Import from `envapt/workerd` /
-`envapt/browser`, not bare `envapt`: the dedicated entries omit the file APIs from the type, so a stray
-call is a compile error, while bare `envapt` falls back to the Node types where it only fails at runtime.
+`FileApiUnsupported`; a read before `useSource` throws `NoSourceBound`. Import from `envapt` everywhere, its
+export conditions resolve the portable build on Workers, the browser, and edge runtimes. The `envapt/workerd`
+and `envapt/browser` subpaths are deprecated and removed in v8. On a plain TypeScript setup bare `envapt`
+resolves to the Node types, so a stray file-only call compiles and fails at runtime rather than at build.
 
 ## Loading .env files
 
@@ -255,7 +256,7 @@ envapt loads `.env` **and** returns typed, validated values from one API, with n
 | Schema fallback             | A fallback is returned as-is; only present env values pass through the schema                                                                          |
 | `required` + `fallback`     | Mutually exclusive; so are `schema` + `converter`                                                                                                      |
 | Cascade order               | Most-specific-wins: `.env.<env>.local` > `.env.<env>` > `.env.local` > `.env`                                                                          |
-| Off Node (Workers/browser)  | Import from `envapt/workerd` / `envapt/browser`; `Envapter.useSource(...)` before reading (else `NoSourceBound`); file APIs throw `FileApiUnsupported` |
+| Off Node (Workers/browser)  | Import from `envapt` (the `envapt/workerd` / `envapt/browser` subpaths are deprecated, removed in v8); `Envapter.useSource(...)` before reading (else `NoSourceBound`); file APIs throw `FileApiUnsupported` |
 
 ## Old patterns (recognize, then migrate)
 

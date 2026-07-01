@@ -1,43 +1,47 @@
 ---
 title: Browser
-description: Seed a ManualEnvSource from the config your bundler injects, with no filesystem in the browser.
+description: Seed a PortableSource from the config your bundler injects, with no filesystem in the browser.
 ---
 
-In the browser there is no filesystem and no `process.env`. Your bundler inlines configuration at build time, and you seed a `ManualEnvSource` from it, then read with the same typed API as everywhere else.
+In the browser there is no filesystem and no `process.env`. Your bundler inlines configuration at build time, and you seed a `PortableSource` from it, then read with the same typed API as everywhere else.
 
-Import the browser build from `envapt/browser`. It is node-free and omits the file-only config APIs from its type.
+Import from `envapt`. Its package export conditions resolve a node-free portable build in the browser automatically. The `envapt/browser` subpath still resolves the same build but is deprecated and removed in v8.
 
-<Callout type="danger">
+<Callout type="warn">
 
-Import from `envapt/browser`, not bare `envapt`. The `envapt/browser` entry omits the file-only config APIs (`envPaths`, `baseDir`, `configureProfiles`, and the rest) from its type, so a stray call is a compile error. Bare `envapt` leaves you on the Node types, where those APIs look available and instead throw `EnvaptError.FileApiUnsupported` at runtime. See [Errors](/docs/errors).
+Off Node the file-only config APIs (`envPaths`, `baseDir`, `configureProfiles`, and the rest) have no filesystem to act on. Calling one throws `EnvaptError.FileApiUnsupported` at runtime, while readers work as normal. On a plain TypeScript setup bare `envapt` resolves to the Node types, so a stray call compiles and fails at runtime rather than at build. See [Errors](/docs/errors).
 
 ```ts twoslash
-// @errors: 2339
-import { Envapter } from 'envapt/browser';
+import { Envapter } from 'envapt';
 
 Envapter.getBoolean('FEATURE_BETA', false); // readers work
-Envapter.baseDir = '/tmp'; // a file-only API is not on the type
+Envapter.baseDir = '/tmp'; // compiles, but throws FileApiUnsupported at runtime off Node
 ```
 
 </Callout>
 
+<Callout type="warn">
+    `ManualEnvSource` is a deprecated alias of `PortableSource`, removed in v8. Replace `new ManualEnvSource(obj)` with
+    `new PortableSource(obj)`.
+</Callout>
+
 ## Seed from your bundler
 
-Bundlers replace build-time env references with string literals: Vite exposes them on `import.meta.env`, webpack through `DefinePlugin`. Pass that object to `ManualEnvSource`, then read the values typed.
+Bundlers replace build-time env references with string literals: Vite exposes them on `import.meta.env`, webpack through `DefinePlugin`. Pass that object to `PortableSource`, then read the values typed.
 
 ```ts
-import { Envapter, ManualEnvSource, Converters } from 'envapt/browser';
+import { Envapter, PortableSource, Converters } from 'envapt';
 
-Envapter.useSource(new ManualEnvSource(import.meta.env));
+Envapter.useSource(new PortableSource(import.meta.env));
 
 const apiUrl = Envapter.getUsing('VITE_API_URL', Converters.Url); // URL, not a raw string
 const beta = Envapter.getBoolean('VITE_ENABLE_BETA', false); // boolean
 ```
 
-`import.meta.env.VITE_API_URL` is a string; `Envapter.getUsing('VITE_API_URL', Converters.Url)` returns a `URL`, and `getBoolean` returns a `boolean`. `ManualEnvSource` snapshots the object and JSON-stringifies non-string values, so you can read Vite's boolean `DEV` and `PROD` flags too.
+`import.meta.env.VITE_API_URL` is a string; `Envapter.getUsing('VITE_API_URL', Converters.Url)` returns a `URL`, and `getBoolean` returns a `boolean`. `PortableSource` snapshots the object and JSON-stringifies non-string values, so you can read Vite's boolean `DEV` and `PROD` flags too.
 
 <Callout type="warn">
-    Anything you seed into a browser `ManualEnvSource` ships in your client bundle. Pass public configuration only,
+    Anything you seed into a browser `PortableSource` ships in your client bundle. Pass public configuration only,
     never a secret or a server-side key.
 </Callout>
 
@@ -47,7 +51,7 @@ const beta = Envapter.getBoolean('VITE_ENABLE_BETA', false); // boolean
 
 ## No filesystem
 
-`ManualEnvSource` snapshots its object at construction, so mutating that object afterward does not change what envapt reads. There is no `.env` cascade and no file-only config APIs in the browser; calling one throws, as does reading before you bind a source. See [Sources](/docs/sources) and [Errors](/docs/errors).
+`PortableSource` snapshots its object at construction, so mutating that object afterward does not change what envapt reads. There is no `.env` cascade and no file-only config APIs in the browser; calling one throws, as does reading before you bind a source. See [Sources](/docs/sources) and [Errors](/docs/errors).
 
 ## Decorators
 

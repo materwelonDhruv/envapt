@@ -56,7 +56,7 @@ class Config {
 }
 ```
 
-Two compiler behaviors decide where the getter sits. For an instance field, `useDefineForClassFields` (on by default for modern targets) emits a per-instance assignment in the constructor that would overwrite the getter with `undefined`, so `declare` makes the field type-only and the getter survives. For a static field the reverse holds, a `declare static` member is erased so the static read never reaches the getter, so a plain `static readonly` keeps the decorator on the constructor where the read finds it.
+Two compiler behaviors decide where the getter sits. For an instance field, `useDefineForClassFields` (on by default for modern targets) emits a per-instance assignment in the constructor that would overwrite the getter with `undefined`, so `declare` makes the field type-only and the getter survives. For a static field the reverse holds. A `declare static` member is erased so the static read never reaches the getter, and a plain `static readonly` keeps the decorator on the constructor where the read finds it.
 
 The legacy form needs `experimentalDecorators` enabled.
 

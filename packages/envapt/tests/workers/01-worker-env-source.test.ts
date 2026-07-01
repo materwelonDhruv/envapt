@@ -5,7 +5,7 @@ import { Converters, Envapter, WorkerEnvSource } from '../../dist/workerd/index.
 
 describe('WorkerEnvSource on workerd', () => {
     beforeEach(() => {
-        Envapter.useSource(new WorkerEnvSource(env as Record<string, unknown>));
+        Envapter.useSource(new WorkerEnvSource(env));
     });
 
     it('reads typed values from the Worker env binding', () => {

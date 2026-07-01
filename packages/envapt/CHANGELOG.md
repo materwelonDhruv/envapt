@@ -1,5 +1,12 @@
 # envapt
 
+## 7.1.0
+
+### Minor Changes
+
+- Add `PortableSource` and the `Source` type, the v8 names for the no-filesystem source class and the general source type.
+  `PortableSource` replaces both `ManualEnvSource` and `WorkerEnvSource`, which are now deprecated subclasses of it, so migrate `new ManualEnvSource(obj)` and `new WorkerEnvSource(env)` to `new PortableSource(...)`. `Source` replaces the now-deprecated `EnvSource` type. `PortableSource`'s constructor accepts any `object`, so a Cloudflare `Env` binding (an interface with no index signature) can be passed directly without a cast. Every deprecated name still works and is removed or renamed in v8.
+
 ## 7.0.3
 
 ### Patch Changes

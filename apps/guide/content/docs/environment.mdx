@@ -11,7 +11,7 @@ The environment is resolved from the first of these keys that is set, falling ba
 
 `ENVIRONMENT` → `ENV` → `NODE_ENV` → `MODE` → `development`
 
-`MODE` is last because Vite-family browser builds expose `import.meta.env.MODE` but none of the others, so binding `new ManualEnvSource(import.meta.env)` lets the same helpers work there. See [Browser](/docs/browser).
+`MODE` is last because Vite-family browser builds expose `import.meta.env.MODE` but none of the others, so binding `new PortableSource(import.meta.env)` lets the same helpers work there. See [Browser](/docs/browser).
 
 Read it as an enum, or through boolean helpers for the common checks.
 

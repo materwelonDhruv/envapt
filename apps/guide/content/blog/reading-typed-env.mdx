@@ -100,7 +100,7 @@ const timeout = Envapter.parse('TIMEOUT_MS', z.coerce.number(), 30000);
 
 ## If you'd rather have a config class
 
-The same reads bind to a class field with a decorator. The default form is a TC39 accessor decorator, static fields use `static accessor`, instance fields use `accessor x!`, and no `experimentalDecorators` flag is needed.
+The same reads bind to a class field with a decorator. The default form is a TC39 accessor decorator. Static fields use `static accessor`, instance fields use `accessor x!`, and no `experimentalDecorators` flag is needed.
 
 ```ts twoslash
 import { z } from 'zod/v4';
@@ -150,7 +150,7 @@ class Bot {
 
 t3-env centralizes: you declare every variable up front in one `createEnv` call, validated once at startup. envapt puts the check on the field that uses the value. Centralizing is the right call when one app owns all its env. seedcord's config is spread across independently-built pieces (the `Bot` owns the token, a webhook subscriber owns its URL), so each piece validates its own variable where it lives, and a malformed token throws the moment that field resolves instead of in a central config module three files away.
 
-On Node, Bun, and Deno, envapt reads `process.env` and the `.env` cascade with no setup. On Cloudflare Workers and in the browser there is no filesystem, so you bind the source yourself: a `WorkerEnvSource` over the `env` binding in a Worker, a `ManualEnvSource` over the config your bundler injects in the browser. The typed reads, converters, and validators are identical across all of them; the `.env` cascade and the file-only config APIs are the part that stays on Node.
+On Node, Bun, and Deno, envapt reads `process.env` and the `.env` cascade with no setup. On Cloudflare Workers and in the browser there is no filesystem, so you bind the source yourself, a `PortableSource` over the Worker `env` binding or the config your bundler injects in the browser. The typed reads, converters, and validators are identical across all of them. The `.env` cascade and the file-only config APIs are the part that stays on Node.
 
 ## Loading a .env file on Node
 

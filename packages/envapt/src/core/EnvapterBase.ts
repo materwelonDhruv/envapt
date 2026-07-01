@@ -7,7 +7,7 @@ import { UnboundEnvSource } from '../sources/UnboundEnvSource';
 
 import type { DebugLevel } from '../infra/Debug';
 import type { EnvFileOptions } from '../infra/Dotenv';
-import type { EnvKeyInput, EnvSource, FileEnvSource } from '../types';
+import type { EnvKeyInput, FileEnvSource, Source } from '../types';
 
 /** @internal */
 export const EnvaptCache = new Map<string, unknown>();
@@ -24,7 +24,7 @@ export abstract class EnvapterBase {
     protected static _dotenvAddedKeys: Set<string> = new Set<string>();
     // Unbound by default so non-Node builds throw NoSourceBound on read until useSource() is called.
     // NodeEnvapter's static block binds NodeEnvSource when referenced, so `import 'envapt'` needs no setup.
-    protected static _source: EnvSource = new UnboundEnvSource();
+    protected static _source: Source = new UnboundEnvSource();
 
     /**
      * Enable or disable strict mode. Default `false`. Setting refreshes the cache so
@@ -33,7 +33,7 @@ export abstract class EnvapterBase {
     static set strict(value: boolean) {
         // Anchored to EnvapterBase: `this._strict` would write an own-property on the subclass that base readers miss.
         EnvapterBase._strict = value;
-        // `this`, not EnvapterBase: rebuild via the subclass so its `resolveEffectivePaths` override is honored.
+        // rebuild via `this` so the subclass `resolveEffectivePaths` override is honored (EnvapterBase would skip it).
         this.refreshCache();
     }
 
@@ -43,7 +43,7 @@ export abstract class EnvapterBase {
 
     /**
      * Set the debug log level. Defaults to `silent`. When unset, reads `ENVAPT_DEBUG` from the
-     * bound source on first access; the setter overrides any env-var value. Output goes to stderr
+     * bound source on first access. The setter overrides any env-var value. Output goes to stderr
      * on Node (the console elsewhere), prefixed with `[envapt]`.
      */
     static set debug(level: DebugLevel) {
@@ -59,7 +59,7 @@ export abstract class EnvapterBase {
      *
      * Only keys the loader actually wrote are mirrored, so collision behavior follows
      * `envFileOptions.override`: with the default `false`, pre-existing `process.env` values
-     * are preserved; with `true`, the file value wins in both the cache and the mirror.
+     * are preserved. With `true`, the file value wins in both the cache and the mirror.
      *
      * Flipping `false → true` mirrors the existing tracked delta immediately (no cache
      * refresh). Flipping `true → false` is one-way: previously mirrored keys remain in
@@ -94,10 +94,10 @@ export abstract class EnvapterBase {
         return source.resolvePath(baseDir, candidate);
     }
 
-    // File-based config (envPaths/baseDir/configureProfiles) is meaningless without a filesystem;
-    // throw instead of silently ignoring it on the browser or Workers. Narrows the source so callers
+    // File-based config (envPaths/baseDir/configureProfiles) is meaningless without a filesystem, and
+    // it throws instead of silently ignoring it on the browser or Workers. Narrows the source so callers
     // can reach the file capabilities (resolvePath/normalizeBaseDir) after the check.
-    protected static assertFileApiSupported(api: string, source: EnvSource): asserts source is FileEnvSource {
+    protected static assertFileApiSupported(api: string, source: Source): asserts source is FileEnvSource {
         if (!source.supportsFiles) {
             throw new EnvaptError(
                 EnvaptErrorCodes.FileApiUnsupported,
@@ -130,7 +130,7 @@ export abstract class EnvapterBase {
         const mirrored: Record<string, string> = {};
         for (const key of EnvapterBase._dotenvAddedKeys) {
             const value = EnvaptCache.get(key);
-            /* v8 ignore next -- @preserve loader only writes strings; defensive against future cache contents */
+            /* v8 ignore next -- @preserve loader only writes strings, defensive against future cache contents */
             if (typeof value !== 'string') continue;
             mirrored[key] = this.resolveForMirror(key, value);
             debugVerbose(`mirrored ${key} to the ambient environment`);
@@ -146,7 +146,7 @@ export abstract class EnvapterBase {
         return value;
     }
 
-    // Default returns the explicit `_envPaths`; EnvironmentMethods overrides to layer the dotenv-flow
+    // Default returns the explicit `_envPaths`. EnvironmentMethods overrides to layer the dotenv-flow
     // cascade + configureProfiles when envPaths was never explicitly set.
     protected static resolveEffectivePaths(): string[] {
         /* v8 ignore next -- @preserve */
@@ -187,10 +187,10 @@ export abstract class EnvapterBase {
 
             let added = new Set<string>();
             // Sources without a filesystem (injected objects on the browser or Workers) skip the
-            // .env cascade, profiles, and envPaths; only the readVars() snapshot populates the cache.
+            // .env cascade, profiles, and envPaths. Only the readVars() snapshot populates the cache.
             if (source.supportsFiles) {
                 debugVerbose(`base dir: ${EnvapterBase._baseDir ?? 'working directory'}`);
-                // Outside the try below so a missing configured profile path surfaces its EnvaptError; only dotenv parse errors stay caught.
+                // Outside the try below so a missing configured profile path surfaces its EnvaptError. Only dotenv parse errors stay caught.
                 const effectivePaths = this.resolveEffectivePaths();
                 debugVerbose(
                     `effective .env paths: ${effectivePaths.length === 0 ? '(none)' : effectivePaths.join(', ')}`
@@ -223,12 +223,11 @@ export abstract class EnvapterBase {
     }
 
     /**
-     * Bind the environment {@link EnvSource}. On Node the entry binds {@link NodeEnvSource} for you
-     * (a `process.env` snapshot plus the `.env` cascade); on the browser or Workers, pass a
-     * `ManualEnvSource` / `WorkerEnvSource` (or any `EnvSource`) before reading. Clears and rebuilds
-     * the cache.
+     * Bind the environment {@link Source}. On Node the entry binds {@link NodeEnvSource} for you
+     * (a `process.env` snapshot plus the `.env` cascade). On the browser or Workers, pass a
+     * `PortableSource` (or any `Source`) before reading. Clears and rebuilds the cache.
      */
-    static useSource(source: EnvSource): void {
+    static useSource(source: Source): void {
         EnvapterBase._source = source;
         bindRuntimeFromSource(source);
         this.refreshCache();

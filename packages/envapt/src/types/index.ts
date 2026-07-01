@@ -17,5 +17,5 @@ export type {
 export type { Err, SchemaMustBeSync, SchemaConstraint } from './Schema';
 export type { EnvaptOptions, EnvProfile, ProfilesConfig } from './Options';
 export type { EnvKeyInput } from './Env';
-export type { EnvSource, BareEnvSource, FileEnvSource } from './Source';
+export type { Source, EnvSource, BareEnvSource, FileEnvSource } from './Source';
 export type { EnvaptFieldDecorator, EnvaptAccessorDecorator } from './Decorator';
