@@ -12,8 +12,7 @@ describe('Strict mode + required (v5)', () => {
     });
 
     afterEach(() => {
-        // Always reset strict to false so test isolation holds: leaking strict=true into the
-        // next file would change get* semantics globally.
+        // reset strict so it doesn't leak into the next file, where strict=true would change get* semantics globally.
         Envapter.strict = false;
     });
 
@@ -128,8 +127,7 @@ describe('Strict mode + required (v5)', () => {
             static readonly url: URL;
         }
 
-        // Exercises the `Array.isArray(key)` arm of `formatKeyForError`; both keys must be
-        // absent so the throw path runs.
+        // exercises the `Array.isArray(key)` arm of `formatKeyForError`. both keys must be absent so the throw path runs.
         class RequiredArrayKeyAllMissing {
             @Envapt(['NEVER_SET_KEY', 'ALSO_NEVER_SET'], { required: true })
             static readonly key: string;
@@ -196,66 +194,6 @@ describe('Strict mode + required (v5)', () => {
         });
     });
 
-    describe('Functional API options-bag with required: true', () => {
-        it('getUsing throws MissingEnvValue on missing/empty', () => {
-            expect(() => Envapter.getUsing('NEVER_SET_KEY', { converter: Converters.Number, required: true }))
-                .to.throw(EnvaptError)
-                .with.property('code', EnvaptErrorCodes.MissingEnvValue);
-
-            expect(() => Envapter.getUsing('EMPTY_VALUE', { converter: Converters.Number, required: true }))
-                .to.throw(EnvaptError)
-                .with.property('code', EnvaptErrorCodes.MissingEnvValue);
-        });
-
-        it('getUsing returns the typed value when present', () => {
-            const n = Envapter.getUsing('SET_NUMBER', { converter: Converters.Number, required: true });
-            expect(n).to.equal(42);
-        });
-
-        it('getWith throws MissingEnvValue on missing/empty', () => {
-            expect(() =>
-                Envapter.getWith('NEVER_SET_KEY', { converter: (raw) => (raw ?? '').toUpperCase(), required: true })
-            )
-                .to.throw(EnvaptError)
-                .with.property('code', EnvaptErrorCodes.MissingEnvValue);
-        });
-
-        it('getWith returns the value from the custom converter when present', () => {
-            const v = Envapter.getWith('SET_VALUE', { converter: (raw) => (raw ?? '').toUpperCase(), required: true });
-            expect(v).to.equal('HELLO');
-        });
-
-        it('getUsing formats the array-key error message via formatKeyForError', () => {
-            try {
-                Envapter.getUsing(['NEVER_SET_KEY', 'ALSO_NEVER_SET'], {
-                    converter: Converters.Number,
-                    required: true
-                });
-                expect.fail('should have thrown');
-            } catch (err) {
-                expect(err).to.be.instanceOf(EnvaptError);
-                const e = err as EnvaptError;
-                expect(e.code).to.equal(EnvaptErrorCodes.MissingEnvValue);
-                expect(e.message).to.include('[NEVER_SET_KEY, ALSO_NEVER_SET]');
-            }
-        });
-
-        it('getWith formats the array-key error message via formatKeyForError', () => {
-            try {
-                Envapter.getWith(['NEVER_SET_KEY', 'ALSO_NEVER_SET'], {
-                    converter: (raw) => (raw ?? '').toUpperCase(),
-                    required: true
-                });
-                expect.fail('should have thrown');
-            } catch (err) {
-                expect(err).to.be.instanceOf(EnvaptError);
-                const e = err as EnvaptError;
-                expect(e.code).to.equal(EnvaptErrorCodes.MissingEnvValue);
-                expect(e.message).to.include('[NEVER_SET_KEY, ALSO_NEVER_SET]');
-            }
-        });
-    });
-
     describe('Envapter.require()', () => {
         it('does not throw when a single key is set', () => {
             expect(() => Envapter.require('API_KEY')).to.not.throw();
@@ -313,30 +251,6 @@ describe('Strict mode + required (v5)', () => {
     });
 
     describe('compile-time type checks (expect-type)', () => {
-        it('getUsing options-bag with required: true narrows away undefined for built-in converters', () => {
-            const port = Envapter.getUsing('SET_NUMBER', { converter: Converters.Number, required: true });
-            expectTypeOf(port).toEqualTypeOf<number>();
-
-            const url = Envapter.getUsing('DATABASE_URL', { converter: Converters.Url, required: true });
-            expectTypeOf(url).toEqualTypeOf<URL>();
-        });
-
-        it('getUsing options-bag with required: true narrows array converters too', () => {
-            const ports = Envapter.getUsing('PORTS_CLEAN', {
-                converter: Converters.array({ of: Converters.Number }),
-                required: true
-            });
-            expectTypeOf(ports).toEqualTypeOf<number[]>();
-        });
-
-        it('getWith options-bag with required: true returns the converter function return type', () => {
-            const upper = Envapter.getWith('SET_VALUE', {
-                converter: (raw) => (raw ?? '').toUpperCase(),
-                required: true
-            });
-            expectTypeOf(upper).toEqualTypeOf<string>();
-        });
-
         it('Envapter.require returns void for any number of keys', () => {
             const single = Envapter.require('API_KEY');
             const bulk = Envapter.require('API_KEY', 'DATABASE_URL');
@@ -366,18 +280,11 @@ describe('Strict mode + required (v5)', () => {
                 .to.throw(EnvaptError)
                 .with.property('code', EnvaptErrorCodes.InvalidUserDefinedConfig);
         });
-
-        it('functional getUsing: required + fallback combo is a TS error (excess property)', () => {
-            // No runtime mutex check on the functional path, so only the compile-time
-            // directive is asserted here.
-            // @ts-expect-error fallback not allowed when required: true
-            Envapter.getUsing('SET_NUMBER', { converter: Converters.Number, required: true, fallback: 3000 });
-        });
     });
 
     describe('Strict mode does NOT make missing keys throw on get*', () => {
-        // Locked behavior: strict tightens "empty value" semantics; it doesn't auto-require
-        // every absent key. That stays an explicit opt-in via `required:` or `Envapter.require()`.
+        // locked behavior. strict tightens "empty value" semantics. it doesn't auto-require absent keys,
+        // that stays an opt-in via `required:` or `Envapter.require()`.
         it('returns undefined for missing keys under strict (no fallback)', () => {
             Envapter.strict = true;
             expect(Envapter.get('NEVER_SET_KEY')).to.equal(undefined);

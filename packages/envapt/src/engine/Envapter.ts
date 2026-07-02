@@ -1,4 +1,5 @@
 import { AdvancedMethods } from '../core';
+import { resolveRequired } from '../core/AdvancedMethods';
 import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
 
 export { EnvaptCache, Environment } from '../core';
@@ -69,7 +70,7 @@ export class Envapter extends AdvancedMethods {
      * Assert that one or more environment variables are present and non-empty (post-trim,
      * after template resolution). Throws `MissingEnvValue` listing every missing key.
      *
-     * For typed fail-fast in functional code, use `Envapter.getUsing(key, { converter, required: true })`.
+     * For a typed required read in functional code, use `Envapter.getRequired(key, converter)`.
      *
      * @example
      * ```ts
@@ -78,10 +79,9 @@ export class Envapter extends AdvancedMethods {
      * ```
      */
     static require(...keys: [string, ...string[]]): void {
-        const missing: string[] = [];
-        for (const k of keys) {
-            if (Envapter.resolveAndValidate(k) === undefined) missing.push(k);
-        }
+        const missing = keys.filter(
+            (k) => resolveRequired(Envapter.resolveKeyInput(k), Envapter.templateResolver).value === undefined
+        );
 
         if (missing.length > 0) {
             throw new EnvaptError(
@@ -89,14 +89,6 @@ export class Envapter extends AdvancedMethods {
                 `Missing required environment variables: ${missing.join(', ')}.`
             );
         }
-    }
-
-    private static resolveAndValidate(key: string): string | undefined {
-        const { value } = this.resolveKeyInput(key);
-        if (value === undefined) return undefined;
-        const resolved = this.templateResolver.resolveTemplate(key, value);
-        if (resolved.trim() === '') return undefined;
-        return resolved;
     }
 
     /**

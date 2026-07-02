@@ -35,14 +35,16 @@ interface Ctx {
 }
 
 function readCtx(): Ctx {
-    const repository = Envapter.getUsing('GITHUB_REPOSITORY', { converter: Converters.String, required: true });
-    const pr = Envapter.getUsing('PR_NUMBER', { converter: Converters.Number, required: true });
-    const sha = Envapter.getUsing('HEAD_SHA', { converter: Converters.String, required: true });
-    const token = Envapter.getUsing('GITHUB_TOKEN', { converter: Converters.String, required: true });
+    const env = Envapter.getRequiredAll({
+        GITHUB_REPOSITORY: Converters.String,
+        PR_NUMBER: Converters.Number,
+        HEAD_SHA: Converters.String,
+        GITHUB_TOKEN: Converters.String
+    });
 
-    const [owner, repo] = repository.split('/');
+    const [owner, repo] = env.GITHUB_REPOSITORY.split('/');
     if (!owner || !repo) throw new Error('[semver-label] GITHUB_REPOSITORY must be "owner/repo"');
-    return { owner, repo, pr, sha, token };
+    return { owner, repo, pr: env.PR_NUMBER, sha: env.HEAD_SHA, token: env.GITHUB_TOKEN };
 }
 
 function api(token: string, method: string, path: string, body?: unknown): Promise<Response> {

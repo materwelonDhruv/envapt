@@ -28,6 +28,7 @@
         "tailwind-merge": "^3.6.0"
     },
     "devDependencies": {
+        "@cloudflare/workers-types": "^4.20260623.1",
         "@seedcord/eslint-config": "catalog:dev",
         "@tailwindcss/postcss": "4.3.1",
         "@types/mdx": "^2.0.14",

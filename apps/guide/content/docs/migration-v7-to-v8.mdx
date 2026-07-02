@@ -3,7 +3,7 @@ title: Migration (v7 to v8)
 description: Moving from envapt v7 to v8. The source classes get shorter names, one universal envapt import replaces the workerd and browser subpaths, and the portable file APIs warn instead of throwing by default.
 ---
 
-v8 is a major release with four breaking changes. The source classes are renamed, the `envapt/workerd` and `envapt/browser` subpaths are removed, the portable build's filesystem-only config APIs warn once and no-op by default instead of throwing, and the public type surface is trimmed. Everything else (the `Envapter` readers, converters, decorators, and `envapt/legacy`) is unchanged.
+v8 is a major release with **five** breaking changes. The source classes are renamed, the `envapt/workerd` and `envapt/browser` subpaths are removed, the portable build's filesystem-only config APIs warn once and no-op by default instead of throwing, the public type surface is trimmed, and the functional required-read bag moves to `getRequired`. Everything else (the positional `Envapter` readers, converters, decorators, and `envapt/legacy`) is unchanged.
 
 ## Source and type renames
 
@@ -64,6 +64,28 @@ The safety net is unchanged. An unconfigured read still throws `NoSourceBound` o
 ## The portable types now include the file APIs
 
 Before v8 the portable build's types omitted the five file APIs, so calling one was a compile error. v8 drops that fence. The portable types include them, so a config module shared between your Node dev setup and a Workers deploy type-checks the same in both places. At runtime you get the warn-once and no-op above, or a throw under `fileApiMode = 'throw'`.
+
+## Required reads move to `getRequired`
+
+The `{ required: true }` options-bag form of `getUsing` and `getWith` is removed. A required read is now `getRequired(key, converter)`, which takes the converter positionally, returns the non-undefined value, and throws `MissingEnvValue` when the key is missing or empty. New in v8, `getRequiredAll(spec)` reads a group of required values in one call and returns a typed record, throwing once with every missing key.
+
+```ts
+// v7
+const url = Envapter.getUsing('DATABASE_URL', { converter: Converters.Url, required: true });
+const upper = Envapter.getWith('NAME', { converter: (raw) => (raw ?? '').toUpperCase(), required: true });
+
+// v8
+const url = Envapter.getRequired('DATABASE_URL', Converters.Url);
+const upper = Envapter.getRequired('NAME', (raw) => raw.toUpperCase());
+
+// v8, several at once
+const { DATABASE_URL: db, PORT: port } = Envapter.getRequiredAll({
+    DATABASE_URL: Converters.Url,
+    PORT: Converters.Number
+});
+```
+
+`getUsing` and `getWith` keep their positional fallback forms unchanged. The `@Envapt` decorator's `{ required: true }` option stays, only the functional readers dropped the bag.
 
 ## Trimmed public type exports
 
