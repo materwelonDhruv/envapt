@@ -91,6 +91,8 @@ Rule of thumb: **if an adjective can't be replaced by a measurable fact or a cod
 
 The em-dash `—` and en-dash `–` are banned in prose outright, replace them with a hyphen, a comma, parentheses, or two sentences. The colon `:` and semicolon `;` are banned only as a **clause splice**, where the mark joins two independent clauses into one sentence (the AI-prose tell, two thoughts packed behind a mark instead of ended with a period). A colon that introduces a list, a code block, an enumeration, or a short label (a `two forms:` lead-in, an `npm: envapt` label) is standard and clearer than a period there, so keep it and do not flatten it. A semicolon in running prose is almost always a splice, so avoid it, its one legitimate use is separating list items that already contain commas. This is a prose rule only. Code syntax that requires a colon or semicolon (type annotations, object keys, statement terminators) is exempt.
 
+**Replace a banned mark with punctuation that does the same grammatical job.** A `;`, `—`, or `–` between two complete clauses is holding two independent thoughts apart. A comma cannot join two independent clauses, so swapping one in makes a comma splice. Use a period and two sentences, or reword the sentence. Read the result back on its own.
+
 ```ts
 // Bad: colon splice + semicolon splice
 // turn the value into its slot: out of range would corrupt neighbours; check first.

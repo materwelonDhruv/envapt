@@ -49,6 +49,7 @@
         "@seedcord/tsconfig": "^2.0.0",
         "@types/node": "catalog:dev",
         "@vitest/coverage-v8": "4.1.9",
+        "envapt": "workspace:*",
         "eslint": "catalog:dev",
         "husky": "^9.1.7",
         "knip": "^6.18.0",

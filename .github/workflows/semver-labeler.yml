@@ -1,0 +1,35 @@
+name: semver-labeler
+
+on:
+    pull_request_target:
+        types:
+            - opened
+            - synchronize
+            - reopened
+
+permissions:
+    contents: read
+    pull-requests: write
+
+jobs:
+    label-by-changeset:
+        name: Label by changeset bump
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v7
+
+            - name: Setup workspace
+              uses: ./.github/actions/setup
+
+            - name: Build envapt
+              run: pnpm --filter envapt build
+
+            - name: Apply semver label
+              run: pnpm exec tsx scripts/semver-label.ts
+              env:
+                  GITHUB_TOKEN: ${{ github.token }}
+                  PR_NUMBER: ${{ github.event.pull_request.number }}
+                  HEAD_SHA: ${{ github.event.pull_request.head.sha }}
