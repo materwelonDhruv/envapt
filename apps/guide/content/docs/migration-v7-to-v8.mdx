@@ -3,7 +3,7 @@ title: Migration (v7 to v8)
 description: Moving from envapt v7 to v8. The source classes get shorter names, one universal envapt import replaces the workerd and browser subpaths, and the portable file APIs warn instead of throwing by default.
 ---
 
-v8 is a major release with **five** breaking changes. The source classes are renamed, the `envapt/workerd` and `envapt/browser` subpaths are removed, the portable build's filesystem-only config APIs warn once and no-op by default instead of throwing, the public type surface is trimmed, and the functional required-read bag moves to `getRequired`. Everything else (the positional `Envapter` readers, converters, decorators, and `envapt/legacy`) is unchanged.
+v8 is a major release with **six** breaking changes. The source classes are renamed, the `envapt/workerd` and `envapt/browser` subpaths are removed, the portable build's filesystem-only config APIs warn once and no-op by default instead of throwing, the public type surface is trimmed, the functional required-read bag moves to `getRequired`, and the `Integer` and `Float` converters reject malformed values. Everything else (the positional `Envapter` readers, decorators, and `envapt/legacy`) is unchanged.
 
 ## Source and type renames
 
@@ -95,3 +95,20 @@ You only need a change here if you imported one of these by name.
 
 - A custom source typed against `BareEnvSource` / `FileEnvSource` uses the `Source` union instead.
 - A schema output type from `InferSchemaOutput<typeof schema>` uses your validator's own inference (`z.infer`, valibot's `InferOutput`, arktype's `.infer`) or `StandardSchemaV1.InferOutput`.
+
+## Stricter `Integer` and `Float` converters
+
+`Converters.Integer` and `Converters.Float` used to parse with `parseInt` and `parseFloat`, which read a leading number and ignored the rest. `42abc` became `42`, `3.9` became `3` under `Integer`, and a value past 2^53 lost precision. v8 parses both with `Number` and validates the result, so a value that is not a clean number falls back to the default, or throws under `getRequired`.
+
+`Integer` requires `Number.isSafeInteger`, so `42abc`, `3.9`, and magnitudes past 2^53 all fall back. `Float` rejects trailing characters like `3.14xyz`. `Float` still accepts `Infinity`, matching the `number` converter and `getNumber`.
+
+```ts
+import { Converters, Envapter } from 'envapt';
+
+// with PORT="8080abc"
+Envapter.getRequired('PORT', Converters.Integer);
+// v7: 8080 (parseInt read the leading number)
+// v8: throws MissingEnvValue (Number rejects it)
+```
+
+You only need a change here if an env value was relying on the loose parse. A value that is already a clean integer or float reads the same.

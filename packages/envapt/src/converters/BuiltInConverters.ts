@@ -100,12 +100,18 @@ export class BuiltInConverters {
     }
 
     static integer(raw: string, fallback?: number): number | undefined {
-        const parsed = Number.parseInt(raw, 10);
-        return Number.isNaN(parsed) ? fallback : parsed;
+        const trimmed = raw.trim();
+        if (trimmed === '') return fallback;
+        const parsed = Number(trimmed);
+        // isSafeInteger also guards the 2^53 boundary, past which an integer value silently loses precision.
+        return Number.isSafeInteger(parsed) ? parsed : fallback;
     }
 
     static float(raw: string, fallback?: number): number | undefined {
-        const parsed = Number.parseFloat(raw);
+        const trimmed = raw.trim();
+        if (trimmed === '') return fallback;
+        const parsed = Number(trimmed);
+        // isNaN keeps Infinity valid, matching the number converter.
         return Number.isNaN(parsed) ? fallback : parsed;
     }
 
