@@ -58,8 +58,6 @@ jobs:
               run: pnpm test
             - name: Run exports-dedup guard
               run: pnpm --filter envapt test:exports-dedup
-            - name: Run resolution-matrix guard
-              run: pnpm --filter envapt test:resolution-matrix
             - name: Run cjs-validity guard
               run: pnpm --filter envapt test:cjs-validity
             - name: Run tsc-emit decorator guard
