@@ -79,7 +79,9 @@ async function prChangedFiles(ctx: Ctx): Promise<{ filename: string; status: str
             'GET',
             `/repos/${ctx.owner}/${ctx.repo}/pulls/${ctx.pr}/files?per_page=100&page=${page}`
         );
-        if (!res.ok) break;
+        // a failed listing must stop the job, an empty list here would silently apply no label.
+        if (!res.ok)
+            throw new Error(`[semver-label] listing PR #${ctx.pr} files failed: ${res.status} ${res.statusText}`);
         // justified: GitHub "list pull request files" returns an array of file entries
         const pageFiles = (await res.json()) as { filename: string; status: string }[];
         files.push(...pageFiles);
@@ -92,7 +94,8 @@ async function changesetBodies(ctx: Ctx): Promise<string[]> {
     const bodies: string[] = [];
     for (const path of changesetPathsFromFiles(await prChangedFiles(ctx))) {
         const file = await api(ctx.token, 'GET', `/repos/${ctx.owner}/${ctx.repo}/contents/${path}?ref=${ctx.sha}`);
-        if (!file.ok) continue;
+        // same reason as the listing, a skipped changeset would drop its bump and mislabel the PR.
+        if (!file.ok) throw new Error(`[semver-label] reading ${path} failed: ${file.status} ${file.statusText}`);
         // justified: GitHub "get file contents" returns base64 content
         const { content } = (await file.json()) as { content: string };
         bodies.push(Buffer.from(content, 'base64').toString('utf8'));
