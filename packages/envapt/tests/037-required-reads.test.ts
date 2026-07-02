@@ -26,7 +26,7 @@ describe('Required reads (v8)', () => {
 
         it('returns a non-undefined typed array for an array token', () => {
             const parts = Envapter.getRequired(
-                'GITHUB_REPOSITORY',
+                'SAMPLE_REPO',
                 Converters.array({ delimiter: '/', of: Converters.String })
             );
             expect(parts).to.deep.equal(['owner', 'repo']);
@@ -87,12 +87,12 @@ describe('Required reads (v8)', () => {
             const cfg = Envapter.getRequiredAll({
                 SET_NUMBER: Converters.Number,
                 SET_VALUE: Converters.String,
-                GITHUB_REPOSITORY: Converters.array({ delimiter: '/', of: Converters.String })
+                SAMPLE_REPO: Converters.array({ delimiter: '/' })
             });
             expect(cfg.SET_NUMBER).to.equal(42);
             expect(cfg.SET_VALUE).to.equal('hello');
-            expect(cfg.GITHUB_REPOSITORY).to.deep.equal(['owner', 'repo']);
-            expectTypeOf(cfg).toEqualTypeOf<{ SET_NUMBER: number; SET_VALUE: string; GITHUB_REPOSITORY: string[] }>();
+            expect(cfg.SAMPLE_REPO).to.deep.equal(['owner', 'repo']);
+            expectTypeOf(cfg).toEqualTypeOf<{ SET_NUMBER: number; SET_VALUE: string; SAMPLE_REPO: string[] }>();
         });
 
         it('supports a custom function converter in the spec, inferring its return type', () => {
@@ -108,12 +108,12 @@ describe('Required reads (v8)', () => {
 
         it('recases the record keys when a casing is given, leaving them as-is otherwise', () => {
             const camel = Envapter.getRequiredAll(
-                { GITHUB_REPOSITORY: Converters.String, SET_NUMBER: Converters.Number },
+                { SAMPLE_REPO: Converters.String, SET_NUMBER: Converters.Number },
                 'camelCase'
             );
-            expect(camel.githubRepository).to.equal('owner/repo');
+            expect(camel.sampleRepo).to.equal('owner/repo');
             expect(camel.setNumber).to.equal(42);
-            expectTypeOf(camel).toEqualTypeOf<{ githubRepository: string; setNumber: number }>();
+            expectTypeOf(camel).toEqualTypeOf<{ sampleRepo: string; setNumber: number }>();
 
             const pascal = Envapter.getRequiredAll({ SET_NUMBER: Converters.Number }, 'PascalCase');
             expect(pascal.SetNumber).to.equal(42);
@@ -143,6 +143,20 @@ describe('Required reads (v8)', () => {
                 expect(e.message).to.include('EMPTY_VALUE');
                 expect(e.message).to.not.include('SET_NUMBER');
             }
+        });
+    });
+
+    describe('instance methods delegate to the static ones', () => {
+        it('getRequired reads through an instance', () => {
+            const env = new Envapter();
+            expect(env.getRequired('SET_NUMBER', Converters.Number)).to.equal(42);
+        });
+
+        it('getRequiredAll reads through an instance', () => {
+            const env = new Envapter();
+            const cfg = env.getRequiredAll({ SET_NUMBER: Converters.Number, SET_VALUE: Converters.String });
+            expect(cfg.SET_NUMBER).to.equal(42);
+            expect(cfg.SET_VALUE).to.equal('hello');
         });
     });
 
