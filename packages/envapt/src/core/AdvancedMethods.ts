@@ -151,7 +151,18 @@ export class AdvancedMethods extends PrimitiveMethods {
         key: EnvKeyInput,
         converter: TConverter | ConverterFunction<TReturnType, string>
     ): InferConverterReturnType<TConverter> | TReturnType {
-        const { key: resolvedKey, value } = resolveRequired(this.resolveKeyInput(key), this.templateResolver);
+        // a required read treats empty as missing, so an empty value falls through to the next candidate.
+        const candidates: readonly string[] = typeof key === 'string' ? [key] : key;
+        let resolvedKey = '';
+        let value: string | undefined;
+        for (const candidate of candidates) {
+            const resolved = resolveRequired(this.resolveKeyInput(candidate), this.templateResolver);
+            resolvedKey = resolved.key;
+            if (resolved.value !== undefined) {
+                value = resolved.value;
+                break;
+            }
+        }
         if (value === undefined) {
             throw new EnvaptError(
                 EnvaptErrorCodes.MissingEnvValue,
@@ -159,12 +170,20 @@ export class AdvancedMethods extends PrimitiveMethods {
             );
         }
         // cast widens the raw-string parser back to convertValue's ConverterFunction<T> (value proven present above).
-        return this.valueConverter.convertValue<TReturnType>(
+        const result = this.valueConverter.convertValue<TReturnType>(
             resolvedKey,
             undefined,
             converter as EnvaptConverter<TReturnType>,
             false
-        ) as InferConverterReturnType<TConverter> | TReturnType;
+        );
+        // convertValue returns null for a present value it can't convert, which would break the non-undefined return.
+        if (result === undefined || result === null) {
+            throw new EnvaptError(
+                EnvaptErrorCodes.MissingEnvValue,
+                `Required environment variable "${formatKeyForError(key)}" is present but could not be converted.`
+            );
+        }
+        return result;
     }
 
     /**
@@ -208,12 +227,19 @@ export class AdvancedMethods extends PrimitiveMethods {
         const result: Record<string, unknown> = {};
         for (const key of keys) {
             // same widening cast as getRequired, every value was proven present above.
-            result[recase(key, casing)] = this.valueConverter.convertValue<unknown>(
+            const converted = this.valueConverter.convertValue<unknown>(
                 key,
                 undefined,
                 spec[key] as EnvaptConverter<unknown>,
                 false
             );
+            if (converted === undefined || converted === null) {
+                throw new EnvaptError(
+                    EnvaptErrorCodes.MissingEnvValue,
+                    `Required environment variable "${key}" is present but could not be converted.`
+                );
+            }
+            result[recase(key, casing)] = converted;
         }
         return result as { [K in keyof Spec as RecaseKey<K & string, Casing>]: InferSpecField<Spec[K]> };
     }

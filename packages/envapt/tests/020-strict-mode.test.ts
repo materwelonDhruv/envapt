@@ -127,7 +127,7 @@ describe('Strict mode + required (v5)', () => {
             static readonly url: URL;
         }
 
-        // exercises the `Array.isArray(key)` arm of `formatKeyForError`. both keys must be absent so the throw path runs.
+        // both keys must be absent so the required throw runs, exercising the `Array.isArray(key)` arm of `formatKeyForError`.
         class RequiredArrayKeyAllMissing {
             @Envapt(['NEVER_SET_KEY', 'ALSO_NEVER_SET'], { required: true })
             static readonly key: string;
@@ -283,8 +283,8 @@ describe('Strict mode + required (v5)', () => {
     });
 
     describe('Strict mode does NOT make missing keys throw on get*', () => {
-        // locked behavior. strict tightens "empty value" semantics. it doesn't auto-require absent keys,
-        // that stays an opt-in via `required:` or `Envapter.require()`.
+        // locked behavior. strict tightens "empty value" semantics but doesn't auto-require absent keys.
+        // requiring stays opt-in via `@Envapt`'s `required:`, `getRequired`/`getRequiredAll`, or `Envapter.require()`.
         it('returns undefined for missing keys under strict (no fallback)', () => {
             Envapter.strict = true;
             expect(Envapter.get('NEVER_SET_KEY')).to.equal(undefined);

@@ -80,6 +80,18 @@ describe('Required reads (v8)', () => {
             expect(timeout).to.equal(10000);
             expectTypeOf(timeout).toEqualTypeOf<number>();
         });
+
+        it('falls through an empty ordered key to the first non-empty one', () => {
+            const value = Envapter.getRequired(['EMPTY_VALUE', 'SET_VALUE'], Converters.String);
+            expect(value).to.equal('hello');
+            expectTypeOf(value).toEqualTypeOf<string>();
+        });
+
+        it('throws MissingEnvValue when a present value cannot be converted', () => {
+            expect(() => Envapter.getRequired('SET_VALUE', Converters.Number))
+                .to.throw(EnvaptError)
+                .with.property('code', EnvaptErrorCodes.MissingEnvValue);
+        });
     });
 
     describe('getRequiredAll', () => {
@@ -143,6 +155,12 @@ describe('Required reads (v8)', () => {
                 expect(e.message).to.include('EMPTY_VALUE');
                 expect(e.message).to.not.include('SET_NUMBER');
             }
+        });
+
+        it('throws MissingEnvValue when a present value in the spec cannot be converted', () => {
+            expect(() => Envapter.getRequiredAll({ SET_VALUE: Converters.Number }))
+                .to.throw(EnvaptError)
+                .with.property('code', EnvaptErrorCodes.MissingEnvValue);
         });
     });
 
