@@ -17,16 +17,16 @@ function warnOnce(api: string): void {
     if (warned.has(api)) return;
     warned.add(api);
     writeRuntimeLine(
-        `[envapt] Envapter.${api} has no effect in the portable build. ` +
-            `Bind a source with Envapter.useSource(...), or set Envapter.fileApiMode = 'throw' to throw instead.`
+        `[envapt] Envapter.${api} is a filesystem-only API and has no effect in the portable build. ` +
+            `Set Envapter.fileApiMode = 'throw' to throw instead.`
     );
 }
 
-export function portableFileApiRead<Value>(api: string): Value {
+export function portableFileApiRead<Value>(api: string, fallback: Value): Value {
     if (EnvapterBase.fileApiMode === 'throw') fileApiUnsupported(api);
     warnOnce(api);
-    // justified: warn mode no-ops, so the read returns undefined
-    return undefined as Value;
+    // warn mode no-ops, so the read returns the getter's empty default rather than undefined
+    return fallback;
 }
 
 export function portableFileApiWrite(api: string): void {

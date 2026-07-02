@@ -42,7 +42,7 @@ import { Envapter, ManualEnvSource } from 'envapt/browser';
 import { Envapter, PortableSource } from 'envapt';
 ```
 
-The edge runtimes that used to fall through to the node build (Vercel Edge, Fastly) now resolve the portable build through the `edge-light`, `fastly`, and `worker` conditions. `envapt/config` and `envapt/legacy` are unchanged.
+The edge runtimes that used to fall through to the node build now resolve the portable build through the `edge-light`, `fastly`, and `worker` conditions. Vercel Edge and Workers apply these automatically. On Fastly Compute, add the `fastly` condition to your bundler's resolve conditions. `envapt/config` and `envapt/legacy` are unchanged.
 
 ## File-only APIs warn instead of throwing
 

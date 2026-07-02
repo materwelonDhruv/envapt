@@ -9,9 +9,9 @@ describe('portable file-API behavior', () => {
 
     it('no-ops every file API under the default warn mode', () => {
         Envapter.baseDir = '/x';
-        expect(Envapter.envPaths).toBeUndefined();
+        expect(Envapter.envPaths).toEqual([]);
         expect(Envapter.baseDir).toBeUndefined();
-        expect(Envapter.envFileOptions).toBeUndefined();
+        expect(Envapter.envFileOptions).toEqual({});
         expect(() => Envapter.configureProfiles({ useDefaults: false })).not.toThrow();
         expect(() => Envapter.resetProfiles()).not.toThrow();
     });

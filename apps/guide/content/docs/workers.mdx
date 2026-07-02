@@ -12,9 +12,11 @@ Import from `envapt`. The package export conditions resolve a node-free portable
 The filesystem-only config APIs have nothing to do on Workers, so they warn and no-op by default. Readers work as normal. See [Compatibility](/docs/compatibility) for `fileApiMode` and [Errors](/docs/errors) for the codes.
 
 ```ts twoslash
-import { Envapter } from 'envapt';
-
-Envapter.getNumber('PORT', 3000); // readers work
+import { Envapter, PortableSource } from 'envapt';
+// ---cut---
+declare const env: Record<string, string>; // the Cloudflare env binding
+Envapter.useSource(new PortableSource(env));
+Envapter.getNumber('PORT', 3000); // readers work once a source is bound
 Envapter.envPaths = ['.env']; // warns once and no-ops on Workers
 ```
 
