@@ -4,11 +4,10 @@ import { BrandLockup } from '@/components/BrandLockup';
 
 import type { ReactNode } from 'react';
 
-const RESOURCES = [
-    { label: 'GitHub', href: 'https://github.com/materwelonDhruv/envapt' },
+const RELEASES = [
     { label: 'npm', href: 'https://www.npmjs.com/package/envapt' },
     { label: 'JSR', href: 'https://jsr.io/@materwelon/envapt' },
-    { label: 'Blog', href: '/blog' }
+    { label: 'GitHub', href: 'https://github.com/materwelonDhruv/envapt' }
 ];
 
 const DOCS = [
@@ -21,7 +20,8 @@ const DOCS = [
 const MIGRATIONS = [
     { label: 'Migration v4 to v5', href: '/docs/migration-v4-to-v5' },
     { label: 'Migration v5 to v6', href: '/docs/migration-v5-to-v6' },
-    { label: 'Migration v6 to v7', href: '/docs/migration-v6-to-v7' }
+    { label: 'Migration v6 to v7', href: '/docs/migration-v6-to-v7' },
+    { label: 'Migration v7 to v8', href: '/docs/migration-v7-to-v8' }
 ];
 
 export function SiteFooter(): ReactNode {
@@ -33,14 +33,14 @@ export function SiteFooter(): ReactNode {
                         <BrandLockup glyphSize={24} wordmarkHeight={16} gap={10} />
                     </Link>
                     <p className="mt-3 text-sm/relaxed text-fd-muted-foreground">
-                        The apt way to handle environment variables. Read them as typed values, with zero runtime
-                        dependencies.
+                        The apt way to read typed config. Read config from any source as real typed values, with zero
+                        runtime dependencies.
                     </p>
                 </div>
                 <div className="grid grid-cols-2 gap-x-10 gap-y-8 sm:grid-cols-3">
                     <nav className="flex flex-col gap-2.5 font-mono text-[13px]">
-                        <p className="mb-1 text-xs tracking-wide text-fd-muted-foreground/70 uppercase">Resources</p>
-                        {RESOURCES.map((link) => (
+                        <p className="mb-1 text-xs tracking-wide text-fd-muted-foreground/70 uppercase">Releases</p>
+                        {RELEASES.map((link) => (
                             <a
                                 key={link.label}
                                 href={link.href}

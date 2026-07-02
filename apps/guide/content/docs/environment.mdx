@@ -11,7 +11,7 @@ The environment is resolved from the first of these keys that is set, falling ba
 
 `ENVIRONMENT` → `ENV` → `NODE_ENV` → `MODE` → `development`
 
-`MODE` is last because Vite-family browser builds expose `import.meta.env.MODE` but none of the others, so binding `new ManualEnvSource(import.meta.env)` lets the same helpers work there. See [Browser](/docs/browser).
+`MODE` is last because Vite-family browser builds expose `import.meta.env.MODE` but none of the others, so binding `new PortableSource(import.meta.env)` lets the same helpers work there. See [Browser](/docs/browser).
 
 Read it as an enum, or through boolean helpers for the common checks.
 
@@ -89,7 +89,7 @@ So in production it reads `.env.production.local` → `.env.production` → `.en
 
 ## Custom profiles
 
-When your per-environment files live elsewhere, `configureProfiles` layers explicit paths on top of the cascade for the environments you name. Earlier paths in the array win. `configureProfiles` and `resetProfiles` read the filesystem, so they are not available off Node; see [Sources](/docs/sources).
+When your per-environment files live elsewhere, `configureProfiles` layers explicit paths on top of the cascade for the environments you name. Earlier paths in the array win. On the portable build these no-op by default, see [Compatibility](/docs/compatibility).
 
 ```ts twoslash
 import { Envapter, Environment } from 'envapt';

@@ -1,0 +1,80 @@
+---
+title: What changed in envapt v6, v7, and v8
+description: Three majors of envapt, and the dogfooding behind each one, from removing a decorator footgun to one universal import that reads config the same on Node and the edge.
+author: Dhruv
+date: '2026-06-30'
+updated: '2026-06-30'
+---
+
+Every change in envapt's last three majors started the same way. I hit something annoying while using envapt in my own projects, and I fixed it.
+
+The biggest one is v8, and it came from [seedcord](https://github.com/seedcord/seedcord), a bot framework I maintain. seedcord lets you build Discord bots that run on gateway, server, and edge. You develop locally on Node with full HMR, then deploy straight to Cloudflare Workers. So its config gets read off a filesystem in dev and off a Workers binding in production. That split used to need more wiring than it should have. v8 makes it one import. Here is how v6 and v7 got there, and why v8 looks the way it does.
+
+## v6 dropped the positional decorator arguments
+
+The old decorator took its fallback and converter by position.
+
+```ts
+// v5... which one comes first again?
+// And why are only primitives supported in this positional API?
+@Envapt('PORT', 3000, Converters.Number)
+static readonly port: number;
+```
+
+I wrote that line across a few services and got the order wrong often enough to stop trusting it. There is no good reason a reader should have to remember whether the fallback or the converter comes second. So v6 removed the positional form and kept the one that names its arguments. And, to keep things simple, envapt shipped [sugar-decorators](/docs/decorators) for the most common converters which only have 2 arguments.
+
+```ts
+// now
+@EnvNum('PORT', 3000)
+static accessor port: number;
+```
+
+For converters without a sugar shortcut, the named form `@Envapt('PORT', { converter: Converters.Number, fallback: 3000 })` is what the positional one became, and the bare `@Envapt('KEY')` form never changed. v6 also wrote down a behavior that had shipped by accident in a 5.x minor, that `NODE_ENV=test` resolves to `Environment.Test` and does not fall through to development. It was already the behavior, so v6 documented it as intended and moved on.
+
+## v7 made the decorators run on Bun
+
+envapt's decorators were the legacy TypeScript kind, the ones that need `experimentalDecorators`. They did not work on Bun at all. Bun ignores that tsconfig flag and emits the TC39 Stage 3 form instead, so the call shapes never matched and the decorator just broke when you ran your `.ts` directly.
+
+v7 made the modern Stage 3 accessor decorators the default. They need no flag, no build step, and they run the same on Node, Bun, and Deno.
+
+```ts
+class Config {
+    @EnvNum('PORT', 3000) static accessor port: number;
+}
+```
+
+The legacy form is still there for anyone who wants it, moved to `envapt/legacy`, where it keeps the `static readonly` shape and still asks for `experimentalDecorators: true`.
+
+But at the same time, Stage 3 decorators are new enough that some bundlers still do not handle them cleanly. That would be a real problem if decorators were the only way to use envapt. They are not. Decorators are just sugar. The functional API is the floor, and it works everywhere.
+
+```ts
+const port = Envapter.getNumber('PORT', 3000);
+```
+
+So if your toolchain is not ready for Stage 3 decorators yet, you skip them and lose nothing but the syntax sugar.
+
+Two smaller v7 changes came out of the same dogfooding. The legacy decorators now typecheck the field against what the converter returns, so a field typed `number` with no fallback no longer hides the `null` it can actually hold. And the portable builds became side-effect-free, so importing one thing like `EnvaptError` from envapt ships about 1.3 kB instead of pulling in the whole reader.
+
+## v8 is one import for Node and the edge
+
+Back to seedcord. Before v8, reading config across the dev-and-deploy split meant three papercuts at once.
+
+You imported from a different path per runtime, `envapt/workerd` on Workers and `envapt` for local dev. Edge runtimes like Workers fell through to the Node build and broke the moment it touched `node:fs`. And the file-only config APIs like `envPaths` and `configureProfiles` threw off Node, so a config module that used them could not be written once and run in both places. You ended up branching your own config on the runtime vs in the build, which is exactly the wiring envapt is supposed to remove.
+
+v8 collapses all of that into the bare import.
+
+```ts
+import { Envapter } from 'envapt';
+```
+
+The package export conditions resolve the right build per runtime. Workers, the browser, edge, and react-native get the portable build. Node, Bun, and Deno get the Node build. The edge runtimes that used to fall through now resolve the portable build on purpose. And seedcord wires in the Workers env binding as the source in the build step without the user needing to do anything. So envapt turned out to help build a framework itself, well beyond reading config in an app.
+
+The file-only APIs changed too. Off Node they now warn once and do nothing by default, instead of throwing. So a config module that layers `.env` files in local dev and reads a Workers binding in production compiles and runs in both places, with no per-runtime branch in your code. In seedcord that turned the whole cross-runtime config story into the bare import plus one `useSource` in the Worker entry, and nothing else.
+
+Warning by default still catches the real mistake. An unconfigured read throws `NoSourceBound` on the first access, so a Worker that forgot to bind a source stops there. It never serves wrong config quietly. If you want the old strict behavior back, `Envapter.fileApiMode = 'throw'` restores it. The default stops treating the correct setup as an error, where a Worker binds its source and the filesystem APIs have nothing to do.
+
+## That is the throughline
+
+Three releases, each one a thing that annoyed me while using envapt in my own projects. v6 took out a footgun, v7 made the decorators run everywhere they should and kept the functional API as the floor, and v8 made one import read config the same on a laptop and on the edge.
+
+envapt is on [npm](https://www.npmjs.com/package/envapt) and [JSR](https://jsr.io/@materwelon/envapt), and the source is on [GitHub](https://github.com/materwelonDhruv/envapt). If you upgrade and something breaks, please tell me in the repo. That's pretty much how most of this list got written.

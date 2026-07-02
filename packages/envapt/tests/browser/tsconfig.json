@@ -6,6 +6,6 @@
         "lib": ["ESNext", "DOM"],
         "types": ["vite/client"]
     },
-    "include": ["**/*.ts", "../../dist/browser/index.d.mts"],
+    "include": ["**/*.ts", "../../dist/portable/index.d.mts"],
     "exclude": []
 }

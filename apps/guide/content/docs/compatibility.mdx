@@ -1,9 +1,9 @@
 ---
 title: Compatibility
-description: Runtime support, engine versions, module formats, per-runtime builds, and how decorators behave across runtimes.
+description: Runtime support, engine versions, module formats, the portable and node builds, and how decorators behave across runtimes.
 ---
 
-envapt runs on Node, Bun, and Deno with the same API and zero runtime dependencies. It also runs on Cloudflare Workers (workerd) and in the browser, where you bind the source yourself (`WorkerEnvSource` or `ManualEnvSource`) and read with the same typed API. The functional reader API works on every runtime with no build step. The default `@Envapt` accessor decorators need no flag either, the legacy `envapt/legacy` decorators have per-runtime requirements covered below.
+envapt runs on Node, Bun, and Deno with the same API and zero runtime dependencies. It also runs on Cloudflare Workers (workerd) and in the browser, where you bind the source yourself (a `PortableSource`) and read with the same typed API. The functional reader API works on every runtime with no build step. The default `@Envapt` accessor decorators need no flag either, the legacy `envapt/legacy` decorators have per-runtime requirements covered below.
 
 ## Engine versions
 
@@ -29,17 +29,18 @@ The Deno tab installs from JSR; you can also use the npm specifier with `deno ad
 
 envapt ships both ESM and CommonJS with type definitions for each, so `import` and `require` both resolve. There are no runtime dependencies.
 
-## Per-runtime builds
+## Portable and node builds
 
-The package `exports` conditions select a build per runtime:
+The package `exports` conditions select between two builds:
 
-- **Node, Bun, and Deno** resolve the Node build from `envapt`. `NodeEnvSource` is bound on import, so it reads `process.env` and the `.env` cascade, and the file APIs work.
-- **Cloudflare Workers** import from `envapt/workerd`. There is no filesystem, so the file APIs are not available; bind a [`WorkerEnvSource`](/docs/sources) from the `env` binding exported via `cloudflare:workers` or in a fetch.
-- **The browser** imports from `envapt/browser`. There is no filesystem or `process.env`, so seed a [`ManualEnvSource`](/docs/sources) with the values your bundler injects.
+- **The portable build** resolves from bare `envapt` on Workers, edge runtimes (`edge-light`, `fastly`, `worker`), the browser, and react-native. It contains no `node:` imports. Bind a [`PortableSource`](/docs/sources) and read with the same typed API.
+- **The node build** also resolves from bare `envapt` on Node, Bun, and Deno. `FileSource` is bound on import, so it reads `process.env` and the `.env` cascade, and the file APIs work.
 
-The workerd and browser builds contain no `node:` imports. Bind a source before your first read; see [Sources](/docs/sources).
+Bind a source before your first read on the portable build; see [Sources](/docs/sources).
 
-On Workers and the browser, import from `envapt/workerd` and `envapt/browser`. These entries carry the matching types, which omit the five file-only APIs, so calling one is a compile error rather than a runtime [`FileApiUnsupported`](/docs/errors). TypeScript does not apply the `workerd` / `browser` conditions on its own, so bare `envapt` leaves you on the Node types, where those APIs look available.
+Import from `envapt` on every runtime, no subpath import is needed. On the portable build, the file-only config APIs (`envPaths`, `baseDir`, `envFileOptions`, `configureProfiles`, `resetProfiles`) warn once and no-op by default. Set `Envapter.fileApiMode = 'throw'` to make them throw [`FileApiUnsupported`](/docs/errors) instead. `fileApiMode` governs only the portable file-API behavior. On the node build a bare (non-filesystem) source still throws `FileApiUnsupported` when a file API is called. An unbound read throws `NoSourceBound` on all runtimes regardless of `fileApiMode`.
+
+Deno and Deno Deploy resolve the node build by design, so the file APIs work there.
 
 ## Decorators per runtime
 

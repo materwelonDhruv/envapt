@@ -1,11 +1,11 @@
 import { env } from 'cloudflare:workers';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { Converters, Envapter, WorkerEnvSource } from '../../dist/workerd/index.mjs';
+import { Converters, Envapter, PortableSource } from '../../dist/portable/index.mjs';
 
-describe('WorkerEnvSource on workerd', () => {
+describe('PortableSource on workerd', () => {
     beforeEach(() => {
-        Envapter.useSource(new WorkerEnvSource(env as Record<string, unknown>));
+        Envapter.useSource(new PortableSource(env));
     });
 
     it('reads typed values from the Worker env binding', () => {

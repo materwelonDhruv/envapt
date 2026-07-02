@@ -1,0 +1,75 @@
+---
+title: Migration (v7 to v8)
+description: Moving from envapt v7 to v8. The source classes get shorter names, one universal envapt import replaces the workerd and browser subpaths, and the portable file APIs warn instead of throwing by default.
+---
+
+v8 is a major release with four breaking changes. The source classes are renamed, the `envapt/workerd` and `envapt/browser` subpaths are removed, the portable build's filesystem-only config APIs warn once and no-op by default instead of throwing, and the public type surface is trimmed. Everything else (the `Envapter` readers, converters, decorators, and `envapt/legacy`) is unchanged.
+
+## Source and type renames
+
+The source class names drop the `Env` infix. `PortableSource` is the one source for every runtime without a filesystem, and it replaces both `ManualEnvSource` and `WorkerEnvSource`, which were the same class. `FileSource` replaces `NodeEnvSource`, and the `Source` type replaces `EnvSource`.
+
+| v7                                   | v8               |
+| ------------------------------------ | ---------------- |
+| `ManualEnvSource`, `WorkerEnvSource` | `PortableSource` |
+| `NodeEnvSource`                      | `FileSource`     |
+| `EnvSource` (type)                   | `Source`         |
+
+```ts
+// v7
+import { Envapter, ManualEnvSource } from 'envapt';
+
+Envapter.useSource(new ManualEnvSource(config));
+
+// v8
+import { Envapter, PortableSource } from 'envapt';
+
+Envapter.useSource(new PortableSource(config));
+```
+
+If you were already on v7.1, `PortableSource` and `Source` existed and `ManualEnvSource` / `WorkerEnvSource` / `EnvSource` were deprecated aliases, so v8 only removes the aliases. `NodeEnvSource` is renamed to `FileSource` in v8.
+
+## One universal `envapt` import
+
+The `envapt/workerd` and `envapt/browser` subpaths are gone. Import from `envapt` everywhere. The package export conditions resolve the portable build on Workers, edge runtimes, the browser, and react-native, and the node build on Node, Bun, and Deno.
+
+```ts
+// v7
+import { Envapter, WorkerEnvSource } from 'envapt/workerd';
+import { Envapter, ManualEnvSource } from 'envapt/browser';
+
+// v8
+import { Envapter, PortableSource } from 'envapt';
+```
+
+The edge runtimes that used to fall through to the node build now resolve the portable build through the `edge-light`, `fastly`, and `worker` conditions. Vercel Edge and Workers apply these automatically. On Fastly Compute, add the `fastly` condition to your bundler's resolve conditions. `envapt/config` and `envapt/legacy` are unchanged.
+
+## File-only APIs warn instead of throwing
+
+On the portable build, the filesystem-only config APIs (`envPaths`, `baseDir`, `envFileOptions`, `configureProfiles`, `resetProfiles`) used to throw `FileApiUnsupported`. They now warn once and no-op by default, so a config module that touches them can be written once and run on both Node and the portable runtimes. To restore the v7 behavior, set `Envapter.fileApiMode = 'throw'`.
+
+```ts
+// v7: calling a file API on the portable build threw FileApiUnsupported
+
+// v8: it warns once and no-ops by default
+Envapter.envPaths = ['.env']; // warns once, then does nothing on Workers
+
+// opt back into throwing
+Envapter.fileApiMode = 'throw';
+Envapter.envPaths = ['.env']; // throws FileApiUnsupported again
+```
+
+The safety net is unchanged. An unconfigured read still throws `NoSourceBound` on the first access, whatever `fileApiMode` is, so a worker that forgot to bind a source fails fast rather than serving wrong config. And `fileApiMode` governs only the portable file-API behavior. On the node build, binding a non-filesystem source and then calling a file API still throws `FileApiUnsupported`.
+
+## The portable types now include the file APIs
+
+Before v8 the portable build's types omitted the five file APIs, so calling one was a compile error. v8 drops that fence. The portable types include them, so a config module shared between your Node dev setup and a Workers deploy type-checks the same in both places. At runtime you get the warn-once and no-op above, or a throw under `fileApiMode = 'throw'`.
+
+## Trimmed public type exports
+
+v8 exports 15 types instead of 36. The internal machinery that leaked into v7's public surface is gone, the source shape interfaces (`BareEnvSource` / `FileEnvSource`), the decorator return types, the schema brands, the converter and inference helper types, `EnvKeyInput`, `ArrayOf` / `ArrayElement`, and the `InferSchemaInput` / `InferSchemaOutput` aliases. Inference on the readers and decorators is unchanged, since those types resolve at the call site.
+
+You only need a change here if you imported one of these by name.
+
+- A custom source typed against `BareEnvSource` / `FileEnvSource` uses the `Source` union instead.
+- A schema output type from `InferSchemaOutput<typeof schema>` uses your validator's own inference (`z.infer`, valibot's `InferOutput`, arktype's `.infer`) or `StandardSchemaV1.InferOutput`.

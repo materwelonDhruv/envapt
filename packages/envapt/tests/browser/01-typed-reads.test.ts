@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { Converters, Envapter, ManualEnvSource } from '../../dist/browser/index.mjs';
+import { Converters, Envapter, PortableSource } from '../../dist/portable/index.mjs';
 
 describe('envapt in the browser', () => {
     beforeEach(() => {
-        Envapter.useSource(new ManualEnvSource({ APP: 'web', PORT: '443', FLAG: 'true', API: 'https://api.test/v1' }));
+        Envapter.useSource(new PortableSource({ APP: 'web', PORT: '443', FLAG: 'true', API: 'https://api.test/v1' }));
     });
 
     it('reads typed values from an injected source', () => {

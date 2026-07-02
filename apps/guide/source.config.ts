@@ -20,7 +20,8 @@ export const blogPosts = defineDocs({
     docs: {
         schema: pageSchema.extend({
             author: z.string(),
-            date: z.string()
+            date: z.string(),
+            updated: z.string()
         })
     }
 });

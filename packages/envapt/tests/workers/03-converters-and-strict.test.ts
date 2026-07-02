@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { Converters, Envapter, EnvaptError, EnvaptErrorCodes, ManualEnvSource } from '../../dist/workerd/index.mjs';
+import { Converters, Envapter, EnvaptError, EnvaptErrorCodes, PortableSource } from '../../dist/portable/index.mjs';
 
 afterEach(() => {
     Envapter.strict = false;
@@ -8,7 +8,7 @@ afterEach(() => {
 
 describe('converters on workerd', () => {
     it('coerces non-string bindings and reads them back typed', () => {
-        Envapter.useSource(new ManualEnvSource({ PORT: 8080, ENABLED: true, CFG: { a: 1 } }));
+        Envapter.useSource(new PortableSource({ PORT: 8080, ENABLED: true, CFG: { a: 1 } }));
         expect(Envapter.getNumber('PORT')).toBe(8080);
         expect(Envapter.getBoolean('ENABLED')).toBe(true);
         expect(Envapter.getUsing('CFG', Converters.Json)).toEqual({ a: 1 });
@@ -16,7 +16,7 @@ describe('converters on workerd', () => {
 
     it('applies url, regexp, date, and time converters', () => {
         Envapter.useSource(
-            new ManualEnvSource({
+            new PortableSource({
                 URL: 'https://x.test/p',
                 RE: '^a.c$',
                 WHEN: '2020-01-02T03:04:05.000Z',
@@ -30,7 +30,7 @@ describe('converters on workerd', () => {
     });
 
     it('reads a delimited array binding', () => {
-        Envapter.useSource(new ManualEnvSource({ HOSTS: 'a.test;b.test' }));
+        Envapter.useSource(new PortableSource({ HOSTS: 'a.test;b.test' }));
         const hosts = Envapter.getUsing('HOSTS', Converters.array({ of: Converters.String, delimiter: ';' }));
         expect(hosts).toEqual(['a.test', 'b.test']);
     });
@@ -38,7 +38,7 @@ describe('converters on workerd', () => {
 
 describe('strict mode and require on workerd', () => {
     it('throws MissingEnvValue (305) for a missing strict template read', () => {
-        Envapter.useSource(new ManualEnvSource({ PRESENT: 'yes' }));
+        Envapter.useSource(new PortableSource({ PRESENT: 'yes' }));
         Envapter.strict = true;
         try {
             Envapter.resolve`${'ABSENT'}`;
@@ -50,7 +50,7 @@ describe('strict mode and require on workerd', () => {
     });
 
     it('require() throws when a key is missing', () => {
-        Envapter.useSource(new ManualEnvSource({ A: '1' }));
+        Envapter.useSource(new PortableSource({ A: '1' }));
         try {
             Envapter.require('A', 'B');
             expect.unreachable('require should throw when B is missing');

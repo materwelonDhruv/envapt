@@ -26,25 +26,14 @@ export type ConverterToken = (typeof SCALAR)[keyof typeof SCALAR];
  */
 export type CustomElementConverter<TReturn = unknown> = (raw: string) => TReturn;
 
-/**
- * Valid element converters for {@link Converters.array}: any scalar token except
- * `json` and `regexp` (those don't compose as array elements), or a custom function.
- * @public
- */
+// array element converters, any scalar token except json/regexp (those don't compose) or a custom function
 export type ArrayElement = Exclude<ConverterToken, 'json' | 'regexp'> | CustomElementConverter;
 
-/**
- * Phantom-branded token produced by {@link Converters.array}. The `T` type parameter carries
- * the element converter through any variable indirection so inference survives. The
- * `__envaptKind` discriminant is present at runtime for dispatch.
- * @public
- */
+// phantom-branded token from Converters.array. TElement carries the element converter through variable
+// indirection so inference survives. __envaptKind is the runtime dispatch discriminant.
 export interface ArrayOf<TElement extends ArrayElement = ArrayElement> {
-    /** Runtime discriminant marking this token as an array converter. Don't use directly. */
     readonly __envaptKind: 'array';
-    /** The element converter applied to each split slot. */
     readonly of: TElement;
-    /** The string the raw value is split on. */
     readonly delimiter: string;
 }
 

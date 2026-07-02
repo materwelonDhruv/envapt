@@ -1,7 +1,4 @@
-/**
- * Accepted shape for environment variable lookups. Either a single key or an ordered list of keys.
- * @public
- */
+// a single key, or an ordered list where the reader takes the first key that has a value
 type EnvKeyInput = string | readonly [string, ...string[]];
 
 /**

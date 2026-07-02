@@ -42,7 +42,7 @@ const port = Envapter.getNumber('PORT', 3000); // number, not string | undefined
 - **Zero runtime dependencies.** The reader, converters, and built-in `.env` parser are self-contained,
   so nothing is added to your dependency tree.
 - **Runs on Node, Bun, Deno, Cloudflare Workers, and the browser.** Node `>=20`, Bun `>=1.3`, Deno
-  `>=2.5` (ESM and CJS). The Workers and browser builds resolve through the package `exports`
+  `>=2.5` (ESM and CJS). The portable build resolves through the package `exports`
   conditions.
 - **`.env` loading built in on Node.** The default Node source adds a per-environment file cascade,
   `${VAR}` templates, and strict / required checks. Off Node there is no filesystem, so you bind
@@ -75,14 +75,14 @@ const port = Envapter.getNumber('PORT', 3000);
 const origins = Envapter.getUsing('ALLOWED_ORIGINS', Converters.array(), []);
 ```
 
-On Cloudflare Workers, `env` is importable at module scope, so bind it once in a config module; in the
-browser, seed a `ManualEnvSource` from the object your bundler injects.
+On Cloudflare Workers, `env` is importable at module scope, so bind it once in a config module, and in
+the browser seed a `PortableSource` from the object your bundler injects.
 
 ```ts
 import { env } from 'cloudflare:workers';
-import { Envapter, WorkerEnvSource } from 'envapt';
+import { Envapter, PortableSource } from 'envapt';
 
-Envapter.useSource(new WorkerEnvSource(env));
+Envapter.useSource(new PortableSource(env));
 
 export const apiToken = Envapter.get('API_TOKEN');
 ```

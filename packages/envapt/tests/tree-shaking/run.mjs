@@ -4,7 +4,10 @@ import { fileURLToPath } from 'node:url';
 
 import * as esbuild from 'esbuild';
 
+import { createGate } from '../_guard.mjs';
+
 const resolveDir = dirname(fileURLToPath(import.meta.url));
+const gate = createGate('tree-shaking');
 
 // A leaf import that touches none of the reader machinery. If the entry is side-effect-free the bundler
 // drops the whole Envapter graph, leaving only the error type.
@@ -15,13 +18,10 @@ const HEAVY_MARKERS = [/new URL\(/, /~standard/, /JSON\.parse/];
 const MAX_LEAF_BYTES = 4000;
 
 const cases = [
-    { name: 'envapt/browser leaf', specifier: 'envapt/browser', platform: 'browser', conditions: [] },
-    { name: 'envapt/workerd leaf', specifier: 'envapt/workerd', platform: 'neutral', conditions: ['workerd'] },
     { name: 'envapt leaf (browser)', specifier: 'envapt', platform: 'browser', conditions: [] },
     { name: 'envapt leaf (workerd)', specifier: 'envapt', platform: 'neutral', conditions: ['workerd'] }
 ];
 
-let failures = 0;
 for (const testCase of cases) {
     try {
         const result = await esbuild.build({
@@ -42,16 +42,10 @@ for (const testCase of cases) {
             output.length < MAX_LEAF_BYTES,
             `${testCase.name}: leaf bundle is ${output.length} bytes, expected < ${MAX_LEAF_BYTES}`
         );
-        process.stdout.write(`tree-shaking ${testCase.name}: OK (${output.length} bytes)\n`);
+        gate.pass(`${testCase.name}: OK (${output.length} bytes)`);
     } catch (err) {
-        failures += 1;
-        process.stderr.write(`tree-shaking ${testCase.name}: FAIL\n`);
-        process.stderr.write(`${err instanceof Error ? err.message : String(err)}\n`);
+        gate.fail(`${testCase.name}: ${err instanceof Error ? err.message : String(err)}`);
     }
 }
 
-if (failures > 0) {
-    process.stderr.write(`tree-shaking: ${failures} portable entry/entries do not tree-shake a leaf import\n`);
-    process.exit(1);
-}
-process.stdout.write('tree-shaking: every portable leaf import tree-shakes the Envapter graph\n');
+gate.done('every portable leaf import tree-shakes the Envapter graph');

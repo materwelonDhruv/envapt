@@ -15,7 +15,7 @@ export type {
     InferPrimitiveReturnType
 } from './Conversion';
 export type { Err, SchemaMustBeSync, SchemaConstraint } from './Schema';
-export type { EnvaptOptions, EnvProfile, ProfilesConfig } from './Options';
+export type { EnvaptOptions, EnvProfile, ProfilesConfig, FileApiMode } from './Options';
 export type { EnvKeyInput } from './Env';
-export type { EnvSource, BareEnvSource, FileEnvSource } from './Source';
+export type { Source, BareSource, FileCapableSource } from './Source';
 export type { EnvaptFieldDecorator, EnvaptAccessorDecorator } from './Decorator';

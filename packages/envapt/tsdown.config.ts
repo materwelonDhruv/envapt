@@ -2,8 +2,8 @@ import { defineConfig } from 'tsdown';
 
 import type { UserConfig } from 'tsdown';
 
-// es2022 is load-bearing: NodeEnvapter's static-block bind tree-shakes only with the native emit, so
-// lowering the target would defeat it. unbundle keeps one module per source file for tree-shaking.
+// es2022 is required for tree-shaking to work because NodeEnvapter's static block only
+// tree-shakes with the native es2022 emit. unbundle keeps one module per file.
 const shared = {
     unbundle: true,
     dts: true,
@@ -14,8 +14,7 @@ const shared = {
     target: 'es2022'
 } as const satisfies UserConfig;
 
-// Each runtime build emits its own sibling dts so the deep-import tests resolve against the exact built
-// JS. package.json points every `types` at the single dist/types tree below, not at these.
+// the portable build emits a sibling dts that the deep-import tests type-check against. package.json points published types at dist/types.
 export default defineConfig([
     {
         ...shared,
@@ -24,28 +23,17 @@ export default defineConfig([
         platform: 'node',
         outDir: 'dist/node'
     },
-    // fixedExtension forces .mjs (it only defaults on for platform:node).
+    // fixedExtension forces .mjs so the portable build matches its .mjs export paths.
     {
         ...shared,
-        entry: { index: 'src/workerd.ts', legacy: 'src/legacy.ts' },
+        entry: { index: 'src/index.portable.ts', legacy: 'src/legacy.ts' },
         format: ['esm'],
         platform: 'neutral',
         shims: false,
         fixedExtension: true,
-        outDir: 'dist/workerd'
+        outDir: 'dist/portable'
     },
-    {
-        ...shared,
-        entry: { index: 'src/browser.ts', legacy: 'src/legacy.ts' },
-        format: ['esm'],
-        platform: 'browser',
-        shims: false,
-        fixedExtension: true,
-        outDir: 'dist/browser'
-    },
-    // The published types, emitted once and shims-free so no entry carries a node:* banner and every
-    // entry shares one declaration (one auto-import per name, not one per runtime build). emitDtsOnly
-    // drops the JS. esm-only avoids a second cjs bundle here.
+    // Published types are emitted once without shims. emitDtsOnly drops JS.
     {
         ...shared,
         dts: { emitDtsOnly: true },

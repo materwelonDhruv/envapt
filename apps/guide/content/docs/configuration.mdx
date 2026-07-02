@@ -20,9 +20,9 @@ Envapter.debug = 'verbose';
 </Callout>
 
 <Callout type="warn">
-    Everything on this page reads or writes the filesystem, so it applies to Node, Bun, and Deno only. The five file
-    APIs (`envPaths`, `baseDir`, `envFileOptions`, `configureProfiles`, `resetProfiles`) are not available on Cloudflare
-    Workers or in the browser; there you bind an environment source instead. See [Sources](/docs/sources).
+    Everything on this page reads or writes the filesystem, so it applies to Node, Bun, and Deno only. On the portable
+    build (Cloudflare Workers, the browser, and edge runtimes) these APIs warn and no-op by default. Bind an environment
+    source instead. See [Compatibility](/docs/compatibility).
 </Callout>
 
 ## Which files load
@@ -40,8 +40,8 @@ Envapter.envPaths = ['config/app.env', '.env'];
 <Callout type="danger">
     Every path you list must exist. Setting `envPaths` validates the paths immediately, and a missing file throws
     `EnvaptError` with code `EnvFilesNotFound`. Setting `envPaths` also takes precedence: it disables the
-    per-environment auto-cascade and any `configureProfiles` paths. Relative paths resolve against
-    `process.cwd()` unless you set `Envapter.baseDir` (below).
+    per-environment auto-cascade and any `configureProfiles` paths. Relative paths resolve against `process.cwd()`
+    unless you set `Envapter.baseDir` (below).
 </Callout>
 
 `envFileOptions` tunes how files are read. `override` (default `false`) decides whether a later file or a file value can replace an already-set key; `encoding` (default `utf8`) sets the file encoding.
@@ -107,7 +107,6 @@ ENVAPT_DEBUG=verbose
 ```
 
 <Callout type="info">
-    `import 'envapt/config'` loads at import time. Set `ENVAPT_DEBUG=verbose` before the import to see
-    that load logged. An `Envapter.debug` assignment in code runs after the load, so it is too late to
-    log it.
+    `import 'envapt/config'` loads at import time. Set `ENVAPT_DEBUG=verbose` before the import to see that load logged.
+    An `Envapter.debug` assignment in code runs after the load, so it is too late to log it.
 </Callout>
