@@ -224,7 +224,7 @@ export class EnvironmentMethods extends EnvapterBase {
 
     /**
      * Override the base implementation to layer the dotenv-flow cascade + any
-     * `Envapter.configureProfiles` overrides on top of `_envPaths` when the user has NOT
+     * `Envapter.configureProfiles` overrides on top of `state.envPaths` when the user has NOT
      * explicitly set `envPaths`.
      *
      * Precedence (passed to dotenv with first-wins semantics):

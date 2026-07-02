@@ -115,7 +115,7 @@ export abstract class EnvapterBase {
 
     protected static refreshCache(): void {
         cache.clear();
-        state.dotenvAddedKeys = new Set();
+        state.dotenvAddedKeys = new Set<string>();
         debugVerbose('cache cleared, reloading config');
         void this.config; // getter rebuilds the cache as a side effect
     }
@@ -144,7 +144,7 @@ export abstract class EnvapterBase {
         return value;
     }
 
-    // Default returns the explicit `_envPaths`. EnvironmentMethods overrides to layer the dotenv-flow
+    // Default returns the explicit `state.envPaths`. EnvironmentMethods overrides to layer the dotenv-flow
     // cascade + configureProfiles when envPaths was never explicitly set.
     protected static resolveEffectivePaths(): string[] {
         /* v8 ignore next -- @preserve */
