@@ -26,6 +26,17 @@ export function maxBump(changesets: string[]): Bump | null {
     return top;
 }
 
+/** The changeset files this PR adds or edits. */
+export function changesetPathsFromFiles(files: { filename: string; status: string }[]): string[] {
+    return files
+        .filter((file) => {
+            const name = file.filename.split('/').pop() ?? '';
+            const touched = file.status === 'added' || file.status === 'modified';
+            return file.filename.startsWith('.changeset/') && name.endsWith('.md') && name !== 'README.md' && touched;
+        })
+        .map((file) => file.filename);
+}
+
 interface Ctx {
     owner: string;
     repo: string;
@@ -60,20 +71,31 @@ function api(token: string, method: string, path: string, body?: unknown): Promi
     });
 }
 
-async function changesetBodies(ctx: Ctx): Promise<string[]> {
-    const list = await api(ctx.token, 'GET', `/repos/${ctx.owner}/${ctx.repo}/contents/.changeset?ref=${ctx.sha}`);
-    if (!list.ok) return [];
-    // justified: GitHub "get directory contents" returns an array of entries
-    const entries = (await list.json()) as { type: string; name: string; path: string }[];
-    const bodies: string[] = [];
-    for (const entry of entries) {
-        if (entry.type !== 'file' || !entry.name.endsWith('.md') || entry.name === 'README.md') continue;
-        const file = await api(
+async function prChangedFiles(ctx: Ctx): Promise<{ filename: string; status: string }[]> {
+    const files: { filename: string; status: string }[] = [];
+    for (let page = 1; ; page++) {
+        const res = await api(
             ctx.token,
             'GET',
-            `/repos/${ctx.owner}/${ctx.repo}/contents/${entry.path}?ref=${ctx.sha}`
+            `/repos/${ctx.owner}/${ctx.repo}/pulls/${ctx.pr}/files?per_page=100&page=${page}`
         );
-        if (!file.ok) continue;
+        // a failed listing must stop the job, an empty list here would silently apply no label.
+        if (!res.ok)
+            throw new Error(`[semver-label] listing PR #${ctx.pr} files failed: ${res.status} ${res.statusText}`);
+        // justified: GitHub "list pull request files" returns an array of file entries
+        const pageFiles = (await res.json()) as { filename: string; status: string }[];
+        files.push(...pageFiles);
+        if (pageFiles.length < 100) break;
+    }
+    return files;
+}
+
+async function changesetBodies(ctx: Ctx): Promise<string[]> {
+    const bodies: string[] = [];
+    for (const path of changesetPathsFromFiles(await prChangedFiles(ctx))) {
+        const file = await api(ctx.token, 'GET', `/repos/${ctx.owner}/${ctx.repo}/contents/${path}?ref=${ctx.sha}`);
+        // same reason as the listing, a skipped changeset would drop its bump and mislabel the PR.
+        if (!file.ok) throw new Error(`[semver-label] reading ${path} failed: ${file.status} ${file.statusText}`);
         // justified: GitHub "get file contents" returns base64 content
         const { content } = (await file.json()) as { content: string };
         bodies.push(Buffer.from(content, 'base64').toString('utf8'));

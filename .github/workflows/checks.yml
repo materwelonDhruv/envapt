@@ -10,14 +10,6 @@ on:
             - '.changeset/**'
             - '.github/ISSUE_TEMPLATE/**'
             - '.github/PULL_REQUEST_TEMPLATE.md'
-    push:
-        branches-ignore: [main, next]
-        paths-ignore:
-            - '**/*.md'
-            - '.vscode/**'
-            - '.changeset/**'
-            - '.github/ISSUE_TEMPLATE/**'
-            - '.github/PULL_REQUEST_TEMPLATE.md'
 
 concurrency:
     group: checks-${{ github.ref }}
