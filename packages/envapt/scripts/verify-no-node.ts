@@ -10,6 +10,11 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const DIST = join(dirname(fileURLToPath(import.meta.url)), '..', 'dist');
 const TARGETS = ['portable'] as const;
 const ACCESSOR_APIS = ['envPaths', 'baseDir', 'envFileOptions'] as const;
+const WARN_READS: Record<(typeof ACCESSOR_APIS)[number], unknown> = {
+    envPaths: [],
+    baseDir: undefined,
+    envFileOptions: {}
+};
 const METHOD_APIS = ['configureProfiles', 'resetProfiles'] as const;
 const FILE_APIS = [...ACCESSOR_APIS, ...METHOD_APIS] as const;
 
@@ -115,7 +120,11 @@ async function stubProof(): Promise<void> {
 
         Envapter.fileApiMode = 'warn';
         for (const api of ACCESSOR_APIS) {
-            assert.strictEqual(Envapter[api], undefined, `${target}: Envapter.${api} must read undefined under warn`);
+            assert.deepStrictEqual(
+                Envapter[api],
+                WARN_READS[api],
+                `${target}: Envapter.${api} must read its empty default under warn`
+            );
             assert.doesNotThrow(() => {
                 Envapter[api] = undefined;
             }, `${target}: setting Envapter.${api} must no-op under warn`);
