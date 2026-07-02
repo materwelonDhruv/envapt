@@ -2,12 +2,13 @@ import { resolve } from 'node:path';
 
 import { beforeAll, describe, expect, expectTypeOf, it } from 'vitest';
 
-import { Converters, Envapter } from '../src';
+import { Converters, Envapter, EnvaptErrorCodes } from '../src';
+import { EnvaptError } from '../src/infra/Error';
 import { Envapt } from '../src/legacy';
 
-// A rejected value returns undefined from the converter, which the decorator replaces with the fallback.
-// The fallbacks (99, 1.5) are values no leading-number parse of the fixtures would produce, so a loose
-// parse would surface the wrong number and fail these assertions instead of passing.
+// A rejected value makes the converter return the fallback it was given, and that becomes the decorator field.
+// The fallbacks (99, 1.5) are values no leading-number parse of the fixtures would produce, so a loose parse
+// would surface the wrong number and fail these assertions.
 describe('Numeric converter strictness (v8)', () => {
     beforeAll(() => {
         Envapter.envPaths = resolve(import.meta.dirname, '.env.038-numeric-strictness');
@@ -97,6 +98,20 @@ describe('Numeric converter strictness (v8)', () => {
 
         it('falls back on whitespace', () => {
             expect(Floats.whitespace).to.equal(1.5);
+        });
+    });
+
+    describe('getRequired surfaces a rejected value as a throw', () => {
+        it('throws on a malformed integer', () => {
+            expect(() => Envapter.getRequired('INT_GARBAGE', Converters.Integer))
+                .to.throw(EnvaptError)
+                .with.property('code', EnvaptErrorCodes.MissingEnvValue);
+        });
+
+        it('throws on a malformed float', () => {
+            expect(() => Envapter.getRequired('FLOAT_GARBAGE', Converters.Float))
+                .to.throw(EnvaptError)
+                .with.property('code', EnvaptErrorCodes.MissingEnvValue);
         });
     });
 });

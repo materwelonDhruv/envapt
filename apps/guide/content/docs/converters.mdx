@@ -23,8 +23,8 @@ const retries = Envapter.getWith('RETRIES', (raw) => Number(raw ?? 0), 3);
 | -------------------- | ----------- | --------------------------------------------------------- |
 | `Converters.String`  | `string`    | the raw value, unchanged                                  |
 | `Converters.Number`  | `number`    | `Number(raw)`; `NaN` uses the fallback                    |
-| `Converters.Integer` | `number`    | `parseInt(raw, 10)`                                       |
-| `Converters.Float`   | `number`    | `parseFloat(raw)`                                         |
+| `Converters.Integer` | `number`    | `Number(raw)`, must be a safe integer                     |
+| `Converters.Float`   | `number`    | `Number(raw)`, `NaN` uses the fallback                    |
 | `Converters.Boolean` | `boolean`   | `1`/`yes`/`true`/`on` and `0`/`no`/`false`/`off`          |
 | `Converters.Bigint`  | `bigint`    | `BigInt(raw)`                                             |
 | `Converters.Symbol`  | `symbol`    | `Symbol.for(raw)`                                         |
@@ -53,13 +53,16 @@ A fallback removes `undefined` from the return type, the same way it does for th
 
 ## Number, Integer, and Float
 
-`Number` accepts anything JavaScript's `Number()` does, including floats, hex, and scientific notation. `Integer` stops at the first non-digit, so `42px` reads as `42` and `3.9` reads as `3`. `Float` parses a leading decimal and tolerates trailing text.
+`Number` accepts anything JavaScript's `Number()` does, including floats, hex, and scientific notation. `Integer` and `Float` now parse with `Number` as well. `Integer` requires a safe integer, so `42px`, `3.9`, and values past 2^53 fall back. `Float` rejects trailing text like `3.14px` and keeps `Infinity` like `Number`. Both accept the same literal forms as `Number`, including `0x`, `0o`, and `0b`.
 
 ```ts twoslash
 import { Envapter, Converters } from 'envapt';
 // ---cut---
 // MAX_CONNECTIONS=100
 const maxConnections = Envapter.getUsing('MAX_CONNECTIONS', Converters.Integer); // 100
+
+// PORT="8080abc" is not a clean integer, so it falls back
+const port = Envapter.getUsing('PORT', Converters.Integer, 3000); // 3000
 const sampleRate = Envapter.getUsing('SAMPLE_RATE', Converters.Float, 1.0);
 ```
 
