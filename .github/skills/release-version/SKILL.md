@@ -1,5 +1,5 @@
 ---
-name: cs-prerelease
+name: release-version
 description: Release envapt through changesets pre mode. Cut a prerelease from the long-lived `next` branch, graduate it to a stable release on `main`, then re-sync `next`. Use for any envapt release on the `next` line.
 ---
 
