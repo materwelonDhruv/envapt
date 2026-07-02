@@ -5,5 +5,9 @@
     "@envapt/guide": "1.0.0",
     "envapt": "7.0.2"
   },
-  "changesets": []
+  "changesets": [
+    "get-required",
+    "trim-public-types",
+    "v8-universal-exports"
+  ]
 }
