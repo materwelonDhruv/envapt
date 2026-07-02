@@ -36,7 +36,7 @@ Envapter.getWith('FLAGS', (raw) => (raw ? raw.split(',') : [])); // string[]
 
 // Throw instead of returning a fallback:
 Envapter.require('DATABASE_URL', 'JWT_SECRET'); // throws EnvaptError listing every missing key
-Envapter.getUsing('PORT', { converter: Converters.Number, required: true }); // options-bag form, throws if unset
+Envapter.getRequired('PORT', Converters.Number); // throws if unset
 ```
 
 `Envapter.resolve` is a tagged template that interpolates env values: ``Envapter.resolve`postgres://${'DB_HOST'}:${'DB_PORT'}` ``. `Envapter.getRaw('KEY')` returns the raw string with no parsing.

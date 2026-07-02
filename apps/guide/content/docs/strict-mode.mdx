@@ -30,20 +30,22 @@ Three behaviors tighten when strict mode is on:
 
 A plain reader still returns the fallback (or `undefined`) for a missing value, even under strict mode. Strict mode changes how whitespace, templates, and array elements are treated; it does not turn every missing variable into a throw.
 
-To fail fast on a specific value, use `require` or the `{ required: true }` form. These throw on a missing value regardless of strict mode.
+To fail fast on a specific value, use `require` or `getRequired`. These throw on a missing value regardless of strict mode.
 
 ```ts twoslash
 import { Envapter, Converters } from 'envapt';
 // ---cut---
 // throws if unset, independent of Envapter.strict
-const s3Endpoint = Envapter.getUsing('S3_ENDPOINT_URL', { converter: Converters.Url, required: true });
+const s3Endpoint = Envapter.getRequired('S3_ENDPOINT_URL', Converters.Url);
 //    ^?
 
+// A decoupled require call. Can be used at the top level of a module to fail fast
+// on all missing values in one spot instead of scattering them throughout the codebase.
 Envapter.require('API_KEY', 'SENTRY_DSN');
 ```
 
 <Callout type="tip">
-    Use `required` / `require` when one specific value must be present. Turn on strict mode when you want stricter
+    Use `getRequired` / `require` when one specific value must be present. Turn on strict mode when you want stricter
     whitespace, template, and array-element rules everywhere.
 </Callout>
 

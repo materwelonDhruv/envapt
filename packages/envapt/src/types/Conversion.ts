@@ -1,6 +1,6 @@
 import type { ArrayOf, ConverterToken, CustomElementConverter } from '../converters/Converters';
 
-// the scalar tokens, not the array() builder
+// scalar tokens only
 type BuiltInConverter = ConverterToken;
 
 type PrimitiveConstructor = typeof String | typeof Number | typeof Boolean | typeof BigInt | typeof Symbol;
@@ -8,13 +8,17 @@ type PrimitiveConstructor = typeof String | typeof Number | typeof Boolean | typ
 type BaseInput = string | undefined;
 
 /**
- * Custom parser function type for environment variables
- * @param raw - Raw string value from environment
- * @param fallback - Fallback value if parsing fails
- * @returns Parsed value of type T
+ * Custom parser function for an environment variable. `TRaw` is the raw input, `string | undefined` by
+ * default, narrowed to `string` by the readers that guarantee a present value (`getRequired`, `getRequiredAll`).
+ * @param raw - Raw value from the environment
+ * @param fallback - Fallback value when parsing is skipped
+ * @returns Parsed value of type `TFallback`
  * @public
  */
-type ConverterFunction<TFallback = unknown> = (raw: BaseInput, fallback?: TFallback) => TFallback;
+type ConverterFunction<TFallback = unknown, TRaw extends BaseInput = BaseInput> = (
+    raw: TRaw,
+    fallback?: TFallback
+) => TFallback;
 
 /**
  * Environment variable converter: a primitive constructor, a built-in scalar token, an `ArrayOf<...>`
@@ -85,6 +89,18 @@ type InferConverterReturnType<TConverter> =
           ? BuiltInConverterReturnType<TConverter>
           : never;
 
+// raw is `string` here (getRequiredAll throws before converting, so the value is always present).
+type RequiredSpec = Record<string, BuiltInConverter | ArrayOf | ConverterFunction<unknown, string>>;
+
+// InferConverterReturnType is never for a function, so a custom parser recovers its type from the return.
+// Match the bare `(raw) => infer R` form. `ConverterFunction<infer R>` would fail here because a required
+// parser's `raw: string` isn't assignable to ConverterFunction's `raw: string | undefined`, hitting never.
+type InferSpecField<TConverter> = TConverter extends BuiltInConverter | ArrayOf
+    ? InferConverterReturnType<TConverter>
+    : TConverter extends (raw: string) => infer TReturn
+      ? TReturn
+      : never;
+
 // time's fallback (TimeFallback) differs from its return, so add future asymmetric converters here
 type InferConverterFallbackType<TConverter> = TConverter extends 'time'
     ? TimeFallback
@@ -125,5 +141,7 @@ export type {
     InferConverterReturnType,
     InferConverterFallbackType,
     AdvancedConverterReturn,
-    InferPrimitiveReturnType
+    InferPrimitiveReturnType,
+    RequiredSpec,
+    InferSpecField
 };

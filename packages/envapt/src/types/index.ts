@@ -12,8 +12,11 @@ export type {
     InferConverterReturnType,
     InferConverterFallbackType,
     AdvancedConverterReturn,
-    InferPrimitiveReturnType
+    InferPrimitiveReturnType,
+    RequiredSpec,
+    InferSpecField
 } from './Conversion';
+export type { KeyCasing, RecaseKey } from './Casing';
 export type { Err, SchemaMustBeSync, SchemaConstraint } from './Schema';
 export type { EnvaptOptions, EnvProfile, ProfilesConfig, FileApiMode } from './Options';
 export type { EnvKeyInput } from './Env';

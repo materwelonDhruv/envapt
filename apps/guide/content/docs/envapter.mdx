@@ -121,23 +121,44 @@ See [Templates](/docs/templates) for `${VAR}` interpolation and cycle protection
 ```ts twoslash
 import { Envapter } from 'envapt';
 // ---cut---
+// Assuring all three keys are present at the start of the program, for example
 Envapter.require('DATABASE_URL', 'API_KEY', 'SENTRY_DSN');
 ```
 
-For a typed fail-fast that returns the parsed value, use the `{ required: true }` form on `getUsing` or `getWith`:
+For a typed fail-fast that returns the parsed value, use `getRequired`:
 
 ```ts twoslash
 import { Envapter, Converters } from 'envapt';
 // ---cut---
-const url = Envapter.getUsing('DATABASE_URL', { converter: Converters.Url, required: true });
+const url = Envapter.getRequired('DATABASE_URL', Converters.Url);
 //    ^?
 ```
 
-Both throw on a missing value instead of returning a fallback. See [Strict mode](/docs/strict-mode) for the global switch and how `required` relates to it.
+`getRequiredAll` reads a whole group in one call and returns a typed record, throwing once with every missing key. A spec value is a token, an `array()` token, or a custom parser, and an optional casing (`'camelCase'`, `'PascalCase'`, or `'kebab-case'`) renames the keys. Casing splits on underscores, so it expects the conventional `SCREAMING_SNAKE` env-var names:
+
+```ts twoslash
+import { Envapter, Converters } from 'envapt';
+// ---cut---
+const config = Envapter.getRequiredAll(
+    {
+        DATABASE_URL: Converters.Url,
+        PORT: Converters.Number,
+        FEATURE_FLAGS: (raw) => new Set(raw.split(','))
+    },
+    'camelCase'
+);
+
+config;
+// ^?
+```
+
+They throw on a missing value instead of returning a fallback. See [Strict mode](/docs/strict-mode) for the global switch and how required reads relate to it.
 
 <Callout type="danger">
-    `require` and the `{ required: true }` form throw `EnvaptError` the moment a key is missing or empty. Call them at
-    startup, not lazily inside a request path, so a missing value fails the boot rather than a live request.
+    `require`, `getRequired`, and `getRequiredAll` throw `EnvaptError` the moment a key is missing or empty.
+
+    Best to call `require` and `getRequiredAll` at startup, not lazily inside a request path, so a missing value fails the boot rather than a live request.
+
 </Callout>
 
 ## Static vs instance

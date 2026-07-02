@@ -12,9 +12,12 @@ Import from `envapt`. The package export conditions resolve a node-free portable
 The filesystem-only config APIs have nothing to do on Workers, so they warn and no-op by default. Readers work as normal. See [Compatibility](/docs/compatibility) for `fileApiMode` and [Errors](/docs/errors) for the codes.
 
 ```ts twoslash
-import { Envapter, PortableSource } from 'envapt';
+// @lib: esnext
+/// <reference types="@cloudflare/workers-types" />
 // ---cut---
-declare const env: Record<string, string>; // the Cloudflare env binding
+import { env } from 'cloudflare:workers';
+import { Envapter, PortableSource } from 'envapt';
+
 Envapter.useSource(new PortableSource(env));
 Envapter.getNumber('PORT', 3000); // readers work once a source is bound
 Envapter.envPaths = ['.env']; // warns once and no-ops on Workers
@@ -26,30 +29,59 @@ Envapter.envPaths = ['.env']; // warns once and no-ops on Workers
 
 Env vars and secrets are readable at module scope through `cloudflare:workers`, and they are constant for a deployment. Bind the source in a config module and export the typed values the Worker needs, so binding happens once per isolate instead of on every request.
 
-```ts title="src/config.ts"
+```ts title="src/config.ts" twoslash
+// @lib: esnext
+/// <reference types="@cloudflare/workers-types" />
+// ---cut---
 import { env } from 'cloudflare:workers';
 import { Envapter, PortableSource, Converters } from 'envapt';
 
 Envapter.useSource(new PortableSource(env));
-Envapter.require('ORIGIN_URL', 'API_TOKEN');
+const values = Envapter.getRequiredAll(
+    {
+        ORIGIN_URL: Converters.Url,
+        API_TOKEN: Converters.String
+    },
+    'camelCase'
+);
 
 export const config = {
-    origin: Envapter.getUsing('ORIGIN_URL', Converters.Url)!,
-    token: Envapter.get('API_TOKEN')!,
+    ...values,
     cacheTtl: Envapter.getUsing('CACHE_TTL', Converters.Time, '1m')
 };
 ```
 
-```ts title="src/index.ts"
+```ts title="src/index.ts" twoslash
+// @lib: esnext
+// @filename: config.ts
+/// <reference types="@cloudflare/workers-types" />
+import { env } from 'cloudflare:workers';
+import { Envapter, PortableSource, Converters } from 'envapt';
+
+Envapter.useSource(new PortableSource(env));
+const values = Envapter.getRequiredAll(
+    {
+        ORIGIN_URL: Converters.Url,
+        API_TOKEN: Converters.String
+    },
+    'camelCase'
+);
+
+export const config = {
+    ...values,
+    cacheTtl: Envapter.getUsing('CACHE_TTL', Converters.Time, '1m')
+};
+// @filename: index.ts
+// ---cut---
 import { config } from './config';
 
 export default {
     async fetch(request: Request): Promise<Response> {
-        if (request.headers.get('authorization') !== `Bearer ${config.token}`) {
+        if (request.headers.get('authorization') !== `Bearer ${config.apiToken}`) {
             return new Response('Unauthorized', { status: 401 });
         }
         const url = new URL(request.url);
-        return fetch(new URL(url.pathname + url.search, config.origin), request);
+        return fetch(new URL(url.pathname + url.search, config.originUrl), request);
     }
 } satisfies ExportedHandler;
 ```
@@ -64,16 +96,19 @@ export default {
 
 On an older compatibility date, or anywhere `env` is not importable at module scope, bind it at the top of the handler instead. The `env` is the same on every request, so the re-bind is idempotent.
 
-```ts title="src/index.ts"
+```ts title="src/index.ts" twoslash
+// @lib: esnext
+/// <reference types="@cloudflare/workers-types" />
+// ---cut---
 import { Envapter, PortableSource, Converters } from 'envapt';
 
 export default {
     async fetch(request: Request, env: Record<string, unknown>): Promise<Response> {
         Envapter.useSource(new PortableSource(env));
-        const origin = Envapter.getUsing('ORIGIN_URL', { converter: Converters.Url, required: true });
+        const origin = Envapter.getRequired('ORIGIN_URL', Converters.Url);
         return fetch(new URL(new URL(request.url).pathname, origin), request);
     }
-} satisfies ExportedHandler;
+} satisfies ExportedHandler<Record<string, unknown>>;
 ```
 
 ## Non-string bindings
