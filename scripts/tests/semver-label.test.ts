@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { maxBump } from '../semver-label';
+import { changesetPathsFromFiles, maxBump } from '../semver-label';
 
 const changeset = (bump: string): string => `---\n'envapt': ${bump}\n---\n\nsummary line`;
 
@@ -35,5 +35,35 @@ describe('maxBump', () => {
 
     it('returns null for an empty list', () => {
         expect(maxBump([])).to.equal(null);
+    });
+});
+
+describe('changesetPathsFromFiles', () => {
+    it('yields nothing for a PR that adds no changeset (a CI-only PR)', () => {
+        const files = [
+            { filename: '.github/workflows/checks.yml', status: 'modified' },
+            { filename: '.github/workflows/coverage.yml', status: 'modified' }
+        ];
+        expect(changesetPathsFromFiles(files)).to.deep.equal([]);
+    });
+
+    it('picks up a changeset the PR adds or edits', () => {
+        const files = [
+            { filename: '.changeset/strict-converters.md', status: 'added' },
+            { filename: '.changeset/existing-edit.md', status: 'modified' },
+            { filename: 'packages/envapt/src/x.ts', status: 'modified' }
+        ];
+        expect(changesetPathsFromFiles(files)).to.deep.equal([
+            '.changeset/strict-converters.md',
+            '.changeset/existing-edit.md'
+        ]);
+    });
+
+    it('skips the changeset README and removed changesets', () => {
+        const files = [
+            { filename: '.changeset/README.md', status: 'modified' },
+            { filename: '.changeset/dropped.md', status: 'removed' }
+        ];
+        expect(changesetPathsFromFiles(files)).to.deep.equal([]);
     });
 });
