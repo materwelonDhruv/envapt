@@ -1,26 +1,30 @@
+# yaml-language-server: $schema=https://json.schemastore.org/pull-request-labeler-5.json
 '📦 envapt':
-  - changed-files:
-      - any-glob-to-any-file: 'packages/envapt/**'
+    - changed-files:
+          - any-glob-to-any-file: 'packages/envapt/**'
 '📚 docs':
-  - changed-files:
-      - any-glob-to-any-file: 'apps/guide/**'
-      - any-glob-to-any-file: '**/*.md'
-      - any-glob-to-any-file: '**/*.mdx'
-      - any-glob-to-any-file: '!(**/CHANGELOG.md)'
-      - any-glob-to-any-file: '!(**/.changesets/**)'
+    - all:
+          - changed-files:
+                - any-glob-to-any-file:
+                      - 'apps/guide/**'
+                      - '**/*.md'
+                      - '**/*.mdx'
+                - all-globs-to-all-files:
+                      - '!**/CHANGELOG.md'
+                      - '!.changeset/**'
 '🧪 tests':
-  - changed-files:
-      - any-glob-to-any-file: '**/*.test.ts'
-      - any-glob-to-any-file: '**/*.spec.ts'
-      - any-glob-to-any-file: '**/__tests__/**/*'
+    - changed-files:
+          - any-glob-to-any-file: '**/*.test.ts'
+          - any-glob-to-any-file: '**/*.spec.ts'
+          - any-glob-to-any-file: '**/__tests__/**/*'
 '🤖 ci':
-  - changed-files:
-      - any-glob-to-any-file: '.github/**'
-      - any-glob-to-any-file: turbo.json
-      - any-glob-to-any-file: turbo.jsonc
-      - any-glob-to-any-file: pnpm-workspace.yaml
-      - any-glob-to-any-file: pnpm-lock.yaml
-      - any-glob-to-any-file: 'tsconfig*.json'
-      - any-glob-to-any-file: eslint.config.mjs
-      - any-glob-to-any-file: vitest.config.ts
-      - any-glob-to-any-file: tsdown.config.ts
+    - changed-files:
+          - any-glob-to-any-file: '.github/**'
+          - any-glob-to-any-file: turbo.json
+          - any-glob-to-any-file: turbo.jsonc
+          - any-glob-to-any-file: pnpm-workspace.yaml
+          - any-glob-to-any-file: pnpm-lock.yaml
+          - any-glob-to-any-file: 'tsconfig*.json'
+          - any-glob-to-any-file: eslint.config.mjs
+          - any-glob-to-any-file: vitest.config.ts
+          - any-glob-to-any-file: tsdown.config.ts
