@@ -47,13 +47,15 @@ user.displayName = payload.name;
 - Keep comments short and local.
 - Prefer `//` inline comments over JSDoc for implementation details.
 - Use JSDoc (`/** */`) only on public API surfaces where callers need context; keep them minimal.
-- **Public-facing TSDoc (`/** \*/`on exported API) uses proper capitalization and complete sentences.** Inline`//` implementation comments stay lowercase fragments. Both still follow the writing-voice punctuation ban (no em-dash, semicolon, or colon).
+- **Public-facing TSDoc (`/** \*/`on exported API) uses proper capitalization and complete sentences.** Inline`//` implementation comments stay lowercase fragments. Both still follow the writing-voice punctuation ban (no em-dash, and no colon or semicolon splicing two clauses, though a colon before a list or code block is fine).
 - Put the comment immediately above the line or block whose intent is non-obvious.
 - Explain why the rule exists or what breaks if it changes.
 
 ## Connect Clauses The Way You'd Say Them
 
-Once a comment earns its place, it should read like you explaining the code to someone next to you, not a telegram. Join cause and effect with the ordinary words you would use out loud, so, and, because, but, then, instead of clipping every thought into its own stiff fragment or stacking formal clauses. The punctuation ban from the `writing-voice` skill (no `;` `:` `—`) already pushes you here, and a connector word is almost always the replacement that reads best.
+Once a comment earns its place, it should read like you explaining the code to someone next to you, not a telegram. Join cause and effect with the ordinary words you would use out loud, so, and, because, but, then, instead of clipping every thought into its own stiff fragment or stacking formal clauses. The punctuation ban from the `writing-voice` skill (no `—`, and no clause-splicing `;` or `:`) already pushes you here, and a connector word is almost always the replacement that reads best.
+
+Pick the connector that matches the real relation, and do not default to ", so". Use ", so" only for a genuine cause, ", and" for a neutral join, and a period for a plain sequence, because a reflexive ", so" invents a cause the code never had. This mirrors the writing-voice ", so" rule.
 
 Read the comment out loud. If it sounds like something you would say to a colleague at the keyboard, keep it. If it sounds like a spec sheet, you are probably missing the connector that ties the facts together.
 

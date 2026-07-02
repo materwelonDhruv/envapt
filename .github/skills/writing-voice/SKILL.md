@@ -46,46 +46,50 @@ Google's rule: "Don't attribute human qualities to software or hardware." The fi
 
 This list is illustrative, not exhaustive. When a word isn't on it, apply the rule of thumb below and the one-line test at the end.
 
-| Banned                                                              | Why it fails                                                        | Replacement                                                              |
-| ------------------------------------------------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| **powers** ("X powers Y")                                           | anthropomorphizes; hides the mechanism                              | "X sets Y" / "Y reads X" / state the relationship                        |
-| **drives / fuels / underpins**                                      | same                                                                | "determines", "controls", "sets"                                         |
-| **leverage**                                                        | corporate for "use"                                                 | "use"                                                                    |
-| **seamless / seamlessly**                                           | unfalsifiable                                                       | delete, or name the condition                                            |
-| **effortless / effortlessly**                                       | hype                                                                | delete; show the one step it takes                                       |
-| **loud / loudly / fails loudly / throws loudly**                    | intensifier with no measurable meaning; dramatizes the failure      | name the mechanism: "throws `X`", "logs a warning", "exits non-zero"     |
-| **easy / easily / simple / intuitive / fun**                        | reader-relative; what's easy for you may not be for them            | delete, or state the steps it takes                                      |
-| **without any manual wiring / zero config**                         | sells absence of work                                               | state what happens automatically                                         |
-| **robust**                                                          | empty adjective                                                     | name the guarantee: "validates …", "throws on …"                         |
-| **performant**                                                      | vague performance claim                                             | a precise figure: "p99 under 5 ms", "O(1) lookup"                        |
-| **does more than X**                                                | tease, not information                                              | just state what it does                                                  |
-| **under the hood**                                                  | filler                                                              | "internally", or delete                                                  |
-| **out of the box**                                                  | filler                                                              | "by default"                                                             |
-| **first-class**                                                     | jargon                                                              | name the support: "supports gzip and brotli directly"                    |
-| **simply / just**                                                   | minimizes reader effort, often wrong                                | delete                                                                   |
-| **in order to**                                                     | wordiness                                                           | "to"                                                                     |
-| **utilize**                                                         | pompous for "use"                                                   | "use"                                                                    |
-| **please / please note**                                            | filler; never "please note"                                         | delete                                                                   |
-| **allow / allows you to**                                           | feature-centric and wordy                                           | "lets you", or rewrite from the reader's side: "You can …"               |
-| **enable** (= make available)                                       | vague; reserve for feature flags and security                       | "turn on"                                                                |
-| **unlock / enable you to**                                          | hype                                                                | "lets you" / "you can"                                                   |
-| **empower / supercharge / blazing-fast / lightning**                | pure marketing                                                      | delete; if speed matters, give a number                                  |
-| **powerful / flexible / elegant**                                   | self-praise                                                         | show the capability instead                                              |
-| **notably / clearly / of course / actually / essentially**          | editorializing; tells the reader how to feel                        | delete                                                                   |
-| **"some say" / "it is believed" / "research shows"** (unattributed) | weasel; implies a claim without making one                          | name the source, or delete                                               |
-| **handle / handling** (vague)                                       | hides behavior                                                      | name the action: "parses", "coerces", "rejects"                          |
-| **rich set of / suite of**                                          | brochure                                                            | "a set of", or just list them                                            |
-| **magic / magical**                                                 | mystifies behavior                                                  | explain the rule                                                         |
-| **reach for X**                                                     | folksy filler for "use"                                             | "use X", or name the action                                              |
-| **blast radius**                                                    | war metaphor for scope of impact; dramatizes it                     | name what's affected: "every caller of `parse()`", "all rows in `users`" |
-| **lives in / lives on**                                             | folksy for where something is defined; anthropomorphizes a location | "is defined in", "is set on", name the file or element                   |
-| **owns**                                                            | anthropomorphizes; a module isn't an agent with property            | name the relationship: "defines", "sets", "is the only writer of"        |
+<!--prettier-ignore-start-->
+
+| Banned | Why it fails | Replacement |
+|---|---|---|
+| **powers** ("X powers Y") | anthropomorphizes; hides the mechanism | "X sets Y" / "Y reads X" / state the relationship |
+| **drives / fuels / underpins** | same | "determines", "controls", "sets" |
+| **leverage** | corporate for "use" | "use" |
+| **seamless / seamlessly** | unfalsifiable | delete, or name the condition |
+| **effortless / effortlessly** | hype | delete; show the one step it takes |
+| **loud / loudly / fails loudly / throws loudly** | intensifier with no measurable meaning; dramatizes the failure | name the mechanism: "throws `X`", "logs a warning", "exits non-zero" |
+| **easy / easily / simple / intuitive / fun** | reader-relative; what's easy for you may not be for them | delete, or state the steps it takes |
+| **without any manual wiring / zero config** | sells absence of work | state what happens automatically |
+| **robust** | empty adjective | name the guarantee: "validates …", "throws on …" |
+| **performant** | vague performance claim | a precise figure: "p99 under 5 ms", "O(1) lookup" |
+| **does more than X** | tease, not information | just state what it does |
+| **under the hood** | filler | "internally", or delete |
+| **out of the box** | filler | "by default" |
+| **first-class** | jargon | name the support: "supports gzip and brotli directly" |
+| **simply / just** | minimizes reader effort, often wrong | delete |
+| **in order to** | wordiness | "to" |
+| **utilize** | pompous for "use" | "use" |
+| **please / please note** | filler; never "please note" | delete |
+| **allow / allows you to** | feature-centric and wordy | "lets you", or rewrite from the reader's side: "You can …" |
+| **enable** (= make available) | vague; reserve for feature flags and security | "turn on" |
+| **unlock / enable you to** | hype | "lets you" / "you can" |
+| **empower / supercharge / blazing-fast / lightning** | pure marketing | delete; if speed matters, give a number |
+| **powerful / flexible / elegant** | self-praise | show the capability instead |
+| **notably / clearly / of course / actually / essentially** | editorializing; tells the reader how to feel | delete |
+| **"some say" / "it is believed" / "research shows"** (unattributed) | weasel; implies a claim without making one | name the source, or delete |
+| **handle / handling** (vague) | hides behavior | name the action: "parses", "coerces", "rejects" |
+| **rich set of / suite of** | brochure | "a set of", or just list them |
+| **magic / magical** | mystifies behavior | explain the rule |
+| **reach for X** | folksy filler for "use" | "use X", or name the action |
+| **blast radius** | war metaphor for scope of impact; dramatizes it | name what's affected: "every caller of `parse()`", "all rows in `users`" |
+| **lives in / lives on** | folksy for where something is defined; anthropomorphizes a location | "is defined in", "is set on", name the file or element |
+| **owns** | anthropomorphizes; a module isn't an agent with property | name the relationship: "defines", "sets", "is the only writer of" |
+
+<!--prettier-ignore-end-->
 
 Rule of thumb: **if an adjective can't be replaced by a measurable fact or a code reference, delete it.**
 
 ### Banned punctuation
 
-Three marks are banned in prose (comments, commit bodies, docs, PR descriptions, and chat replies): the em-dash `—`, the semicolon `;`, and the colon `:`. They invite two-clause splices and list-y throat-clearing that read as AI prose. Use a comma, parentheses, or two separate sentences instead. This is a prose rule only. Code syntax that requires a colon or semicolon (type annotations, object keys, statement terminators) is exempt.
+The em-dash `—` and en-dash `–` are banned in prose outright, replace them with a hyphen, a comma, parentheses, or two sentences. The colon `:` and semicolon `;` are banned only as a **clause splice**, where the mark joins two independent clauses into one sentence (the AI-prose tell, two thoughts packed behind a mark instead of ended with a period). A colon that introduces a list, a code block, an enumeration, or a short label (a `two forms:` lead-in, an `npm: envapt` label) is standard and clearer than a period there, so keep it and do not flatten it. A semicolon in running prose is almost always a splice, so avoid it, its one legitimate use is separating list items that already contain commas. This is a prose rule only. Code syntax that requires a colon or semicolon (type annotations, object keys, statement terminators) is exempt.
 
 ```ts
 // Bad: colon splice + semicolon splice
@@ -93,6 +97,13 @@ Three marks are banned in prose (comments, commit bodies, docs, PR descriptions,
 // Good: one fact, plain comma
 // out of range would carry into the neighbouring field on decode.
 ```
+
+**Do not reflexively replace a `;` or `:` with ", so".** A semicolon often just sets two related facts side by side, and ", so" asserts a cause the original never claimed. It reads wrong when the real link is a design choice or a plain sequence, and stacking two "so"s in one sentence is a tell. Use ", so" only when the second clause genuinely results from the first. Otherwise use a period, or ", and" for a neutral join.
+
+- BAD, invented cause: "meaningless without a filesystem, so it throws" (the throw is a design choice, and ", so" overstates it as a consequence).
+- GOOD: "meaningless without a filesystem, and it throws instead of ignoring it".
+- BAD, stacked "so": "binds a source per file, so restore it after any swap so later tests see a clean default".
+- GOOD: "binds a source per file. Tests here swap it, so restore it afterward for a clean default."
 
 ---
 
