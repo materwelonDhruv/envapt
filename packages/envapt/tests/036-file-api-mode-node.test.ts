@@ -34,6 +34,11 @@ describe('Envapter.fileApiMode (node build)', () => {
             .with.property('code', EnvaptErrorCodes.InvalidUserDefinedConfig);
     });
 
+    it('names the type of a non-string invalid value in the error (302)', () => {
+        // justified: bypass the compile-time union to exercise the non-string guard branch
+        expect(() => (Envapter.fileApiMode = 42 as unknown as FileApiMode)).to.throw(EnvaptError, /got number/);
+    });
+
     it('runs the node file APIs under both modes with a filesystem source', () => {
         for (const mode of MODES) {
             Envapter.useSource(new FileSource());
