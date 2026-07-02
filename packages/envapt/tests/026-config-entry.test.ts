@@ -4,7 +4,7 @@ import process from 'node:process';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { Envapter } from '../src';
-import { EnvaptCache } from '../src/core/EnvapterBase';
+import { cache } from '../src/core/state';
 
 const FIXTURE_KEYS = ['CONFIG_KEY_A', 'CONFIG_KEY_B'] as const;
 const FIXTURE_PATH = resolve(import.meta.dirname, '.env.config-entry');
@@ -16,10 +16,10 @@ function cleanFixtureKeys(): void {
 describe('Envapter.load()', () => {
     it('eagerly populates the cache and is idempotent', () => {
         Envapter.load();
-        const size = EnvaptCache.size;
+        const size = cache.size;
         expect(size).to.be.greaterThan(0);
         Envapter.load();
-        expect(EnvaptCache.size).to.equal(size);
+        expect(cache.size).to.equal(size);
     });
 });
 

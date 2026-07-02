@@ -11,7 +11,6 @@ export type {
     ConverterFunction,
     EnvaptConverter,
     JsonValue,
-    TimeUnit,
     TimeFallback,
     EnvaptOptions,
     EnvProfile,

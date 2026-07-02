@@ -60,6 +60,7 @@ This list is illustrative, not exhaustive. When a word isn't on it, apply the ru
 | **without any manual wiring / zero config** | sells absence of work | state what happens automatically |
 | **robust** | empty adjective | name the guarantee: "validates …", "throws on …" |
 | **performant** | vague performance claim | a precise figure: "p99 under 5 ms", "O(1) lookup" |
+| **harden / hardening** | vague security verb, hides the change | name the change: "make private", "remove the export", "block the write" |
 | **does more than X** | tease, not information | just state what it does |
 | **under the hood** | filler | "internally", or delete |
 | **out of the box** | filler | "by default" |
@@ -78,7 +79,7 @@ This list is illustrative, not exhaustive. When a word isn't on it, apply the ru
 | **handle / handling** (vague) | hides behavior | name the action: "parses", "coerces", "rejects" |
 | **rich set of / suite of** | brochure | "a set of", or just list them |
 | **magic / magical** | mystifies behavior | explain the rule |
-| **reach for X** | folksy filler for "use" | "use X", or name the action |
+| **reach for X (or variations of reach)** | folksy filler for "use" | "use X", or name the action |
 | **blast radius** | war metaphor for scope of impact; dramatizes it | name what's affected: "every caller of `parse()`", "all rows in `users`" |
 | **lives in / lives on** | folksy for where something is defined; anthropomorphizes a location | "is defined in", "is set on", name the file or element |
 | **owns** | anthropomorphizes; a module isn't an agent with property | name the relationship: "defines", "sets", "is the only writer of" |

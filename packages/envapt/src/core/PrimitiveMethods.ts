@@ -1,5 +1,4 @@
 import { BuiltInConverters, ValueConverter } from '../converters';
-import { EnvapterBase } from './EnvapterBase';
 import { EnvironmentMethods } from './EnvironmentMethods';
 import { TemplateResolver } from '../engine/TemplateResolver';
 import { debugWarn } from '../infra/Debug';
@@ -25,13 +24,6 @@ export class PrimitiveMethods extends EnvironmentMethods implements EnvapterServ
     private static readonly service = new PrimitiveMethods();
     protected static readonly templateResolver: TemplateResolver = new TemplateResolver(PrimitiveMethods.service);
     protected static readonly valueConverter: ValueConverter = new ValueConverter(PrimitiveMethods.service);
-
-    // Read `EnvapterBase.strict` directly: `PrimitiveMethods._strict` would resolve to the
-    // BaseClass default because a `Envapter.strict = true` write lands as an own-property
-    // on `Envapter`, which is a descendant of `PrimitiveMethods`, not an ancestor.
-    isStrict(): boolean {
-        return EnvapterBase.strict;
-    }
 
     protected static override resolveForMirror(key: string, value: string): string {
         return this.templateResolver.resolveTemplate(key, value);
