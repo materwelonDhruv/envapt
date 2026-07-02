@@ -2,7 +2,7 @@ import { AdvancedMethods } from '../core';
 import { resolveRequired } from '../core/AdvancedMethods';
 import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
 
-export { EnvaptCache, Environment } from '../core';
+export { Environment } from '../core';
 
 /**
  * Main configuration class for environment variable management.

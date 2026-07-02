@@ -1,5 +1,5 @@
 import { ValueConverter } from '../converters';
-import { EnvaptCache } from '../core';
+import { cache } from '../core/state';
 import { Envapter } from '../engine/Envapter';
 import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
 
@@ -41,7 +41,7 @@ export function resolveDecoratorValue<TFallback>(
 
     // .has(), not a get()-truthiness check, so a cached undefined (fallback: undefined, or a converter
     // that returns undefined) resolves once instead of re-running on every access
-    if (EnvaptCache.has(cacheKey)) return EnvaptCache.get(cacheKey) as TFallback | null | undefined;
+    if (cache.has(cacheKey)) return cache.get(cacheKey) as TFallback | null | undefined;
 
     const envapter = new Envapter();
 
@@ -61,6 +61,6 @@ export function resolveDecoratorValue<TFallback>(
             ? (valueConverter.convertWithSchema(key, schema, fallback, hasFallback) as TFallback)
             : valueConverter.convertValue(key, fallback, converter, hasFallback);
 
-    EnvaptCache.set(cacheKey, value);
+    cache.set(cacheKey, value);
     return value;
 }

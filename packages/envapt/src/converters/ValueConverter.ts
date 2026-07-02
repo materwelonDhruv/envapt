@@ -1,4 +1,5 @@
 import { BuiltInConverters } from './BuiltInConverters';
+import { state } from '../core/state';
 import { Validator } from '../engine/Validators';
 import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
 
@@ -139,7 +140,7 @@ export class ValueConverter {
             return fallback;
         }
 
-        const result = BuiltInConverters.processArrayConverter(parsed, resolvedConverter, this.envService.isStrict());
+        const result = BuiltInConverters.processArrayConverter(parsed, resolvedConverter, state.strict);
         return result as TFallback;
     }
 

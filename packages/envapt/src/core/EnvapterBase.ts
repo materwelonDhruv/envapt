@@ -1,45 +1,27 @@
+import { cache, state } from './state';
 import { Validator } from '../engine/Validators';
 import { debugVerbose, getDebugLevel, setDebugLevel } from '../infra/Debug';
 import { loadDotenv } from '../infra/Dotenv';
 import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
 import { bindRuntimeFromSource } from '../infra/runtime';
-import { UnboundSource } from '../sources/UnboundSource';
 
 import type { DebugLevel } from '../infra/Debug';
-import type { EnvFileOptions } from '../infra/Dotenv';
 import type { EnvKeyInput, FileApiMode, FileCapableSource, Source } from '../types';
 
 /** @internal */
-export const EnvaptCache = new Map<string, unknown>();
-
-/** @internal */
 export abstract class EnvapterBase {
-    protected static _envPaths: string[] = ['.env'];
-    protected static _envPathsExplicitlySet = false;
-    protected static _baseDir: string | undefined = undefined;
-    protected static _userDefinedEnvFileOptions: EnvFileOptions = {};
-    protected static _strict = false;
-    protected static _syncProcessEnv = false;
-    protected static _fileApiMode: FileApiMode = 'warn';
-    // Loader-written keys only (collisions skipped). Refilled on every cache rebuild.
-    protected static _dotenvAddedKeys: Set<string> = new Set<string>();
-    // Unbound by default so non-Node builds throw NoSourceBound on read until useSource() is called.
-    // NodeEnvapter's static block binds FileSource when referenced, so `import 'envapt'` needs no setup.
-    protected static _source: Source = new UnboundSource();
-
     /**
      * Enable or disable strict mode. Default `false`. Setting refreshes the cache so
      * previously-cached converted values get re-evaluated under the new rule.
      */
     static set strict(value: boolean) {
-        // Anchored to EnvapterBase: `this._strict` would write an own-property on the subclass that base readers miss.
-        EnvapterBase._strict = value;
+        state.strict = value;
         // rebuild via `this` so the subclass `resolveEffectivePaths` override is honored (EnvapterBase would skip it).
         this.refreshCache();
     }
 
     static get strict(): boolean {
-        return EnvapterBase._strict;
+        return state.strict;
     }
 
     /**
@@ -68,14 +50,13 @@ export abstract class EnvapterBase {
      */
     static set syncProcessEnv(value: boolean) {
         Validator.validateSyncProcessEnv(value);
-        const previous = EnvapterBase._syncProcessEnv;
-        // Anchored to EnvapterBase: `this._syncProcessEnv` would write an own-property on the subclass that base readers miss.
-        EnvapterBase._syncProcessEnv = value;
-        if (!previous && value && EnvaptCache.size > 0) this.mirrorToProcessEnv();
+        const previous = state.syncProcessEnv;
+        state.syncProcessEnv = value;
+        if (!previous && value && cache.size > 0) this.mirrorToProcessEnv();
     }
 
     static get syncProcessEnv(): boolean {
-        return EnvapterBase._syncProcessEnv;
+        return state.syncProcessEnv;
     }
 
     /**
@@ -86,26 +67,26 @@ export abstract class EnvapterBase {
      */
     static set fileApiMode(mode: FileApiMode) {
         Validator.validateFileApiMode(mode);
-        // anchored to EnvapterBase like _strict. no refreshCache, it only gates the portable stubs.
-        EnvapterBase._fileApiMode = mode;
+        // no refreshCache, this only gates the portable stubs.
+        state.fileApiMode = mode;
     }
 
     static get fileApiMode(): FileApiMode {
-        return EnvapterBase._fileApiMode;
+        return state.fileApiMode;
     }
 
     protected static treatAsMissing(value: string | undefined): boolean {
         if (value === undefined || value === '') return true;
-        if (EnvapterBase._strict && value.trim() === '') return true;
+        if (state.strict && value.trim() === '') return true;
         return false;
     }
 
     // No baseDir: candidate returned unchanged so the source resolves it against its own default
     // (process.cwd() on Node). Resolution goes through the source to keep this class node-free.
     protected static resolveAgainstBase(candidate: string): string {
-        const baseDir = EnvapterBase._baseDir;
+        const baseDir = state.baseDir;
         if (baseDir === undefined) return candidate;
-        const source = EnvapterBase._source;
+        const source = state.source;
         /* v8 ignore next -- @preserve callers are all file-gated, so the source is never bare here */
         if (!source.supportsFiles) return candidate;
         return source.resolvePath(baseDir, candidate);
@@ -126,34 +107,34 @@ export abstract class EnvapterBase {
     // Existence via the bound source instead of fs.existsSync/accessSync: a file "exists" when the
     // source can read it.
     protected static sourceFileExists(path: string): boolean {
-        const source = EnvapterBase._source;
+        const source = state.source;
         /* v8 ignore next -- @preserve every caller is file-gated, so this never sees a bare source */
         if (!source.supportsFiles) return false;
         return source.readFile(path, 'utf8') !== undefined;
     }
 
     protected static refreshCache(): void {
-        EnvaptCache.clear();
-        EnvapterBase._dotenvAddedKeys = new Set();
+        cache.clear();
+        state.dotenvAddedKeys = new Set();
         debugVerbose('cache cleared, reloading config');
         void this.config; // getter rebuilds the cache as a side effect
     }
 
     protected static mirrorToProcessEnv(): void {
-        if (EnvapterBase._dotenvAddedKeys.size === 0) return;
-        const source = EnvapterBase._source;
+        if (state.dotenvAddedKeys.size === 0) return;
+        const source = state.source;
         /* v8 ignore next -- @preserve dotenv keys only accumulate under a file source, so the delta implies supportsFiles here */
         if (!source.supportsFiles) return;
         const mirrored: Record<string, string> = {};
-        for (const key of EnvapterBase._dotenvAddedKeys) {
-            const value = EnvaptCache.get(key);
+        for (const key of state.dotenvAddedKeys) {
+            const value = cache.get(key);
             /* v8 ignore next -- @preserve loader only writes strings, defensive against future cache contents */
             if (typeof value !== 'string') continue;
             mirrored[key] = this.resolveForMirror(key, value);
             debugVerbose(`mirrored ${key} to the ambient environment`);
         }
         source.writeVars(mirrored);
-        debugVerbose(`mirrored ${EnvapterBase._dotenvAddedKeys.size} keys to the ambient environment`);
+        debugVerbose(`mirrored ${state.dotenvAddedKeys.size} keys to the ambient environment`);
     }
 
     // The template resolver is defined in PrimitiveMethods, and EnvapterBase can't call it without an
@@ -167,7 +148,7 @@ export abstract class EnvapterBase {
     // cascade + configureProfiles when envPaths was never explicitly set.
     protected static resolveEffectivePaths(): string[] {
         /* v8 ignore next -- @preserve */
-        return this._envPaths.map((p) => this.resolveAgainstBase(p));
+        return state.envPaths.map((p) => this.resolveAgainstBase(p));
     }
 
     protected static resolveKeyInput(keyInput: EnvKeyInput): { key: string; value: string | undefined } {
@@ -197,8 +178,8 @@ export abstract class EnvapterBase {
     }
 
     protected static get config(): Map<string, unknown> {
-        if (EnvaptCache.size === 0) {
-            const source = EnvapterBase._source;
+        if (cache.size === 0) {
+            const source = state.source;
             // Clone so the loader and downstream reads never mutate the source's backing object.
             const isolatedEnv: Record<string, string> = { ...source.readVars() };
 
@@ -206,7 +187,7 @@ export abstract class EnvapterBase {
             // Sources without a filesystem (injected objects on the browser or Workers) skip the
             // .env cascade, profiles, and envPaths. Only the readVars() snapshot populates the cache.
             if (source.supportsFiles) {
-                debugVerbose(`base dir: ${EnvapterBase._baseDir ?? 'working directory'}`);
+                debugVerbose(`base dir: ${state.baseDir ?? 'working directory'}`);
                 // Outside the try below so a missing configured profile path surfaces its EnvaptError. Only dotenv parse errors stay caught.
                 const effectivePaths = this.resolveEffectivePaths();
                 debugVerbose(
@@ -214,20 +195,20 @@ export abstract class EnvapterBase {
                 );
                 try {
                     added = loadDotenv({
-                        ...this._userDefinedEnvFileOptions,
+                        ...state.userDefinedEnvFileOptions,
                         path: effectivePaths,
                         processEnv: isolatedEnv,
                         readFile: source.readFile.bind(source)
                     });
                 } catch {}
             }
-            EnvapterBase._dotenvAddedKeys = added;
-            for (const [key, value] of Object.entries(isolatedEnv)) EnvaptCache.set(key, value);
-            debugVerbose(`cache populated: ${EnvaptCache.size} keys total`);
-            if (EnvapterBase._syncProcessEnv) this.mirrorToProcessEnv();
+            state.dotenvAddedKeys = added;
+            for (const [key, value] of Object.entries(isolatedEnv)) cache.set(key, value);
+            debugVerbose(`cache populated: ${cache.size} keys total`);
+            if (state.syncProcessEnv) this.mirrorToProcessEnv();
         }
 
-        return EnvaptCache;
+        return cache;
     }
 
     /**
@@ -245,7 +226,7 @@ export abstract class EnvapterBase {
      * `PortableSource` (or any `Source`) before reading. Clears and rebuilds the cache.
      */
     static useSource(source: Source): void {
-        EnvapterBase._source = source;
+        state.source = source;
         bindRuntimeFromSource(source);
         this.refreshCache();
     }

@@ -1,8 +1,9 @@
 import { EnvapterBase } from './EnvapterBase';
+import { state } from './state';
 import { debugWarn } from '../infra/Debug';
 import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
 
-import type { EnvProfile, ProfilesConfig } from '../types';
+import type { EnvProfile } from '../types';
 
 /**
  * Environment types supported by Envapter
@@ -49,19 +50,15 @@ function parseEnvironment(raw: string): Environment | undefined {
  * @internal
  */
 export class EnvironmentMethods extends EnvapterBase {
-    protected static _environment: Environment | undefined;
-    protected static _environmentExplicitlySet = false;
-    protected static _profiles: ProfilesConfig | undefined;
-
     protected static determineEnvironment(env?: string | Environment): void {
         if (typeof env === 'number') {
-            this._environment = env;
-            this._environmentExplicitlySet = true;
+            state.environment = env;
+            state.environmentExplicitlySet = true;
             return;
         }
         if (typeof env === 'string') {
-            this._environment = parseEnvironment(env) ?? Environment.Development;
-            this._environmentExplicitlySet = true;
+            state.environment = parseEnvironment(env) ?? Environment.Development;
+            state.environmentExplicitlySet = true;
             return;
         }
 
@@ -71,16 +68,16 @@ export class EnvironmentMethods extends EnvapterBase {
         });
         if (raw === undefined) {
             debugWarn(`no environment set (looked for ${ENV_KEYS.join(', ')}); defaulting to development`);
-            this._environment = Environment.Development;
+            state.environment = Environment.Development;
             return;
         }
         const parsed = parseEnvironment(raw);
         if (parsed === undefined) {
             debugWarn(`unrecognized environment "${raw}"; defaulting to development`);
-            this._environment = Environment.Development;
+            state.environment = Environment.Development;
             return;
         }
-        this._environment = parsed;
+        state.environment = parsed;
     }
 
     private static firstEnvKeyValue(read: (key: string) => string | undefined): string | undefined {
@@ -95,10 +92,10 @@ export class EnvironmentMethods extends EnvapterBase {
      * Get the current application environment
      */
     static get environment(): Environment {
-        if (this._environment === undefined) {
+        if (state.environment === undefined) {
             this.determineEnvironment();
         }
-        return this._environment as Environment;
+        return state.environment as Environment;
     }
 
     /**
@@ -183,7 +180,7 @@ export class EnvironmentMethods extends EnvapterBase {
         // from current state. If the user explicitly set Envapter.environment = X, preserve
         // that value through the refresh. The immediate re-hydration inside super.refreshCache()
         // will use it for cascade selection.
-        if (!this._environmentExplicitlySet) this._environment = undefined;
+        if (!state.environmentExplicitlySet) state.environment = undefined;
         super.refreshCache();
     }
 
@@ -193,9 +190,9 @@ export class EnvironmentMethods extends EnvapterBase {
      * @internal
      */
     protected static getCascadeEnvironment(): Environment {
-        if (this._environment !== undefined) return this._environment;
+        if (state.environment !== undefined) return state.environment;
 
-        const vars = EnvapterBase._source.readVars();
+        const vars = state.source.readVars();
         const raw = this.firstEnvKeyValue((key) => vars[key]);
         return raw === undefined ? Environment.Development : (parseEnvironment(raw) ?? Environment.Development);
     }
@@ -242,10 +239,10 @@ export class EnvironmentMethods extends EnvapterBase {
      * @internal
      */
     protected static override resolveEffectivePaths(): string[] {
-        if (this._envPathsExplicitlySet) return this._envPaths.map((p) => this.resolveAgainstBase(p));
+        if (state.envPathsExplicitlySet) return state.envPaths.map((p) => this.resolveAgainstBase(p));
 
         const env = this.getCascadeEnvironment();
-        const profileEntry = this._profiles?.[env];
+        const profileEntry = state.profiles?.[env];
         const profilePaths = this.normalizeProfilePaths(profileEntry);
 
         // Validate that explicitly configured profile paths exist for the active env.
@@ -259,7 +256,7 @@ export class EnvironmentMethods extends EnvapterBase {
             }
         }
 
-        const cascade = this._profiles?.useDefaults === false ? [] : this.buildCascadePaths(env);
+        const cascade = state.profiles?.useDefaults === false ? [] : this.buildCascadePaths(env);
         return [...profilePaths.map((p) => this.resolveAgainstBase(p)), ...cascade];
     }
 }

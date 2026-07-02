@@ -2,8 +2,7 @@ import process from 'node:process';
 
 import { Envapter } from './Envapter';
 import { Validator } from './Validators';
-import { EnvapterBase } from '../core/EnvapterBase';
-import { EnvironmentMethods } from '../core/EnvironmentMethods';
+import { state } from '../core/state';
 import { setRuntimeSink } from '../infra/runtime';
 import { FileSource } from '../sources/FileSource';
 
@@ -15,9 +14,6 @@ import type { ProfilesConfig } from '../types';
  * path selection, base directory, dotenv options, and per-environment profiles). On the portable
  * build (Workers, the browser, edge) these same APIs warn once and no-op by default, controlled by
  * `Envapter.fileApiMode`.
- *
- * Writes target the state-owning class (`EnvapterBase`/`EnvironmentMethods`), not `this`: the engine
- * reads that state through `EnvapterBase`-anchored paths, so a subclass own-property would be invisible.
  * @public
  */
 export class NodeEnvapter extends Envapter {
@@ -37,15 +33,15 @@ export class NodeEnvapter extends Envapter {
      * `Envapter.configureProfiles` configuration are ignored.
      */
     static set envPaths(paths: string[] | string) {
-        this.assertFileApiSupported('envPaths', EnvapterBase._source);
+        this.assertFileApiSupported('envPaths', state.source);
         const newPaths = Array.isArray(paths) ? paths : [paths];
         Validator.validateEnvFilesExist(
             newPaths.map((p) => this.resolveAgainstBase(p)),
             (p) => this.sourceFileExists(p)
         );
 
-        EnvapterBase._envPaths = newPaths;
-        EnvapterBase._envPathsExplicitlySet = true;
+        state.envPaths = newPaths;
+        state.envPathsExplicitlySet = true;
         this.refreshCache();
     }
 
@@ -53,7 +49,7 @@ export class NodeEnvapter extends Envapter {
      * Get currently configured .env file paths
      */
     static get envPaths(): string[] {
-        return EnvapterBase._envPaths;
+        return state.envPaths;
     }
 
     /**
@@ -67,21 +63,21 @@ export class NodeEnvapter extends Envapter {
      * Unset (`undefined`) restores `process.cwd()` resolution.
      */
     static set baseDir(value: string | URL | undefined) {
-        const source = EnvapterBase._source;
+        const source = state.source;
         this.assertFileApiSupported('baseDir', source);
-        EnvapterBase._baseDir = value === undefined ? undefined : source.normalizeBaseDir(value);
+        state.baseDir = value === undefined ? undefined : source.normalizeBaseDir(value);
         this.refreshCache();
     }
 
     /** The configured base directory, or `undefined` when relative paths resolve against the working directory. */
     static get baseDir(): string | undefined {
-        return EnvapterBase._baseDir;
+        return state.baseDir;
     }
 
     /** Set the env file loader options (`encoding`, `override`). Refreshes the cache. */
     static set envFileOptions(config: EnvFileOptions) {
         Validator.validateEnvFileOptions(config);
-        EnvapterBase._userDefinedEnvFileOptions = config;
+        state.userDefinedEnvFileOptions = config;
         this.refreshCache();
     }
 
@@ -89,7 +85,7 @@ export class NodeEnvapter extends Envapter {
      * Get current env file loader options
      */
     static get envFileOptions(): EnvFileOptions {
-        return EnvapterBase._userDefinedEnvFileOptions;
+        return state.userDefinedEnvFileOptions;
     }
 
     /**
@@ -110,8 +106,8 @@ export class NodeEnvapter extends Envapter {
      * ```
      */
     static configureProfiles(config: ProfilesConfig): void {
-        this.assertFileApiSupported('configureProfiles', EnvapterBase._source);
-        EnvironmentMethods._profiles = config;
+        this.assertFileApiSupported('configureProfiles', state.source);
+        state.profiles = config;
         this.refreshCache();
     }
 
@@ -121,13 +117,11 @@ export class NodeEnvapter extends Envapter {
      * Returns the resolver to the pure dotenv-flow cascade.
      */
     static resetProfiles(): void {
-        EnvironmentMethods._profiles = undefined;
-        EnvapterBase._envPaths = ['.env'];
-        EnvapterBase._envPathsExplicitlySet = false;
-        // Clear via `this`, not EnvironmentMethods: determineEnvironment writes `_environment*` via
-        // `this`, so a base-anchored clear would leave a subclass own-property shadowing it.
-        this._environmentExplicitlySet = false;
-        this._environment = undefined;
+        state.profiles = undefined;
+        state.envPaths = ['.env'];
+        state.envPathsExplicitlySet = false;
+        state.environmentExplicitlySet = false;
+        state.environment = undefined;
         this.refreshCache();
     }
 }

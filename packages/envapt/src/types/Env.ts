@@ -7,7 +7,6 @@ type EnvKeyInput = string | readonly [string, ...string[]];
 interface EnvapterService {
     getRaw(key: EnvKeyInput): string | undefined;
     get(key: EnvKeyInput, def?: string): string | undefined;
-    isStrict(): boolean;
 }
 
 export type { EnvKeyInput, EnvapterService };

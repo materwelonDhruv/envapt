@@ -1,3 +1,4 @@
+import { state } from '../core/state';
 import { debugWarn } from '../infra/Debug';
 import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
 
@@ -15,7 +16,7 @@ export class TemplateResolver {
 
     resolveTemplate(key: string, value: string, stack: Set<string> = new Set<string>()): string {
         stack.add(key);
-        const strict = this.envService.isStrict();
+        const strict = state.strict;
 
         const out = value.replace(this.TEMPLATE_REGEX, (template) => {
             const variable = template.slice(2, -1);
