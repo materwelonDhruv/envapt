@@ -2,6 +2,7 @@
 interface BareSource {
     readVars(): Record<string, string>;
     readonly supportsFiles?: false;
+    readVar?(key: string): string | undefined;
 }
 
 // a filesystem-backed source. supportsFiles true unlocks the .env cascade and baseDir. FileSource implements it.
@@ -12,6 +13,7 @@ interface FileCapableSource {
     resolvePath(baseDir: string, candidate: string): string;
     normalizeBaseDir(value: string | URL): string;
     writeVars(vars: Record<string, string>): void;
+    readVar?(key: string): string | undefined;
 }
 
 /**

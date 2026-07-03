@@ -121,6 +121,10 @@ envapt reads through a pluggable `Source`, and the build you import binds the ri
 
 `PortableSource` snapshots the object and JSON-stringifies non-string values, so you pass the runtime's object straight through. Any object with a `readVars(): Record<string, string>` method is a valid `Source`.
 
+For a source that reads one key at a time and cannot list its keys, pass a `(key) => string | undefined` reader to `useSource`, and envapt calls it per key on the first read, caching the result.
+
+`merge(...members)` composes several sources, last-wins across their `readVars()` snapshots. A member may be a `(key) => string | undefined` reader, which fills a key missing from every snapshot. At most one member is filesystem-backed, and the `.env` cascade and file APIs route to it. `merge` throws `EnvaptError` `InvalidMergedSource` with no members or more than one file-backed member.
+
 On the portable build (Workers, the browser, edge runtimes) there is no filesystem: the file-only config APIs (`envPaths`, `baseDir`, `envFileOptions`, `configureProfiles`, `resetProfiles`) warn once and no-op by default. Set `Envapter.fileApiMode = 'throw'` to make them throw `EnvaptError` `FileApiUnsupported` instead. A read before `useSource` throws `NoSourceBound` regardless of `fileApiMode`.
 
 ## Loading .env files

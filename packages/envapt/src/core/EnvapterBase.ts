@@ -3,6 +3,7 @@ import { cache, state } from './state';
 import { Validator } from '../engine/Validators';
 import { getDebugLevel, setDebugLevel } from '../infra/Debug';
 import { bindRuntimeFromSource } from '../infra/runtime';
+import { normalizeSource } from '../sources/normalizeSource';
 
 import type { DebugLevel } from '../infra/Debug';
 import type { EnvKeyInput, FileApiMode, Source } from '../types';
@@ -85,11 +86,13 @@ export abstract class EnvapterBase {
     /**
      * Bind the environment {@link Source}. On Node the entry binds {@link FileSource} for you
      * (a `process.env` snapshot plus the `.env` cascade). On the browser or Workers, pass a
-     * `PortableSource` (or any `Source`) before reading. Clears and rebuilds the cache.
+     * `PortableSource` (or any `Source`) before reading. Pass a `(key) => string | undefined` reader for
+     * a source that reads one key at a time and cannot list its keys. Clears and rebuilds the cache.
      */
-    static useSource(source: Source): void {
-        state.source = source;
-        bindRuntimeFromSource(source);
+    static useSource(source: Source | ((key: string) => string | undefined)): void {
+        const resolved = normalizeSource(source);
+        state.source = resolved;
+        bindRuntimeFromSource(resolved);
         refreshCache();
     }
 

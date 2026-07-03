@@ -1,19 +1,24 @@
+import { normalizeSource } from './normalizeSource';
 import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
 
-import type { FileCapableSource, Source } from '../types';
+import type { BareSource, FileCapableSource, Source } from '../types';
 
 /**
- * Compose several sources into one, read last-wins. A later member's value overrides an earlier
- * member's value for the same key. Bind the result with `Envapter.useSource`. Throws
- * {@link EnvaptErrorCodes.InvalidMergedSource} with no members or with more than one file-backed member.
+ * Compose several sources into one, read last-wins. A later member's `readVars()` value overrides an
+ * earlier member's for the same key. A member may be a `(key) => string | undefined` reader for a
+ * source that reads one key at a time, and it fills a key missing from every snapshot. Bind the result
+ * with `Envapter.useSource`. Throws {@link EnvaptErrorCodes.InvalidMergedSource} with no members or with
+ * more than one file-backed member.
  * @public
  */
-export function merge(...members: Source[]): Source {
+export function merge(...members: (Source | ((key: string) => string | undefined))[]): Source {
     if (members.length === 0) {
         throw new EnvaptError(EnvaptErrorCodes.InvalidMergedSource, 'merge requires at least one source.');
     }
 
-    const fileMembers = members.filter((m): m is FileCapableSource => m.supportsFiles === true);
+    const sources = members.map(normalizeSource);
+
+    const fileMembers = sources.filter((m): m is FileCapableSource => m.supportsFiles === true);
     if (fileMembers.length > 1) {
         throw new EnvaptError(
             EnvaptErrorCodes.InvalidMergedSource,
@@ -23,12 +28,31 @@ export function merge(...members: Source[]): Source {
 
     const readVars = (): Record<string, string> => {
         const merged: Record<string, string> = {};
-        for (const m of members) Object.assign(merged, m.readVars());
+        for (const m of sources) Object.assign(merged, m.readVars());
         return merged;
     };
 
+    const readers = sources.filter(
+        (m): m is Source & { readVar: (key: string) => string | undefined } => typeof m.readVar === 'function'
+    );
+    const readVar =
+        readers.length === 0
+            ? undefined
+            : (key: string): string | undefined => {
+                  let value: string | undefined;
+                  for (const m of readers) {
+                      const found = m.readVar(key);
+                      if (found !== undefined) value = found;
+                  }
+                  return value;
+              };
+
     const fileMember = fileMembers[0];
-    if (!fileMember) return { readVars };
+    if (!fileMember) {
+        const bare: BareSource = { readVars };
+        if (readVar) bare.readVar = readVar;
+        return bare;
+    }
 
     const fileCapable: FileCapableSource = {
         readVars,
@@ -38,5 +62,6 @@ export function merge(...members: Source[]): Source {
         normalizeBaseDir: (value) => fileMember.normalizeBaseDir(value),
         writeVars: (vars) => fileMember.writeVars(vars)
     };
+    if (readVar) fileCapable.readVar = readVar;
     return fileCapable;
 }
