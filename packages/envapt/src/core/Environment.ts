@@ -8,6 +8,7 @@
  * - `MODE`
  *
  * @public
+ * @see {@link https://envapt.materwelon.dev/docs/environment#detecting-the-environment}
  */
 export enum Environment {
     /** The default when no environment variable names a known environment. */

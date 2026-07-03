@@ -6,6 +6,7 @@ import { debugVerbose, debugWarn } from './Debug';
  * For debug output, use `Envapter.debug` (or the `ENVAPT_DEBUG` env var).
  *
  * @public
+ * @see {@link https://envapt.materwelon.dev/docs/configuration#which-files-load}
  */
 export interface EnvFileOptions {
     /** Encoding for reading .env files. Defaults to 'utf8'. */

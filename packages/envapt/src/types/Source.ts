@@ -22,6 +22,7 @@ interface FileCapableSource {
  * environment (an injected object on the browser, the Cloudflare `env` binding on Workers). Bind one
  * with `Envapter.useSource`.
  * @public
+ * @see {@link https://envapt.materwelon.dev/docs/sources#any-object-can-be-a-source}
  */
 type Source = BareSource | FileCapableSource;
 

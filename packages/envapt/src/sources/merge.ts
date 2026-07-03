@@ -10,6 +10,7 @@ import type { BareSource, FileCapableSource, Source } from '../types';
  * with `Envapter.useSource`. Throws {@link EnvaptErrorCodes.InvalidMergedSource} with no members or with
  * more than one file-backed member.
  * @public
+ * @see {@link https://envapt.materwelon.dev/docs/sources#combining-sources}
  */
 export function merge(...members: (Source | ((key: string) => string | undefined))[]): Source {
     if (members.length === 0) {

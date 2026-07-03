@@ -8,6 +8,7 @@ import { readRuntimeEnv, writeRuntimeLine } from './runtime';
  * (whether it returns a fallback or `undefined`). `verbose` adds every loaded file,
  * per-file key count, per-key load lines, and effective-paths / cache-rebuild notices.
  * @public
+ * @see {@link https://envapt.materwelon.dev/docs/configuration#debug-logging}
  */
 export type DebugLevel = 'silent' | 'warn' | 'verbose';
 

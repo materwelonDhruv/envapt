@@ -10,6 +10,7 @@ import type { BareSource } from '../types';
  * still apply, which means they must be JSON-serializable. Without a filesystem the `.env` cascade and
  * file APIs do not apply.
  * @public
+ * @see {@link https://envapt.materwelon.dev/docs/sources#the-providers}
  */
 export class PortableSource implements BareSource {
     /** Always `false`. With no filesystem, the `.env` cascade and file APIs do not apply. */

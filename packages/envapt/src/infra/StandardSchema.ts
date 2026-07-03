@@ -8,6 +8,7 @@
  * `SchemaMustBeSync` brand in `Types.ts`) and at runtime by the Parser dispatch.
  *
  * @public
+ * @see {@link https://envapt.materwelon.dev/docs/standard-schema#any-conformant-validator-or-none}
  */
 export interface StandardSchemaV1<Input = unknown, Output = Input> {
     /** The Standard Schema entry point holding the validator and the inferred input/output types. */

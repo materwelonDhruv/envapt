@@ -13,6 +13,7 @@ export abstract class EnvapterBase {
     /**
      * Enable or disable strict mode. Default `false`. Setting refreshes the cache so
      * previously-cached converted values get re-evaluated under the new rule.
+     * @see {@link https://envapt.materwelon.dev/docs/strict-mode#what-strict-mode-changes}
      */
     static set strict(value: boolean) {
         state.strict = value;
@@ -27,6 +28,7 @@ export abstract class EnvapterBase {
      * Set the debug log level. Defaults to `silent`. When unset, reads `ENVAPT_DEBUG` from the
      * bound source on first access. The setter overrides any env-var value. Output goes to stderr
      * on Node (the console elsewhere), prefixed with `[envapt]`.
+     * @see {@link https://envapt.materwelon.dev/docs/configuration#debug-logging}
      */
     static set debug(level: DebugLevel) {
         setDebugLevel(level);
@@ -46,6 +48,7 @@ export abstract class EnvapterBase {
      * Flipping `false → true` mirrors the existing tracked delta immediately (no cache
      * refresh). Flipping `true → false` is one-way: previously mirrored keys remain in
      * `process.env` until the process exits.
+     * @see {@link https://envapt.materwelon.dev/docs/configuration#mirroring-to-processenv}
      */
     static set syncProcessEnv(value: boolean) {
         Validator.validateSyncProcessEnv(value);
@@ -63,6 +66,7 @@ export abstract class EnvapterBase {
      * `envFileOptions`, `configureProfiles`, `resetProfiles`). `'warn'` (the default) warns once and
      * no-ops, `'throw'` throws {@link EnvaptError} `FileApiUnsupported`. The node build runs these
      * APIs normally and this value has no effect there.
+     * @see {@link https://envapt.materwelon.dev/docs/compatibility#binding-by-runtime}
      */
     static set fileApiMode(mode: FileApiMode) {
         Validator.validateFileApiMode(mode);
@@ -78,6 +82,7 @@ export abstract class EnvapterBase {
      * Eagerly load the `.env` cascade now instead of lazily on the first read. Idempotent: a no-op
      * once the cache is built. Useful before mirroring to `process.env` (see {@link syncProcessEnv}),
      * which is what the `envapt/config` side-effect entry does.
+     * @see {@link https://envapt.materwelon.dev/docs/configuration#which-files-load}
      */
     static load(): void {
         ensureLoaded();
@@ -88,6 +93,7 @@ export abstract class EnvapterBase {
      * (a `process.env` snapshot plus the `.env` cascade). On the browser or Workers, pass a
      * `PortableSource` (or any `Source`) before reading. Pass a `(key) => string | undefined` reader for
      * a source that reads one key at a time and cannot list its keys. Clears and rebuilds the cache.
+     * @see {@link https://envapt.materwelon.dev/docs/sources#the-providers}
      */
     static useSource(source: Source | ((key: string) => string | undefined)): void {
         const resolved = normalizeSource(source);
@@ -98,6 +104,7 @@ export abstract class EnvapterBase {
 
     /**
      * Read an environment variable as its raw string, skipping parsing and conversion.
+     * @see {@link https://envapt.materwelon.dev/docs/envapter#raw-values}
      */
     getRaw(key: EnvKeyInput): string | undefined {
         return resolveKeyInput(key).value;

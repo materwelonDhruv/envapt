@@ -33,6 +33,7 @@ export class NodeEnvapter extends Envapter {
      *
      * When set, this takes absolute precedence. The dotenv-flow auto-cascade and any
      * `Envapter.configureProfiles` configuration are ignored.
+     * @see {@link https://envapt.materwelon.dev/docs/configuration#which-files-load}
      */
     static set envPaths(paths: string[] | string) {
         assertFileApiSupported('envPaths', state.source);
@@ -49,6 +50,7 @@ export class NodeEnvapter extends Envapter {
 
     /**
      * Get currently configured .env file paths
+     * @see {@link https://envapt.materwelon.dev/docs/configuration#which-files-load}
      */
     static get envPaths(): string[] {
         return state.envPaths;
@@ -63,6 +65,7 @@ export class NodeEnvapter extends Envapter {
      *
      * Set this before `envPaths` so relative `envPaths` validate against the right directory.
      * Unset (`undefined`) restores `process.cwd()` resolution.
+     * @see {@link https://envapt.materwelon.dev/docs/configuration#reading-from-a-fixed-directory}
      */
     static set baseDir(value: string | URL | undefined) {
         const source = state.source;
@@ -71,12 +74,18 @@ export class NodeEnvapter extends Envapter {
         refreshCache();
     }
 
-    /** The configured base directory, or `undefined` when relative paths resolve against the working directory. */
+    /**
+     * The configured base directory, or `undefined` when relative paths resolve against the working directory.
+     * @see {@link https://envapt.materwelon.dev/docs/configuration#reading-from-a-fixed-directory}
+     */
     static get baseDir(): string | undefined {
         return state.baseDir;
     }
 
-    /** Set the env file loader options (`encoding`, `override`). Refreshes the cache. */
+    /**
+     * Set the env file loader options (`encoding`, `override`). Refreshes the cache.
+     * @see {@link https://envapt.materwelon.dev/docs/configuration#which-files-load}
+     */
     static set envFileOptions(config: EnvFileOptions) {
         Validator.validateEnvFileOptions(config);
         state.userDefinedEnvFileOptions = config;
@@ -85,6 +94,7 @@ export class NodeEnvapter extends Envapter {
 
     /**
      * Get current env file loader options
+     * @see {@link https://envapt.materwelon.dev/docs/configuration#which-files-load}
      */
     static get envFileOptions(): EnvFileOptions {
         return state.userDefinedEnvFileOptions;
@@ -106,6 +116,7 @@ export class NodeEnvapter extends Envapter {
      *   [Environment.Production]: { paths: ['config/prod.env', 'secrets/prod.env'] }
      * });
      * ```
+     * @see {@link https://envapt.materwelon.dev/docs/environment#custom-profiles}
      */
     static configureProfiles(config: ProfilesConfig): void {
         assertFileApiSupported('configureProfiles', state.source);
@@ -117,6 +128,7 @@ export class NodeEnvapter extends Envapter {
      * Reset all path-resolution configuration to defaults: clears any prior
      * `Envapter.configureProfiles` call AND any explicit `Envapter.envPaths` assignment.
      * Returns the resolver to the pure dotenv-flow cascade.
+     * @see {@link https://envapt.materwelon.dev/docs/environment#custom-profiles}
      */
     static resetProfiles(): void {
         state.profiles = undefined;

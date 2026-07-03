@@ -49,6 +49,8 @@ export class AdvancedMethods extends PrimitiveMethods {
      * Supports both scalar tokens (e.g. `Converters.Number`) and `ArrayOf<...>` tokens
      * produced by `Converters.array(...)`. The key can be a single name or an ordered list.
      * The first defined value wins.
+     * @see {@link https://envapt.materwelon.dev/docs/envapter#converters}
+     * @see {@link https://envapt.materwelon.dev/docs/converters#custom-converters}
      */
     // Time-specific overload must precede the generic BuiltInConverter overload so it wins
     // overload resolution (TimeFallback accepts time-strings like `'10s'`).
@@ -109,6 +111,8 @@ export class AdvancedMethods extends PrimitiveMethods {
     /**
      * Get an environment variable using a custom converter function.
      * Accepts a single key or an ordered list for automatic fallback.
+     * @see {@link https://envapt.materwelon.dev/docs/envapter#converters}
+     * @see {@link https://envapt.materwelon.dev/docs/converters#custom-converters}
      */
     static getWith<TReturnType, TFallback extends TReturnType | undefined = undefined>(
         key: EnvKeyInput,
@@ -142,6 +146,8 @@ export class AdvancedMethods extends PrimitiveMethods {
      * Read a required environment variable and convert it, throwing `MissingEnvValue` when the value
      * is missing or empty. Returns the non-undefined converter output. Accepts a built-in or `ArrayOf`
      * token, or a custom parser function. The key can be a single name or an ordered list.
+     * @see {@link https://envapt.materwelon.dev/docs/envapter#fail-fast-on-missing-values}
+     * @see {@link https://envapt.materwelon.dev/docs/converters#require-a-converted-value}
      */
     static getRequired<TConverter extends BuiltInConverter | ArrayOf>(
         key: EnvKeyInput,
@@ -209,6 +215,8 @@ export class AdvancedMethods extends PrimitiveMethods {
      * `MissingEnvValue` listing them all. Pass a `casing` (`'camelCase'`, `'PascalCase'`, or
      * `'kebab-case'`) to rename the record keys, splitting on underscores, which assumes the
      * conventional SCREAMING_SNAKE env-var names. With no casing the keys stay as-is.
+     * @see {@link https://envapt.materwelon.dev/docs/envapter#fail-fast-on-missing-values}
+     * @see {@link https://envapt.materwelon.dev/docs/converters#require-a-converted-value}
      */
     static getRequiredAll<Spec extends RequiredSpec, Casing extends KeyCasing | undefined = undefined>(
         spec: Spec,
@@ -269,6 +277,7 @@ export class AdvancedMethods extends PrimitiveMethods {
      * import { z } from 'zod';
      * const port = Envapter.parse('PORT', z.coerce.number().min(1024).max(65535), 3000);
      * ```
+     * @see {@link https://envapt.materwelon.dev/docs/standard-schema#any-conformant-validator-or-none}
      */
     static parse<Schema extends StandardSchemaV1>(
         key: EnvKeyInput,
