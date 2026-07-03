@@ -19,6 +19,7 @@
         "compatibility",
         "sources",
         "workers",
+        "edge-runtimes",
         "browser",
         "---Reference---",
         "migrations"
