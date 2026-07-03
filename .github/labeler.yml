@@ -1,17 +1,12 @@
-# yaml-language-server: $schema=https://json.schemastore.org/pull-request-labeler-5.json
 '📦 envapt':
     - changed-files:
           - any-glob-to-any-file: 'packages/envapt/**'
 '📚 docs':
-    - all:
-          - changed-files:
-                - any-glob-to-any-file:
-                      - 'apps/guide/**'
-                      - '**/*.md'
-                      - '**/*.mdx'
-                - all-globs-to-all-files:
-                      - '!**/CHANGELOG.md'
-                      - '!.changeset/**'
+    - changed-files:
+          - any-glob-to-any-file:
+                - 'apps/guide/**'
+                - '**/*.mdx'
+                - '**/README.md'
 '🧪 tests':
     - changed-files:
           - any-glob-to-any-file: '**/*.test.ts'
