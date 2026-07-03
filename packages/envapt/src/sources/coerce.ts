@@ -1,5 +1,5 @@
-// Shared by PortableSource and its deprecated aliases. The returned record is fresh, so a caller
-// mutating its object later cannot leak into the source, and non-string values are JSON-stringified.
+// The returned record is fresh, so a caller mutating its object
+// later cannot leak into the source, and non-string values are JSON-stringified.
 export function coerceToStringRecord(env: object): Record<string, string> {
     const snapshot: Record<string, string> = {};
     // `object` so a Cloudflare `Env` (an interface with no index signature) is accepted. cast to a record
@@ -10,7 +10,7 @@ export function coerceToStringRecord(env: object): Record<string, string> {
             continue;
         }
         const encoded = JSON.stringify(value);
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- TS lib mistypes JSON.stringify's return as always-string; it is string | undefined at runtime
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- TS lib mistypes JSON.stringify's return as always-string when it is string | undefined at runtime
         if (encoded !== undefined) snapshot[key] = encoded;
     }
     return snapshot;
