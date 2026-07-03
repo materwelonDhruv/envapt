@@ -61,7 +61,9 @@ export function ensureLoaded(): Map<string, unknown> {
                     processEnv: isolatedEnv,
                     readFile: source.readFile.bind(source)
                 });
-            } catch {}
+            } catch (error) {
+                debugWarn(`failed to load .env: ${error instanceof Error ? error.message : String(error)}`);
+            }
         }
         state.dotenvAddedKeys = added;
         for (const [key, value] of Object.entries(isolatedEnv)) cache.set(key, value);
@@ -169,9 +171,8 @@ export function readPrimitive<EnvVarReturnType, DefaultType extends EnvVarReturn
         else debugWarn(`${resolvedKey} is missing or empty`);
         return def as ConditionalReturn<EnvVarReturnType, DefaultType>;
     }
-    const rawVal = value as string | number | boolean | undefined;
 
-    const parsed = templateResolver.resolveTemplate(resolvedKey, String(rawVal));
+    const parsed = templateResolver.resolveTemplate(resolvedKey, String(value));
 
     let result: EnvVarReturnType;
     if (type === Primitive.Number) result = BuiltInConverters.number(parsed, def as number) as EnvVarReturnType;
