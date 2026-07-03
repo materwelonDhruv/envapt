@@ -2,6 +2,8 @@ import process from 'node:process';
 
 import { Envapter } from './Envapter';
 import { Validator } from './Validators';
+import { refreshCache } from '../core/engine';
+import { assertFileApiSupported, resolveAgainstBase, sourceFileExists } from '../core/paths';
 import { state } from '../core/state';
 import { setRuntimeSink } from '../infra/runtime';
 import { FileSource } from '../sources/FileSource';
@@ -19,7 +21,7 @@ import type { ProfilesConfig } from '../types';
 export class NodeEnvapter extends Envapter {
     // A static block (not a top-level statement in a separate entry) keeps the bind intrinsic to this
     // class: tree-shaken out of `import { EnvaptError }`, run whenever `Envapter` is referenced, with no
-    // sideEffects entry. Depends on the es2022 native static-block emit; lowering the target defeats it.
+    // sideEffects entry. Depends on the es2022 native static-block emit.
     static {
         setRuntimeSink((line) => process.stderr.write(`${line}\n`));
         NodeEnvapter.useSource(new FileSource());
@@ -33,16 +35,16 @@ export class NodeEnvapter extends Envapter {
      * `Envapter.configureProfiles` configuration are ignored.
      */
     static set envPaths(paths: string[] | string) {
-        this.assertFileApiSupported('envPaths', state.source);
+        assertFileApiSupported('envPaths', state.source);
         const newPaths = Array.isArray(paths) ? paths : [paths];
         Validator.validateEnvFilesExist(
-            newPaths.map((p) => this.resolveAgainstBase(p)),
-            (p) => this.sourceFileExists(p)
+            newPaths.map((p) => resolveAgainstBase(p)),
+            (p) => sourceFileExists(p)
         );
 
         state.envPaths = newPaths;
         state.envPathsExplicitlySet = true;
-        this.refreshCache();
+        refreshCache();
     }
 
     /**
@@ -64,9 +66,9 @@ export class NodeEnvapter extends Envapter {
      */
     static set baseDir(value: string | URL | undefined) {
         const source = state.source;
-        this.assertFileApiSupported('baseDir', source);
+        assertFileApiSupported('baseDir', source);
         state.baseDir = value === undefined ? undefined : source.normalizeBaseDir(value);
-        this.refreshCache();
+        refreshCache();
     }
 
     /** The configured base directory, or `undefined` when relative paths resolve against the working directory. */
@@ -78,7 +80,7 @@ export class NodeEnvapter extends Envapter {
     static set envFileOptions(config: EnvFileOptions) {
         Validator.validateEnvFileOptions(config);
         state.userDefinedEnvFileOptions = config;
-        this.refreshCache();
+        refreshCache();
     }
 
     /**
@@ -106,9 +108,9 @@ export class NodeEnvapter extends Envapter {
      * ```
      */
     static configureProfiles(config: ProfilesConfig): void {
-        this.assertFileApiSupported('configureProfiles', state.source);
+        assertFileApiSupported('configureProfiles', state.source);
         state.profiles = config;
-        this.refreshCache();
+        refreshCache();
     }
 
     /**
@@ -122,6 +124,6 @@ export class NodeEnvapter extends Envapter {
         state.envPathsExplicitlySet = false;
         state.environmentExplicitlySet = false;
         state.environment = undefined;
-        this.refreshCache();
+        refreshCache();
     }
 }

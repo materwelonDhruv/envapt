@@ -26,3 +26,9 @@ describe("engine's mutable state is module-private and should not be exposed as 
         expect(present).to.deep.equal([]);
     });
 });
+
+describe('the read cache is unreachable from a consumer subclass', () => {
+    it('exposes no `config` accessor that returns the cache Map', () => {
+        expect(Object.getOwnPropertyDescriptor(EnvapterBase, 'config')).to.equal(undefined);
+    });
+});

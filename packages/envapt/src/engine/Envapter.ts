@@ -1,5 +1,6 @@
 import { AdvancedMethods } from '../core';
 import { resolveRequired } from '../core/AdvancedMethods';
+import { resolveKeyInput, templateResolver } from '../core/engine';
 import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
 
 export { Environment } from '../core';
@@ -79,9 +80,7 @@ export class Envapter extends AdvancedMethods {
      * ```
      */
     static require(...keys: [string, ...string[]]): void {
-        const missing = keys.filter(
-            (k) => resolveRequired(Envapter.resolveKeyInput(k), Envapter.templateResolver).value === undefined
-        );
+        const missing = keys.filter((k) => resolveRequired(resolveKeyInput(k), templateResolver).value === undefined);
 
         if (missing.length > 0) {
             throw new EnvaptError(

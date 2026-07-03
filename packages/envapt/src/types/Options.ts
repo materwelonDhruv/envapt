@@ -1,5 +1,5 @@
 import type { EnvaptConverter } from './Conversion';
-import type { Environment } from '../core/EnvironmentMethods';
+import type { Environment } from '../core/Environment';
 
 /**
  * Options for the \@Envapt decorator (modern API). `required: true` is mutually exclusive
