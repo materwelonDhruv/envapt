@@ -1,6 +1,6 @@
 import { UnboundSource } from '../sources/UnboundSource';
 
-import type { Environment } from './EnvironmentMethods';
+import type { Environment } from './Environment';
 import type { EnvFileOptions } from '../infra/Dotenv';
 import type { FileApiMode, ProfilesConfig, Source } from '../types';
 

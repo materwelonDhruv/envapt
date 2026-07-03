@@ -1,3 +1,4 @@
+import { resolveKeyInput, templateResolver, treatAsMissing, valueConverter } from './engine';
 import { PrimitiveMethods } from './PrimitiveMethods';
 import { debugWarn } from '../infra/Debug';
 import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
@@ -67,18 +68,18 @@ export class AdvancedMethods extends PrimitiveMethods {
         converter: TConverter,
         fallback?: TFallback
     ): AdvancedConverterReturn<TConverter, TFallback> {
-        const { key: resolvedKey, value } = this.resolveKeyInput(key);
+        const { key: resolvedKey, value } = resolveKeyInput(key);
 
         // missing with no fallback returns undefined, matching the primitive methods. with a fallback,
         // route through the parser so asymmetric types (TimeFallback, TimeFallback[] for `of: time`)
         // coerce to the return type.
-        if (this.treatAsMissing(value) && fallback === undefined) {
+        if (treatAsMissing(value) && fallback === undefined) {
             debugWarn(`${resolvedKey} is missing or empty`);
             return undefined as AdvancedConverterReturn<TConverter, TFallback>;
         }
 
         const hasFallback = fallback !== undefined;
-        const result = this.valueConverter.convertValue(resolvedKey, fallback, converter, hasFallback);
+        const result = valueConverter.convertValue(resolvedKey, fallback, converter, hasFallback);
 
         return result as AdvancedConverterReturn<TConverter, TFallback>;
     }
@@ -114,14 +115,14 @@ export class AdvancedMethods extends PrimitiveMethods {
         converter: ConverterFunction<TReturnType>,
         fallback?: TFallback
     ): ConditionalReturn<TReturnType, TFallback> {
-        const { key: resolvedKey, value } = this.resolveKeyInput(key);
-        if (this.treatAsMissing(value)) {
+        const { key: resolvedKey, value } = resolveKeyInput(key);
+        if (treatAsMissing(value)) {
             debugWarn(`${resolvedKey} is missing or empty`);
             return fallback as ConditionalReturn<TReturnType, TFallback>;
         }
 
         const hasFallback = fallback !== undefined;
-        const result = this.valueConverter.convertValue<TReturnType>(resolvedKey, fallback, converter, hasFallback);
+        const result = valueConverter.convertValue<TReturnType>(resolvedKey, fallback, converter, hasFallback);
 
         return result as ConditionalReturn<TReturnType, TFallback>;
     }
@@ -156,7 +157,7 @@ export class AdvancedMethods extends PrimitiveMethods {
         let resolvedKey = '';
         let value: string | undefined;
         for (const candidate of candidates) {
-            const resolved = resolveRequired(this.resolveKeyInput(candidate), this.templateResolver);
+            const resolved = resolveRequired(resolveKeyInput(candidate), templateResolver);
             resolvedKey = resolved.key;
             if (resolved.value !== undefined) {
                 value = resolved.value;
@@ -170,7 +171,7 @@ export class AdvancedMethods extends PrimitiveMethods {
             );
         }
         // cast widens the raw-string parser back to convertValue's ConverterFunction<T> (value proven present above).
-        const result = this.valueConverter.convertValue<TReturnType>(
+        const result = valueConverter.convertValue<TReturnType>(
             resolvedKey,
             undefined,
             converter as EnvaptConverter<TReturnType>,
@@ -215,7 +216,7 @@ export class AdvancedMethods extends PrimitiveMethods {
     ): { [K in keyof Spec as RecaseKey<K & string, Casing>]: InferSpecField<Spec[K]> } {
         const keys = Object.keys(spec);
         const missing = keys.filter(
-            (key) => resolveRequired(this.resolveKeyInput(key), this.templateResolver).value === undefined
+            (key) => resolveRequired(resolveKeyInput(key), templateResolver).value === undefined
         );
         if (missing.length > 0) {
             throw new EnvaptError(
@@ -227,7 +228,7 @@ export class AdvancedMethods extends PrimitiveMethods {
         const result: Record<string, unknown> = {};
         for (const key of keys) {
             // same widening cast as getRequired, every value was proven present above.
-            const converted = this.valueConverter.convertValue<unknown>(
+            const converted = valueConverter.convertValue<unknown>(
                 key,
                 undefined,
                 spec[key] as EnvaptConverter<unknown>,
@@ -277,7 +278,7 @@ export class AdvancedMethods extends PrimitiveMethods {
         const hasFallback = arguments.length > 2;
         // SchemaConstraint resolves to the unsatisfiable SchemaMustBeSync brand for async
         // schemas, so reaching this body means the input is structurally a sync Schema.
-        const result = this.valueConverter.convertWithSchema(
+        const result = valueConverter.convertWithSchema(
             key,
             schema as unknown as StandardSchemaV1,
             fallback,
@@ -295,7 +296,7 @@ export class AdvancedMethods extends PrimitiveMethods {
         fallback?: InferSchemaOutput<Schema>
     ): InferSchemaOutput<Schema> {
         const hasFallback = arguments.length > 2;
-        const result = AdvancedMethods.valueConverter.convertWithSchema(
+        const result = valueConverter.convertWithSchema(
             key,
             schema as unknown as StandardSchemaV1,
             fallback,

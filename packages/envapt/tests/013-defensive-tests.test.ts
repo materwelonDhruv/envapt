@@ -6,7 +6,7 @@ import { TemplateResolver } from '../src/engine/TemplateResolver';
 import { Validator } from '../src/engine/Validators';
 import { EnvaptError, EnvaptErrorCodes } from '../src/infra/Error';
 
-import type { BuiltInConverter, EnvKeyInput, PrimitiveConstructor } from '../src/types';
+import type { BuiltInConverter, PrimitiveConstructor } from '../src/types';
 import type { EnvapterService } from '../src/types/Env';
 
 class StubEnvService implements EnvapterService {
@@ -196,30 +196,24 @@ describe('Defensive tests', () => {
         });
     });
 
-    describe('EnvapterBase.resolveKeyInput validation', () => {
-        class ResolveHarness extends Envapter {
-            public static callResolve(key: EnvKeyInput): unknown {
-                return this.resolveKeyInput(key);
-            }
-        }
-
+    describe('key-input validation through the public read path', () => {
         it('throws when no keys are provided', () => {
             // @ts-expect-error Runtime guard ensures empty arrays are rejected
-            expect(() => ResolveHarness.callResolve([]))
+            expect(() => new Envapter().getRaw([]))
                 .to.throw(EnvaptError, 'At least one environment key must be provided.')
                 .and.to.have.property('code', EnvaptErrorCodes.InvalidKeyInput);
         });
 
         it('throws when keys include a non-string entry', () => {
             // @ts-expect-error Passing non-string key to trigger runtime guard
-            expect(() => ResolveHarness.callResolve(['VALID_KEY', 42])).to.throw(
+            expect(() => new Envapter().getRaw(['VALID_KEY', 42])).to.throw(
                 EnvaptError,
                 'Environment keys must be strings.'
             );
         });
 
         it('throws when keys include an empty string', () => {
-            expect(() => ResolveHarness.callResolve(['   '])).to.throw(
+            expect(() => new Envapter().getRaw(['   '])).to.throw(
                 EnvaptError,
                 'Environment keys cannot be empty strings.'
             );
