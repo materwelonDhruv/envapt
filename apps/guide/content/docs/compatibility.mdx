@@ -7,21 +7,30 @@ envapt runs on Node, Bun, and Deno with the same API and zero runtime dependenci
 
 ## Binding by runtime
 
-Which `exports` condition resolves, the source that gets bound, where the values come from, and the per-runtime catch.
+envapt splits into two builds, selected by the package `exports` conditions. On the node build a source binds on import. On the portable build you bind one yourself.
 
-| Runtime | Condition | Source | Seed from | `process.env` | Gotcha |
-| ------- | --------- | ------ | --------- | ------------- | ------ |
-| Node | `node` | `FileSource` auto | `process.env` and the `.env` cascade | yes | — |
-| Bun | `node` | `FileSource` auto | `process.env` and the `.env` cascade | yes | — |
-| Deno | `deno` | `FileSource` auto | `process.env` and the `.env` cascade | yes | needs Deno 2.5+ |
-| Deno Deploy | `deno` | `FileSource` auto | dashboard vars via `process.env` / `Deno.env` | yes | no `.env` files, set vars in the dashboard |
-| [Cloudflare Workers](/docs/workers) | `workerd` | bind `PortableSource` | the `env` binding | no | bind once at module load |
-| [Vercel Edge](/docs/edge-runtimes) | `edge-light` | bind `PortableSource` | `process.env` | yes | deprecated by Vercel, the Node runtime auto-binds |
-| [Fastly Compute](/docs/edge-runtimes) | `fastly` | bind `PortableSource` | `env()` keys, no bulk object | no | add the `fastly` condition |
-| [Expo / React Native](/docs/edge-runtimes) | `react-native` | bind `PortableSource` | `Constants.expoConfig.extra` | build-inlined | `process.env` is not a runtime object |
-| [Browser](/docs/browser) | `browser` | bind `PortableSource` | bundler-injected config | no | ships in the client bundle |
+### Node build, binds automatically
 
-On the node build a source is bound on import, so the first read works right away. On the portable build you bind a source first, an unbound read throws [`NoSourceBound`](/docs/errors). The file-only APIs warn once and no-op on the portable build, governed by `fileApiMode`, covered below.
+`FileSource` binds on import and reads `process.env` plus the `.env` cascade, so the first read works with no setup.
+
+| Runtime | Condition | Reads | Gotcha |
+| ----------- | --------- | ---------------------------------------------- | ------------------------------------------- |
+| Node | `node` | `process.env` and the `.env` cascade | — |
+| Bun | `node` | `process.env` and the `.env` cascade | — |
+| Deno | `deno` | `process.env` and the `.env` cascade | needs Deno 2.5+ |
+| Deno Deploy | `deno` | dashboard vars via `process.env` / `Deno.env` | no `.env` files, set vars in the dashboard |
+
+### Portable build, you bind a source
+
+Bind a `PortableSource` from the object the platform gives you before your first read. An unbound read throws [`NoSourceBound`](/docs/errors), and the file-only APIs warn once and no-op (see `fileApiMode` below).
+
+| Runtime | Condition | Seed from | `process.env` | Gotcha |
+| ----------------------------------------------- | -------------- | ---------------------------- | ------------- | -------------------------------------------------- |
+| [Cloudflare Workers](/docs/workers) | `workerd` | the `env` binding | no | bind once at module load |
+| [Vercel Edge](/docs/edge-runtimes) | `edge-light` | `process.env` | yes | deprecated by Vercel, the Node runtime auto-binds |
+| [Fastly Compute](/docs/edge-runtimes) | `fastly` | `env()` keys, no bulk object | no | add the `fastly` condition |
+| [Expo / React Native](/docs/edge-runtimes) | `react-native` | `Constants.expoConfig.extra` | build-inlined | `process.env` is not a runtime object |
+| [Browser](/docs/browser) | `browser` | bundler-injected config | no | ships in the client bundle |
 
 ## Engine versions
 
