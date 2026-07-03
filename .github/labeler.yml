@@ -1,25 +1,34 @@
+# yaml-language-server: $schema=https://json.schemastore.org/pull-request-labeler-5.json
 '📦 envapt':
-    - changed-files:
-          - any-glob-to-any-file: 'packages/envapt/**'
+  - changed-files:
+      - any-glob-to-any-file: 'packages/envapt/**'
 '📚 docs':
-    - changed-files:
-          - any-glob-to-any-file:
-                - 'apps/guide/**'
-                - '**/*.mdx'
-                - '**/README.md'
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'apps/guide/**'
+          - '**/*.mdx'
+          - '**/README.md'
 '🧪 tests':
-    - changed-files:
-          - any-glob-to-any-file: '**/*.test.ts'
-          - any-glob-to-any-file: '**/*.spec.ts'
-          - any-glob-to-any-file: '**/__tests__/**/*'
+  - changed-files:
+      - any-glob-to-any-file: '**/*.test.ts'
+      - any-glob-to-any-file: '**/*.spec.ts'
+      - any-glob-to-any-file: '**/__tests__/**/*'
+'🔧 build':
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'turbo.json'
+          - 'turbo.jsonc'
+          - '**/tsconfig*.json'
+          - '**/tsdown.config.*'
+          - '**/eslint.config.*'
+          - '**/vitest*.config.*'
+          - 'pnpm-workspace.yaml'
+'🔗 deps':
+  - changed-files:
+      - any-glob-to-any-file: 'pnpm-lock.yaml'
 '🤖 ci':
-    - changed-files:
-          - any-glob-to-any-file: '.github/**'
-          - any-glob-to-any-file: turbo.json
-          - any-glob-to-any-file: turbo.jsonc
-          - any-glob-to-any-file: pnpm-workspace.yaml
-          - any-glob-to-any-file: pnpm-lock.yaml
-          - any-glob-to-any-file: 'tsconfig*.json'
-          - any-glob-to-any-file: eslint.config.mjs
-          - any-glob-to-any-file: vitest.config.ts
-          - any-glob-to-any-file: tsdown.config.ts
+  - changed-files:
+      - any-glob-to-any-file:
+          - '.github/workflows/**'
+          - '.github/actions/**'
+          - '.github/labeler.yml'
