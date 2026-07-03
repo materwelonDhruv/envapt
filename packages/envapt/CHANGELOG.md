@@ -1,11 +1,41 @@
 # envapt
 
+## 8.0.0-next.0
+
+### Major Changes
+
+- f889a67: Add `getRequired(key, converter)` and `getRequiredAll(spec, casing?)` for typed required reads. `getRequired` takes the converter positionally, returns the non-undefined value, and throws `MissingEnvValue` on a missing or empty key. `getRequiredAll` reads a group in one call and returns a typed record, throwing once listing every missing key. Its spec values can be tokens, `array()` tokens, or custom parser functions, and an optional `casing` (`'camelCase'`, `'PascalCase'`, or `'kebab-case'`) renames the record keys.
+
+    **BREAKING:** the `{ required: true }` options-bag form of `getUsing` and `getWith` is removed, use `getRequired` instead. The `@Envapt` decorator's `{ required: true }` option is unchanged.
+
+- 5e02661: Move the engine's mutable state and read cache into a module that the `exports` map does not include. They are no longer fields on the class and have no import path, so outside code cannot read or write them through an `as`-cast or a subclass. Drop the internal `TimeUnit` type and `isStrict()` method from the public exports.
+- 651008e: **BREAKING:** Tighten the `Integer` and `Float` converters.
+
+    `Converters.Integer` parses with `Number` and requires `Number.isSafeInteger`, so trailing characters (`42abc`), non-integers (`3.9`), and values past 2^53 now fall back. `Converters.Float` parses with `Number`, so trailing characters (`3.14xyz`) now fall back. `Float` still accepts `Infinity`.
+
+- d415d68: Trim internal-only types out of the public API surface, from 36 exported types down to 15. Gone are the source shape interfaces, the decorator return types, the schema brands, the converter/inference machinery, the `EnvKeyInput`/`ArrayOf`/`ArrayElement` helpers, and the redundant `InferSchemaInput`/`InferSchemaOutput` aliases. Type inference on the readers and decorators is unchanged, since these types are inferred at the call site or reproducible from the still-public `Source` and `StandardSchemaV1`. For a schema's output type, use your validator's own inference (`z.infer`, valibot's `InferOutput`, arktype's `.infer`) or `StandardSchemaV1.InferOutput`.
+- d415d68: Collapse to one portable build and a single universal `envapt` import, and rename the source classes. Three breaking changes.
+
+    1. The source classes drop the `Env` infix. `PortableSource` (was `ManualEnvSource` / `WorkerEnvSource`, which were the same class) is the one source for every runtime without a filesystem. `FileSource` (was `NodeEnvSource`) is the Node source. The `Source` type replaces `EnvSource`. The v7.1 deprecated aliases are removed.
+    2. `Envapter.fileApiMode` defaults to `'warn'`. On the portable build the file-only config APIs (`envPaths`, `baseDir`, `envFileOptions`, `configureProfiles`, `resetProfiles`) now warn once and no-op by default. Set `Envapter.fileApiMode = 'throw'` to restore the previous throwing behavior. An unconfigured read still throws `NoSourceBound` on first access.
+    3. The `envapt/workerd` and `envapt/browser` subpaths are removed. Import from `envapt` everywhere. The package exports route Workers, the browser, and the edge runtimes (workerd, edge-light, fastly, worker, browser, react-native) to the portable build, and Node, Bun, and Deno to the node build. The portable types now include the file APIs, so config shared between dev and deploy compiles on every runtime.
+
+### Minor Changes
+
+- 5dea9fb: Add `merge`, a source combinator that layers several sources with last-wins precedence. It keeps the `.env` cascade and file APIs on one filesystem-backed member, and throws `InvalidMergedSource` with no members or more than one file-backed member.
+
+### Patch Changes
+
+- 5dea9fb: Fix the read cache rebuilding on every access when a bound source and the `.env` cascade resolve to no keys. It now builds once per `useSource`, matching a non-empty source.
+- 48d4f02: Move the engine read-path into module functions under core/ so a consumer subclass can no longer reach or mutate the read cache. No public API change.
+
 ## 7.1.0
 
 ### Minor Changes
 
 - Add `PortableSource` and the `Source` type, the v8 names for the no-filesystem source class and the general source type.
   `PortableSource` replaces both `ManualEnvSource` and `WorkerEnvSource`, which are now deprecated subclasses of it, so migrate `new ManualEnvSource(obj)` and `new WorkerEnvSource(env)` to `new PortableSource(...)`. `Source` replaces the now-deprecated `EnvSource` type. `PortableSource`'s constructor accepts any `object`, so a Cloudflare `Env` binding (an interface with no index signature) can be passed directly without a cast. Every deprecated name still works and is removed or renamed in v8.
+
 ## 7.0.3
 
 ### Patch Changes

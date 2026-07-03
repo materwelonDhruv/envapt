@@ -5,5 +5,14 @@
     "@envapt/guide": "1.0.0",
     "envapt": "7.0.2"
   },
-  "changesets": []
+  "changesets": [
+    "frank-years-warn",
+    "get-required",
+    "merge-source-combinator",
+    "module-private-engine-state",
+    "nice-garlics-joke",
+    "strict-integer-float-converters",
+    "trim-public-types",
+    "v8-universal-exports"
+  ]
 }
