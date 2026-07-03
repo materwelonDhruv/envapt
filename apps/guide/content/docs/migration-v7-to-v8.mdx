@@ -112,3 +112,18 @@ Envapter.getRequired('PORT', Converters.Integer);
 ```
 
 You only need a change here if an env value was relying on the loose parse. A value that is already a clean integer or float reads the same.
+
+## Ordered reads skip a present-but-empty key
+
+This one is a bug fix, but also a behavior change. An ordered read (`get`, `getNumber`, the decorators, or an array of keys) now falls through a key that is set to an empty string, the same as it already did for an unset key and the same as `getRequired`. v7 stopped at the first present key even when its value was blank, so `get(['PRIMARY', 'FALLBACK'])` returned the fallback when `PRIMARY` was set to an empty string. v8 reads `FALLBACK`. A single key set to an empty string still reads as missing.
+
+```ts
+import { Envapter } from 'envapt';
+
+// with PRIMARY="" and FALLBACK="value"
+Envapter.get(['PRIMARY', 'FALLBACK'], 'default');
+// v7: "default" (stopped at the empty PRIMARY)
+// v8: "value" (falls through to FALLBACK)
+```
+
+You only need a change here if you relied on an empty higher-precedence key masking a later one.

@@ -26,12 +26,17 @@ export function resolveKeyInput(keyInput: EnvKeyInput): { key: string; value: st
         throw new EnvaptError(EnvaptErrorCodes.InvalidKeyInput, 'Environment keys cannot be empty strings.');
     }
 
+    // An ordered read keeps trying so a present-but-empty candidate falls through to the next, matching
+    // getRequired and firstEnvKeyValue. A single key or an all-empty list resolves to the first present value.
+    let firstPresent: { key: string; value: string } | undefined;
     for (const candidate of normalizedKeys) {
         const value = ensureLoaded().get(candidate) as string | undefined;
-        if (value !== undefined) return { key: candidate, value };
+        if (value === undefined) continue;
+        if (!treatAsMissing(value)) return { key: candidate, value };
+        firstPresent ??= { key: candidate, value };
     }
 
-    return { key: normalizedKeys[0] as string, value: undefined };
+    return firstPresent ?? { key: normalizedKeys[0] as string, value: undefined };
 }
 
 export function treatAsMissing(value: string | undefined): boolean {
