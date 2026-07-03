@@ -115,6 +115,7 @@ export abstract class EnvapterBase {
 
     protected static refreshCache(): void {
         cache.clear();
+        state.cacheBuilt = false;
         state.dotenvAddedKeys = new Set<string>();
         debugVerbose('cache cleared, reloading config');
         void this.config; // getter rebuilds the cache as a side effect
@@ -178,7 +179,7 @@ export abstract class EnvapterBase {
     }
 
     protected static get config(): Map<string, unknown> {
-        if (cache.size === 0) {
+        if (!state.cacheBuilt) {
             const source = state.source;
             // Clone so the loader and downstream reads never mutate the source's backing object.
             const isolatedEnv: Record<string, string> = { ...source.readVars() };
@@ -205,6 +206,8 @@ export abstract class EnvapterBase {
             state.dotenvAddedKeys = added;
             for (const [key, value] of Object.entries(isolatedEnv)) cache.set(key, value);
             debugVerbose(`cache populated: ${cache.size} keys total`);
+            // set before mirroring, whose template expansion reads config and would re-enter this build otherwise
+            state.cacheBuilt = true;
             if (state.syncProcessEnv) this.mirrorToProcessEnv();
         }
 

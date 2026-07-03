@@ -53,7 +53,9 @@ export enum EnvaptErrorCodes {
     /** Thrown when a file-based API (envPaths, baseDir, configureProfiles) is used on a source without filesystem support */
     FileApiUnsupported = 306,
     /** Thrown when an environment value is read before a source is bound via Envapter.useSource */
-    NoSourceBound = 307
+    NoSourceBound = 307,
+    /** Thrown when `merge` is called with no members, or with more than one filesystem-backed source */
+    InvalidMergedSource = 308
 }
 
 interface EnvaptErrorOptions {

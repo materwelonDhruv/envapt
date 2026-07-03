@@ -14,7 +14,7 @@ interface CodeProps {
 export async function Code({ code, lang = 'ts', dense = false }: CodeProps): Promise<ReactNode> {
     const html = await codeToHtml(code, {
         lang,
-        themes: { light: 'ayu-light', dark: 'ayu-dark' },
+        themes: { light: 'gruvbox-light-hard', dark: 'ayu-dark' },
         defaultColor: false
     });
 

@@ -11,7 +11,7 @@ const captureBytes = 64 * 1024 * 1024;
 
 // build first because every slice below reads the built dist
 process.stdout.write('── build ──\n');
-execFileSync('pnpm', ['--filter', 'envapt', 'build'], { stdio: 'inherit' });
+execFileSync('pnpm', ['exec', 'turbo', 'run', 'build', '--filter=envapt'], { stdio: 'inherit' });
 
 const playwrightCache = [
     process.env.PLAYWRIGHT_BROWSERS_PATH,

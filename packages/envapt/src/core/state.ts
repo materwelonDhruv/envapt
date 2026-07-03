@@ -15,6 +15,8 @@ export const state = {
     fileApiMode: 'warn' as FileApiMode,
     // loader-written keys only (collisions skipped), refilled on every cache rebuild.
     dotenvAddedKeys: new Set<string>(),
+    // cache.size can't tell built-and-empty from not-built, so a source resolving to no keys would rebuild on every read without this.
+    cacheBuilt: false,
     // unbound by default so non-Node builds throw NoSourceBound on read until useSource() runs.
     source: new UnboundSource() as Source,
     environment: undefined as Environment | undefined,

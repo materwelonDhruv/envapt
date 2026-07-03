@@ -13,16 +13,15 @@
         "errors",
         "---Configuration---",
         "configuration",
-        "sources",
         "secret-stores",
-        "workers",
-        "browser",
         "env-file-syntax",
-        "---Reference---",
+        "---Runtimes---",
         "compatibility",
-        "migration-v4-to-v5",
-        "migration-v5-to-v6",
-        "migration-v6-to-v7",
-        "migration-v7-to-v8"
+        "sources",
+        "workers",
+        "edge-runtimes",
+        "browser",
+        "---Reference---",
+        "migrations"
     ]
 }

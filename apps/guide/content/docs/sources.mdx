@@ -52,6 +52,21 @@ An optional `supportsFiles` flag marks a source as backing the file-only config 
 
 For fetching that secrets object from 1Password, Vault, Doppler, AWS Secrets Manager, and others, see [Using secret stores](/docs/secret-stores).
 
+## Combining sources
+
+`merge` composes several sources into one, read last-wins. A later member overrides an earlier member's key. Keep the `.env` cascade and layer fetched secrets on top in a single bind, with no write to `process.env`.
+
+```ts twoslash
+import { Envapter, FileSource, PortableSource, merge, Converters } from 'envapt';
+// ---cut---
+declare const secrets: Record<string, string>; // fetched and awaited
+Envapter.useSource(merge(new FileSource(), new PortableSource(secrets)));
+
+const dbUrl = Envapter.getUsing('DATABASE_URL', Converters.Url);
+```
+
+At most one member is filesystem-backed, and the `.env` cascade and file APIs route to it. `merge` throws [`InvalidMergedSource`](/docs/errors) with no members or more than one file-backed member.
+
 ## When nothing is bound
 
 Reading a value before you call `useSource` throws `EnvaptError` with code `NoSourceBound`. It cannot happen on Node, where the source is bound on import.

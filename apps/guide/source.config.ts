@@ -46,7 +46,7 @@ export default defineConfig({
     mdxOptions: {
         remarkPlugins: [[remarkNpm, { persist: { id: 'package-manager' }, packageManagers: PACKAGE_MANAGERS }]],
         rehypeCodeOptions: {
-            themes: { light: 'ayu-light', dark: 'ayu-dark' },
+            themes: { light: 'gruvbox-light-hard', dark: 'ayu-dark' },
             transformers: [
                 ...(rehypeCodeDefaultOptions.transformers ?? []),
                 ...(twoslashEnabled
