@@ -36,9 +36,11 @@ jobs:
                   enable_fallback_cache: 'true'
             - name: Setup workspace
               uses: ./.github/actions/setup
-            - name: Build, type-check, lint, format, test, and build guards
+            - name: Build, type-check, lint, format, and build guards
               run: >
-                  pnpm exec turbo run build tc lint fmt:check test build:verify
+                  pnpm exec turbo run build tc lint fmt:check build:verify
                   test:exports-dedup test:resolution-matrix test:cjs-validity test:tsc-emit test:stage3-emit test:tree-shaking
+            - name: Test
+              run: pnpm exec turbo run test
             - name: Run audit
               run: pnpm audit --audit-level=high
