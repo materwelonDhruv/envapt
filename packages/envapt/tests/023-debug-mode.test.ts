@@ -276,6 +276,23 @@ describe('Debug mode (v5)', () => {
                 expect(capture.lines.some((l) => l.includes('could not convert') && l.includes('RETRIES'))).to.equal(
                     true
                 );
+                // the raw value never appears, since it can be a secret
+                expect(capture.lines.some((l) => l.includes('not-a-number') || l.includes('abc'))).to.equal(false);
+            } finally {
+                capture.restore();
+                Envapter.useSource(new FileSource());
+            }
+        });
+
+        it('omits "using the fallback" when the read has no fallback', () => {
+            Envapter.useSource(new PortableSource({ PORT: 'not-a-number' }));
+            Envapter.debug = 'verbose';
+            const capture = captureStderr();
+            try {
+                expect(Envapter.getNumber('PORT')).to.be.undefined;
+                const line = capture.lines.find((l) => l.includes('could not convert') && l.includes('PORT'));
+                expect(line, 'expected a convert-failure line').to.exist;
+                expect(line).to.not.include('using the fallback');
             } finally {
                 capture.restore();
                 Envapter.useSource(new FileSource());

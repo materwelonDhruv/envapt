@@ -98,10 +98,12 @@ export class ValueConverter {
         const converted = converterFn(parsed, undefined);
 
         if (converted === undefined) {
+            // key and type only, no value: env values can be secrets and verbose logs reach stderr
             debugVerbose(
-                `could not convert ${formatKeyForError(key)}="${parsed}" as ${resolvedConverter}, using the fallback`
+                `could not convert ${formatKeyForError(key)} as ${resolvedConverter}${hasFallback ? ', using the fallback' : ''}`
             );
-            return hasFallback ? fallback : null;
+            // re-run with the real fallback so time's string-form fallback still coerces to a number
+            return hasFallback ? (converterFn(parsed, fallback) as TFallback) : null;
         }
 
         return converted as TFallback;

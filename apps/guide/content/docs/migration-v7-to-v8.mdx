@@ -3,7 +3,7 @@ title: Migration (v7 to v8)
 description: Moving from envapt v7 to v8. The source classes get shorter names, one universal envapt import replaces the workerd and browser subpaths, and the portable file APIs warn instead of throwing by default.
 ---
 
-v8 is a major release with **seven** breaking changes. The source classes are renamed, the `envapt/workerd` and `envapt/browser` subpaths are removed, the portable build's filesystem-only config APIs warn once and no-op by default instead of throwing, the public type surface is trimmed, the functional required-read bag moves to `getRequired`, the `Integer` and `Float` converters reject malformed values, and the missing-value rule is unified so ordered reads skip an empty key and whitespace-only values follow `strict`. Everything else (the positional `Envapter` readers, decorators, and `envapt/legacy`) is unchanged.
+v8 is a major release with **seven** breaking changes. The source classes are renamed, the `envapt/workerd` and `envapt/browser` subpaths are removed, the portable build's filesystem-only config APIs warn once and no-op by default instead of throwing, the public type surface is trimmed, the functional required-read bag moves to `getRequired`, the `Integer` and `Float` converters reject malformed values, and the missing-value rule is unified so ordered reads skip an empty key and whitespace-only values follow `strict`.
 
 ## Source and type renames
 

@@ -202,7 +202,10 @@ export function readPrimitive<EnvVarReturnType, DefaultType extends EnvVarReturn
     else converted = BuiltInConverters.string(parsed) as EnvVarReturnType | undefined;
 
     if (converted === undefined) {
-        debugVerbose(`could not convert ${resolvedKey}="${parsed}" as ${PRIMITIVE_NAMES[type]}, using the fallback`);
+        // key and type only, no value: env values can be secrets and verbose logs reach stderr
+        debugVerbose(
+            `could not convert ${resolvedKey} as ${PRIMITIVE_NAMES[type]}${def !== undefined ? ', using the fallback' : ''}`
+        );
         return def as ConditionalReturn<EnvVarReturnType, DefaultType>;
     }
 

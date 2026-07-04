@@ -141,6 +141,14 @@ describe('Standard Schema adapter (v5)', () => {
                 .with.property('code', EnvaptErrorCodes.MissingEnvValue);
         });
 
+        it('throws MissingEnvValue on empty even when the schema would accept it', () => {
+            // z.string() accepts "", so a MissingEnvValue rather than a schema error proves the missing
+            // check runs before the schema, the same path @Envapt({ required: true, schema }) relies on.
+            expect(() => Envapter.parse('EMPTY', z.string()))
+                .to.throw(EnvaptError)
+                .with.property('code', EnvaptErrorCodes.MissingEnvValue);
+        });
+
         it('strict mode treats whitespace-only as missing', () => {
             Envapter.strict = true;
             expect(() => Envapter.parse('WHITESPACE_ONLY', z.string().min(1)))

@@ -155,7 +155,7 @@ config;
 They throw on a missing value instead of returning a fallback. See [Strict mode](/docs/strict-mode) for the global switch and how required reads relate to it.
 
 <Callout type="danger">
-    `require`, `getRequired`, and `getRequiredAll` throw `EnvaptError` the moment a key is missing or empty (or, under strict mode, whitespace-only).
+    `require`, `getRequired`, and `getRequiredAll` throw `EnvaptError` for a missing or empty key (or, under strict mode, a whitespace-only one). `require` and `getRequiredAll` collect every missing key into one error.
 
     Best to call `require` and `getRequiredAll` at startup, not lazily inside a request path, so a missing value fails the boot rather than a live request.
 
