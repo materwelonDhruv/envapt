@@ -161,6 +161,14 @@ export enum Primitive {
     Symbol
 }
 
+const PRIMITIVE_NAMES: Record<Primitive, string> = {
+    [Primitive.String]: 'string',
+    [Primitive.Number]: 'number',
+    [Primitive.Boolean]: 'boolean',
+    [Primitive.BigInt]: 'bigint',
+    [Primitive.Symbol]: 'symbol'
+};
+
 // getRaw is the raw string lookup, get is the template-resolved string read. Lazy arrows so the
 // resolver singletons below store envService without calling readPrimitive, which reads
 // templateResolver before it is assigned.
@@ -186,12 +194,17 @@ export function readPrimitive<EnvVarReturnType, DefaultType extends EnvVarReturn
 
     const parsed = templateResolver.resolveTemplate(resolvedKey, String(value));
 
-    let result: EnvVarReturnType;
-    if (type === Primitive.Number) result = BuiltInConverters.number(parsed, def as number) as EnvVarReturnType;
-    else if (type === Primitive.Boolean) result = BuiltInConverters.boolean(parsed, def as boolean) as EnvVarReturnType;
-    else if (type === Primitive.BigInt) result = BuiltInConverters.bigint(parsed, def as bigint) as EnvVarReturnType;
-    else if (type === Primitive.Symbol) result = BuiltInConverters.symbol(parsed, def as symbol) as EnvVarReturnType;
-    else result = BuiltInConverters.string(parsed, def as string) as EnvVarReturnType;
+    let converted: EnvVarReturnType | undefined;
+    if (type === Primitive.Number) converted = BuiltInConverters.number(parsed) as EnvVarReturnType | undefined;
+    else if (type === Primitive.Boolean) converted = BuiltInConverters.boolean(parsed) as EnvVarReturnType | undefined;
+    else if (type === Primitive.BigInt) converted = BuiltInConverters.bigint(parsed) as EnvVarReturnType | undefined;
+    else if (type === Primitive.Symbol) converted = BuiltInConverters.symbol(parsed) as EnvVarReturnType | undefined;
+    else converted = BuiltInConverters.string(parsed) as EnvVarReturnType | undefined;
 
-    return result;
+    if (converted === undefined) {
+        debugVerbose(`could not convert ${resolvedKey}="${parsed}" as ${PRIMITIVE_NAMES[type]}, using the fallback`);
+        return def as ConditionalReturn<EnvVarReturnType, DefaultType>;
+    }
+
+    return converted;
 }

@@ -1,6 +1,7 @@
 import { BuiltInConverters } from './BuiltInConverters';
 import { state } from '../core/state';
 import { Validator } from '../engine/Validators';
+import { debugVerbose } from '../infra/Debug';
 import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
 
 import type { ArrayOf } from './Converters';
@@ -84,9 +85,8 @@ export class ValueConverter {
 
         if (parsed === undefined) {
             if (!hasFallback) return null;
-            // For converters with asymmetric fallback / return types — currently only `time`,
-            // whose fallback may be a string while the return type is `number` — route the
-            // fallback through the converter so it gets coerced to the return type.
+            // Route the fallback through the time converter to coerce it to the return type,
+            // since fallback may be a string while the return type is number.
             if (resolvedConverter === 'time' && typeof fallback === 'string') {
                 const timeFn = BuiltInConverters.getConverter(resolvedConverter);
                 return timeFn('', fallback) as TFallback;
@@ -95,11 +95,16 @@ export class ValueConverter {
         }
 
         const converterFn = BuiltInConverters.getConverter(resolvedConverter);
-        const result = converterFn(parsed, fallback);
+        const converted = converterFn(parsed, undefined);
 
-        if (result === undefined && !hasFallback) return null;
+        if (converted === undefined) {
+            debugVerbose(
+                `could not convert ${formatKeyForError(key)}="${parsed}" as ${resolvedConverter}, using the fallback`
+            );
+            return hasFallback ? fallback : null;
+        }
 
-        return result as TFallback;
+        return converted as TFallback;
     }
 
     private processArrayConverter<TFallback>(
