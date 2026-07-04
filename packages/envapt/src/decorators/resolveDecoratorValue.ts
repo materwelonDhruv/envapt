@@ -1,4 +1,5 @@
 import { ValueConverter } from '../converters';
+import { isMissing } from '../core/missing';
 import { cache } from '../core/state';
 import { Envapter } from '../engine/Envapter';
 import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
@@ -47,7 +48,7 @@ export function resolveDecoratorValue<TFallback>(
 
     if (required && schema === undefined) {
         const rawValue = envapter.getRaw(key);
-        if (rawValue === undefined || rawValue.trim() === '') {
+        if (isMissing(rawValue)) {
             throw new EnvaptError(
                 EnvaptErrorCodes.MissingEnvValue,
                 `Required environment variable "${formatKeyForError(key)}" is missing or empty.`

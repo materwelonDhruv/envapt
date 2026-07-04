@@ -1,5 +1,6 @@
 import { BuiltInConverters, ValueConverter } from '../converters';
 import { ENV_KEYS, Environment, firstEnvKeyValue, parseEnvironment } from './Environment';
+import { isMissing } from './missing';
 import { resolveEffectivePaths } from './paths';
 import { cache, state } from './state';
 import { TemplateResolver } from '../engine/TemplateResolver';
@@ -32,17 +33,11 @@ export function resolveKeyInput(keyInput: EnvKeyInput): { key: string; value: st
     for (const candidate of normalizedKeys) {
         const value = readCached(candidate);
         if (value === undefined) continue;
-        if (!treatAsMissing(value)) return { key: candidate, value };
+        if (!isMissing(value)) return { key: candidate, value };
         firstPresent ??= { key: candidate, value };
     }
 
     return firstPresent ?? { key: normalizedKeys[0] as string, value: undefined };
-}
-
-export function treatAsMissing(value: string | undefined): boolean {
-    if (value === undefined || value === '') return true;
-    if (state.strict && value.trim() === '') return true;
-    return false;
 }
 
 export function ensureLoaded(): Map<string, unknown> {
@@ -183,7 +178,7 @@ export function readPrimitive<EnvVarReturnType, DefaultType extends EnvVarReturn
     def?: DefaultType
 ): ConditionalReturn<EnvVarReturnType, DefaultType> {
     const { key: resolvedKey, value } = resolveKeyInput(key);
-    if (treatAsMissing(value)) {
+    if (isMissing(value)) {
         if (def !== undefined) debugWarn(`${resolvedKey} is missing or empty, using fallback ${String(def)}`);
         else debugWarn(`${resolvedKey} is missing or empty`);
         return def as ConditionalReturn<EnvVarReturnType, DefaultType>;
