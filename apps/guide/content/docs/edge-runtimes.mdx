@@ -31,22 +31,17 @@ const origin = Envapter.getRequired('ORIGIN_URL', Converters.Url);
 
 ## Fastly Compute
 
-Fastly is the one runtime that hands you no environment object. You read values one key at a time with `env` from `fastly:env`, and `ConfigStore` is the same shape (a keyed `.get()`, no listing). So name the keys you read and build the object from them. Add the `fastly` condition to your bundler's resolve conditions so bare `envapt` resolves the portable build.
+Fastly is the one runtime that hands you no environment object. You read values one key at a time with `env` from `fastly:env`. Pass the reader straight to `useSource` and envapt reads each key from it on the first access, caching the result. Add the `fastly` condition to your bundler's resolve conditions so bare `envapt` resolves the portable build.
 
 ```ts
 import { env } from 'fastly:env';
-import { Envapter, PortableSource, Converters } from 'envapt';
+import { Envapter, Converters } from 'envapt';
 
-Envapter.useSource(
-    new PortableSource({
-        ORIGIN_URL: env('ORIGIN_URL'),
-        API_TOKEN: env('API_TOKEN')
-    })
-);
+Envapter.useSource(env);
 const origin = Envapter.getRequired('ORIGIN_URL', Converters.Url);
 ```
 
-Custom variables are inlined into the Wasm binary at build time through the `--env` flag, so changing one needs a redeploy. For values that change without a redeploy, read a `ConfigStore` by key the same way. See Fastly's [environment variables](https://www.fastly.com/documentation/reference/compute/ecp-env/) docs.
+Custom variables are inlined into the Wasm binary at build time through the `--env` flag, so changing one needs a redeploy. See Fastly's [environment variables](https://www.fastly.com/documentation/reference/compute/ecp-env/) docs.
 
 ## Expo and React Native
 

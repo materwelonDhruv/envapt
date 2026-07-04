@@ -4,6 +4,7 @@ import type { StandardSchemaV1 } from './StandardSchema';
 /**
  * Numeric codes carried by {@link EnvaptError.code}, grouped by fallback (1xx), converter (2xx),
  * and configuration (3xx) failures.
+ * @see {@link https://envapt.materwelon.dev/docs/errors#codes}
  */
 export enum EnvaptErrorCodes {
     // Fallback related errors
@@ -70,6 +71,7 @@ interface EnvaptErrorOptions {
  * ```ts
  * throw new EnvaptError(EnvaptErrorCodes.InvalidFallback, "Invalid fallback value provided for environment variable.");
  * ```
+ * @see {@link https://envapt.materwelon.dev/docs/errors#the-error-shape}
  */
 export class EnvaptError extends Error {
     /** The {@link EnvaptErrorCodes} value identifying what failed. */

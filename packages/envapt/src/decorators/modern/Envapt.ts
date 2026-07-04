@@ -237,6 +237,7 @@ export function Envapt<Schema extends StandardSchemaV1>(
  *   accessor databaseUrl!: URL;
  * }
  * ```
+ * @see {@link https://envapt.materwelon.dev/docs/decorators#declaring-decorated-fields}
  */
 /* v8 ignore start -- @preserve oxc (vitest's transform) breaks modern accessor decorators (context.name unset), so the tsc stage3-emit harness covers these, not vitest */
 export function Envapt<TFallback = unknown>(key: EnvKeyInput, options?: unknown): EnvaptAccessorDecorator<unknown> {

@@ -5,6 +5,7 @@ import type { Environment } from '../core/Environment';
  * Options for the \@Envapt decorator (modern API). `required: true` is mutually exclusive
  * with `fallback`; see the per-converter overloads in `Envapt.ts` for the type-level mutex.
  * @public
+ * @see {@link https://envapt.materwelon.dev/docs/decorators#declaring-decorated-fields}
  */
 interface EnvaptOptions<TFallback = string> {
     /** Value returned when the variable is missing or empty. Mutually exclusive with `required: true`. */
@@ -18,6 +19,7 @@ interface EnvaptOptions<TFallback = string> {
 /**
  * Per-environment profile entry passed to `Envapter.configureProfiles`.
  * @public
+ * @see {@link https://envapt.materwelon.dev/docs/environment#custom-profiles}
  */
 interface EnvProfile {
     /** One or more `.env` paths to load for this environment. Order matters: earlier paths take precedence. */
@@ -29,6 +31,7 @@ interface EnvProfile {
  * profile override. Unspecified environments fall through to the default cascade behavior
  * (`.env.${env}.local`, `.env.local`, `.env.${env}`, `.env`).
  * @public
+ * @see {@link https://envapt.materwelon.dev/docs/environment#custom-profiles}
  */
 type ProfilesConfig = Partial<Record<Environment, EnvProfile>> & {
     /**
@@ -44,6 +47,7 @@ type ProfilesConfig = Partial<Record<Environment, EnvProfile>> & {
  * warns once and no-ops, `'throw'` throws `FileApiUnsupported`. The node build runs these APIs
  * normally and is unaffected by this value.
  * @public
+ * @see {@link https://envapt.materwelon.dev/docs/compatibility#binding-by-runtime}
  */
 type FileApiMode = 'warn' | 'throw';
 

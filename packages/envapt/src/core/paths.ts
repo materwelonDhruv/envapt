@@ -52,13 +52,13 @@ function normalizeProfilePaths(profile: EnvProfile | undefined): string[] {
     return Array.isArray(profile.paths) ? profile.paths : [profile.paths];
 }
 
-// Reads the source's raw vars, not the cache, because cascade selection runs before the `.env` load.
-// `Envapter.environment` may differ post-load if a file sets `ENVIRONMENT`.
+// the cache is not built yet here, so read the reader directly (readCached would re-enter this build)
 function getCascadeEnvironment(): Environment {
     if (state.environment !== undefined) return state.environment;
 
-    const vars = state.source.readVars();
-    const raw = firstEnvKeyValue((key) => vars[key]);
+    const source = state.source;
+    const vars = source.readVars();
+    const raw = firstEnvKeyValue((key) => vars[key] ?? source.readVar?.(key));
     return raw === undefined ? Environment.Development : (parseEnvironment(raw) ?? Environment.Development);
 }
 
