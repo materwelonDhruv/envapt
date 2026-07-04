@@ -72,6 +72,17 @@ describe('a reader source reads one key at a time', () => {
         expect(Envapter.get('ONLY_B')).to.equal('b');
     });
 
+    it('returns a miss from a merge when no reader answers the key', () => {
+        Envapter.useSource(
+            merge(
+                (key) => (key === 'ONLY_A' ? 'a' : undefined),
+                (key) => (key === 'ONLY_B' ? 'b' : undefined)
+            )
+        );
+
+        expect(Envapter.get('UNANSWERED', 'fallback')).to.equal('fallback');
+    });
+
     it('selects the cascade environment from a reader member of a file merge', () => {
         Envapter.useSource(merge(new FileSource(), (key) => (key === 'ENVIRONMENT' ? 'production' : undefined)));
         Envapter.baseDir = import.meta.dirname;
