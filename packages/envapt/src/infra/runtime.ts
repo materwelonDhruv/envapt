@@ -20,7 +20,14 @@ export function writeRuntimeLine(line: string): void {
 
 // check snapshot first, then the source's per-key reader, so a reader source (empty snapshot) still resolves a key
 export function readRuntimeVar(key: string): string | undefined {
-    return envReader()[key] ?? varReader?.(key);
+    const fromSnapshot = envReader()[key];
+    if (fromSnapshot !== undefined) return fromSnapshot;
+    // ENVAPT_DEBUG resolves through here, so a throwing reader must not abort the config load that triggered it
+    try {
+        return varReader?.(key);
+    } catch {
+        return undefined;
+    }
 }
 
 export function bindRuntimeFromSource(source: Source): void {

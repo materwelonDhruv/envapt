@@ -97,4 +97,18 @@ describe('a reader source reads one key at a time', () => {
 
         expect(Envapter.debug).to.equal('verbose');
     });
+
+    it('swallows a throwing reader during the debug probe instead of aborting the load', () => {
+        resetDebugForTesting();
+
+        expect(() =>
+            Envapter.useSource((key) => {
+                if (key === 'ENVAPT_DEBUG') throw new Error('reader unavailable');
+                return key === 'PORT' ? '8080' : undefined;
+            })
+        ).to.not.throw();
+
+        expect(Envapter.getNumber('PORT')).to.equal(8080);
+        expect(Envapter.debug).to.equal('silent');
+    });
 });
