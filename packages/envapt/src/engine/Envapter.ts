@@ -69,8 +69,9 @@ export class Envapter extends AdvancedMethods {
     }
 
     /**
-     * Assert that one or more environment variables are present and non-empty (post-trim,
-     * after template resolution). Throws `MissingEnvValue` listing every missing key.
+     * Assert that one or more environment variables are present and non-empty after template
+     * resolution. Throws `MissingEnvValue` listing every missing key. A whitespace-only value
+     * counts as missing only under strict mode.
      *
      * For a typed required read in functional code, use `Envapter.getRequired(key, converter)`.
      *

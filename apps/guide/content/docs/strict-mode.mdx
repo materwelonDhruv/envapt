@@ -30,7 +30,7 @@ Three behaviors tighten when strict mode is on:
 
 A plain reader still returns the fallback (or `undefined`) for a missing value, even under strict mode. Strict mode changes how whitespace, templates, and array elements are treated; it does not turn every missing variable into a throw.
 
-To fail fast on a specific value, use `require` or `getRequired`. These throw on a missing value regardless of strict mode.
+To fail fast on a specific value, use `require` or `getRequired`. These throw on an unset or empty value in any mode, and on a whitespace-only value under strict mode.
 
 ```ts twoslash
 import { Envapter, Converters } from 'envapt';

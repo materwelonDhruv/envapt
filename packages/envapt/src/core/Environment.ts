@@ -3,7 +3,7 @@ import { isMissing } from './missing';
 /**
  * Environment types supported by Envapter
  *
- * The following keys are checked in order until the first with a non-empty value is found, or defaulting to development if none are set:
+ * The following keys are checked in order until the first with a present (non-missing) value, defaulting to development if none are set:
  * - `ENVIRONMENT`
  * - `ENV`
  * - `NODE_ENV`

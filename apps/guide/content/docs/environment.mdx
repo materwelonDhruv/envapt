@@ -7,9 +7,11 @@ envapt detects which environment it's running in and exposes it through the `isP
 
 ## Detecting the environment
 
-The environment is resolved from the first of these keys that is set, falling back to development:
+The environment is resolved from the first of these keys with a non-missing value, falling back to development:
 
 `ENVIRONMENT` → `ENV` → `NODE_ENV` → `MODE` → `development`
+
+An empty value is skipped like an unset key. A whitespace-only value is skipped only under strict mode.
 
 `MODE` is last because Vite-family browser builds expose `import.meta.env.MODE` but none of the others, so binding `new PortableSource(import.meta.env)` lets the same helpers work there. See [Browser](/docs/browser).
 
