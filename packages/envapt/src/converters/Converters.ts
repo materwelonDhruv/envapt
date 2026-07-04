@@ -13,42 +13,33 @@ const SCALAR = {
     Time: 'time'
 } as const;
 
-/**
- * String tokens for every built-in scalar converter.
- * @public
- */
 export type ConverterToken = (typeof SCALAR)[keyof typeof SCALAR];
 
 /**
  * Custom element converter for use inside {@link Converters.array}. Receives the trimmed,
  * non-empty raw string for one array slot and returns the parsed value.
  * @public
+ * @see {@link https://envapt.materwelon.dev/docs/converters#custom-converters}
  */
 export type CustomElementConverter<TReturn = unknown> = (raw: string) => TReturn;
 
-// array element converters, any scalar token except json/regexp (those don't compose) or a custom function
+// json/regexp are not allowed as array elements because they consume the whole string and cannot be split into slots
 export type ArrayElement = Exclude<ConverterToken, 'json' | 'regexp'> | CustomElementConverter;
 
-// phantom-branded token from Converters.array. TElement carries the element converter through variable
-// indirection so inference survives. __envaptKind is the runtime dispatch discriminant.
+// phantom type branded with __envaptKind for runtime dispatch. TElement preserves
+// element converter type through variable indirection for type inference
 export interface ArrayOf<TElement extends ArrayElement = ArrayElement> {
     readonly __envaptKind: 'array';
     readonly of: TElement;
     readonly delimiter: string;
 }
 
-/**
- * Runtime type guard for tokens produced by {@link Converters.array}.
- * @internal
- */
 export function isArrayOf(value: unknown): value is ArrayOf {
     return typeof value === 'object' && value !== null && '__envaptKind' in value && value.__envaptKind === 'array';
 }
 
 type ArrayScalarElement = Exclude<ConverterToken, 'json' | 'regexp'>;
 
-// Overloads. The function-element overload must come first so it wins inference when `of`
-// is a function, otherwise TS picks the scalar branch and `raw` defaults to `any`.
 function buildArrayConverter<TReturn>(opts: {
     of: CustomElementConverter<TReturn>;
     delimiter?: string;
@@ -80,6 +71,7 @@ function buildArrayConverter(opts?: { of?: ArrayElement; delimiter?: string }): 
  * ```
  *
  * @public
+ * @see {@link https://envapt.materwelon.dev/docs/converters#built-in-tokens}
  */
 export const Converters = {
     ...SCALAR,

@@ -10,6 +10,7 @@ import { state } from './state';
 export class EnvironmentMethods extends EnvapterBase {
     /**
      * Get the current application environment
+     * @see {@link https://envapt.materwelon.dev/docs/environment#detecting-the-environment}
      */
     static get environment(): Environment {
         if (state.environment === undefined) {
@@ -20,6 +21,7 @@ export class EnvironmentMethods extends EnvapterBase {
 
     /**
      * Set the application environment. Accepts either Environment enum or string value.
+     * @see {@link https://envapt.materwelon.dev/docs/environment#detecting-the-environment}
      */
     static set environment(env: string | Environment) {
         determineEnvironment(env);
@@ -41,6 +43,7 @@ export class EnvironmentMethods extends EnvapterBase {
 
     /**
      * Check if the current environment is production
+     * @see {@link https://envapt.materwelon.dev/docs/environment#branching-on-the-environment}
      */
     static get isProduction(): boolean {
         return this.environment === Environment.Production;
@@ -55,6 +58,7 @@ export class EnvironmentMethods extends EnvapterBase {
 
     /**
      * Check if the current environment is staging
+     * @see {@link https://envapt.materwelon.dev/docs/environment#branching-on-the-environment}
      */
     static get isStaging(): boolean {
         return this.environment === Environment.Staging;
@@ -69,6 +73,7 @@ export class EnvironmentMethods extends EnvapterBase {
 
     /**
      * Check if the current environment is development
+     * @see {@link https://envapt.materwelon.dev/docs/environment#branching-on-the-environment}
      */
     static get isDevelopment(): boolean {
         return this.environment === Environment.Development;
@@ -83,6 +88,7 @@ export class EnvironmentMethods extends EnvapterBase {
 
     /**
      * Check if the current environment is test
+     * @see {@link https://envapt.materwelon.dev/docs/environment#branching-on-the-environment}
      */
     static get isTest(): boolean {
         return this.environment === Environment.Test;

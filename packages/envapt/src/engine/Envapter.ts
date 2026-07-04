@@ -43,6 +43,7 @@ export class Envapter extends AdvancedMethods {
      * const message = Envapter.resolve`Service endpoint: ${'API_URL'}`;
      * // Returns: "Service endpoint: https://api.example.com:8080"
      * ```
+     * @see {@link https://envapt.materwelon.dev/docs/templates#the-resolve-tagged-template}
      */
     static resolve(strings: TemplateStringsArray, ...keys: string[]): string {
         const strict = Envapter.strict;

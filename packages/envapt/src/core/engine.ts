@@ -30,7 +30,7 @@ export function resolveKeyInput(keyInput: EnvKeyInput): { key: string; value: st
     // getRequired and firstEnvKeyValue. A single key or an all-empty list resolves to the first present value.
     let firstPresent: { key: string; value: string } | undefined;
     for (const candidate of normalizedKeys) {
-        const value = ensureLoaded().get(candidate) as string | undefined;
+        const value = readCached(candidate);
         if (value === undefined) continue;
         if (!treatAsMissing(value)) return { key: candidate, value };
         firstPresent ??= { key: candidate, value };
@@ -81,6 +81,21 @@ export function ensureLoaded(): Map<string, unknown> {
     return cache;
 }
 
+function readCached(key: string): string | undefined {
+    const c = ensureLoaded();
+    // decorator memoization also stores non-string values in this shared cache
+    if (c.has(key)) {
+        const cached = c.get(key);
+        return typeof cached === 'string' ? cached : undefined;
+    }
+    const source = state.source;
+    if (typeof source.readVar !== 'function') return undefined;
+    const value = source.readVar(key);
+    // cache a miss too, so a later read of an absent key skips the reader
+    c.set(key, value);
+    return value;
+}
+
 export function refreshCache(): void {
     // Reset an inferred environment so re-hydration re-determines it from current state. An explicit
     // Envapter.environment = X is preserved through the refresh and used for cascade selection.
@@ -125,10 +140,7 @@ export function determineEnvironment(env?: string | Environment): void {
         return;
     }
 
-    const raw = firstEnvKeyValue((key) => {
-        const value = ensureLoaded().get(key);
-        return typeof value === 'string' ? value : undefined;
-    });
+    const raw = firstEnvKeyValue((key) => readCached(key));
     if (raw === undefined) {
         debugWarn(`no environment set (looked for ${ENV_KEYS.join(', ')}); defaulting to development`);
         state.environment = Environment.Development;

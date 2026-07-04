@@ -219,6 +219,7 @@ export function Envapt<Schema extends StandardSchemaV1>(
 
 /**
  * Instance or static property decorator that loads and converts an environment variable.
+ * @see {@link https://envapt.materwelon.dev/docs/decorators#declaring-decorated-fields}
  */
 export function Envapt<TFallback = unknown>(key: EnvKeyInput, options?: unknown): EnvaptFieldDecorator<unknown> {
     return createPropertyDecorator(key, parseEnvaptOptions<TFallback>(options)) as EnvaptFieldDecorator<unknown>;

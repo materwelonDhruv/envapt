@@ -14,17 +14,13 @@ type BaseInput = string | undefined;
  * @param fallback - Fallback value when parsing is skipped
  * @returns Parsed value of type `TFallback`
  * @public
+ * @see {@link https://envapt.materwelon.dev/docs/converters#custom-converters}
  */
 type ConverterFunction<TFallback = unknown, TRaw extends BaseInput = BaseInput> = (
     raw: TRaw,
     fallback?: TFallback
 ) => TFallback;
 
-/**
- * Environment variable converter: a primitive constructor, a built-in scalar token, an `ArrayOf<...>`
- * produced by {@link Converters.array}, or a custom parser function.
- * @public
- */
 type EnvaptConverter<TFallback> = PrimitiveConstructor | BuiltInConverter | ArrayOf | ConverterFunction<TFallback>;
 
 type JsonPrimitive = string | number | boolean | null;
@@ -36,6 +32,7 @@ interface JsonObject {
 /**
  * JSON value types for custom converters
  * @public
+ * @see {@link https://envapt.materwelon.dev/docs/converters#json}
  */
 type JsonValue = JsonPrimitive | JsonArray | JsonObject;
 
@@ -73,6 +70,7 @@ type TimeUnit = 'ms' | 's' | 'm' | 'h' | 'd' | 'w';
 /**
  * Fallback type for time duration conversions
  * @public
+ * @see {@link https://envapt.materwelon.dev/docs/converters#time-and-durations}
  */
 type TimeFallback = number | `${number}${TimeUnit}`;
 

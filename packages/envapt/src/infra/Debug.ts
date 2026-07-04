@@ -1,5 +1,5 @@
 import { EnvaptError, EnvaptErrorCodes } from './Error';
-import { readRuntimeEnv, writeRuntimeLine } from './runtime';
+import { readRuntimeVar, writeRuntimeLine } from './runtime';
 
 /**
  * Debug log levels for {@link Envapter.debug}. `silent` (default) emits nothing.
@@ -8,6 +8,7 @@ import { readRuntimeEnv, writeRuntimeLine } from './runtime';
  * (whether it returns a fallback or `undefined`). `verbose` adds every loaded file,
  * per-file key count, per-key load lines, and effective-paths / cache-rebuild notices.
  * @public
+ * @see {@link https://envapt.materwelon.dev/docs/configuration#debug-logging}
  */
 export type DebugLevel = 'silent' | 'warn' | 'verbose';
 
@@ -23,7 +24,7 @@ function isDebugLevel(value: string | undefined): value is DebugLevel {
 // Reads `ENVAPT_DEBUG` lazily on first access. Setter wins after that.
 function resolveLevel(): DebugLevel {
     if (!initialized) {
-        const fromEnv = readRuntimeEnv().ENVAPT_DEBUG;
+        const fromEnv = readRuntimeVar('ENVAPT_DEBUG');
         currentLevel = isDebugLevel(fromEnv) ? fromEnv : 'silent';
         initialized = true;
     }
