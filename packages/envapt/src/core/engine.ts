@@ -78,7 +78,11 @@ export function ensureLoaded(): Map<string, unknown> {
 
 function readCached(key: string): string | undefined {
     const c = ensureLoaded();
-    if (c.has(key)) return c.get(key) as string | undefined;
+    // decorator memoization also stores non-string values in this shared cache
+    if (c.has(key)) {
+        const cached = c.get(key);
+        return typeof cached === 'string' ? cached : undefined;
+    }
     const source = state.source;
     if (typeof source.readVar !== 'function') return undefined;
     const value = source.readVar(key);

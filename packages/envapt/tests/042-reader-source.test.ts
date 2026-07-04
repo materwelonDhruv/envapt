@@ -1,12 +1,18 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { Converters, Environment, Envapter, FileSource, merge, PortableSource } from '../src';
+import { resetDebugForTesting } from '../src/infra/Debug';
 
 describe('a reader source reads one key at a time', () => {
     afterEach(() => {
         Envapter.useSource(new FileSource());
         Envapter.baseDir = undefined;
         Envapter.resetProfiles();
+    });
+
+    // resolve the debug level once up front so its one-time ENVAPT_DEBUG probe never ends up on a tracked reader
+    beforeEach(() => {
+        void Envapter.debug;
     });
 
     it('binds a reader function and reads a key through it', () => {
@@ -72,5 +78,12 @@ describe('a reader source reads one key at a time', () => {
         Envapter.configureProfiles({ [Environment.Production]: { paths: '.env.042-prod' } });
 
         expect(Envapter.get('READER_CASCADE_FOO')).to.equal('prod');
+    });
+
+    it('reads ENVAPT_DEBUG through a reader source', () => {
+        resetDebugForTesting();
+        Envapter.useSource((key) => (key === 'ENVAPT_DEBUG' ? 'verbose' : undefined));
+
+        expect(Envapter.debug).to.equal('verbose');
     });
 });
