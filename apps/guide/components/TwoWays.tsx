@@ -21,7 +21,6 @@ class Config {
 export function TwoWays(): ReactNode {
     return (
         <Section
-            eyebrow="// two ways to read"
             title="Two ways to read, one engine."
             lead={
                 <>

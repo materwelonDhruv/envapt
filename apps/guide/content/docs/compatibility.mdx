@@ -13,32 +13,44 @@ envapt splits into two builds, selected by the package `exports` conditions. On 
 
 `FileSource` binds on import and reads `process.env` plus the `.env` cascade, so the first read works with no setup.
 
+{/* prettier-ignore-start */}
+
 | Runtime | Condition | Reads | Gotcha |
-| ----------- | --------- | ---------------------------------------------- | ------------------------------------------- |
+| --- | --- | --- | --- |
 | Node | `node` | `process.env` and the `.env` cascade | — |
 | Bun | `node` | `process.env` and the `.env` cascade | — |
 | Deno | `deno` | `process.env` and the `.env` cascade | needs Deno 2.5+ |
 | Deno Deploy | `deno` | dashboard vars via `process.env` / `Deno.env` | no `.env` files, set vars in the dashboard |
 
+{/* prettier-ignore-end */}
+
 ### Portable build, you bind a source
 
 Bind a `PortableSource` from the object the platform gives you before your first read. An unbound read throws [`NoSourceBound`](/docs/errors), and the file-only APIs warn once and no-op (see `fileApiMode` below).
 
+{/* prettier-ignore-start */}
+
 | Runtime | Condition | Seed from | `process.env` | Gotcha |
-| ----------------------------------------------- | -------------- | ---------------------------- | ------------- | -------------------------------------------------- |
+| --- | --- | --- | --- | --- |
 | [Cloudflare Workers](/docs/workers) | `workerd` | the `env` binding | no | bind once at module load |
 | [Vercel Edge](/docs/edge-runtimes) | `edge-light` | `process.env` | yes | deprecated by Vercel, the Node runtime auto-binds |
 | [Fastly Compute](/docs/edge-runtimes) | `fastly` | `env()` keys, no bulk object | no | add the `fastly` condition |
 | [Expo / React Native](/docs/edge-runtimes) | `react-native` | `Constants.expoConfig.extra` | build-inlined | `process.env` is not a runtime object |
 | [Browser](/docs/browser) | `browser` | bundler-injected config | no | ships in the client bundle |
 
+{/* prettier-ignore-end */}
+
 ## Engine versions
 
+{/* prettier-ignore-start */}
+
 | Runtime | Minimum |
-| ------- | ------- |
-| Node    | `>=20`  |
-| Bun     | `>=1.3` |
-| Deno    | `>=2.5` |
+| --- | --- |
+| Node | `>=20` |
+| Bun | `>=1.3` |
+| Deno | `>=2.5` |
+
+{/* prettier-ignore-end */}
 
 Each release is tested against Node 20, 22, and 24, plus Bun and Deno.
 
