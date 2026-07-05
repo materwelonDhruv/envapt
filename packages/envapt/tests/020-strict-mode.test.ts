@@ -149,9 +149,16 @@ describe('Strict mode + required (v5)', () => {
                 .with.property('code', EnvaptErrorCodes.MissingEnvValue);
         });
 
-        it('throws MissingEnvValue on whitespace-only value (independent of global strict)', () => {
+        it('keeps a whitespace-only required value non-strict, and throws under strict', () => {
             Envapter.strict = false;
-            expect(() => RequiredWhitespace.key)
+            expect(RequiredWhitespace.key).to.equal('   ');
+
+            Envapter.strict = true;
+            class RequiredWhitespaceStrict {
+                @Envapt('WHITESPACE_ONLY', { required: true })
+                static readonly key: string;
+            }
+            expect(() => RequiredWhitespaceStrict.key)
                 .to.throw(EnvaptError)
                 .with.property('code', EnvaptErrorCodes.MissingEnvValue);
         });
@@ -215,8 +222,11 @@ describe('Strict mode + required (v5)', () => {
                 .with.property('code', EnvaptErrorCodes.MissingEnvValue);
         });
 
-        it('throws MissingEnvValue on whitespace-only value (independent of global strict)', () => {
+        it('passes a whitespace-only value non-strict, and throws under strict', () => {
             Envapter.strict = false;
+            expect(() => Envapter.require('WHITESPACE_ONLY')).to.not.throw();
+
+            Envapter.strict = true;
             expect(() => Envapter.require('WHITESPACE_ONLY'))
                 .to.throw(EnvaptError)
                 .with.property('code', EnvaptErrorCodes.MissingEnvValue);

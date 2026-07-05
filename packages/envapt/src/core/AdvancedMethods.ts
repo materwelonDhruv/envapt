@@ -1,4 +1,5 @@
-import { resolveKeyInput, templateResolver, treatAsMissing, valueConverter } from './engine';
+import { resolveKeyInput, templateResolver, valueConverter } from './engine';
+import { isMissing } from './missing';
 import { PrimitiveMethods } from './PrimitiveMethods';
 import { debugWarn } from '../infra/Debug';
 import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
@@ -27,7 +28,8 @@ function formatKeyForError(key: EnvKeyInput): string {
     return Array.isArray(key) ? `[${key.join(', ')}]` : String(key);
 }
 
-// template-resolve a present value, treating a post-trim-empty result as missing regardless of strict.
+// template-resolve a present value, then apply the shared missing check so a resolved blank falls
+// through (empty always, whitespace-only under strict).
 // a module function so getRequired/getRequiredAll and Envapter.require share it without exposing it on any subclass.
 export function resolveRequired(
     resolved: { key: string; value: string | undefined },
@@ -35,7 +37,7 @@ export function resolveRequired(
 ): { key: string; value: string | undefined } {
     if (resolved.value === undefined) return resolved;
     const value = templateResolver.resolveTemplate(resolved.key, resolved.value);
-    return { key: resolved.key, value: value.trim() === '' ? undefined : value };
+    return { key: resolved.key, value: isMissing(value) ? undefined : value };
 }
 
 /**
@@ -75,7 +77,7 @@ export class AdvancedMethods extends PrimitiveMethods {
         // missing with no fallback returns undefined, matching the primitive methods. with a fallback,
         // route through the parser so asymmetric types (TimeFallback, TimeFallback[] for `of: time`)
         // coerce to the return type.
-        if (treatAsMissing(value) && fallback === undefined) {
+        if (isMissing(value) && fallback === undefined) {
             debugWarn(`${resolvedKey} is missing or empty`);
             return undefined as AdvancedConverterReturn<TConverter, TFallback>;
         }
@@ -120,7 +122,7 @@ export class AdvancedMethods extends PrimitiveMethods {
         fallback?: TFallback
     ): ConditionalReturn<TReturnType, TFallback> {
         const { key: resolvedKey, value } = resolveKeyInput(key);
-        if (treatAsMissing(value)) {
+        if (isMissing(value)) {
             debugWarn(`${resolvedKey} is missing or empty`);
             return fallback as ConditionalReturn<TReturnType, TFallback>;
         }

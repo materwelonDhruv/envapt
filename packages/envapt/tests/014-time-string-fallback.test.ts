@@ -59,6 +59,13 @@ describe('Converters.Time — time-string fallbacks', () => {
         });
     });
 
+    describe('present-but-invalid value with a string fallback', () => {
+        it('coerces the string fallback when the raw value is malformed', () => {
+            // TEST_TIME_INVALID=5x in the fixture is present but malformed, so the '10s' fallback must still coerce
+            expect(Envapter.getUsing('TEST_TIME_INVALID', 'time', '10s')).to.equal(10000);
+        });
+    });
+
     describe('malformed time-string fallbacks', () => {
         it('throws MalformedTimeFallback for a bogus string fallback', () => {
             class BogusFallback extends Envapter {

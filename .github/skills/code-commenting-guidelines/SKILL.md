@@ -51,6 +51,64 @@ user.displayName = payload.name;
 - Put the comment immediately above the line or block whose intent is non-obvious.
 - Explain why the rule exists or what breaks if it changes.
 
+## Put the why on the line it explains
+
+When a comment explains one specific line, put it on that line (`code; // why`) or right above it. Avoid a multi-sentence block at the top of the function. When one header covers three different lines, the reader has to hold all three explanations at once and map each back to the line it describes. An inline note sits where the confusion is, so the reader gets the why exactly where they need it.
+
+Break a multi-clause header into per-line comments. Each clause moves to the line it explains, and any clause that only restates its line falls away in the move.
+
+Why it matters:
+
+- **Locality.** The reader meets the why at the line, not after decoding a preamble.
+- **It survives edits.** An inline note is anchored to its line and gets deleted with it. A top-of-function block drifts stale as the lines beneath it change, because no one sentence is tied to any one line.
+- **It forces brevity.** A line has room for one short clause, so only the load-bearing why fits. A header block invites narrate-then-justify and restatement.
+
+Keep a block comment only for a why that genuinely spans the whole function, an invariant every line leans on or a design choice the whole body carries out, and that cannot be pinned to one line.
+
+Bad, one header narrating three separate lines:
+
+```ts
+// the item count: addMethod appends, setMethod replaces everything before it. collectChain is
+// outermost-first, so walk it reversed to follow source order. undefined when the count is not static.
+function countStaticItems(calls: Call[], limit: Limit): number | undefined {
+    let count = 0;
+    for (const call of [...calls].reverse()) {
+        const name = methodName(call);
+        if (name === limit.addMethod) count += call.arguments.length;
+        else if (name === limit.setMethod) count = arrayLen(call.arguments[0]);
+    }
+    return count;
+}
+```
+
+Good, each why on the line it explains, the return-type restatement dropped:
+
+```ts
+function countStaticItems(calls: Call[], limit: Limit): number | undefined {
+    let count = 0;
+    // reversed to source order, so the last setX wins over earlier adds
+    for (const call of [...calls].reverse()) {
+        const name = methodName(call);
+        if (name === limit.addMethod) count += call.arguments.length;
+        else if (name === limit.setMethod) count = arrayLen(call.arguments[0]); // setX replaces
+    }
+    return count;
+}
+```
+
+Bad, a header line for one constant:
+
+```ts
+// ButtonStyle.Link, the stable Discord wire value for a link button
+const BUTTON_STYLE_LINK = 5;
+```
+
+Good, inline on the same line:
+
+```ts
+const BUTTON_STYLE_LINK = 5; // stable Discord wire value for a link button
+```
+
 ## Connect Clauses The Way You'd Say Them
 
 Once a comment earns its place, it should read like you explaining the code to someone next to you, not a telegram. Join cause and effect with the ordinary words you would use out loud, so, and, because, but, then, instead of clipping every thought into its own stiff fragment or stacking formal clauses. The punctuation ban from the `writing-voice` skill (no `—`, and no clause-splicing `;` or `:`) already pushes you here, and a connector word is almost always the replacement that reads best.

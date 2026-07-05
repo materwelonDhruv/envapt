@@ -1,5 +1,6 @@
 import { BuiltInConverters, ValueConverter } from '../converters';
 import { ENV_KEYS, Environment, firstEnvKeyValue, parseEnvironment } from './Environment';
+import { isMissing } from './missing';
 import { resolveEffectivePaths } from './paths';
 import { cache, state } from './state';
 import { TemplateResolver } from '../engine/TemplateResolver';
@@ -26,18 +27,17 @@ export function resolveKeyInput(keyInput: EnvKeyInput): { key: string; value: st
         throw new EnvaptError(EnvaptErrorCodes.InvalidKeyInput, 'Environment keys cannot be empty strings.');
     }
 
+    // An ordered read keeps trying so a present-but-empty candidate falls through to the next, matching
+    // getRequired and firstEnvKeyValue. A single key or an all-empty list resolves to the first present value.
+    let firstPresent: { key: string; value: string } | undefined;
     for (const candidate of normalizedKeys) {
         const value = readCached(candidate);
-        if (value !== undefined) return { key: candidate, value };
+        if (value === undefined) continue;
+        if (!isMissing(value)) return { key: candidate, value };
+        firstPresent ??= { key: candidate, value };
     }
 
-    return { key: normalizedKeys[0] as string, value: undefined };
-}
-
-export function treatAsMissing(value: string | undefined): boolean {
-    if (value === undefined || value === '') return true;
-    if (state.strict && value.trim() === '') return true;
-    return false;
+    return firstPresent ?? { key: normalizedKeys[0] as string, value: undefined };
 }
 
 export function ensureLoaded(): Map<string, unknown> {
@@ -161,6 +161,14 @@ export enum Primitive {
     Symbol
 }
 
+const PRIMITIVE_NAMES: Record<Primitive, string> = {
+    [Primitive.String]: 'string',
+    [Primitive.Number]: 'number',
+    [Primitive.Boolean]: 'boolean',
+    [Primitive.BigInt]: 'bigint',
+    [Primitive.Symbol]: 'symbol'
+};
+
 // getRaw is the raw string lookup, get is the template-resolved string read. Lazy arrows so the
 // resolver singletons below store envService without calling readPrimitive, which reads
 // templateResolver before it is assigned.
@@ -178,7 +186,7 @@ export function readPrimitive<EnvVarReturnType, DefaultType extends EnvVarReturn
     def?: DefaultType
 ): ConditionalReturn<EnvVarReturnType, DefaultType> {
     const { key: resolvedKey, value } = resolveKeyInput(key);
-    if (treatAsMissing(value)) {
+    if (isMissing(value)) {
         if (def !== undefined) debugWarn(`${resolvedKey} is missing or empty, using fallback ${String(def)}`);
         else debugWarn(`${resolvedKey} is missing or empty`);
         return def as ConditionalReturn<EnvVarReturnType, DefaultType>;
@@ -186,12 +194,20 @@ export function readPrimitive<EnvVarReturnType, DefaultType extends EnvVarReturn
 
     const parsed = templateResolver.resolveTemplate(resolvedKey, String(value));
 
-    let result: EnvVarReturnType;
-    if (type === Primitive.Number) result = BuiltInConverters.number(parsed, def as number) as EnvVarReturnType;
-    else if (type === Primitive.Boolean) result = BuiltInConverters.boolean(parsed, def as boolean) as EnvVarReturnType;
-    else if (type === Primitive.BigInt) result = BuiltInConverters.bigint(parsed, def as bigint) as EnvVarReturnType;
-    else if (type === Primitive.Symbol) result = BuiltInConverters.symbol(parsed, def as symbol) as EnvVarReturnType;
-    else result = BuiltInConverters.string(parsed, def as string) as EnvVarReturnType;
+    let converted: EnvVarReturnType | undefined;
+    if (type === Primitive.Number) converted = BuiltInConverters.number(parsed) as EnvVarReturnType | undefined;
+    else if (type === Primitive.Boolean) converted = BuiltInConverters.boolean(parsed) as EnvVarReturnType | undefined;
+    else if (type === Primitive.BigInt) converted = BuiltInConverters.bigint(parsed) as EnvVarReturnType | undefined;
+    else if (type === Primitive.Symbol) converted = BuiltInConverters.symbol(parsed) as EnvVarReturnType | undefined;
+    else converted = BuiltInConverters.string(parsed) as EnvVarReturnType | undefined;
 
-    return result;
+    if (converted === undefined) {
+        // key and type only, no value: env values can be secrets and verbose logs reach stderr
+        debugVerbose(
+            `could not convert ${resolvedKey} as ${PRIMITIVE_NAMES[type]}${def !== undefined ? ', using the fallback' : ''}`
+        );
+        return def as ConditionalReturn<EnvVarReturnType, DefaultType>;
+    }
+
+    return converted;
 }

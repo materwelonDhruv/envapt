@@ -145,7 +145,7 @@ These are accessor decorators like `@Envapt`, so the same [declaration rule](#de
 
 ## Required values
 
-Pass `required: true` to throw `EnvaptError` on a missing or empty value instead of returning a fallback. It's mutually exclusive with `fallback`.
+Pass `required: true` to throw `EnvaptError` on a missing or empty value (or, under strict mode, a whitespace-only value) instead of returning a fallback. It's mutually exclusive with `fallback`.
 
 ```ts twoslash
 import { Envapt, Converters } from 'envapt';
@@ -156,7 +156,7 @@ class Config {
 }
 ```
 
-The throw happens on first access to the property, independent of global strict mode. See [Strict mode](/docs/strict-mode) for the global switch and how `required` relates to it.
+The throw happens on first access to the property. An unset or empty value throws in any mode. A whitespace-only value throws only under strict mode. See [Strict mode](/docs/strict-mode) for the global switch and how `required` relates to it.
 
 <Callout type="warn">
     First access can be deep in a request, not at boot. A missing required value then surfaces as a runtime error

@@ -43,7 +43,7 @@ describe('Required reads (v8)', () => {
             expectTypeOf(upper).toEqualTypeOf<string>();
         });
 
-        it('throws MissingEnvValue on missing, empty, or whitespace-only (independent of strict)', () => {
+        it('throws on missing or empty always, and on whitespace-only only in strict', () => {
             expect(() => Envapter.getRequired('NEVER_SET_KEY', Converters.Number))
                 .to.throw(EnvaptError)
                 .with.property('code', EnvaptErrorCodes.MissingEnvValue);
@@ -52,7 +52,10 @@ describe('Required reads (v8)', () => {
                 .to.throw(EnvaptError)
                 .with.property('code', EnvaptErrorCodes.MissingEnvValue);
 
-            Envapter.strict = false;
+            // non-strict keeps a whitespace-only value as a real value
+            expect(Envapter.getRequired('WHITESPACE_ONLY', Converters.String)).to.equal('   ');
+
+            Envapter.strict = true;
             expect(() => Envapter.getRequired('WHITESPACE_ONLY', Converters.String))
                 .to.throw(EnvaptError)
                 .with.property('code', EnvaptErrorCodes.MissingEnvValue);
@@ -235,13 +238,23 @@ describe('Required reads (v8)', () => {
             expect(port).to.equal(42);
         });
 
-        it('treats a whitespace-only value as missing in the aggregated throw', () => {
+        it('counts a whitespace-only value as missing only under strict in the aggregated throw', () => {
+            // non-strict keeps whitespace as a real value, so only the truly-missing key is listed
             try {
                 Envapter.getRequiredAll({ WHITESPACE_ONLY: Converters.String, NEVER_SET_KEY: Converters.String });
                 expect.fail('should have thrown');
             } catch (err) {
                 const e = err as EnvaptError;
-                expect(e.code).to.equal(EnvaptErrorCodes.MissingEnvValue);
+                expect(e.message).to.include('NEVER_SET_KEY');
+                expect(e.message).to.not.include('WHITESPACE_ONLY');
+            }
+
+            Envapter.strict = true;
+            try {
+                Envapter.getRequiredAll({ WHITESPACE_ONLY: Converters.String, NEVER_SET_KEY: Converters.String });
+                expect.fail('should have thrown');
+            } catch (err) {
+                const e = err as EnvaptError;
                 expect(e.message).to.include('WHITESPACE_ONLY');
                 expect(e.message).to.include('NEVER_SET_KEY');
             }

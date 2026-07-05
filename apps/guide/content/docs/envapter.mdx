@@ -50,7 +50,7 @@ const noFallback = Envapter.get('API_URL');
 
 ## Ordered keys
 
-Any reader accepts an ordered list of keys instead of a single name. The first key with a defined value wins, so an aliased or renamed variable falls back to its old name in one read.
+Any reader accepts an ordered list of keys instead of a single name. The first key with a present value wins, so an aliased or renamed variable falls back to its old name in one read. An empty value, or a whitespace-only value under strict, is skipped like an unset key.
 
 ```ts twoslash
 import { Envapter } from 'envapt';
@@ -116,7 +116,7 @@ See [Templates](/docs/templates) for `${VAR}` interpolation and cycle protection
 
 ## Fail-fast on missing values
 
-`require` asserts that one or more keys are present and non-empty (after trimming and template resolution), throwing an `EnvaptError` that names every missing key.
+`require` asserts that one or more keys are present and non-empty after template resolution, throwing an `EnvaptError` that names every missing key. A whitespace-only value counts as missing only under strict mode.
 
 ```ts twoslash
 import { Envapter } from 'envapt';
@@ -155,7 +155,7 @@ config;
 They throw on a missing value instead of returning a fallback. See [Strict mode](/docs/strict-mode) for the global switch and how required reads relate to it.
 
 <Callout type="danger">
-    `require`, `getRequired`, and `getRequiredAll` throw `EnvaptError` the moment a key is missing or empty.
+    `require`, `getRequired`, and `getRequiredAll` throw `EnvaptError` for a missing or empty key (or, under strict mode, a whitespace-only one). `require` and `getRequiredAll` collect every missing key into one error.
 
     Best to call `require` and `getRequiredAll` at startup, not lazily inside a request path, so a missing value fails the boot rather than a live request.
 

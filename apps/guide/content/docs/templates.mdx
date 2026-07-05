@@ -35,7 +35,7 @@ Reading `HEALTHCHECK` returns `https://api.example.com/health`.
 
 ## Unresolved references
 
-When a referenced variable is missing or empty, envapt leaves the literal `${VAR}` text in place.
+When a referenced variable is missing or empty (or, under strict mode, whitespace-only), envapt leaves the literal `${VAR}` text in place.
 
 ```dotenv
 DB_HOST=localhost
@@ -83,9 +83,9 @@ const endpoint = Envapter.resolve`https://${'API_HOST'}:${'API_PORT'}`;
 //    ^?
 ```
 
-`resolve` returns a `string`. Under strict mode, a missing or empty key throws `EnvaptError` with code `MissingEnvValue`; otherwise the missing key resolves to an empty string.
+`resolve` returns a `string`. Under strict mode, a missing, empty, or whitespace-only key throws `EnvaptError` with code `MissingEnvValue`. Otherwise a missing or empty key resolves to an empty string, and a whitespace-only key keeps its value.
 
 <Callout type="warn">
     `resolve` does not preserve unresolved keys as literal text the way `.env` expansion does. In non-strict mode a
-    missing or empty key collapses to an empty string in the output. Use strict mode if a missing key should throw.
+    missing or empty key collapses to an empty string in the output, and a whitespace-only key keeps its value. Use strict mode if a missing key should throw.
 </Callout>

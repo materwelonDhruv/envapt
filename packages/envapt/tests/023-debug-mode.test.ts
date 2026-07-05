@@ -3,7 +3,7 @@ import process from 'node:process';
 
 import { afterEach, beforeAll, beforeEach, describe, expect, expectTypeOf, it, vi } from 'vitest';
 
-import { Envapter, EnvaptErrorCodes, FileSource } from '../src';
+import { Converters, Envapter, EnvaptErrorCodes, FileSource, PortableSource } from '../src';
 import { resetDebugForTesting } from '../src/infra/Debug';
 import { loadDotenv } from '../src/infra/Dotenv';
 import { EnvaptError } from '../src/infra/Error';
@@ -261,6 +261,54 @@ describe('Debug mode (v5)', () => {
                 expect(capture.lines.some((l) => l.includes('cache cleared'))).to.equal(true);
             } finally {
                 capture.restore();
+            }
+        });
+
+        it('logs a line when a present value fails to convert and the fallback is used', () => {
+            Envapter.useSource(new PortableSource({ PORT: 'not-a-number', RETRIES: 'abc' }));
+            Envapter.debug = 'verbose';
+            const capture = captureStderr();
+            try {
+                expect(Envapter.getNumber('PORT', 8080)).to.equal(8080);
+                expect(Envapter.getUsing('RETRIES', Converters.Integer, 3)).to.equal(3);
+
+                expect(capture.lines.some((l) => l.includes('could not convert') && l.includes('PORT'))).to.equal(true);
+                expect(capture.lines.some((l) => l.includes('could not convert') && l.includes('RETRIES'))).to.equal(
+                    true
+                );
+                // the raw value never appears, since it can be a secret
+                expect(capture.lines.some((l) => l.includes('not-a-number') || l.includes('abc'))).to.equal(false);
+            } finally {
+                capture.restore();
+                Envapter.useSource(new FileSource());
+            }
+        });
+
+        it('omits "using the fallback" when the read has no fallback', () => {
+            Envapter.useSource(new PortableSource({ PORT: 'not-a-number' }));
+            Envapter.debug = 'verbose';
+            const capture = captureStderr();
+            try {
+                expect(Envapter.getNumber('PORT')).to.be.undefined;
+                const line = capture.lines.find((l) => l.includes('could not convert') && l.includes('PORT'));
+                expect(line, 'expected a convert-failure line').to.exist;
+                expect(line).to.not.include('using the fallback');
+            } finally {
+                capture.restore();
+                Envapter.useSource(new FileSource());
+            }
+        });
+
+        it('does not log a convert-failure for a missing value', () => {
+            Envapter.useSource(new PortableSource({}));
+            Envapter.debug = 'verbose';
+            const capture = captureStderr();
+            try {
+                Envapter.getNumber('ABSENT', 5);
+                expect(capture.lines.some((l) => l.includes('could not convert'))).to.equal(false);
+            } finally {
+                capture.restore();
+                Envapter.useSource(new FileSource());
             }
         });
 

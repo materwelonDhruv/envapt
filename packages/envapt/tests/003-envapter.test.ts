@@ -102,6 +102,13 @@ describe('Envapter', () => {
             expect(Envapter.get(['UNKNOWN_A', 'UNKNOWN_B'], 'default-value')).to.equal('default-value');
         });
 
+        it('should fall through a present-but-empty key to the next in the list', () => {
+            expect(Envapter.get(['EMPTY_ORDERED', 'GETTER_STRING'])).to.equal('primitiveString');
+            expect(Envapter.getRequired(['EMPTY_ORDERED', 'GETTER_STRING'], Converters.String)).to.equal(
+                'primitiveString'
+            );
+        });
+
         it('should work with advanced converters for arrays of keys', () => {
             expect(Envapter.getUsing(['UNKNOWN_BOOL', 'GETTER_BOOLEAN'], Converters.Boolean)).to.be.true;
         });

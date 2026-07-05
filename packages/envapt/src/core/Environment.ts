@@ -1,7 +1,9 @@
+import { isMissing } from './missing';
+
 /**
  * Environment types supported by Envapter
  *
- * The following keys are checked in order until the first with a non-empty value is found, or defaulting to development if none are set:
+ * The following keys are checked in order until the first with a present (non-missing) value, defaulting to development if none are set:
  * - `ENVIRONMENT`
  * - `ENV`
  * - `NODE_ENV`
@@ -42,7 +44,7 @@ export function parseEnvironment(raw: string): Environment | undefined {
 export function firstEnvKeyValue(read: (key: string) => string | undefined): string | undefined {
     for (const key of ENV_KEYS) {
         const value = read(key);
-        if (value !== undefined && value.length > 0) return value;
+        if (!isMissing(value)) return value;
     }
     return undefined;
 }
