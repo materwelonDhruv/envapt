@@ -9,7 +9,6 @@ const RESOLVED = `Envapter.get('DATABASE_URL');
 export function EnvLoading(): ReactNode {
     return (
         <Section
-            eyebrow="// node source"
             title={
                 <>
                     The default Node source loads <span className="text-(--ev-link)">.env</span>.
