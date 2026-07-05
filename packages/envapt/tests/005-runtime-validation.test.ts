@@ -267,6 +267,44 @@ describe('Runtime Validation', () => {
         });
     });
 
+    describe('Fallback value validation for built-in converters', () => {
+        it('rejects a non-safe-integer integer fallback', () => {
+            expect(() => Envapter.getUsing('NONEXISTENT_INT_FB', Converters.Integer, Number.MAX_SAFE_INTEGER + 1))
+                .to.throw(EnvaptError)
+                .with.property('code', EnvaptErrorCodes.FallbackConverterTypeMismatch);
+        });
+
+        it('rejects a NaN number fallback', () => {
+            expect(() => Envapter.getUsing('NONEXISTENT_NUM_FB', Converters.Number, NaN))
+                .to.throw(EnvaptError)
+                .with.property('code', EnvaptErrorCodes.FallbackConverterTypeMismatch);
+        });
+
+        it('rejects a NaN float fallback but keeps Infinity', () => {
+            expect(() => Envapter.getUsing('NONEXISTENT_FLOAT_FB', Converters.Float, NaN))
+                .to.throw(EnvaptError)
+                .with.property('code', EnvaptErrorCodes.FallbackConverterTypeMismatch);
+            expect(Envapter.getUsing('NONEXISTENT_FLOAT_FB', Converters.Float, Infinity)).to.equal(Infinity);
+        });
+
+        it('rejects an Invalid Date fallback', () => {
+            expect(() => Envapter.getUsing('NONEXISTENT_DATE_FB', Converters.Date, new Date('not-a-date')))
+                .to.throw(EnvaptError)
+                .with.property('code', EnvaptErrorCodes.FallbackConverterTypeMismatch);
+        });
+
+        it('keeps a safe-integer fallback', () => {
+            expect(Envapter.getUsing('NONEXISTENT_INT_FB', Converters.Integer, 42)).to.equal(42);
+        });
+
+        it('keeps a valid Date fallback', () => {
+            const valid = new Date('2024-01-15T00:00:00.000Z');
+            expect(Envapter.getUsing('NONEXISTENT_DATE_FB', Converters.Date, valid).getTime()).to.equal(
+                valid.getTime()
+            );
+        });
+    });
+
     describe('Array converter fallback element type validation', () => {
         class ArrayConverterValidationTests {
             @Envapt('NONEXISTENT_ARRAY_VAR', {

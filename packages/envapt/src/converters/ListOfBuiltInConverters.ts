@@ -1,3 +1,5 @@
+import { EMAIL_RE, MAX_PORT } from './BuiltInConverters';
+
 import type { ConverterToken } from './Converters';
 import type { JsonValue } from '../types';
 
@@ -29,12 +31,12 @@ export const ListOfBuiltInConverters: ConverterToken[] = [
  */
 export const BuiltInConverterTypeCheckers: Record<ConverterToken, (value: unknown) => boolean> = {
     string: (value: unknown): value is string => typeof value === 'string',
-    number: (value: unknown): value is number => typeof value === 'number',
+    number: (value: unknown): value is number => typeof value === 'number' && !Number.isNaN(value),
     boolean: (value: unknown): value is boolean => typeof value === 'boolean',
     bigint: (value: unknown): value is bigint => typeof value === 'bigint',
     symbol: (value: unknown): value is symbol => typeof value === 'symbol',
-    integer: (value: unknown): value is number => typeof value === 'number' && Number.isInteger(value),
-    float: (value: unknown): value is number => typeof value === 'number',
+    integer: (value: unknown): value is number => typeof value === 'number' && Number.isSafeInteger(value),
+    float: (value: unknown): value is number => typeof value === 'number' && !Number.isNaN(value),
     json: (value: unknown): value is JsonValue => {
         try {
             JSON.parse(JSON.stringify(value));
@@ -45,8 +47,9 @@ export const BuiltInConverterTypeCheckers: Record<ConverterToken, (value: unknow
     },
     url: (value: unknown): value is URL => value instanceof URL,
     regexp: (value: unknown): value is RegExp => value instanceof RegExp,
-    date: (value: unknown): value is Date => value instanceof Date,
+    date: (value: unknown): value is Date => value instanceof Date && !Number.isNaN(value.getTime()),
     time: (value: unknown): value is number | string => typeof value === 'number' || typeof value === 'string',
-    port: (value: unknown): value is number => typeof value === 'number' && Number.isInteger(value),
-    email: (value: unknown): value is string => typeof value === 'string'
+    port: (value: unknown): value is number =>
+        typeof value === 'number' && Number.isSafeInteger(value) && value >= 0 && value <= MAX_PORT,
+    email: (value: unknown): value is string => typeof value === 'string' && EMAIL_RE.test(value)
 };

@@ -34,14 +34,14 @@ const TIME_UNIT_MS: Record<TimeUnit, number> = {
 const TIME_LOOSE_RE = new RegExp(String.raw`^(\d+(?:\.\d+)?)(ms|s|m|h|d|w)?$`, 'u');
 const TIME_STRICT_RE = new RegExp(String.raw`^(\d+(?:\.\d+)?)(ms|s|m|h|d|w)$`, 'u');
 
-// WHATWG input[type=email] pattern, the pragmatic bar. Full RFC 5322 rejects addresses people use.
+// WHATWG input[type=email] pattern. Full RFC 5322 rejects addresses people use.
 // eslint-disable-next-line security/detect-unsafe-regex -- bounded quantifiers, each label anchored by a literal dot, linear match (no ReDoS)
-const EMAIL_RE = new RegExp(
+export const EMAIL_RE = new RegExp(
     "^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$",
     'u'
 );
 
-const MAX_PORT = 65535;
+export const MAX_PORT = 65535;
 
 /**
  * Parse a time string (e.g. `"30s"`, `"1.5h"`) into milliseconds.
@@ -192,7 +192,7 @@ export class BuiltInConverters {
         const trimmed = raw.trim();
         if (trimmed === '') return fallback;
         const parsed = Number(trimmed);
-        // 0 is valid, the ephemeral-bind wildcard
+        // 0 is the ephemeral-bind wildcard
         return Number.isSafeInteger(parsed) && parsed >= 0 && parsed <= MAX_PORT ? parsed : fallback;
     }
 

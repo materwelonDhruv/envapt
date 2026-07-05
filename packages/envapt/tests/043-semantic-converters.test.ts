@@ -17,11 +17,11 @@ describe('Semantic converters (v8): port and email', () => {
         });
 
         it('accepts 0, the ephemeral-bind wildcard', () => {
-            expect(Envapter.getUsing('PORT_ZERO', Converters.Port, -1)).to.equal(0);
+            expect(Envapter.getUsing('PORT_ZERO', Converters.Port, 8080)).to.equal(0);
         });
 
         it('accepts the max port 65535', () => {
-            expect(Envapter.getUsing('PORT_MAX', Converters.Port, -1)).to.equal(65535);
+            expect(Envapter.getUsing('PORT_MAX', Converters.Port, 8080)).to.equal(65535);
         });
 
         it('falls back above 65535', () => {
@@ -56,6 +56,18 @@ describe('Semantic converters (v8): port and email', () => {
                 .with.property('code', EnvaptErrorCodes.MissingEnvValue);
         });
 
+        it('rejects an out-of-range port fallback', () => {
+            expect(() => Envapter.getUsing('PORT_VALID', Converters.Port, 65536))
+                .to.throw(EnvaptError)
+                .with.property('code', EnvaptErrorCodes.FallbackConverterTypeMismatch);
+        });
+
+        it('rejects a negative port fallback', () => {
+            expect(() => Envapter.getUsing('PORT_VALID', Converters.Port, -1))
+                .to.throw(EnvaptError)
+                .with.property('code', EnvaptErrorCodes.FallbackConverterTypeMismatch);
+        });
+
         it('throws on a non-number fallback', () => {
             // cast bypasses the compile-time guard so the runtime port type-checker reject path runs
             expect(() => Envapter.getUsing('PORT_VALID', Converters.Port, 'nope' as unknown as number))
@@ -66,20 +78,20 @@ describe('Semantic converters (v8): port and email', () => {
 
     describe('email', () => {
         it('reads a valid email and returns it unchanged', () => {
-            expect(Envapter.getUsing('EMAIL_VALID', Converters.Email, '')).to.equal('a@b.com');
-            expectTypeOf(Envapter.getUsing('EMAIL_VALID', Converters.Email, '')).toEqualTypeOf<string>();
+            expect(Envapter.getUsing('EMAIL_VALID', Converters.Email, 'x@y.z')).to.equal('a@b.com');
+            expectTypeOf(Envapter.getUsing('EMAIL_VALID', Converters.Email, 'x@y.z')).toEqualTypeOf<string>();
         });
 
         it('accepts a dotted local part and a multi-label domain', () => {
-            expect(Envapter.getUsing('EMAIL_DOTTED', Converters.Email, '')).to.equal('first.last@sub.domain.co');
+            expect(Envapter.getUsing('EMAIL_DOTTED', Converters.Email, 'x@y.z')).to.equal('first.last@sub.domain.co');
         });
 
         it('accepts a plus-tagged local part', () => {
-            expect(Envapter.getUsing('EMAIL_PLUS', Converters.Email, '')).to.equal('user+tag@example.io');
+            expect(Envapter.getUsing('EMAIL_PLUS', Converters.Email, 'x@y.z')).to.equal('user+tag@example.io');
         });
 
         it('accepts a single-label domain, which WHATWG allows', () => {
-            expect(Envapter.getUsing('EMAIL_LOCALHOST', Converters.Email, '')).to.equal('x@localhost');
+            expect(Envapter.getUsing('EMAIL_LOCALHOST', Converters.Email, 'x@y.z')).to.equal('x@localhost');
         });
 
         it('returns the address as-is without lowercasing', () => {
@@ -125,6 +137,18 @@ describe('Semantic converters (v8): port and email', () => {
             expect(() => Envapter.getRequired('EMAIL_NOAT', Converters.Email))
                 .to.throw(EnvaptError)
                 .with.property('code', EnvaptErrorCodes.MissingEnvValue);
+        });
+
+        it('rejects a non-email fallback', () => {
+            expect(() => Envapter.getUsing('EMAIL_VALID', Converters.Email, 'not-an-email'))
+                .to.throw(EnvaptError)
+                .with.property('code', EnvaptErrorCodes.FallbackConverterTypeMismatch);
+        });
+
+        it('rejects an empty-string fallback', () => {
+            expect(() => Envapter.getUsing('EMAIL_VALID', Converters.Email, ''))
+                .to.throw(EnvaptError)
+                .with.property('code', EnvaptErrorCodes.FallbackConverterTypeMismatch);
         });
 
         it('throws on a non-string fallback', () => {
