@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { CodeCard } from '@/components/CodeCard';
 import { cn } from '@/lib/cn';
 
-import type { ReactNode } from 'react';
+import type { KeyboardEvent, ReactNode } from 'react';
 
 interface Converter {
     readonly name: string;
@@ -85,6 +85,35 @@ function scrollTabIntoView(el: HTMLButtonElement | null): void {
     strip.scrollLeft = el.offsetLeft - strip.clientWidth / 2 + el.clientWidth / 2;
 }
 
+// roving tabIndex + arrow/Home/End keys, the ARIA tabs keyboard pattern
+function moveTab(e: KeyboardEvent<HTMLButtonElement>, active: Converter, setActive: (next: Converter) => void): void {
+    const idx = CONVERTERS.indexOf(active);
+    const last = CONVERTERS.length - 1;
+    let next: number;
+    switch (e.key) {
+        case 'ArrowRight':
+        case 'ArrowDown':
+            next = idx === last ? 0 : idx + 1;
+            break;
+        case 'ArrowLeft':
+        case 'ArrowUp':
+            next = idx === 0 ? last : idx - 1;
+            break;
+        case 'Home':
+            next = 0;
+            break;
+        case 'End':
+            next = last;
+            break;
+        default:
+            return;
+    }
+    e.preventDefault();
+    const target = CONVERTERS[next];
+    setActive(target);
+    document.getElementById(`ct-tab-${target.name}`)?.focus();
+}
+
 export function ConverterTabs(): ReactNode {
     const [active, setActive] = useState<Converter>(CONVERTERS.find((c) => c.name === 'Time') ?? CONVERTERS[0]);
 
@@ -105,8 +134,10 @@ export function ConverterTabs(): ReactNode {
                             id={`ct-tab-${c.name}`}
                             aria-selected={on}
                             aria-controls="ct-panel"
+                            tabIndex={on ? 0 : -1}
                             ref={on ? scrollTabIntoView : null}
                             onClick={() => setActive(c)}
+                            onKeyDown={(e) => moveTab(e, active, setActive)}
                             className={cn(
                                 'shrink-0 rounded-md px-2.5 py-1 font-mono text-[11px] whitespace-nowrap transition-colors sm:text-[12px]',
                                 on

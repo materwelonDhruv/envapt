@@ -51,7 +51,7 @@ const apiUrl = Envapter.getUsing('API_URL', Converters.Url);
 
 A fallback removes `undefined` from the return type, the same way it does for the [primitive readers](/docs/envapter#fallbacks-shape-the-return-type). Without one, the return is `T | undefined`.
 
-The fallback must itself be valid for the converter (a real email, an in-range port, a finite number, a valid `Date`). An invalid one throws `FallbackConverterTypeMismatch`.
+The fallback must itself be valid for the converter (a real email, an in-range port, a non-`NaN` number, a valid `Date`). An invalid one throws `FallbackConverterTypeMismatch`.
 
 <Callout type="info">
     No converter throws on a failed conversion. The converter returns the fallback, or `undefined` when you gave none.

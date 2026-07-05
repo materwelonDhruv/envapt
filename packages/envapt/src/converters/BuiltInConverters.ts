@@ -66,6 +66,12 @@ function parseTimeString(input: string, strict = false): number | undefined {
     return value * TIME_UNIT_MS[unit];
 }
 
+// undefined for an empty or whitespace-only value, so each numeric converter maps that to its own fallback
+function parseTrimmedNumber(raw: string): number | undefined {
+    const trimmed = raw.trim();
+    return trimmed === '' ? undefined : Number(trimmed);
+}
+
 /**
  * Built-in converter implementations
  * @internal
@@ -109,19 +115,15 @@ export class BuiltInConverters {
     }
 
     static integer(raw: string, fallback?: number): number | undefined {
-        const trimmed = raw.trim();
-        if (trimmed === '') return fallback;
-        const parsed = Number(trimmed);
+        const parsed = parseTrimmedNumber(raw);
         // isSafeInteger also guards the 2^53 boundary, past which an integer value silently loses precision.
-        return Number.isSafeInteger(parsed) ? parsed : fallback;
+        return parsed !== undefined && Number.isSafeInteger(parsed) ? parsed : fallback;
     }
 
     static float(raw: string, fallback?: number): number | undefined {
-        const trimmed = raw.trim();
-        if (trimmed === '') return fallback;
-        const parsed = Number(trimmed);
+        const parsed = parseTrimmedNumber(raw);
         // isNaN keeps Infinity valid, matching the number converter.
-        return Number.isNaN(parsed) ? fallback : parsed;
+        return parsed !== undefined && !Number.isNaN(parsed) ? parsed : fallback;
     }
 
     static json(raw: string, fallback?: JsonValue): JsonValue | undefined {
@@ -189,11 +191,11 @@ export class BuiltInConverters {
     }
 
     static port(raw: string, fallback?: number): number | undefined {
-        const trimmed = raw.trim();
-        if (trimmed === '') return fallback;
-        const parsed = Number(trimmed);
+        const parsed = parseTrimmedNumber(raw);
         // 0 is the ephemeral-bind wildcard
-        return Number.isSafeInteger(parsed) && parsed >= 0 && parsed <= MAX_PORT ? parsed : fallback;
+        return parsed !== undefined && Number.isSafeInteger(parsed) && parsed >= 0 && parsed <= MAX_PORT
+            ? parsed
+            : fallback;
     }
 
     static email(raw: string, fallback?: string): string | undefined {

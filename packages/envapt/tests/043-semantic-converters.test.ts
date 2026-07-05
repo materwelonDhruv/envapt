@@ -40,6 +40,10 @@ describe('Semantic converters (v8): port and email', () => {
             expect(Envapter.getUsing('PORT_JUNK', Converters.Port, 8080)).to.equal(8080);
         });
 
+        it('falls back on a whitespace-only value', () => {
+            expect(Envapter.getUsing('PORT_WS', Converters.Port, 8080)).to.equal(8080);
+        });
+
         it('reads an array of ports', () => {
             expect(Envapter.getUsing('PORTS', Converters.array({ of: Converters.Port }), [])).to.deep.equal([
                 3000, 3001, 3002
