@@ -36,11 +36,15 @@ COLOR=#ff0000 # kept: the # has no leading space before it
 
 A value can be wrapped in single quotes, double quotes, or backticks. The quote style decides escape handling, not whether multi-line works (all three support it).
 
-| Quote            | Escapes                          | Use it for                                          |
-| ---------------- | -------------------------------- | --------------------------------------------------- |
-| `"double"`       | decodes `\n` `\r` `\t` `\\` `\"` | values where you want `\n` to become a real newline |
-| `'single'`       | none, fully literal              | values that should stay exactly as written          |
-| `` `backtick` `` | none, fully literal              | same as single, when the value contains `'`         |
+{/* prettier-ignore-start */}
+
+| Quote | Escapes | Use it for |
+| --- | --- | --- |
+| `"double"` | decodes `\n` `\r` `\t` `\\` `\"` | values where you want `\n` to become a real newline |
+| `'single'` | none, fully literal | values that should stay exactly as written |
+| `` `backtick` `` | none, fully literal | same as single, when the value contains `'` |
+
+{/* prettier-ignore-end */}
 
 <Callout type="warn">
     Only double quotes interpret escapes. Inside single quotes or backticks, `\n` stays as the two characters

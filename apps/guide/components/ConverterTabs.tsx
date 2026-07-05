@@ -79,14 +79,14 @@ const CONVERTERS: readonly Converter[] = [
 // centers the active tab in the strip without scrolling the page
 function scrollTabIntoView(el: HTMLButtonElement | null): void {
     if (el === null) return;
-    // el is null on unmount; a mounted tab always has a parent strip
+    // el is null on unmount. A mounted tab always has a parent strip
     const strip = el.parentElement;
     if (strip === null) throw new Error('scrollTabIntoView: active tab has no parent strip');
     strip.scrollLeft = el.offsetLeft - strip.clientWidth / 2 + el.clientWidth / 2;
 }
 
 export function ConverterTabs(): ReactNode {
-    const [active, setActive] = useState<Converter>(CONVERTERS[11]);
+    const [active, setActive] = useState<Converter>(CONVERTERS.find((c) => c.name === 'Time') ?? CONVERTERS[0]);
 
     return (
         <CodeCard fileName="env.ts" className="flex flex-col">
