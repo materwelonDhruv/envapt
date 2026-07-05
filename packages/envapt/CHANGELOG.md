@@ -1,5 +1,17 @@
 # envapt
 
+## 8.0.0-next.2
+
+### Major Changes
+
+- 13bd158: A built-in converter fallback must now be a value the converter would accept. One of the correct type but an invalid value throws `FallbackConverterTypeMismatch`: an out-of-range `Port`, a `NaN` `Number` or `Float`, a non-safe-integer `Integer`, an `Invalid Date`, or an `Email` that is not a valid address. Pass a valid fallback or omit it.
+
+### Minor Changes
+
+- 13bd158: Add the `Email` and `Port` converters.
+
+    `Converters.Email` validates with the WHATWG `input[type=email]` pattern and returns the address unchanged. `Converters.Port` accepts an integer in the `0-65535` range, including `0` for ephemeral binding. Both fall back on invalid input, throw under `getRequired`, and compose inside `Converters.array`.
+
 ## 8.0.0-next.1
 
 ### Major Changes
