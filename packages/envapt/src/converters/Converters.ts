@@ -10,7 +10,9 @@ const SCALAR = {
     Url: 'url',
     Regexp: 'regexp',
     Date: 'date',
-    Time: 'time'
+    Time: 'time',
+    Port: 'port',
+    Email: 'email'
 } as const;
 
 export type ConverterToken = (typeof SCALAR)[keyof typeof SCALAR];

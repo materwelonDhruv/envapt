@@ -18,7 +18,9 @@ export const ListOfBuiltInConverters: ConverterToken[] = [
     'url',
     'regexp',
     'date',
-    'time'
+    'time',
+    'port',
+    'email'
 ] as const;
 
 /**
@@ -44,5 +46,7 @@ export const BuiltInConverterTypeCheckers: Record<ConverterToken, (value: unknow
     url: (value: unknown): value is URL => value instanceof URL,
     regexp: (value: unknown): value is RegExp => value instanceof RegExp,
     date: (value: unknown): value is Date => value instanceof Date,
-    time: (value: unknown): value is number | string => typeof value === 'number' || typeof value === 'string'
+    time: (value: unknown): value is number | string => typeof value === 'number' || typeof value === 'string',
+    port: (value: unknown): value is number => typeof value === 'number' && Number.isInteger(value),
+    email: (value: unknown): value is string => typeof value === 'string'
 };

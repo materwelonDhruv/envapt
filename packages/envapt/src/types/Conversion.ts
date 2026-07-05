@@ -49,6 +49,8 @@ interface ConverterMap {
     regexp: RegExp;
     date: Date;
     time: number;
+    port: number;
+    email: string;
 }
 
 type BuiltInConverterReturnType<ConverterKey extends BuiltInConverter> = ConverterMap[ConverterKey];

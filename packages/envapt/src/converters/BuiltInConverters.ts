@@ -34,6 +34,15 @@ const TIME_UNIT_MS: Record<TimeUnit, number> = {
 const TIME_LOOSE_RE = new RegExp(String.raw`^(\d+(?:\.\d+)?)(ms|s|m|h|d|w)?$`, 'u');
 const TIME_STRICT_RE = new RegExp(String.raw`^(\d+(?:\.\d+)?)(ms|s|m|h|d|w)$`, 'u');
 
+// WHATWG input[type=email] pattern, the pragmatic bar. Full RFC 5322 rejects addresses people use.
+// eslint-disable-next-line security/detect-unsafe-regex -- bounded quantifiers, each label anchored by a literal dot, linear match (no ReDoS)
+const EMAIL_RE = new RegExp(
+    "^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$",
+    'u'
+);
+
+const MAX_PORT = 65535;
+
 /**
  * Parse a time string (e.g. `"30s"`, `"1.5h"`) into milliseconds.
  *
@@ -179,24 +188,24 @@ export class BuiltInConverters {
         return undefined;
     }
 
-    /**
-     * Process the raw env value for an {@link ArrayOf} configuration.
-     *
-     * Behaviour:
-     * - Splits on `config.delimiter`, trims each item, and filters out empty entries.
-     * - With a scalar element token: runs each item through the matching built-in converter.
-     *   If any element returns `undefined`, throws `ArrayElementConversionFailed` with positional info.
-     * - With a custom function element: runs each item through the function. Propagates user
-     *   exceptions; treats `undefined` returns as conversion failures (same throw as scalar path).
-     * - Returns `[]` when the raw value is empty/whitespace.
-     * - When `strict` is true, throws `EmptyArrayElement` on any empty/whitespace item instead
-     *   of silently filtering it out.
-     */
+    static port(raw: string, fallback?: number): number | undefined {
+        const trimmed = raw.trim();
+        if (trimmed === '') return fallback;
+        const parsed = Number(trimmed);
+        // 0 is valid, the ephemeral-bind wildcard
+        return Number.isSafeInteger(parsed) && parsed >= 0 && parsed <= MAX_PORT ? parsed : fallback;
+    }
+
+    static email(raw: string, fallback?: string): string | undefined {
+        return EMAIL_RE.test(raw) ? raw : fallback;
+    }
+
     static processArrayConverter(raw: string, config: ArrayOf, strict = false): unknown[] {
         if (raw.trim() === '') return [];
 
         const trimmedItems = raw.split(config.delimiter).map((item) => String(item).trim());
 
+        // strict rejects an empty item that the default filter below drops silently
         if (strict) {
             const emptyIdx = trimmedItems.findIndex((item) => item === '');
             if (emptyIdx !== -1) {
@@ -256,7 +265,9 @@ export class BuiltInConverters {
             url: BuiltInConverters.url,
             regexp: BuiltInConverters.regexp,
             date: BuiltInConverters.date,
-            time: BuiltInConverters.time
+            time: BuiltInConverters.time,
+            port: BuiltInConverters.port,
+            email: BuiltInConverters.email
         } as const;
 
         return converters[type];
