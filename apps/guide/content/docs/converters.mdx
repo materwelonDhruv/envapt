@@ -33,6 +33,8 @@ const retries = Envapter.getWith('RETRIES', (raw) => Number(raw ?? 0), 3);
 | `Converters.Regexp`  | `RegExp`    | `/pattern/flags` form, or the whole string as the pattern |
 | `Converters.Date`    | `Date`      | a millisecond timestamp or a UTC ISO 8601 string          |
 | `Converters.Time`    | `number`    | a duration string like `30s`, returned as milliseconds    |
+| `Converters.Port`    | `number`    | an integer in the `0-65535` range                         |
+| `Converters.Email`   | `string`    | an address matching the WHATWG email pattern              |
 
 ```ts twoslash
 import { Envapter, Converters } from 'envapt';
@@ -46,9 +48,8 @@ const apiUrl = Envapter.getUsing('API_URL', Converters.Url);
 A fallback removes `undefined` from the return type, the same way it does for the [primitive readers](/docs/envapter#fallbacks-shape-the-return-type). Without one, the return is `T | undefined`.
 
 <Callout type="info">
-    A failed conversion never throws. `Url`, `Json`, `Date`, `Regexp`, and the number tokens swallow the parse error
-    and return the fallback, or `undefined` when you gave none. Use `getRequired` to throw on a malformed or missing
-    value instead.
+    No converter throws on a failed conversion. The converter returns the fallback, or `undefined` when you gave none.
+    Use `getRequired` to throw on a malformed or missing value instead.
 </Callout>
 
 ## Number, Integer, and Float
