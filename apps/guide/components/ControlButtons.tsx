@@ -18,8 +18,8 @@ export function SearchTrigger({ className }: { className?: string }): ReactNode 
                 <circle cx="11" cy="11" r="7" />
                 <path d="m20 20-3.5-3.5" />
             </svg>
-            Search
-            <span className="ml-auto flex items-center self-stretch font-sans text-xs text-fd-muted-foreground">
+            <span className="hidden sm:inline">Search</span>
+            <span className="ml-auto hidden items-center self-stretch font-sans text-xs text-fd-muted-foreground sm:flex">
                 ⌘K
             </span>
         </BaseButton>
