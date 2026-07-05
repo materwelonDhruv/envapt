@@ -6,13 +6,16 @@
     "envapt": "7.0.2"
   },
   "changesets": [
+    "convert-failure-debug-log",
     "frank-years-warn",
     "get-required",
     "merge-source-combinator",
     "module-private-engine-state",
     "nice-garlics-joke",
+    "see-docs-links",
     "strict-integer-float-converters",
     "trim-public-types",
+    "unify-missing-value-rule",
     "v8-universal-exports"
   ]
 }
