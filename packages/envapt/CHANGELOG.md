@@ -1,5 +1,26 @@
 # envapt
 
+## 8.0.0-next.1
+
+### Major Changes
+
+- 60ba358: Unify the rule for when an environment value counts as missing, and use it in every read path, with the global `strict` flag as its only knob.
+
+    A value is missing when it is unset or an empty string (always), and additionally when it is whitespace-only under `Envapter.strict = true`. This one rule now applies to ordered-key reads, `getRequired` / `getRequiredAll`, `Envapter.require`, the `@Envapt({ required: true })` decorator, environment detection, and `${VAR}` template resolution, so their behavior stays consistent.
+
+    **Breaking changes to APIs that predate v8:**
+
+    - Ordered-key reads skip a present-but-empty candidate. `Envapter.get(['PRIMARY', 'FALLBACK'])` returns `FALLBACK` when `PRIMARY` is set but empty. A single key set to an empty string still resolves as before.
+    - `Envapter.require` and the `@Envapt({ required: true })` decorator keep a whitespace-only value in the default non-strict mode, where they previously treated it as missing.
+    - Environment detection keeps a whitespace-only key under non-strict and skips it under strict, where it previously used the key in both modes.
+
+    Set `Envapter.strict = true` for the old whitespace-is-blank behavior.
+
+### Patch Changes
+
+- 60ba358: Under `Envapter.debug = 'verbose'`, log when a present value cannot be parsed by a built-in converter and the read falls back to its default. This surfaces a malformed value (for example a non-numeric `PORT`) that would otherwise fall back silently.
+- 5be3e5c: Add `@see` links to the docs site on the public API TSDoc, so hovering a reader, converter, source, decorator, or error in an editor links to its documentation page.
+
 ## 8.0.0-next.0
 
 ### Major Changes
