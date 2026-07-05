@@ -14,7 +14,7 @@ const url = Envapter.get(['DATABASE_URL', 'DB_URL']);
 
 // typed lists
 const cors = Envapter.getUsing('CORS',
-  Converters.array({ of: Converters.String })
+  Converters.array({ of: Converters.Url })
 );`;
 
 export function Hero(): ReactNode {
