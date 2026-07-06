@@ -76,11 +76,6 @@ const raw = new Envapter().getRaw('DATABASE_URL');
 //    ^?
 ```
 
-<Callout type="info">
-    There is no `Envapter.getRaw` static. Every other reader has a static form, but the raw string is reachable only
-    through an instance.
-</Callout>
-
 ## Converters
 
 For shapes beyond primitives, two readers take a converter:
