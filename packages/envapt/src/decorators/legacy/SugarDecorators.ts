@@ -26,8 +26,8 @@ function sugar<TFallback>(
  * @see {@link https://envapt.materwelon.dev/docs/decorators#shorthand-decorators}
  */
 export function EnvBool(key: EnvKeyInput, fallback: boolean): EnvaptFieldDecorator<boolean>;
-export function EnvBool(key: EnvKeyInput): EnvaptFieldDecorator<boolean | null>;
-export function EnvBool(key: EnvKeyInput, fallback?: boolean): EnvaptFieldDecorator<boolean | null> {
+export function EnvBool(key: EnvKeyInput): EnvaptFieldDecorator<boolean | undefined>;
+export function EnvBool(key: EnvKeyInput, fallback?: boolean): EnvaptFieldDecorator<boolean | undefined> {
     return sugar(Converters.Boolean, key, fallback);
 }
 
@@ -37,8 +37,8 @@ export function EnvBool(key: EnvKeyInput, fallback?: boolean): EnvaptFieldDecora
  * @see {@link https://envapt.materwelon.dev/docs/decorators#shorthand-decorators}
  */
 export function EnvNum(key: EnvKeyInput, fallback: number): EnvaptFieldDecorator<number>;
-export function EnvNum(key: EnvKeyInput): EnvaptFieldDecorator<number | null>;
-export function EnvNum(key: EnvKeyInput, fallback?: number): EnvaptFieldDecorator<number | null> {
+export function EnvNum(key: EnvKeyInput): EnvaptFieldDecorator<number | undefined>;
+export function EnvNum(key: EnvKeyInput, fallback?: number): EnvaptFieldDecorator<number | undefined> {
     return sugar(Converters.Number, key, fallback);
 }
 
@@ -48,8 +48,8 @@ export function EnvNum(key: EnvKeyInput, fallback?: number): EnvaptFieldDecorato
  * @see {@link https://envapt.materwelon.dev/docs/decorators#shorthand-decorators}
  */
 export function EnvStr(key: EnvKeyInput, fallback: string): EnvaptFieldDecorator<string>;
-export function EnvStr(key: EnvKeyInput): EnvaptFieldDecorator<string | null>;
-export function EnvStr(key: EnvKeyInput, fallback?: string): EnvaptFieldDecorator<string | null> {
+export function EnvStr(key: EnvKeyInput): EnvaptFieldDecorator<string | undefined>;
+export function EnvStr(key: EnvKeyInput, fallback?: string): EnvaptFieldDecorator<string | undefined> {
     return sugar(Converters.String, key, fallback);
 }
 
@@ -60,8 +60,8 @@ export function EnvStr(key: EnvKeyInput, fallback?: string): EnvaptFieldDecorato
  * @see {@link https://envapt.materwelon.dev/docs/decorators#shorthand-decorators}
  */
 export function EnvTime(key: EnvKeyInput, fallback: TimeFallback): EnvaptFieldDecorator<number>;
-export function EnvTime(key: EnvKeyInput): EnvaptFieldDecorator<number | null>;
-export function EnvTime(key: EnvKeyInput, fallback?: TimeFallback): EnvaptFieldDecorator<number | null> {
+export function EnvTime(key: EnvKeyInput): EnvaptFieldDecorator<number | undefined>;
+export function EnvTime(key: EnvKeyInput, fallback?: TimeFallback): EnvaptFieldDecorator<number | undefined> {
     return sugar(Converters.Time, key, fallback);
 }
 
@@ -72,7 +72,7 @@ export function EnvTime(key: EnvKeyInput, fallback?: TimeFallback): EnvaptFieldD
  * @see {@link https://envapt.materwelon.dev/docs/decorators#shorthand-decorators}
  */
 export function EnvUrl(key: EnvKeyInput, fallback: URL): EnvaptFieldDecorator<URL>;
-export function EnvUrl(key: EnvKeyInput): EnvaptFieldDecorator<URL | null>;
-export function EnvUrl(key: EnvKeyInput, fallback?: URL): EnvaptFieldDecorator<URL | null> {
+export function EnvUrl(key: EnvKeyInput): EnvaptFieldDecorator<URL | undefined>;
+export function EnvUrl(key: EnvKeyInput, fallback?: URL): EnvaptFieldDecorator<URL | undefined> {
     return sugar(Converters.Url, key, fallback);
 }

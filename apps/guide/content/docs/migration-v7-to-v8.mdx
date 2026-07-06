@@ -3,9 +3,9 @@ title: Migration (v7 to v8)
 description: Moving from envapt v7 to v8. The source classes get shorter names, one universal envapt import replaces the workerd and browser subpaths, and the portable file APIs warn instead of throwing by default.
 ---
 
-v8 is a major release with **eight** breaking changes. The source classes are renamed, the `envapt/workerd` and `envapt/browser` subpaths are removed, the portable build's filesystem-only config APIs warn once and no-op by default instead of throwing, the public type surface is trimmed, the functional required-read bag moves to `getRequired`, the `Integer` and `Float` converters reject malformed values, the missing-value rule is unified so ordered reads skip an empty key and whitespace-only values follow `strict`, and built-in converter fallbacks are validated by value.
+v8 is a major release with **eleven** breaking changes. The source classes are renamed, the `envapt/workerd` and `envapt/browser` subpaths are removed, the portable build's filesystem-only config APIs warn once and no-op by default, the public type surface is trimmed, the functional required-read bag moves to `getRequired`, the `Integer` and `Float` converters reject malformed values, the missing-value rule is unified so ordered reads skip an empty key and whitespace-only values follow `strict`, built-in converter fallbacks are validated by value, a missing read with no fallback resolves to `undefined` across every reader, `getWith` passes the raw value to its custom converter, and an explicit `undefined` fallback counts as no fallback.
 
-Most upgrades touch only two of these, the source renames and the single `envapt` import. The rest apply only if you imported an internal type by name or leaned on loose parsing, and each section says when it affects you.
+Most upgrades touch only two of these, the source renames and the single `envapt` import. The rest apply only if you imported an internal type by name, typed a decorator field as `| null`, or leaned on loose parsing, and each section says when it affects you.
 
 ## Source and type renames
 
@@ -160,3 +160,51 @@ Envapter.getUsing('SAMPLE_RATE', Converters.Float, NaN);
 ```
 
 You only need a change here if you passed a sentinel or placeholder fallback that is not a real value. Pass a valid fallback, or omit it to get `T | undefined`.
+
+## A missing read with no fallback resolves to `undefined`
+
+A read of a missing key with no fallback resolves to `undefined` everywhere. The functional readers (`get`, `getNumber`, `getUsing`, `getWith`, `getRaw`) already returned `undefined`. The decorators returned `null` on this path. v8 returns `undefined` from the decorators and the converter dispatch too, so one value marks an absent read across the whole API.
+
+The no-fallback decorator field types drop `| null`. A field typed `T | null` stops type-checking. Retype it to `T | undefined`.
+
+```ts
+// v7
+class Config {
+    @Envapt('OPTIONAL_TOKEN') static accessor token: string | null;
+}
+// Config.token is null when OPTIONAL_TOKEN is unset
+
+// v8
+class Config {
+    @Envapt('OPTIONAL_TOKEN') static accessor token: string | undefined;
+}
+// Config.token is undefined when OPTIONAL_TOKEN is unset
+```
+
+You only need a change here if you typed a no-fallback decorator field as `| null`, or branched on a decorator read with `=== null`. Nullish handling (`?? fallback`, `== null`) keeps working.
+
+## `getWith` passes the raw value to your converter
+
+`getWith` calls your custom converter with the raw value on every read, including a missing key, where the converter receives `raw === undefined`. v7 short-circuited a missing key and returned the fallback without running the converter. The converter already received the fallback as the second argument, so you can still return it when `raw` is missing. Just that now it's your converter's choice, not envapt's.
+
+```ts
+const name = Envapter.getWith('NAME', (raw, fallback) => raw?.toUpperCase(), 'ANON');
+// with NAME unset
+// v7: 'ANON' (the converter never ran)
+// v8: undefined (the converter ran with raw === undefined)
+```
+
+A converter that reads `raw` without a guard now runs on a missing key. Guard it with `raw ?? ''` or an early `if (!raw) return fallback`. The `ConverterFunction` type has always typed `raw` as `string | undefined` and passed the fallback as the second argument. The `@Envapt` custom-converter decorator already ran the converter on a missing key, and v8 brings `getWith` in line with it.
+
+## An explicit `undefined` fallback counts as no fallback
+
+Passing `undefined` as the fallback argument counts as no fallback, across every reader and the `@Envapt` options. `Envapter.parse` previously read an explicit `undefined` as a provided fallback and returned it for a missing key. It now throws `MissingEnvValue`.
+
+```ts
+// with API_URL unset
+Envapter.parse('API_URL', schema, undefined); // why would you even do this
+// v7: undefined
+// v8: throws MissingEnvValue
+```
+
+You only need a change here if you passed `undefined` to `parse` to make a key optional. Pass a real fallback, or guard the read with `getRaw` before parsing.

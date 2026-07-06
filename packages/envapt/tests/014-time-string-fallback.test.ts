@@ -49,13 +49,13 @@ describe('Converters.Time — time-string fallbacks', () => {
     describe('absent fallback', () => {
         class NoFallback extends Envapter {
             // Env value is malformed (`TEST_TIME_INVALID=5x` in the fixture) and no fallback
-            // is provided — converter returns undefined, decorator surfaces it as null.
+            // is provided, the converter returns undefined and the decorator surfaces that.
             @Envapt('TEST_TIME_INVALID', { converter: Converters.Time })
-            static readonly noFallback: number | null;
+            static readonly noFallback: number | undefined;
         }
 
-        it('returns null when raw is malformed and no fallback is provided', () => {
-            expect(NoFallback.noFallback).to.be.null;
+        it('returns undefined when raw is malformed and no fallback is provided', () => {
+            expect(NoFallback.noFallback).to.be.undefined;
         });
     });
 

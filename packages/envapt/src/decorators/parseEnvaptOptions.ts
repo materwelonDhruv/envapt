@@ -1,3 +1,4 @@
+import { hasFallback } from '../core/missing';
 import { Validator } from '../engine/Validators';
 import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
 
@@ -9,7 +10,6 @@ export function parseEnvaptOptions<TFallback>(options: unknown): DecoratorConfig
     let fallback: TFallback | undefined;
     let converter: EnvaptConverter<TFallback> | undefined;
     let schema: StandardSchemaV1 | undefined;
-    let hasFallback = false;
     let required = false;
 
     if (options !== undefined) {
@@ -32,10 +32,9 @@ export function parseEnvaptOptions<TFallback>(options: unknown): DecoratorConfig
         };
         fallback = opts.fallback;
         converter = opts.converter;
-        hasFallback = 'fallback' in opts;
         required = opts.required === true;
 
-        if (required && hasFallback && fallback !== undefined) {
+        if (required && hasFallback(fallback)) {
             throw new EnvaptError(
                 EnvaptErrorCodes.InvalidUserDefinedConfig,
                 '`required: true` and `fallback` are mutually exclusive on @Envapt options. Drop the fallback or call `Envapter.require()` separately.'
@@ -59,5 +58,5 @@ export function parseEnvaptOptions<TFallback>(options: unknown): DecoratorConfig
         }
     }
 
-    return { fallback, converter, hasFallback, required, schema };
+    return { fallback, converter, hasFallback: hasFallback(fallback), required, schema };
 }

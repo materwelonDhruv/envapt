@@ -89,7 +89,7 @@ import { Envapter, Converters } from 'envapt';
 const origins = Envapter.getUsing('CORS', Converters.array({ of: Converters.String }));
 //    ^?
 
-const retries = Envapter.getWith('RETRIES', (raw) => Number(raw), 3);
+const retries = Envapter.getWith('RETRIES', (raw, fallback) => (raw ? Number(raw) : fallback), 3);
 //    ^?
 ```
 

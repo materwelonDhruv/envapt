@@ -112,7 +112,7 @@ describe('Runtime Validation', () => {
             @Envapt('NONEXISTENT_ARRAY_VAR', {
                 converter: Converters.array()
             })
-            static readonly noFallbackArray: string[] | null;
+            static readonly noFallbackArray: string[] | undefined;
         }
 
         it('should throw error when ArrayOf is used with non-array fallback for missing env var', () => {
@@ -121,8 +121,8 @@ describe('Runtime Validation', () => {
                 .with.property('code', EnvaptErrorCodes.InvalidFallback);
         });
 
-        it('should return null when ArrayOf is used without fallback for missing env var', () => {
-            expect(FallbackTests.noFallbackArray).to.be.null;
+        it('should return undefined when ArrayOf is used without fallback for missing env var', () => {
+            expect(FallbackTests.noFallbackArray).to.be.undefined;
         });
     });
 

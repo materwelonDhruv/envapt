@@ -16,7 +16,7 @@ class Config {
     static accessor tags: string[];
 
     @EnvBool('MD_NO_FALLBACK_ABSENT')
-    static accessor missing: boolean | null;
+    static accessor missing: boolean | undefined;
 }
 
 const runtime = typeof Deno !== 'undefined' ? 'deno' : typeof Bun !== 'undefined' ? 'bun' : 'node';

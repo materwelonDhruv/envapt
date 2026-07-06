@@ -1,5 +1,5 @@
 import { resolveKeyInput, templateResolver, valueConverter } from './engine';
-import { isMissing } from './missing';
+import { hasFallback, isMissing } from './missing';
 import { PrimitiveMethods } from './PrimitiveMethods';
 import { debugWarn } from '../infra/Debug';
 import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
@@ -28,9 +28,8 @@ function formatKeyForError(key: EnvKeyInput): string {
     return Array.isArray(key) ? `[${key.join(', ')}]` : String(key);
 }
 
-// template-resolve a present value, then apply the shared missing check so a resolved blank falls
-// through (empty always, whitespace-only under strict).
-// a module function so getRequired/getRequiredAll and Envapter.require share it without exposing it on any subclass.
+// missing check runs after template resolution so a value that resolves to blank falls through
+// (empty always, whitespace-only under strict)
 export function resolveRequired(
     resolved: { key: string; value: string | undefined },
     templateResolver: TemplateResolver
@@ -74,16 +73,14 @@ export class AdvancedMethods extends PrimitiveMethods {
     ): AdvancedConverterReturn<TConverter, TFallback> {
         const { key: resolvedKey, value } = resolveKeyInput(key);
 
-        // missing with no fallback returns undefined, matching the primitive methods. with a fallback,
-        // route through the parser so asymmetric types (TimeFallback, TimeFallback[] for `of: time`)
-        // coerce to the return type.
-        if (isMissing(value) && fallback === undefined) {
+        // a missing value with a fallback falls through to the parser so asymmetric types
+        // (TimeFallback, TimeFallback[] for `of: time`) coerce to the return type
+        if (isMissing(value) && !hasFallback(fallback)) {
             debugWarn(`${resolvedKey} is missing or empty`);
             return undefined as AdvancedConverterReturn<TConverter, TFallback>;
         }
 
-        const hasFallback = fallback !== undefined;
-        const result = valueConverter.convertValue(resolvedKey, fallback, converter, hasFallback);
+        const result = valueConverter.convertValue(resolvedKey, fallback, converter, hasFallback(fallback));
 
         return result as AdvancedConverterReturn<TConverter, TFallback>;
     }
@@ -121,14 +118,8 @@ export class AdvancedMethods extends PrimitiveMethods {
         converter: ConverterFunction<TReturnType>,
         fallback?: TFallback
     ): ConditionalReturn<TReturnType, TFallback> {
-        const { key: resolvedKey, value } = resolveKeyInput(key);
-        if (isMissing(value)) {
-            debugWarn(`${resolvedKey} is missing or empty`);
-            return fallback as ConditionalReturn<TReturnType, TFallback>;
-        }
-
-        const hasFallback = fallback !== undefined;
-        const result = valueConverter.convertValue<TReturnType>(resolvedKey, fallback, converter, hasFallback);
+        // run the custom converter even on a missing value, with raw as undefined
+        const result = valueConverter.convertValue<TReturnType>(key, fallback, converter, hasFallback(fallback));
 
         return result as ConditionalReturn<TReturnType, TFallback>;
     }
@@ -185,7 +176,7 @@ export class AdvancedMethods extends PrimitiveMethods {
             converter as EnvaptConverter<TReturnType>,
             false
         );
-        // convertValue returns null for a present value it can't convert, which would break the non-undefined return.
+        // a built-in yields undefined for a present value it cannot convert, a custom converter can return null, both break the non-undefined return
         if (result === undefined || result === null) {
             throw new EnvaptError(
                 EnvaptErrorCodes.MissingEnvValue,
@@ -286,14 +277,13 @@ export class AdvancedMethods extends PrimitiveMethods {
         schema: SchemaConstraint<Schema>,
         fallback?: InferSchemaOutput<Schema>
     ): InferSchemaOutput<Schema> {
-        const hasFallback = arguments.length > 2;
         // SchemaConstraint resolves to the unsatisfiable SchemaMustBeSync brand for async
         // schemas, so reaching this body means the input is structurally a sync Schema.
         const result = valueConverter.convertWithSchema(
             key,
             schema as unknown as StandardSchemaV1,
             fallback,
-            hasFallback
+            hasFallback(fallback)
         );
         return result;
     }
@@ -306,12 +296,11 @@ export class AdvancedMethods extends PrimitiveMethods {
         schema: SchemaConstraint<Schema>,
         fallback?: InferSchemaOutput<Schema>
     ): InferSchemaOutput<Schema> {
-        const hasFallback = arguments.length > 2;
         const result = valueConverter.convertWithSchema(
             key,
             schema as unknown as StandardSchemaV1,
             fallback,
-            hasFallback
+            hasFallback(fallback)
         );
         return result;
     }

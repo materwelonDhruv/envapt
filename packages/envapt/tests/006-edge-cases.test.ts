@@ -77,22 +77,22 @@ describe('Edge Cases', () => {
     describe('Template resolution edge cases', () => {
         class TemplateEdgeCases {
             @Envapt('NONEXISTENT_TEMPLATE')
-            static readonly nonexistentTemplate: string | null;
+            static readonly nonexistentTemplate: string | undefined;
 
             @Envapt('EMPTY_TEMPLATE')
-            static readonly emptyTemplate: string | null;
+            static readonly emptyTemplate: string | undefined;
 
             @Envapt('CIRCULAR_TEMPLATE')
-            static readonly circularTemplate: string | null;
+            static readonly circularTemplate: string | undefined;
 
             @Envapt('CIRCULAR_A')
-            static readonly circularA: string | null;
+            static readonly circularA: string | undefined;
 
             @Envapt('CIRCULAR_B')
-            static readonly circularB: string | null;
+            static readonly circularB: string | undefined;
 
             @Envapt('MULTI_TYPE_TEMPLATE')
-            static readonly multiTypeTemplate: string | null;
+            static readonly multiTypeTemplate: string | undefined;
         }
 
         it('should handle nonexistent template variables', () => {
