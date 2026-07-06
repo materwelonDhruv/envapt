@@ -221,7 +221,7 @@
     },
     "devDependencies": {
         "@cloudflare/vitest-pool-workers": "0.16.19",
-        "@cloudflare/workers-types": "^4.20260623.1",
+        "@cloudflare/workers-types": "^5.20260706.1",
         "@vitest/browser": "4.1.9",
         "@vitest/browser-playwright": "4.1.9",
         "arktype": "^2.2.1",
