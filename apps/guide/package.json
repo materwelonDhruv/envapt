@@ -55,7 +55,7 @@
         "twoslash": "0.3.9",
         "typescript": "catalog:dev",
         "vitest": "catalog:dev",
-        "wrangler": "^4.104.0",
+        "wrangler": "^4.107.0",
         "zod": "catalog:dev"
     }
 }

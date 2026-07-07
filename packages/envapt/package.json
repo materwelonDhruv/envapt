@@ -220,7 +220,7 @@
         "provenance": true
     },
     "devDependencies": {
-        "@cloudflare/vitest-pool-workers": "0.16.19",
+        "@cloudflare/vitest-pool-workers": "0.18.0",
         "@cloudflare/workers-types": "catalog:dev",
         "@vitest/browser": "4.1.10",
         "@vitest/browser-playwright": "4.1.10",
