@@ -8,7 +8,7 @@ import { BrandLockup } from '@/components/BrandLockup';
 import { NavControls } from '@/components/NavControls';
 import { VersionBadge } from '@/components/VersionBadge';
 import { cn } from '@/lib/cn';
-import { CHANGELOG_URL, NPM_URL } from '@/lib/site';
+import { CHANGELOG_URL } from '@/lib/site';
 
 import type { ComponentProps, ReactNode } from 'react';
 
@@ -36,7 +36,7 @@ export function SiteNavbar(props: ComponentProps<'header'>): ReactNode {
                         <Link href="/" className="flex items-center">
                             <BrandLockup glyphSize={26} wordmarkHeight={19} gap={10} />
                         </Link>
-                        <VersionBadge href={NPM_URL} />
+                        <VersionBadge linked />
                     </div>
                 )}
 
