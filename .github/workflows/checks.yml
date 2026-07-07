@@ -36,6 +36,8 @@ jobs:
                   enable_fallback_cache: 'true'
             - name: Setup workspace
               uses: ./.github/actions/setup
+            - name: Workspace catalog check
+              run: pnpm check:catalog
             - name: Build, type-check, lint, format, and build guards
               run: >
                   pnpm exec turbo run build tc lint fmt:check build:verify

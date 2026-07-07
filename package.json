@@ -12,6 +12,7 @@
         "lint:fix": "turbo lint:fix && eslint 'scripts/**/*.{ts,mjs,cjs}' --fix --cache",
         "lint:md": "markdownlint-cli2",
         "lint:fix:md": "markdownlint-cli2 --fix",
+        "check:catalog": "tsx scripts/check-workspace-catalog.ts",
         "knip": "knip",
         "react-doctor": "react-doctor --verbose",
         "fmt": "turbo fmt",
@@ -20,7 +21,7 @@
         "test": "turbo test",
         "test:scripts": "vitest run scripts/ --coverage.enabled=false",
         "coverage": "turbo coverage",
-        "prePush": "pnpm tc && pnpm lint && pnpm lint:md && pnpm test && pnpm test:scripts",
+        "prePush": "pnpm check:catalog && pnpm tc && pnpm lint && pnpm lint:md && pnpm test && pnpm test:scripts",
         "lint-staged": "lint-staged",
         "clean": "turbo clean",
         "clean:node": "find . -name node_modules -type d -prune -exec rm -rf '{}' +",
@@ -62,7 +63,7 @@
         "turbo": "^2.9.18",
         "typescript": "catalog:dev",
         "vite": "^8.0.16",
-        "vitest": "4.1.9"
+        "vitest": "catalog:dev"
     },
     "packageManager": "pnpm@11.5.0"
 }

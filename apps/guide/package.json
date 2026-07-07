@@ -14,6 +14,8 @@
         "postinstall": "fumadocs-mdx",
         "lint": "eslint . --cache",
         "lint:fix": "eslint . --fix --cache",
+        "test": "vitest run",
+        "test:watch": "vitest dev",
         "fmt": "prettier --write . --cache",
         "fmt:check": "prettier --check . --cache"
     },
@@ -29,7 +31,7 @@
         "tailwind-merge": "^3.6.0"
     },
     "devDependencies": {
-        "@cloudflare/workers-types": "^4.20260623.1",
+        "@cloudflare/workers-types": "catalog:dev",
         "@seedcord/eslint-config": "catalog:dev",
         "@tailwindcss/postcss": "4.3.1",
         "@types/mdx": "^2.0.14",
@@ -52,6 +54,7 @@
         "tailwindcss": "4.3.1",
         "twoslash": "0.3.9",
         "typescript": "catalog:dev",
+        "vitest": "catalog:dev",
         "wrangler": "^4.104.0",
         "zod": "catalog:dev"
     }
