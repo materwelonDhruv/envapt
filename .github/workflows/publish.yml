@@ -144,8 +144,8 @@ jobs:
               run: |
                   version="$(printf '%s' "$PUBLISHED_PACKAGES" | jq -r '.[] | select(.name == "envapt") | .version')"
                   if [ -z "$version" ]; then
-                      echo "publish reported no envapt version" >&2
-                      exit 1
+                      echo "no envapt version in this publish, skipping guide redeploy"
+                      exit 0
                   fi
                   gh workflow run deploy-guide.yml --ref "$GITHUB_REF_NAME" -f version="$version"
 

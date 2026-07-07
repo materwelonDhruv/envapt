@@ -13,7 +13,7 @@ const readIsMac = (): boolean => /Mac|iPhone|iPad|iPod/i.test(navigator.platform
 
 export function SearchTrigger({ className }: { className?: string }): ReactNode {
     const { setOpenSearch } = useSearchContext();
-    const isMac = useSyncExternalStore(subscribeToNothing, readIsMac, () => true);
+    const isMac = useSyncExternalStore(subscribeToNothing, readIsMac, () => false);
     return (
         <BaseButton aria-label="Search" onClick={() => setOpenSearch(true)} className={className}>
             <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>

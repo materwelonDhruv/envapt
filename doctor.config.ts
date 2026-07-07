@@ -19,9 +19,7 @@ export default defineConfig({
             // three small related controls, co-located on purpose and composed by NavControls and TocControls
             { files: ['**/components/ControlButtons.tsx'], rules: ['react-doctor/no-multi-comp'] },
             // the conditional spread is a literal without a key, so it won't override the map key
-            { files: ['**/components/SiteNavbar.tsx'], rules: ['react-doctor/jsx-key'] },
-            // static site constants only, no dynamic value can break out of the script
-            { files: ['**/app/layout.tsx'], rules: ['react-doctor/unsafe-json-in-html'] }
+            { files: ['**/components/SiteNavbar.tsx'], rules: ['react-doctor/jsx-key'] }
         ]
     }
 });
