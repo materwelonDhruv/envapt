@@ -14,10 +14,14 @@ export default defineConfig({
             { files: ['**/lib/og/**'], rules: ['react-doctor/no-inline-exhaustive-style'] },
             // the wordmark path data is extracted from the brand SVG, so its precision is intentional
             { files: ['**/components/Wordmark.tsx'], rules: ['react-doctor/rendering-svg-precision'] },
-            // shown starts false on purpose and flips when the section scrolls into view
+            // shown is initialized false and changes when the section scrolls into view
             { files: ['**/components/Reveal.tsx'], rules: ['react-doctor/no-initialize-state'] },
             // three small related controls, co-located on purpose and composed by NavControls and TocControls
-            { files: ['**/components/ControlButtons.tsx'], rules: ['react-doctor/no-multi-comp'] }
+            { files: ['**/components/ControlButtons.tsx'], rules: ['react-doctor/no-multi-comp'] },
+            // the conditional spread is a literal without a key, so it won't override the map key
+            { files: ['**/components/SiteNavbar.tsx'], rules: ['react-doctor/jsx-key'] },
+            // static site constants only, no dynamic value can break out of the script
+            { files: ['**/app/layout.tsx'], rules: ['react-doctor/unsafe-json-in-html'] }
         ]
     }
 });
