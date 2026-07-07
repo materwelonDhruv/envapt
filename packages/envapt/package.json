@@ -222,12 +222,12 @@
     "devDependencies": {
         "@cloudflare/vitest-pool-workers": "0.16.19",
         "@cloudflare/workers-types": "catalog:dev",
-        "@vitest/browser": "4.1.9",
-        "@vitest/browser-playwright": "4.1.9",
-        "arktype": "^2.2.1",
+        "@vitest/browser": "4.1.10",
+        "@vitest/browser-playwright": "4.1.10",
+        "arktype": "^2.2.2",
         "esbuild": "^0.28.1",
-        "playwright": "1.61.0",
-        "valibot": "^1.4.1",
+        "playwright": "1.61.1",
+        "valibot": "^1.4.2",
         "zod": "catalog:dev"
     }
 }

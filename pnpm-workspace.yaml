@@ -14,13 +14,13 @@ allowBuilds:
 catalogs:
     dev:
         '@cloudflare/workers-types': ^4.20260623.1
-        '@seedcord/eslint-config': 1.4.2
+        '@seedcord/eslint-config': 1.4.3
         '@types/node': 25.9.3
         prettier: 3.8.4
         eslint: 9.39.2
         typescript: 6.0.3
         zod: 4.4.3
-        vitest: 4.1.9
+        vitest: 4.1.10
 
 minimumReleaseAgeExclude:
   - '@cloudflare/vitest-pool-workers@0.16.19'
