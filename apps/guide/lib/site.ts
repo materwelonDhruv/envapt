@@ -8,8 +8,16 @@ export const DEFAULT_OG_IMAGE = '/og/image.png';
 
 export const ENVAPT_VERSION = process.env.NEXT_PUBLIC_ENVAPT_VERSION ?? '';
 
+export function npmVersionUrl(version: string): string {
+    return `${NPM_URL}/v/${version}`;
+}
+
+export function npmTagForSite(siteUrl: string): 'next' | 'latest' {
+    return siteUrl.includes('next-envapt') ? 'next' : 'latest';
+}
+
 // next deploy sets this to 'next', stable to 'main', so the nav links the matching CHANGELOG.md
-export const CHANGELOG_REF = process.env.NEXT_PUBLIC_CHANGELOG_REF ?? 'main';
+const CHANGELOG_REF = process.env.NEXT_PUBLIC_CHANGELOG_REF ?? 'main';
 export const CHANGELOG_URL = `${REPO_URL}/blob/${CHANGELOG_REF}/packages/envapt/CHANGELOG.md`;
 
 export function canonicalUrl(path: string): string {

@@ -48,7 +48,7 @@ export default function RootLayout({ children }: { children: ReactNode }): React
             <body className="flex min-h-screen flex-col" suppressHydrationWarning>
                 <script
                     type="application/ld+json"
-                    dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+                    dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, '\\u003c') }}
                 />
                 <RootProvider
                     theme={{ defaultTheme: 'dark', enableSystem: false }}

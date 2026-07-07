@@ -2,6 +2,8 @@ import { readFileSync } from 'node:fs';
 
 import { createMDX } from 'fumadocs-mdx/next';
 
+import { SITE_URL, npmTagForSite } from './lib/site';
+
 import type { NextConfig } from 'next';
 
 const withMDX = createMDX();
@@ -10,9 +12,12 @@ const { version: localVersion } = JSON.parse(
     readFileSync(new URL('../../packages/envapt/package.json', import.meta.url), 'utf8')
 ) as { version: string };
 
-// next site shows the npm next tag, prod shows latest. baked so React renders it, an edge injection gets clobbered by hydration. falls back to package.json
+// baked at build time
 async function badgeVersion(): Promise<string> {
-    const tag = process.env.NEXT_PUBLIC_SITE_URL?.includes('next-envapt') ? 'next' : 'latest';
+    const injected = process.env.ENVAPT_BADGE_VERSION?.trim();
+    if (injected) return injected;
+
+    const tag = npmTagForSite(SITE_URL);
     try {
         const res = await fetch('https://registry.npmjs.org/-/package/envapt/dist-tags');
         if (!res.ok) return localVersion;
@@ -30,7 +35,7 @@ async function nextConfig(): Promise<NextConfig> {
         images: { unoptimized: true },
         reactStrictMode: true,
         env: { NEXT_PUBLIC_ENVAPT_VERSION: await badgeVersion() },
-        // typescript + twoslash run at build time only (in transformerTwoslash); keep them out of the bundle
+        // typescript + twoslash run at build time only (in transformerTwoslash)
         serverExternalPackages: ['typescript', 'twoslash']
     };
     return withMDX(config);

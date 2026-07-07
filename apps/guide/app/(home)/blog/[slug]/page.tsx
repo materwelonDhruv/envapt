@@ -37,7 +37,10 @@ export default async function Page(props: { params: Promise<{ slug: string }> })
 
     return (
         <main className="mx-auto w-full max-w-3xl px-4 py-16">
-            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, '\\u003c') }}
+            />
             <Link href="/blog" className="font-mono text-sm text-fd-muted-foreground hover:text-fd-foreground">
                 ← Blog
             </Link>

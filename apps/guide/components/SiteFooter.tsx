@@ -1,11 +1,12 @@
 import Link from 'next/link';
 
 import { BrandLockup } from '@/components/BrandLockup';
+import { ENVAPT_VERSION, NPM_URL, npmVersionUrl } from '@/lib/site';
 
 import type { ReactNode } from 'react';
 
 const RELEASES = [
-    { label: 'npm', href: 'https://www.npmjs.com/package/envapt' },
+    { label: 'npm', href: ENVAPT_VERSION ? npmVersionUrl(ENVAPT_VERSION) : NPM_URL },
     { label: 'JSR', href: 'https://jsr.io/@materwelon/envapt' },
     { label: 'GitHub', href: 'https://github.com/materwelonDhruv/envapt' }
 ];
