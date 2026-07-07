@@ -15,10 +15,10 @@ describe('Envapt', () => {
             public static readonly testUndefinedVar: string | undefined;
 
             @Envapt('NONEXISTENT_VAR_WITHOUT_FALLBACK', { converter: String })
-            public static readonly nonexistentVarWithoutFallback: string | null;
+            public static readonly nonexistentVarWithoutFallback: string | undefined;
 
             @Envapt('NONEXISTENT_VAR_NO_OPTIONS')
-            public static readonly nonexistentVarNoOptions: string | null;
+            public static readonly nonexistentVarNoOptions: string | undefined;
 
             @Envapt('PORT', { fallback: 6956 })
             public static readonly port: number;
@@ -40,12 +40,12 @@ describe('Envapt', () => {
             expect(TestTypeDetection.testUndefinedVar).to.be.undefined;
         });
 
-        it('should return null for non-existent variable without fallback but with converter', () => {
-            expect(TestTypeDetection.nonexistentVarWithoutFallback).to.be.null;
+        it('should return undefined for non-existent variable without fallback but with converter', () => {
+            expect(TestTypeDetection.nonexistentVarWithoutFallback).to.be.undefined;
         });
 
-        it('should return null for non-existent variable without fallback or converter', () => {
-            expect(TestTypeDetection.nonexistentVarNoOptions).to.be.null;
+        it('should return undefined for non-existent variable without fallback or converter', () => {
+            expect(TestTypeDetection.nonexistentVarNoOptions).to.be.undefined;
         });
 
         it('should detect number type from fallback', () => {
@@ -238,22 +238,22 @@ describe('Envapt', () => {
     describe('built-in converters showcase', () => {
         class BuiltInConverterShowcase {
             @Envapt('DATABASE_CONFIG', { converter: Converters.Json })
-            static readonly databaseConfig: JsonValue;
+            static readonly databaseConfig: JsonValue | undefined;
 
             @Envapt('API_ENDPOINTS', { converter: Converters.array({ delimiter: ';' }) })
-            static readonly apiEndpoints: string[] | null;
+            static readonly apiEndpoints: string[] | undefined;
 
             @Envapt('CORS_ORIGINS', { converter: Converters.array({ of: Converters.Url, delimiter: '|' }) })
-            static readonly corsOrigins: URL[] | null;
+            static readonly corsOrigins: URL[] | undefined;
 
             @Envapt('SERVICE_TAGS', { converter: Converters.array({ delimiter: ' ' }) })
-            static readonly serviceTags: string[] | null;
+            static readonly serviceTags: string[] | undefined;
 
             @Envapt('ENABLED_FEATURES', { converter: Converters.Boolean })
-            static readonly enabledFeatures: boolean | null;
+            static readonly enabledFeatures: boolean | undefined;
 
             @Envapt('API_TIMEOUT', { converter: Converters.Integer })
-            static readonly apiTimeout: number | null;
+            static readonly apiTimeout: number | undefined;
         }
 
         it('should parse JSON configuration', () => {
@@ -297,16 +297,16 @@ describe('Envapt', () => {
     describe('multi-line variables', () => {
         class MultiLineEnv {
             @Envapt('MULTI_LINE_VAR')
-            public static readonly multiLineVar: string | null;
+            public static readonly multiLineVar: string | undefined;
 
             @Envapt('MULTI_LINE_VAR_ESCAPED')
-            public static readonly multiLineVarEscaped: string | null;
+            public static readonly multiLineVarEscaped: string | undefined;
 
             @Envapt('MULTI_LINE_WITH_BACKSLASHN')
-            public static readonly multiLineWithBackslashN: string | null;
+            public static readonly multiLineWithBackslashN: string | undefined;
 
             @Envapt('MULTI_LINE_NUMBER', { converter: Converters.Number })
-            public static readonly multiLineNumber: number | null;
+            public static readonly multiLineNumber: number | undefined;
         }
 
         it('should handle multi-line variables correctly', () => {
@@ -324,20 +324,20 @@ describe('Envapt', () => {
         });
 
         it('should only allow strings in multiline', () => {
-            expect(MultiLineEnv.multiLineNumber).to.be.null;
+            expect(MultiLineEnv.multiLineNumber).to.be.undefined;
         });
     });
 
     describe('multi-key lookups', () => {
         class MultiKeyEnv extends Envapter {
             @Envapt(['PRIMARY_DB_URL', 'REPLICA_DB_URL'])
-            public static readonly databaseUrl: string | null;
+            public static readonly databaseUrl: string | undefined;
 
             @Envapt(['PRIMARY_SERVICE_PORT', 'LEGACY_SERVICE_PORT'], { converter: Converters.Number })
-            public static readonly preferredPort: number | null;
+            public static readonly preferredPort: number | undefined;
 
             @Envapt(['MISSING_SERVICE_PORT', 'LEGACY_SERVICE_PORT'], { converter: Converters.Number })
-            public static readonly legacyFallbackPort: number | null;
+            public static readonly legacyFallbackPort: number | undefined;
 
             @Envapt(['NOT_DEFINED_ONE', 'NOT_DEFINED_TWO'], { fallback: 'decorator-fallback' })
             public static readonly fallbackValue: string;

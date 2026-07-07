@@ -11,7 +11,7 @@ import { Envapter, Converters } from 'envapt';
 const timeout = Envapter.getUsing('TIMEOUT', Converters.Time, '30s');
 //    ^?
 
-const retries = Envapter.getWith('RETRIES', (raw) => Number(raw ?? 0), 3);
+const retries = Envapter.getWith('RETRIES', (raw, fallback) => (raw ? Number(raw) : fallback), 3);
 //    ^?
 ```
 

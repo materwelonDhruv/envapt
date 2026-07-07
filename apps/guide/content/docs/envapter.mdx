@@ -76,11 +76,6 @@ const raw = new Envapter().getRaw('DATABASE_URL');
 //    ^?
 ```
 
-<Callout type="info">
-    There is no `Envapter.getRaw` static. Every other reader has a static form, but the raw string is reachable only
-    through an instance.
-</Callout>
-
 ## Converters
 
 For shapes beyond primitives, two readers take a converter:
@@ -94,7 +89,7 @@ import { Envapter, Converters } from 'envapt';
 const origins = Envapter.getUsing('CORS', Converters.array({ of: Converters.String }));
 //    ^?
 
-const retries = Envapter.getWith('RETRIES', (raw) => Number(raw), 3);
+const retries = Envapter.getWith('RETRIES', (raw, fallback) => (raw ? Number(raw) : fallback), 3);
 //    ^?
 ```
 

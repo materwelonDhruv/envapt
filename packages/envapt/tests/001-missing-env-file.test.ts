@@ -15,7 +15,7 @@ describe('Missing .env file handling', () => {
             public static readonly anotherNonexistentVar: number;
 
             @Envapt('PROCESS_ENV_VAR')
-            public static readonly processEnvVar: string | null;
+            public static readonly processEnvVar: string | undefined;
         }
 
         it('should use fallback values when no .env file exists', () => {
@@ -23,8 +23,8 @@ describe('Missing .env file handling', () => {
             expect(TestEnvWithoutFile.anotherNonexistentVar).to.equal(42);
         });
 
-        it('should return null for variables without fallback when no .env file exists', () => {
-            expect(TestEnvWithoutFile.processEnvVar).to.be.null;
+        it('should return undefined for variables without fallback when no .env file exists', () => {
+            expect(TestEnvWithoutFile.processEnvVar).to.be.undefined;
         });
 
         it('should still work with functional API when no .env file exists', () => {
