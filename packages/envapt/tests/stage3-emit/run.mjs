@@ -45,7 +45,7 @@ function assertReads(reads, runtime) {
     assert.equal(reads.multiKey, 8080, `${runtime}: multi-key falls through to the second key`);
     assert.equal(reads.greeting, 'Hello eu-west-1', `${runtime}: template variable resolution`);
     assert.equal(reads.schemaPort, 8080, `${runtime}: standard schema validates and returns the output`);
-    assert.equal(reads.noFallback, null, `${runtime}: no-fallback sugar resolves to null`);
+    assert.equal(reads.noFallback, undefined, `${runtime}: no-fallback sugar resolves to undefined`);
     assert.equal(reads.inheritedRegion, 'eu-west-1', `${runtime}: subclass reads the inherited instance accessor`);
     assert.equal(reads.collisionA, 8080, `${runtime}: first of two same-named classes`);
     assert.equal(reads.collisionB, 4321, `${runtime}: second same-named class resolves independently`);

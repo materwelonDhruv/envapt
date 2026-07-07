@@ -1,80 +1,23 @@
-import { BuiltInConverters, ValueConverter } from '../converters';
-import { EnvapterBase } from './EnvapterBase';
+import { Primitive, readPrimitive } from './engine';
 import { EnvironmentMethods } from './EnvironmentMethods';
-import { TemplateResolver } from '../engine/TemplateResolver';
-import { debugWarn } from '../infra/Debug';
 
 import type { ConditionalReturn, EnvKeyInput } from '../types';
-import type { EnvapterService } from '../types/Env';
 
 /**
  * @internal
  */
-enum Primitive {
-    String,
-    Number,
-    Boolean,
-    BigInt,
-    Symbol
-}
-
-/**
- * @internal
- */
-export class PrimitiveMethods extends EnvironmentMethods implements EnvapterService {
-    private static readonly service = new PrimitiveMethods();
-    protected static readonly templateResolver: TemplateResolver = new TemplateResolver(PrimitiveMethods.service);
-    protected static readonly valueConverter: ValueConverter = new ValueConverter(PrimitiveMethods.service);
-
-    // Read `EnvapterBase.strict` directly: `PrimitiveMethods._strict` would resolve to the
-    // BaseClass default because a `Envapter.strict = true` write lands as an own-property
-    // on `Envapter`, which is a descendant of `PrimitiveMethods`, not an ancestor.
-    isStrict(): boolean {
-        return EnvapterBase.strict;
-    }
-
-    protected static override resolveForMirror(key: string, value: string): string {
-        return this.templateResolver.resolveTemplate(key, value);
-    }
-
-    private static _get<EnvVarReturnType, DefaultType extends EnvVarReturnType | undefined = undefined>(
-        key: EnvKeyInput,
-        type: Primitive,
-        def?: DefaultType
-    ): ConditionalReturn<EnvVarReturnType, DefaultType> {
-        const { key: resolvedKey, value } = this.resolveKeyInput(key);
-        if (this.treatAsMissing(value)) {
-            if (def !== undefined) debugWarn(`${resolvedKey} is missing or empty, using fallback ${String(def)}`);
-            else debugWarn(`${resolvedKey} is missing or empty`);
-            return def as ConditionalReturn<EnvVarReturnType, DefaultType>;
-        }
-        const rawVal = value as string | number | boolean | undefined;
-
-        const parsed = this.templateResolver.resolveTemplate(resolvedKey, String(rawVal));
-
-        let result: EnvVarReturnType;
-        if (type === Primitive.Number) result = BuiltInConverters.number(parsed, def as number) as EnvVarReturnType;
-        else if (type === Primitive.Boolean)
-            result = BuiltInConverters.boolean(parsed, def as boolean) as EnvVarReturnType;
-        else if (type === Primitive.BigInt)
-            result = BuiltInConverters.bigint(parsed, def as bigint) as EnvVarReturnType;
-        else if (type === Primitive.Symbol)
-            result = BuiltInConverters.symbol(parsed, def as symbol) as EnvVarReturnType;
-        else result = BuiltInConverters.string(parsed, def as string) as EnvVarReturnType;
-
-        return result;
-    }
-
+export class PrimitiveMethods extends EnvironmentMethods {
     /**
      * Get a string environment variable with optional fallback.
      * Supports template variable resolution using `${VAR}` syntax.
      * Accepts a single key or an ordered array of keys (first match wins).
+     * @see {@link https://envapt.materwelon.dev/docs/envapter#primitives}
      */
     static get<Default extends string | undefined = undefined>(
         key: EnvKeyInput,
         def?: Default
     ): ConditionalReturn<string, Default> {
-        return this._get(key, Primitive.String, def);
+        return readPrimitive(key, Primitive.String, def);
     }
 
     /**
@@ -84,19 +27,20 @@ export class PrimitiveMethods extends EnvironmentMethods implements EnvapterServ
         key: EnvKeyInput,
         def?: Default
     ): ConditionalReturn<string, Default> {
-        return PrimitiveMethods._get(key, Primitive.String, def);
+        return readPrimitive(key, Primitive.String, def);
     }
 
     /**
      * Get a number environment variable with optional fallback.
      * Automatically converts string values to numbers.
      * Accepts a single key or an ordered array of keys (first match wins).
+     * @see {@link https://envapt.materwelon.dev/docs/envapter#primitives}
      */
     static getNumber<Default extends number | undefined = undefined>(
         key: EnvKeyInput,
         def?: Default
     ): ConditionalReturn<number, Default> {
-        return this._get(key, Primitive.Number, def);
+        return readPrimitive(key, Primitive.Number, def);
     }
 
     /**
@@ -106,19 +50,20 @@ export class PrimitiveMethods extends EnvironmentMethods implements EnvapterServ
         key: EnvKeyInput,
         def?: Default
     ): ConditionalReturn<number, Default> {
-        return PrimitiveMethods._get(key, Primitive.Number, def);
+        return readPrimitive(key, Primitive.Number, def);
     }
 
     /**
      * Get a boolean environment variable with optional fallback.
      * Recognizes: `1`, `yes`, `true`, `on` as **true**; `0`, `no`, `false`, `off` as **false** (case-insensitive).
      * Accepts a single key or an ordered array of keys (first match wins).
+     * @see {@link https://envapt.materwelon.dev/docs/envapter#primitives}
      */
     static getBoolean<Default extends boolean | undefined = undefined>(
         key: EnvKeyInput,
         def?: Default
     ): ConditionalReturn<boolean, Default> {
-        return this._get(key, Primitive.Boolean, def);
+        return readPrimitive(key, Primitive.Boolean, def);
     }
 
     /**
@@ -128,19 +73,20 @@ export class PrimitiveMethods extends EnvironmentMethods implements EnvapterServ
         key: EnvKeyInput,
         def?: Default
     ): ConditionalReturn<boolean, Default> {
-        return PrimitiveMethods._get(key, Primitive.Boolean, def);
+        return readPrimitive(key, Primitive.Boolean, def);
     }
 
     /**
      * Get a bigint environment variable with optional fallback.
      * Automatically converts string values to bigint.
      * Accepts a single key or an ordered array of keys (first match wins).
+     * @see {@link https://envapt.materwelon.dev/docs/envapter#primitives}
      */
     static getBigInt<Default extends bigint | undefined = undefined>(
         key: EnvKeyInput,
         def?: Default
     ): ConditionalReturn<bigint, Default> {
-        return this._get(key, Primitive.BigInt, def);
+        return readPrimitive(key, Primitive.BigInt, def);
     }
 
     /**
@@ -150,19 +96,20 @@ export class PrimitiveMethods extends EnvironmentMethods implements EnvapterServ
         key: EnvKeyInput,
         def?: Default
     ): ConditionalReturn<bigint, Default> {
-        return PrimitiveMethods._get(key, Primitive.BigInt, def);
+        return readPrimitive(key, Primitive.BigInt, def);
     }
 
     /**
      * Get a symbol environment variable with optional fallback.
      * Creates a symbol from the string value.
      * Accepts a single key or an ordered array of keys (first match wins).
+     * @see {@link https://envapt.materwelon.dev/docs/envapter#primitives}
      */
     static getSymbol<Default extends symbol | undefined = undefined>(
         key: EnvKeyInput,
         def?: Default
     ): ConditionalReturn<symbol, Default> {
-        return this._get(key, Primitive.Symbol, def);
+        return readPrimitive(key, Primitive.Symbol, def);
     }
 
     /**
@@ -172,6 +119,6 @@ export class PrimitiveMethods extends EnvironmentMethods implements EnvapterServ
         key: EnvKeyInput,
         def?: Default
     ): ConditionalReturn<symbol, Default> {
-        return PrimitiveMethods._get(key, Primitive.Symbol, def);
+        return readPrimitive(key, Primitive.Symbol, def);
     }
 }

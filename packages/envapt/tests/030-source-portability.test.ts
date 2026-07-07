@@ -2,10 +2,9 @@ import { resolve } from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { Converters, Envapter, EnvaptErrorCodes, NodeEnvSource, PortableSource } from '../src';
-import { EnvapterBase } from '../src/core/EnvapterBase';
+import { Converters, Envapter, EnvaptErrorCodes, FileSource, PortableSource } from '../src';
 import { EnvaptError } from '../src/infra/Error';
-import { UnboundEnvSource } from '../src/sources/UnboundEnvSource';
+import { UnboundSource } from '../src/sources/UnboundSource';
 
 import type { Source } from '../src';
 
@@ -17,15 +16,15 @@ interface CloudflareLikeEnv {
 
 describe('Source portability (v5.2)', () => {
     afterEach(() => {
-        // setup.ts binds NodeEnvSource per file, so restore it and reset path config after any swap
+        // setup.ts binds FileSource per file, so restore it and reset path config after any swap
         // so later tests see a clean Node default.
-        Envapter.useSource(new NodeEnvSource());
+        Envapter.useSource(new FileSource());
         Envapter.resetProfiles();
     });
 
-    describe('UnboundEnvSource', () => {
+    describe('UnboundSource', () => {
         it('throws NoSourceBound on read', () => {
-            expect(() => new UnboundEnvSource().readVars())
+            expect(() => new UnboundSource().readVars())
                 .to.throw(EnvaptError)
                 .with.property('code', EnvaptErrorCodes.NoSourceBound);
         });
@@ -110,15 +109,12 @@ describe('Source portability (v5.2)', () => {
         });
     });
 
-    describe('NodeEnvapter state anchoring', () => {
-        it('writes envPaths to EnvapterBase, where the engine reads it', () => {
-            // A mis-anchored setter (writing this._envPaths) is behaviorally invisible because its own
-            // refresh warms the shared cache, so this pins that the write happens on EnvapterBase.
-            // pragmatic white-box read of protected state -- justified, asserts where the write landed
-            const base = EnvapterBase as unknown as { _envPaths: string[] };
+    describe('the envPaths setter takes effect for the engine', () => {
+        it('loads variables from the newly set path', () => {
             const fixture = resolve(import.meta.dirname, '.env.extra');
             Envapter.envPaths = fixture;
-            expect(base._envPaths).to.deep.equal([fixture]);
+            expect(Envapter.envPaths).to.deep.equal([fixture]);
+            expect(Envapter.getBoolean('VAR_IN_EXTRA_FILE')).to.equal(true);
         });
     });
 });

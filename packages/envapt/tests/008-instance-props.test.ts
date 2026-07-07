@@ -12,9 +12,9 @@ describe('Instance Properties with @Envapt', () => {
 
     describe('basic instance properties', () => {
         class BasicInstanceProperties extends Envapter {
-            @Envapt('INSTANCE_PROP_1') declare instanceProp1: string | null;
+            @Envapt('INSTANCE_PROP_1') declare instanceProp1: string | undefined;
 
-            @Envapt('INSTANCE_PROP_2') declare instanceProp2: string | null;
+            @Envapt('INSTANCE_PROP_2') declare instanceProp2: string | undefined;
 
             @Envapt('INSTANCE_PROP_3_TEMPLATED', { fallback: 'default3' })
             declare instanceProp3: string;

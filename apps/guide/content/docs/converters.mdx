@@ -11,7 +11,7 @@ import { Envapter, Converters } from 'envapt';
 const timeout = Envapter.getUsing('TIMEOUT', Converters.Time, '30s');
 //    ^?
 
-const retries = Envapter.getWith('RETRIES', (raw) => Number(raw ?? 0), 3);
+const retries = Envapter.getWith('RETRIES', (raw, fallback) => (raw ? Number(raw) : fallback), 3);
 //    ^?
 ```
 
@@ -19,20 +19,26 @@ const retries = Envapter.getWith('RETRIES', (raw) => Number(raw ?? 0), 3);
 
 `Converters` carries one token per built-in type, plus the `array` builder.
 
-| Token                | Returns     | Parsed from                                               |
-| -------------------- | ----------- | --------------------------------------------------------- |
-| `Converters.String`  | `string`    | the raw value, unchanged                                  |
-| `Converters.Number`  | `number`    | `Number(raw)`; `NaN` uses the fallback                    |
-| `Converters.Integer` | `number`    | `parseInt(raw, 10)`                                       |
-| `Converters.Float`   | `number`    | `parseFloat(raw)`                                         |
-| `Converters.Boolean` | `boolean`   | `1`/`yes`/`true`/`on` and `0`/`no`/`false`/`off`          |
-| `Converters.Bigint`  | `bigint`    | `BigInt(raw)`                                             |
-| `Converters.Symbol`  | `symbol`    | `Symbol.for(raw)`                                         |
-| `Converters.Json`    | `JsonValue` | `JSON.parse(raw)`                                         |
-| `Converters.Url`     | `URL`       | `new URL(raw)`                                            |
-| `Converters.Regexp`  | `RegExp`    | `/pattern/flags` form, or the whole string as the pattern |
-| `Converters.Date`    | `Date`      | a millisecond timestamp or a UTC ISO 8601 string          |
-| `Converters.Time`    | `number`    | a duration string like `30s`, returned as milliseconds    |
+{/* prettier-ignore-start */}
+
+| Token | Returns | Parsed from |
+| --- | --- | --- |
+| `Converters.String` | `string` | the raw value, unchanged |
+| `Converters.Number` | `number` | `Number(raw)`; `NaN` uses the fallback |
+| `Converters.Integer` | `number` | `Number(raw)`, must be a safe integer |
+| `Converters.Float` | `number` | `Number(raw)`, `NaN` uses the fallback |
+| `Converters.Boolean` | `boolean` | `1`/`yes`/`true`/`on` and `0`/`no`/`false`/`off` |
+| `Converters.Bigint` | `bigint` | `BigInt(raw)` |
+| `Converters.Symbol` | `symbol` | `Symbol.for(raw)` |
+| `Converters.Json` | `JsonValue` | `JSON.parse(raw)` |
+| `Converters.Url` | `URL` | `new URL(raw)` |
+| `Converters.Regexp` | `RegExp` | `/pattern/flags` form, or the whole string as the pattern |
+| `Converters.Date` | `Date` | a millisecond timestamp or a UTC ISO 8601 string |
+| `Converters.Time` | `number` | a duration string like `30s`, returned as milliseconds |
+| `Converters.Port` | `number` | an integer in the `0-65535` range |
+| `Converters.Email` | `string` | an address matching the WHATWG email pattern |
+
+{/* prettier-ignore-end */}
 
 ```ts twoslash
 import { Envapter, Converters } from 'envapt';
@@ -45,21 +51,25 @@ const apiUrl = Envapter.getUsing('API_URL', Converters.Url);
 
 A fallback removes `undefined` from the return type, the same way it does for the [primitive readers](/docs/envapter#fallbacks-shape-the-return-type). Without one, the return is `T | undefined`.
 
+The fallback must itself be valid for the converter (a real email, an in-range port, a non-`NaN` number, a valid `Date`). An invalid one throws `FallbackConverterTypeMismatch`.
+
 <Callout type="info">
-    A failed conversion never throws. `Url`, `Json`, `Date`, `Regexp`, and the number tokens swallow the parse error
-    and return the fallback, or `undefined` when you gave none. Use the `{ required: true }` form to throw on a
-    malformed value instead.
+    No converter throws on a failed conversion. The converter returns the fallback, or `undefined` when you gave none.
+    Use `getRequired` to throw on a malformed or missing value instead.
 </Callout>
 
-## Numbers: Number, Integer, Float
+## Number, Integer, and Float
 
-`Number` accepts anything JavaScript's `Number()` does, including floats, hex, and scientific notation. `Integer` stops at the first non-digit, so `42px` reads as `42` and `3.9` reads as `3`. `Float` parses a leading decimal and tolerates trailing text.
+`Number` accepts anything JavaScript's `Number()` does, including floats, hex, and scientific notation. `Integer` and `Float` now parse with `Number` as well. `Integer` requires a safe integer, so `42px`, `3.9`, and values past 2^53 fall back. `Float` rejects trailing text like `3.14px` and keeps `Infinity` like `Number`. Both accept the same literal forms as `Number`, including `0x`, `0o`, and `0b`.
 
 ```ts twoslash
 import { Envapter, Converters } from 'envapt';
 // ---cut---
 // MAX_CONNECTIONS=100
 const maxConnections = Envapter.getUsing('MAX_CONNECTIONS', Converters.Integer); // 100
+
+// PORT="8080abc" is not a clean integer, so it falls back
+const port = Envapter.getUsing('PORT', Converters.Integer, 3000); // 3000
 const sampleRate = Envapter.getUsing('SAMPLE_RATE', Converters.Float, 1.0);
 ```
 
@@ -183,7 +193,7 @@ Both readers take an options form that throws on a missing value instead of retu
 ```ts twoslash
 import { Envapter, Converters } from 'envapt';
 // ---cut---
-const dbUrl = Envapter.getUsing('DATABASE_URL', { converter: Converters.Url, required: true });
+const dbUrl = Envapter.getRequired('DATABASE_URL', Converters.Url);
 //    ^?
 ```
 

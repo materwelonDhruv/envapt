@@ -1,7 +1,8 @@
 /**
- * The portable surface shared by the browser and Workers builds. Re-exports the same public API as the
- * Node entry but binds {@link Envapter} to a portable class whose filesystem-only config APIs throw.
- * Bind a source with `Envapter.useSource` before reading.
+ * The portable surface for Workers, the browser, and edge runtimes. Re-exports the same public API as
+ * the Node entry, with {@link Envapter} as a portable class whose filesystem-only config APIs warn once
+ * and no-op by default (`Envapter.fileApiMode = 'throw'` restores `FileApiUnsupported`). Bind a source
+ * with `Envapter.useSource` before reading. An unbound read throws `NoSourceBound`.
  *
  * @module
  */

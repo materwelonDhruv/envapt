@@ -119,6 +119,14 @@ HOST=localhost # inline comment, stripped
 COLOR=#ff0000 # kept: no space before the #
 TLS_KEY="line one\\nline two"`
     },
+    migrations: {
+        filename: 'config.ts',
+        lang: 'ts',
+        code: `// Migrations - one major version at a time
+// v6 to v7: decorators become TC39 accessors
+// v7 to v8: one universal 'envapt' import
+import { Envapter, PortableSource } from 'envapt';`
+    },
     'migration-v4-to-v5': {
         filename: 'config.ts',
         lang: 'ts',
@@ -149,6 +157,15 @@ static readonly port: number;
 // v7 - now exported via 'envapt'
 @Envapt('PORT', { fallback: 3000 })
 static accessor port: number;`
+    },
+    'migration-v7-to-v8': {
+        filename: 'config.ts',
+        lang: 'ts',
+        code: `// Migration - one universal import in v8
+// v7
+import { WorkerEnvSource } from 'envapt/workerd';
+// v8
+import { PortableSource } from 'envapt';`
     },
     compatibility: {
         filename: 'tsconfig.json',
@@ -201,5 +218,14 @@ Envapter.useSource(
 const api = Envapter.getUsing(
   'VITE_API_URL', Converters.Url
 );`
+    },
+    'edge-runtimes': {
+        filename: 'edge.ts',
+        lang: 'ts',
+        code: `// Edge runtimes - hand envapt the platform's config
+import { Envapter, PortableSource, Converters } from 'envapt';
+
+Envapter.useSource(new PortableSource(platformEnv));
+const url = Envapter.getRequired('ORIGIN_URL', Converters.Url);`
     }
 };

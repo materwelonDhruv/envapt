@@ -1,4 +1,4 @@
-// envapt/legacy ships only the decorators, so importing the main entry is what binds NodeEnvSource
+// envapt/legacy ships only the decorators, so importing the main entry is what binds FileSource
 import 'envapt';
 import { EnvNum, EnvStr } from 'envapt/legacy';
 

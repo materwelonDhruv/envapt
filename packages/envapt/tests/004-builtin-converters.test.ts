@@ -181,7 +181,7 @@ describe('Built-in Converters', () => {
     describe('url converter', () => {
         class UrlTest {
             @Envapt('TEST_URL_VALID', { converter: Converters.Url })
-            static readonly validUrl: URL | null;
+            static readonly validUrl: URL | undefined;
 
             @Envapt('TEST_URL_INVALID', { converter: Converters.Url, fallback: new URL('http://fallback.com') })
             static readonly invalidUrl: URL;
@@ -209,19 +209,19 @@ describe('Built-in Converters', () => {
     describe('regexp converter', () => {
         class RegexpTest {
             @Envapt('TEST_REGEXP_SIMPLE', { converter: Converters.Regexp })
-            static readonly simpleRegexp: RegExp | null;
+            static readonly simpleRegexp: RegExp | undefined;
 
             @Envapt('TEST_REGEXP_WITH_FLAGS', { converter: Converters.Regexp })
-            static readonly regexpWithFlags: RegExp | null;
+            static readonly regexpWithFlags: RegExp | undefined;
 
             @Envapt('TEST_REGEXP_EMAIL', { converter: Converters.Regexp })
-            static readonly emailRegexp: RegExp | null;
+            static readonly emailRegexp: RegExp | undefined;
 
             @Envapt('TEST_REGEXP_URL_PATTERN', { converter: Converters.Regexp })
-            static readonly urlRegexp: RegExp | null;
+            static readonly urlRegexp: RegExp | undefined;
 
             @Envapt('TEST_REGEXP_PHONE', { converter: Converters.Regexp })
-            static readonly phoneRegexp: RegExp | null;
+            static readonly phoneRegexp: RegExp | undefined;
 
             @Envapt('TEST_REGEXP_INVALID', { converter: Converters.Regexp, fallback: /fallback/i })
             static readonly invalidRegexp: RegExp;
@@ -326,10 +326,10 @@ describe('Built-in Converters', () => {
     describe('date converter', () => {
         class DateTest {
             @Envapt('TEST_DATE_ISO', { converter: Converters.Date })
-            static readonly isoDate: Date | null;
+            static readonly isoDate: Date | undefined;
 
             @Envapt('TEST_DATE_TIMESTAMP', { converter: Converters.Date })
-            static readonly timestampDate: Date | null;
+            static readonly timestampDate: Date | undefined;
 
             @Envapt('TEST_DATE_INVALID', { converter: Converters.Date, fallback: new Date('2023-01-01') })
             static readonly invalidDate: Date;

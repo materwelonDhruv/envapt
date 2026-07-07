@@ -8,6 +8,7 @@
  * `SchemaMustBeSync` brand in `Types.ts`) and at runtime by the Parser dispatch.
  *
  * @public
+ * @see {@link https://envapt.materwelon.dev/docs/standard-schema#any-conformant-validator-or-none}
  */
 export interface StandardSchemaV1<Input = unknown, Output = Input> {
     /** The Standard Schema entry point holding the validator and the inferred input/output types. */
@@ -53,16 +54,5 @@ export namespace StandardSchemaV1 {
     export type InferOutput<Schema extends StandardSchemaV1> = NonNullable<Schema['~standard']['types']>['output'];
 }
 
-/**
- * Envapt-side alias for {@link StandardSchemaV1.InferOutput}. Re-exported under a friendlier
- * name so consumers writing `static readonly x: InferSchemaOutput<typeof mySchema>`
- * don't need the namespace path.
- * @public
- */
+// internal alias of StandardSchemaV1.InferOutput, used by the parse and decorator return types
 export type InferSchemaOutput<Schema extends StandardSchemaV1> = StandardSchemaV1.InferOutput<Schema>;
-
-/**
- * Envapt-side alias for {@link StandardSchemaV1.InferInput}.
- * @public
- */
-export type InferSchemaInput<Schema extends StandardSchemaV1> = StandardSchemaV1.InferInput<Schema>;

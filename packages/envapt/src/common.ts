@@ -1,12 +1,20 @@
 export { Environment } from './engine/Envapter';
-export { Converters, isArrayOf } from './converters';
-export { ManualEnvSource } from './sources/ManualEnvSource';
+export { Converters } from './converters';
 export { PortableSource } from './sources/PortableSource';
-export { WorkerEnvSource } from './sources/WorkerEnvSource';
-export type { ArrayElement, ArrayOf, ConverterToken, CustomElementConverter } from './converters';
+export { merge } from './sources/merge';
+export type { CustomElementConverter } from './converters';
 export type { DebugLevel } from './infra/Debug';
 export type { EnvFileOptions } from './infra/Dotenv';
-export type { InferSchemaInput, InferSchemaOutput, StandardSchemaV1 } from './infra/StandardSchema';
+export type { StandardSchemaV1 } from './infra/StandardSchema';
 export * from './infra/Error';
 
-export type * from './types';
+export type {
+    ConverterFunction,
+    JsonValue,
+    TimeFallback,
+    EnvaptOptions,
+    EnvProfile,
+    ProfilesConfig,
+    FileApiMode,
+    Source
+} from './types';

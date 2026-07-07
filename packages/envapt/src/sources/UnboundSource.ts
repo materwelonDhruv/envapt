@@ -1,14 +1,14 @@
 import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
 
-import type { BareEnvSource } from '../types';
+import type { BareSource } from '../types';
 
 /**
  * The default source until one is bound. Every read throws NoSourceBound so a forgotten `useSource`
- * surfaces at read time instead of silently yielding nothing. The Node entry binds {@link NodeEnvSource}
+ * surfaces at read time instead of silently yielding nothing. The Node entry binds {@link FileSource}
  * at load, browser and Workers bundles must call `Envapter.useSource(...)` before reading.
  * @internal
  */
-export class UnboundEnvSource implements BareEnvSource {
+export class UnboundSource implements BareSource {
     readonly supportsFiles = false;
 
     readVars(): Record<string, string> {

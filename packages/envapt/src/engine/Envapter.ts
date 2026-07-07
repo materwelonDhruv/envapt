@@ -1,7 +1,9 @@
 import { AdvancedMethods } from '../core';
+import { resolveRequired } from '../core/AdvancedMethods';
+import { resolveKeyInput, templateResolver } from '../core/engine';
 import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
 
-export { EnvaptCache, Environment } from '../core';
+export { Environment } from '../core';
 
 /**
  * Main configuration class for environment variable management.
@@ -41,6 +43,7 @@ export class Envapter extends AdvancedMethods {
      * const message = Envapter.resolve`Service endpoint: ${'API_URL'}`;
      * // Returns: "Service endpoint: https://api.example.com:8080"
      * ```
+     * @see {@link https://envapt.materwelon.dev/docs/templates#the-resolve-tagged-template}
      */
     static resolve(strings: TemplateStringsArray, ...keys: string[]): string {
         const strict = Envapter.strict;
@@ -66,10 +69,11 @@ export class Envapter extends AdvancedMethods {
     }
 
     /**
-     * Assert that one or more environment variables are present and non-empty (post-trim,
-     * after template resolution). Throws `MissingEnvValue` listing every missing key.
+     * Assert that one or more environment variables are present and non-empty after template
+     * resolution. Throws `MissingEnvValue` listing every missing key. A whitespace-only value
+     * counts as missing only under strict mode.
      *
-     * For typed fail-fast in functional code, use `Envapter.getUsing(key, { converter, required: true })`.
+     * For a typed required read in functional code, use `Envapter.getRequired(key, converter)`.
      *
      * @example
      * ```ts
@@ -78,10 +82,7 @@ export class Envapter extends AdvancedMethods {
      * ```
      */
     static require(...keys: [string, ...string[]]): void {
-        const missing: string[] = [];
-        for (const k of keys) {
-            if (Envapter.resolveAndValidate(k) === undefined) missing.push(k);
-        }
+        const missing = keys.filter((k) => resolveRequired(resolveKeyInput(k), templateResolver).value === undefined);
 
         if (missing.length > 0) {
             throw new EnvaptError(
@@ -89,14 +90,6 @@ export class Envapter extends AdvancedMethods {
                 `Missing required environment variables: ${missing.join(', ')}.`
             );
         }
-    }
-
-    private static resolveAndValidate(key: string): string | undefined {
-        const { value } = this.resolveKeyInput(key);
-        if (value === undefined) return undefined;
-        const resolved = this.templateResolver.resolveTemplate(key, value);
-        if (resolved.trim() === '') return undefined;
-        return resolved;
     }
 
     /**

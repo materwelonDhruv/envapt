@@ -24,30 +24,33 @@ function sugar<TFallback>(
 /**
  * Shorthand for `@Envapt(key, { converter: Converters.Boolean, fallback })`.
  * @public
+ * @see {@link https://envapt.materwelon.dev/docs/decorators#shorthand-decorators}
  */
 export function EnvBool(key: EnvKeyInput, fallback: boolean): EnvaptAccessorDecorator<boolean>;
-export function EnvBool(key: EnvKeyInput): EnvaptAccessorDecorator<boolean | null>;
-export function EnvBool(key: EnvKeyInput, fallback?: boolean): EnvaptAccessorDecorator<boolean | null> {
+export function EnvBool(key: EnvKeyInput): EnvaptAccessorDecorator<boolean | undefined>;
+export function EnvBool(key: EnvKeyInput, fallback?: boolean): EnvaptAccessorDecorator<boolean | undefined> {
     return sugar(Converters.Boolean, key, fallback);
 }
 
 /**
  * Shorthand for `@Envapt(key, { converter: Converters.Number, fallback })`.
  * @public
+ * @see {@link https://envapt.materwelon.dev/docs/decorators#shorthand-decorators}
  */
 export function EnvNum(key: EnvKeyInput, fallback: number): EnvaptAccessorDecorator<number>;
-export function EnvNum(key: EnvKeyInput): EnvaptAccessorDecorator<number | null>;
-export function EnvNum(key: EnvKeyInput, fallback?: number): EnvaptAccessorDecorator<number | null> {
+export function EnvNum(key: EnvKeyInput): EnvaptAccessorDecorator<number | undefined>;
+export function EnvNum(key: EnvKeyInput, fallback?: number): EnvaptAccessorDecorator<number | undefined> {
     return sugar(Converters.Number, key, fallback);
 }
 
 /**
  * Shorthand for `@Envapt(key, { converter: Converters.String, fallback })`.
  * @public
+ * @see {@link https://envapt.materwelon.dev/docs/decorators#shorthand-decorators}
  */
 export function EnvStr(key: EnvKeyInput, fallback: string): EnvaptAccessorDecorator<string>;
-export function EnvStr(key: EnvKeyInput): EnvaptAccessorDecorator<string | null>;
-export function EnvStr(key: EnvKeyInput, fallback?: string): EnvaptAccessorDecorator<string | null> {
+export function EnvStr(key: EnvKeyInput): EnvaptAccessorDecorator<string | undefined>;
+export function EnvStr(key: EnvKeyInput, fallback?: string): EnvaptAccessorDecorator<string | undefined> {
     return sugar(Converters.String, key, fallback);
 }
 
@@ -55,10 +58,11 @@ export function EnvStr(key: EnvKeyInput, fallback?: string): EnvaptAccessorDecor
  * Shorthand for `@Envapt(key, { converter: Converters.Time, fallback })`. The fallback is a
  * millisecond number or a time string (`'15m'`), and the resolved value is always milliseconds.
  * @public
+ * @see {@link https://envapt.materwelon.dev/docs/decorators#shorthand-decorators}
  */
 export function EnvTime(key: EnvKeyInput, fallback: TimeFallback): EnvaptAccessorDecorator<number>;
-export function EnvTime(key: EnvKeyInput): EnvaptAccessorDecorator<number | null>;
-export function EnvTime(key: EnvKeyInput, fallback?: TimeFallback): EnvaptAccessorDecorator<number | null> {
+export function EnvTime(key: EnvKeyInput): EnvaptAccessorDecorator<number | undefined>;
+export function EnvTime(key: EnvKeyInput, fallback?: TimeFallback): EnvaptAccessorDecorator<number | undefined> {
     return sugar(Converters.Time, key, fallback);
 }
 
@@ -66,10 +70,11 @@ export function EnvTime(key: EnvKeyInput, fallback?: TimeFallback): EnvaptAccess
  * Shorthand for `@Envapt(key, { converter: Converters.Url, fallback })`. The fallback is a `URL`
  * instance, not a URL string.
  * @public
+ * @see {@link https://envapt.materwelon.dev/docs/decorators#shorthand-decorators}
  */
 export function EnvUrl(key: EnvKeyInput, fallback: URL): EnvaptAccessorDecorator<URL>;
-export function EnvUrl(key: EnvKeyInput): EnvaptAccessorDecorator<URL | null>;
-export function EnvUrl(key: EnvKeyInput, fallback?: URL): EnvaptAccessorDecorator<URL | null> {
+export function EnvUrl(key: EnvKeyInput): EnvaptAccessorDecorator<URL | undefined>;
+export function EnvUrl(key: EnvKeyInput, fallback?: URL): EnvaptAccessorDecorator<URL | undefined> {
     return sugar(Converters.Url, key, fallback);
 }
 /* v8 ignore stop */

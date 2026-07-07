@@ -1,3 +1,5 @@
+import { isMissing } from '../core/missing';
+import { state } from '../core/state';
 import { debugWarn } from '../infra/Debug';
 import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
 
@@ -15,7 +17,7 @@ export class TemplateResolver {
 
     resolveTemplate(key: string, value: string, stack: Set<string> = new Set<string>()): string {
         stack.add(key);
-        const strict = this.envService.isStrict();
+        const strict = state.strict;
 
         const out = value.replace(this.TEMPLATE_REGEX, (template) => {
             const variable = template.slice(2, -1);
@@ -23,8 +25,7 @@ export class TemplateResolver {
             if (stack.has(variable)) return template; // cycle, preserve
 
             const raw = this.envService.getRaw(variable);
-            const isMissing = raw === undefined || raw === '' || (strict && raw.trim() === '');
-            if (isMissing) {
+            if (raw === undefined || isMissing(raw)) {
                 if (strict) {
                     throw new EnvaptError(
                         EnvaptErrorCodes.MissingEnvValue,

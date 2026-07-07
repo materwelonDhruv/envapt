@@ -2,31 +2,29 @@ import process from 'node:process';
 
 import { Envapter } from './Envapter';
 import { Validator } from './Validators';
-import { EnvapterBase } from '../core/EnvapterBase';
-import { EnvironmentMethods } from '../core/EnvironmentMethods';
+import { refreshCache } from '../core/engine';
+import { assertFileApiSupported, resolveAgainstBase, sourceFileExists } from '../core/paths';
+import { state } from '../core/state';
 import { setRuntimeSink } from '../infra/runtime';
-import { NodeEnvSource } from '../sources/NodeEnvSource';
+import { FileSource } from '../sources/FileSource';
 
 import type { EnvFileOptions } from '../infra/Dotenv';
 import type { ProfilesConfig } from '../types';
 
 /**
  * The Node/Bun/Deno facade: {@link Envapter} plus the filesystem-only configuration APIs (`.env`
- * path selection, base directory, dotenv options, and per-environment profiles). The browser and
- * Workers builds export the base {@link Envapter} without these, so calling one where there is no
- * filesystem is a compile error (and a thrown {@link EnvaptError} when types are bypassed).
- *
- * Writes target the state-owning class (`EnvapterBase`/`EnvironmentMethods`), not `this`: the engine
- * reads that state through `EnvapterBase`-anchored paths, so a subclass own-property would be invisible.
+ * path selection, base directory, dotenv options, and per-environment profiles). On the portable
+ * build (Workers, the browser, edge) these same APIs warn once and no-op by default, controlled by
+ * `Envapter.fileApiMode`.
  * @public
  */
 export class NodeEnvapter extends Envapter {
     // A static block (not a top-level statement in a separate entry) keeps the bind intrinsic to this
     // class: tree-shaken out of `import { EnvaptError }`, run whenever `Envapter` is referenced, with no
-    // sideEffects entry. Depends on the es2022 native static-block emit; lowering the target defeats it.
+    // sideEffects entry. Depends on the es2022 native static-block emit.
     static {
         setRuntimeSink((line) => process.stderr.write(`${line}\n`));
-        NodeEnvapter.useSource(new NodeEnvSource());
+        NodeEnvapter.useSource(new FileSource());
     }
 
     /**
@@ -35,25 +33,27 @@ export class NodeEnvapter extends Envapter {
      *
      * When set, this takes absolute precedence. The dotenv-flow auto-cascade and any
      * `Envapter.configureProfiles` configuration are ignored.
+     * @see {@link https://envapt.materwelon.dev/docs/configuration#which-files-load}
      */
     static set envPaths(paths: string[] | string) {
-        this.assertFileApiSupported('envPaths', EnvapterBase._source);
+        assertFileApiSupported('envPaths', state.source);
         const newPaths = Array.isArray(paths) ? paths : [paths];
         Validator.validateEnvFilesExist(
-            newPaths.map((p) => this.resolveAgainstBase(p)),
-            (p) => this.sourceFileExists(p)
+            newPaths.map((p) => resolveAgainstBase(p)),
+            (p) => sourceFileExists(p)
         );
 
-        EnvapterBase._envPaths = newPaths;
-        EnvapterBase._envPathsExplicitlySet = true;
-        this.refreshCache();
+        state.envPaths = newPaths;
+        state.envPathsExplicitlySet = true;
+        refreshCache();
     }
 
     /**
      * Get currently configured .env file paths
+     * @see {@link https://envapt.materwelon.dev/docs/configuration#which-files-load}
      */
     static get envPaths(): string[] {
-        return EnvapterBase._envPaths;
+        return state.envPaths;
     }
 
     /**
@@ -65,31 +65,39 @@ export class NodeEnvapter extends Envapter {
      *
      * Set this before `envPaths` so relative `envPaths` validate against the right directory.
      * Unset (`undefined`) restores `process.cwd()` resolution.
+     * @see {@link https://envapt.materwelon.dev/docs/configuration#reading-from-a-fixed-directory}
      */
     static set baseDir(value: string | URL | undefined) {
-        const source = EnvapterBase._source;
-        this.assertFileApiSupported('baseDir', source);
-        EnvapterBase._baseDir = value === undefined ? undefined : source.normalizeBaseDir(value);
-        this.refreshCache();
+        const source = state.source;
+        assertFileApiSupported('baseDir', source);
+        state.baseDir = value === undefined ? undefined : source.normalizeBaseDir(value);
+        refreshCache();
     }
 
-    /** The configured base directory, or `undefined` when relative paths resolve against the working directory. */
+    /**
+     * The configured base directory, or `undefined` when relative paths resolve against the working directory.
+     * @see {@link https://envapt.materwelon.dev/docs/configuration#reading-from-a-fixed-directory}
+     */
     static get baseDir(): string | undefined {
-        return EnvapterBase._baseDir;
+        return state.baseDir;
     }
 
-    /** Set the env file loader options (`encoding`, `override`). Refreshes the cache. */
+    /**
+     * Set the env file loader options (`encoding`, `override`). Refreshes the cache.
+     * @see {@link https://envapt.materwelon.dev/docs/configuration#which-files-load}
+     */
     static set envFileOptions(config: EnvFileOptions) {
         Validator.validateEnvFileOptions(config);
-        EnvapterBase._userDefinedEnvFileOptions = config;
-        this.refreshCache();
+        state.userDefinedEnvFileOptions = config;
+        refreshCache();
     }
 
     /**
      * Get current env file loader options
+     * @see {@link https://envapt.materwelon.dev/docs/configuration#which-files-load}
      */
     static get envFileOptions(): EnvFileOptions {
-        return EnvapterBase._userDefinedEnvFileOptions;
+        return state.userDefinedEnvFileOptions;
     }
 
     /**
@@ -108,26 +116,26 @@ export class NodeEnvapter extends Envapter {
      *   [Environment.Production]: { paths: ['config/prod.env', 'secrets/prod.env'] }
      * });
      * ```
+     * @see {@link https://envapt.materwelon.dev/docs/environment#custom-profiles}
      */
     static configureProfiles(config: ProfilesConfig): void {
-        this.assertFileApiSupported('configureProfiles', EnvapterBase._source);
-        EnvironmentMethods._profiles = config;
-        this.refreshCache();
+        assertFileApiSupported('configureProfiles', state.source);
+        state.profiles = config;
+        refreshCache();
     }
 
     /**
      * Reset all path-resolution configuration to defaults: clears any prior
      * `Envapter.configureProfiles` call AND any explicit `Envapter.envPaths` assignment.
      * Returns the resolver to the pure dotenv-flow cascade.
+     * @see {@link https://envapt.materwelon.dev/docs/environment#custom-profiles}
      */
     static resetProfiles(): void {
-        EnvironmentMethods._profiles = undefined;
-        EnvapterBase._envPaths = ['.env'];
-        EnvapterBase._envPathsExplicitlySet = false;
-        // Clear via `this`, not EnvironmentMethods: determineEnvironment writes `_environment*` via
-        // `this`, so a base-anchored clear would leave a subclass own-property shadowing it.
-        this._environmentExplicitlySet = false;
-        this._environment = undefined;
-        this.refreshCache();
+        state.profiles = undefined;
+        state.envPaths = ['.env'];
+        state.envPathsExplicitlySet = false;
+        state.environmentExplicitlySet = false;
+        state.environment = undefined;
+        refreshCache();
     }
 }

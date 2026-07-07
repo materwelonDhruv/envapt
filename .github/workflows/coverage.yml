@@ -3,6 +3,11 @@ name: codecov
 on:
     pull_request:
     push:
+        branches: [main, next]
+
+concurrency:
+    group: codecov-${{ github.ref }}
+    cancel-in-progress: true
 
 permissions:
     contents: read

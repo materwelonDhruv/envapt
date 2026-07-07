@@ -10,14 +10,6 @@ on:
             - '.changeset/**'
             - '.github/ISSUE_TEMPLATE/**'
             - '.github/PULL_REQUEST_TEMPLATE.md'
-    push:
-        branches-ignore: [main, next]
-        paths-ignore:
-            - '**/*.md'
-            - '.vscode/**'
-            - '.changeset/**'
-            - '.github/ISSUE_TEMPLATE/**'
-            - '.github/PULL_REQUEST_TEMPLATE.md'
 
 concurrency:
     group: checks-${{ github.ref }}
@@ -44,25 +36,13 @@ jobs:
                   enable_fallback_cache: 'true'
             - name: Setup workspace
               uses: ./.github/actions/setup
-            - name: Build project
-              run: pnpm build
-            - name: Verify portable builds are node-free
-              run: pnpm --filter envapt build:verify
-            - name: Run type check
-              run: pnpm tc
-            - name: Check formatting
-              run: pnpm fmt:check
-            - name: Run lint
-              run: pnpm lint
-            - name: Run tests
-              run: pnpm test
-            - name: Run exports-dedup guard
-              run: pnpm --filter envapt test:exports-dedup
-            - name: Run cjs-validity guard
-              run: pnpm --filter envapt test:cjs-validity
-            - name: Run tsc-emit decorator guard
-              run: pnpm --filter envapt test:tsc-emit
-            - name: Run stage3-emit decorator guard
-              run: pnpm --filter envapt test:stage3-emit
+            - name: Workspace catalog check
+              run: pnpm check:catalog
+            - name: Build, type-check, lint, format, and build guards
+              run: >
+                  pnpm exec turbo run build tc lint fmt:check build:verify
+                  test:exports-dedup test:resolution-matrix test:cjs-validity test:tsc-emit test:stage3-emit test:tree-shaking
+            - name: Test
+              run: pnpm exec turbo run test
             - name: Run audit
               run: pnpm audit --audit-level=high

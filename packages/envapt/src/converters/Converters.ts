@@ -10,56 +10,38 @@ const SCALAR = {
     Url: 'url',
     Regexp: 'regexp',
     Date: 'date',
-    Time: 'time'
+    Time: 'time',
+    Port: 'port',
+    Email: 'email'
 } as const;
 
-/**
- * String tokens for every built-in scalar converter.
- * @public
- */
 export type ConverterToken = (typeof SCALAR)[keyof typeof SCALAR];
 
 /**
  * Custom element converter for use inside {@link Converters.array}. Receives the trimmed,
  * non-empty raw string for one array slot and returns the parsed value.
  * @public
+ * @see {@link https://envapt.materwelon.dev/docs/converters#custom-converters}
  */
 export type CustomElementConverter<TReturn = unknown> = (raw: string) => TReturn;
 
-/**
- * Valid element converters for {@link Converters.array}: any scalar token except
- * `json` and `regexp` (those don't compose as array elements), or a custom function.
- * @public
- */
+// json/regexp are not allowed as array elements because they consume the whole string and cannot be split into slots
 export type ArrayElement = Exclude<ConverterToken, 'json' | 'regexp'> | CustomElementConverter;
 
-/**
- * Phantom-branded token produced by {@link Converters.array}. The `T` type parameter carries
- * the element converter through any variable indirection so inference survives. The
- * `__envaptKind` discriminant is present at runtime for dispatch.
- * @public
- */
+// phantom type branded with __envaptKind for runtime dispatch. TElement preserves
+// element converter type through variable indirection for type inference
 export interface ArrayOf<TElement extends ArrayElement = ArrayElement> {
-    /** Runtime discriminant marking this token as an array converter. Don't use directly. */
     readonly __envaptKind: 'array';
-    /** The element converter applied to each split slot. */
     readonly of: TElement;
-    /** The string the raw value is split on. */
     readonly delimiter: string;
 }
 
-/**
- * Runtime type guard for tokens produced by {@link Converters.array}.
- * @internal
- */
 export function isArrayOf(value: unknown): value is ArrayOf {
     return typeof value === 'object' && value !== null && '__envaptKind' in value && value.__envaptKind === 'array';
 }
 
 type ArrayScalarElement = Exclude<ConverterToken, 'json' | 'regexp'>;
 
-// Overloads. The function-element overload must come first so it wins inference when `of`
-// is a function, otherwise TS picks the scalar branch and `raw` defaults to `any`.
 function buildArrayConverter<TReturn>(opts: {
     of: CustomElementConverter<TReturn>;
     delimiter?: string;
@@ -91,6 +73,7 @@ function buildArrayConverter(opts?: { of?: ArrayElement; delimiter?: string }): 
  * ```
  *
  * @public
+ * @see {@link https://envapt.materwelon.dev/docs/converters#built-in-tokens}
  */
 export const Converters = {
     ...SCALAR,

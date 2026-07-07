@@ -1,6 +1,6 @@
 import { coerceToStringRecord } from './coerce';
 
-import type { BareEnvSource } from '../types';
+import type { BareSource } from '../types';
 
 /**
  * Environment source seeded from an object you provide, for every runtime without a filesystem. The
@@ -10,8 +10,9 @@ import type { BareEnvSource } from '../types';
  * still apply, which means they must be JSON-serializable. Without a filesystem the `.env` cascade and
  * file APIs do not apply.
  * @public
+ * @see {@link https://envapt.materwelon.dev/docs/sources#the-providers}
  */
-export class PortableSource implements BareEnvSource {
+export class PortableSource implements BareSource {
     /** Always `false`. With no filesystem, the `.env` cascade and file APIs do not apply. */
     readonly supportsFiles = false;
     private readonly vars: Record<string, string>;

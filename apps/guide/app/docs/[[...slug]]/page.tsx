@@ -26,7 +26,10 @@ export default async function Page(props: { params: Promise<{ slug?: string[] }>
 
     return (
         <DocsPage toc={page.data.toc} full={page.data.full} tableOfContent={{ header: <TocControls /> }}>
-            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, '\\u003c') }}
+            />
             <DocsTitle>{page.data.title}</DocsTitle>
             <DocsDescription>{page.data.description}</DocsDescription>
             <DocsBody>

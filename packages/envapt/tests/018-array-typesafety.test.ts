@@ -6,7 +6,7 @@ import { Converters, Envapter, EnvaptErrorCodes } from '../src';
 import { EnvaptError } from '../src/infra/Error';
 import { Envapt } from '../src/legacy';
 
-import type { ArrayOf } from '../src';
+import type { ArrayOf } from '../src/converters/Converters';
 
 describe('ArrayConverter typesafety (v5) — runtime', () => {
     beforeAll(() => (Envapter.envPaths = resolve(import.meta.dirname, '.env.018-array')));

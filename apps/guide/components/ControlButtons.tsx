@@ -2,25 +2,27 @@
 
 import { useSearchContext } from 'fumadocs-ui/contexts/search';
 import { useTheme } from 'next-themes';
+import { useSyncExternalStore } from 'react';
 
 import { BaseButton } from '@/components/BaseButton';
 
 import type { ReactNode } from 'react';
 
-// Shared Search / theme / GitHub controls, composed by both the home navbar (NavControls) and the
-// docs ToC header (TocControls). Each is a BaseButton segment; callers wrap them in a group.
+const subscribeToNothing = (): (() => void) => () => {};
+const readIsMac = (): boolean => /Mac|iPhone|iPad|iPod/i.test(navigator.platform || navigator.userAgent);
 
 export function SearchTrigger({ className }: { className?: string }): ReactNode {
     const { setOpenSearch } = useSearchContext();
+    const isMac = useSyncExternalStore(subscribeToNothing, readIsMac, () => false);
     return (
         <BaseButton aria-label="Search" onClick={() => setOpenSearch(true)} className={className}>
             <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                 <circle cx="11" cy="11" r="7" />
                 <path d="m20 20-3.5-3.5" />
             </svg>
-            Search
-            <span className="ml-auto flex items-center self-stretch font-sans text-xs text-fd-muted-foreground">
-                ⌘K
+            <span className="hidden sm:inline">Search</span>
+            <span className="ml-auto hidden items-center self-stretch font-sans text-xs text-fd-muted-foreground sm:flex">
+                {isMac ? '⌘K' : 'Ctrl+K'}
             </span>
         </BaseButton>
     );

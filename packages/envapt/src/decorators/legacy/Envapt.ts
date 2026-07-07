@@ -43,7 +43,7 @@ import type {
  */
 export function Envapt(
     key: EnvKeyInput,
-    options: { fallback: undefined; converter?: undefined }
+    options?: { fallback: undefined; converter?: undefined }
 ): EnvaptFieldDecorator<string | undefined>;
 export function Envapt<TFallback>(
     key: EnvKeyInput,
@@ -105,7 +105,7 @@ export function Envapt<TReturnType>(
  *
  *   // prefers CANARY_URL when present, otherwise APP_URL
  *   \@Envapt(['CANARY_URL', 'APP_URL'], { converter: Converters.Url })
- *   static readonly canaryUrl: URL | null;
+ *   static readonly canaryUrl: URL | undefined;
  *
  *   // Time takes a number (milliseconds) or a time-string fallback (`<number><unit>`)
  *   \@Envapt('REQUEST_TIMEOUT', { converter: Converters.Time, fallback: '10s' })
@@ -130,12 +130,8 @@ export function Envapt<TConverter extends BuiltInConverter | ArrayOf>(
 ): EnvaptFieldDecorator<InferConverterReturnType<TConverter>>;
 export function Envapt<TConverter extends BuiltInConverter | ArrayOf>(
     key: EnvKeyInput,
-    options: { converter: TConverter; fallback: undefined; required?: false }
+    options: { converter: TConverter; fallback?: undefined; required?: false }
 ): EnvaptFieldDecorator<InferConverterReturnType<TConverter> | undefined>;
-export function Envapt<TConverter extends BuiltInConverter | ArrayOf>(
-    key: EnvKeyInput,
-    options: { converter: TConverter; required?: false }
-): EnvaptFieldDecorator<InferConverterReturnType<TConverter> | null>;
 
 /**
  * A primitive constructor (`Number`, `Boolean`) with an optional fallback.
@@ -162,12 +158,8 @@ export function Envapt<TConstructor extends PrimitiveConstructor>(
 ): EnvaptFieldDecorator<InferPrimitiveReturnType<TConstructor>>;
 export function Envapt<TConstructor extends PrimitiveConstructor>(
     key: EnvKeyInput,
-    options: { converter: TConstructor; fallback: undefined; required?: false }
+    options: { converter: TConstructor; fallback?: undefined; required?: false }
 ): EnvaptFieldDecorator<InferPrimitiveReturnType<TConstructor> | undefined>;
-export function Envapt<TConstructor extends PrimitiveConstructor>(
-    key: EnvKeyInput,
-    options: { converter: TConstructor; required?: false }
-): EnvaptFieldDecorator<InferPrimitiveReturnType<TConstructor> | null>;
 
 /**
  * Required, no converter (raw string). Throws `MissingEnvValue` on first access when the env
@@ -189,21 +181,6 @@ export function Envapt<TConstructor extends PrimitiveConstructor>(
 export function Envapt(key: EnvKeyInput, options: { required: true }): EnvaptFieldDecorator<string>;
 
 /**
- * No-fallback form. The property resolves from env or `null`.
- *
- * @param key - Environment variable name(s) to load
- * @public
- * @example
- * ```ts
- * class Config extends Envapter {
- *   \@Envapt('SIMPLE_VALUE')
- *   static readonly simple?: string | null;
- * }
- * ```
- */
-export function Envapt(key: EnvKeyInput): EnvaptFieldDecorator<string | null>;
-
-/**
  * A Standard Schema v1 adapter (zod, valibot, arktype, hand-rolled). Synchronous schemas only,
  * so a Promise-returning `validate` throws `InvalidUserDefinedConfig` at runtime. Pairing
  * `schema` with `converter` matches no overload at compile time, and the runtime Validator
@@ -219,6 +196,7 @@ export function Envapt<Schema extends StandardSchemaV1>(
 
 /**
  * Instance or static property decorator that loads and converts an environment variable.
+ * @see {@link https://envapt.materwelon.dev/docs/decorators#declaring-decorated-fields}
  */
 export function Envapt<TFallback = unknown>(key: EnvKeyInput, options?: unknown): EnvaptFieldDecorator<unknown> {
     return createPropertyDecorator(key, parseEnvaptOptions<TFallback>(options)) as EnvaptFieldDecorator<unknown>;

@@ -1,0 +1,79 @@
+---
+title: Edge runtimes
+description: Bind a PortableSource on Vercel Edge, Fastly Compute, and Expo, then read typed config with the same API as everywhere else.
+---
+
+These runtimes have no filesystem and no `.env` cascade. Import from `envapt` (the portable build resolves automatically through the `edge-light`, `fastly`, and `react-native` conditions), hand envapt the config object the platform gives you once, and read with the same typed API as everywhere else. On Node-like runtimes, including Vercel's Node.js functions, `FileSource` binds on import, so even that step is automatic.
+
+<Callout type="info">
+    The filesystem-only config APIs have nothing to do on these runtimes, so they warn and no-op by default. Readers
+    work as normal. See [Compatibility](/docs/compatibility) for `fileApiMode` and [Errors](/docs/errors) for the codes.
+</Callout>
+
+## Vercel
+
+Vercel's Node.js runtime (the default, and the one Vercel now recommends) runs the node build, so `FileSource` binds on import and reads `process.env` for you. Nothing to bind.
+
+```ts twoslash
+import { Envapter, Converters } from 'envapt';
+
+const origin = Envapter.getRequired('ORIGIN_URL', Converters.Url);
+```
+
+The Edge runtime is the exception. Vercel is [moving away from it](https://vercel.com/docs/functions/runtimes/edge), but if you use it, it resolves the portable build (`edge-light`) and exposes your variables on `process.env` as a real object. Bind it once.
+
+```ts twoslash
+import { Envapter, PortableSource, Converters } from 'envapt';
+
+Envapter.useSource(new PortableSource(process.env));
+const origin = Envapter.getRequired('ORIGIN_URL', Converters.Url);
+```
+
+## Fastly Compute
+
+Fastly is the one runtime that hands you no environment object. You read values one key at a time with `env` from `fastly:env`. Pass the reader straight to `useSource` and envapt reads each key from it on the first access, caching the result. Add the `fastly` condition to your bundler's resolve conditions so bare `envapt` resolves the portable build.
+
+```ts
+import { env } from 'fastly:env';
+import { Envapter, Converters } from 'envapt';
+
+Envapter.useSource(env);
+const origin = Envapter.getRequired('ORIGIN_URL', Converters.Url);
+```
+
+Custom variables are inlined into the Wasm binary at build time through the `--env` flag, so changing one needs a redeploy. See Fastly's [environment variables](https://www.fastly.com/documentation/reference/compute/ecp-env/) docs.
+
+## Expo and React Native
+
+Put your config under `extra` in `app.config.js`. It is a real object at runtime through `expo-constants`, so you bind it whole and envapt does the rest.
+
+```ts
+import Constants from 'expo-constants';
+import { Envapter, PortableSource } from 'envapt';
+
+Envapter.useSource(new PortableSource(Constants.expoConfig?.extra ?? {}));
+```
+
+You cannot pass `process.env` here. On Metro it is not a runtime object, the bundler replaces each static `process.env.EXPO_PUBLIC_*` reference with its literal string at build time, so spreading it gives you nothing. If your config already lives in `EXPO_PUBLIC_*` variables, reference each by name.
+
+```ts
+import { Envapter, PortableSource, Converters } from 'envapt';
+
+Envapter.useSource(
+    new PortableSource({
+        API_URL: process.env.EXPO_PUBLIC_API_URL,
+        FEATURE_BETA: process.env.EXPO_PUBLIC_FEATURE_BETA
+    })
+);
+const api = Envapter.getRequired('API_URL', Converters.Url);
+```
+
+<Callout type="warn">
+    Both Expo surfaces ship in your app bundle. Pass public configuration only, never a secret or a server-side key.
+</Callout>
+
+See Expo's [environment variables](https://docs.expo.dev/guides/environment-variables/) docs for the prefix rules and inlining.
+
+## No filesystem
+
+There is no `.env` cascade on these runtimes. Bind a source before your first read, else an unbound read throws [`NoSourceBound`](/docs/errors). `PortableSource` snapshots its object at construction, so mutating that object afterward does not change what envapt reads. The default `@Envapt` accessor decorators work on all three, the legacy `envapt/legacy` form needs a compile step. For the providers and the contract see [Sources](/docs/sources).

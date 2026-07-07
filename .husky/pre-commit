@@ -1,1 +1,5 @@
-pnpm exec lint-staged
+#!/bin/sh
+
+echo "Pre-commit hook triggered."
+
+pnpm fmt:check && pnpm exec lint-staged

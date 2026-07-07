@@ -112,7 +112,7 @@ describe('Runtime Validation', () => {
             @Envapt('NONEXISTENT_ARRAY_VAR', {
                 converter: Converters.array()
             })
-            static readonly noFallbackArray: string[] | null;
+            static readonly noFallbackArray: string[] | undefined;
         }
 
         it('should throw error when ArrayOf is used with non-array fallback for missing env var', () => {
@@ -121,8 +121,8 @@ describe('Runtime Validation', () => {
                 .with.property('code', EnvaptErrorCodes.InvalidFallback);
         });
 
-        it('should return null when ArrayOf is used without fallback for missing env var', () => {
-            expect(FallbackTests.noFallbackArray).to.be.null;
+        it('should return undefined when ArrayOf is used without fallback for missing env var', () => {
+            expect(FallbackTests.noFallbackArray).to.be.undefined;
         });
     });
 
@@ -264,6 +264,44 @@ describe('Runtime Validation', () => {
         it('should not throw when converters have matching fallback types', () => {
             expect(() => FallbackTypeValidationTests.stringWithValidFallback).to.not.throw();
             expect(() => FallbackTypeValidationTests.urlWithValidFallback).to.not.throw();
+        });
+    });
+
+    describe('Fallback value validation for built-in converters', () => {
+        it('rejects a non-safe-integer integer fallback', () => {
+            expect(() => Envapter.getUsing('NONEXISTENT_INT_FB', Converters.Integer, Number.MAX_SAFE_INTEGER + 1))
+                .to.throw(EnvaptError)
+                .with.property('code', EnvaptErrorCodes.FallbackConverterTypeMismatch);
+        });
+
+        it('rejects a NaN number fallback', () => {
+            expect(() => Envapter.getUsing('NONEXISTENT_NUM_FB', Converters.Number, NaN))
+                .to.throw(EnvaptError)
+                .with.property('code', EnvaptErrorCodes.FallbackConverterTypeMismatch);
+        });
+
+        it('rejects a NaN float fallback but keeps Infinity', () => {
+            expect(() => Envapter.getUsing('NONEXISTENT_FLOAT_FB', Converters.Float, NaN))
+                .to.throw(EnvaptError)
+                .with.property('code', EnvaptErrorCodes.FallbackConverterTypeMismatch);
+            expect(Envapter.getUsing('NONEXISTENT_FLOAT_FB', Converters.Float, Infinity)).to.equal(Infinity);
+        });
+
+        it('rejects an Invalid Date fallback', () => {
+            expect(() => Envapter.getUsing('NONEXISTENT_DATE_FB', Converters.Date, new Date('not-a-date')))
+                .to.throw(EnvaptError)
+                .with.property('code', EnvaptErrorCodes.FallbackConverterTypeMismatch);
+        });
+
+        it('keeps a safe-integer fallback', () => {
+            expect(Envapter.getUsing('NONEXISTENT_INT_FB', Converters.Integer, 42)).to.equal(42);
+        });
+
+        it('keeps a valid Date fallback', () => {
+            const valid = new Date('2024-01-15T00:00:00.000Z');
+            expect(Envapter.getUsing('NONEXISTENT_DATE_FB', Converters.Date, valid).getTime()).to.equal(
+                valid.getTime()
+            );
         });
     });
 

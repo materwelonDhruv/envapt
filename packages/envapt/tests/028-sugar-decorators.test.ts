@@ -57,7 +57,7 @@ describe('Sugar decorators', () => {
             static readonly ttl: number;
 
             @EnvNum('SUGAR_MISSING_NO_FALLBACK')
-            static readonly none: number | null;
+            static readonly none: number | undefined;
         }
 
         it('EnvNum uses the numeric fallback', () => expect(SugarDefaults.port).to.equal(3000));
@@ -69,16 +69,16 @@ describe('Sugar decorators', () => {
         });
         it('EnvTime coerces the time-string fallback to milliseconds (10s -> 10000)', () =>
             expect(SugarDefaults.ttl).to.equal(10000));
-        it('no fallback resolves to null, like @Envapt(key)', () => expect(SugarDefaults.none).to.be.null);
+        it('no fallback resolves to undefined, like @Envapt(key)', () => expect(SugarDefaults.none).to.be.undefined);
     });
 
     describe('multi-key ordered fallback (inherited)', () => {
         class SugarMultiKey {
             @EnvUrl(['SUGAR_CANARY_URL', 'SUGAR_APP_URL'])
-            static readonly url: URL | null;
+            static readonly url: URL | undefined;
 
             @EnvNum(['SUGAR_MISSING_PORT', 'SUGAR_LEGACY_PORT'])
-            static readonly port: number | null;
+            static readonly port: number | undefined;
         }
 
         it('picks the first defined key', () => expect(SugarMultiKey.url?.href).to.equal('https://app.example.com/'));

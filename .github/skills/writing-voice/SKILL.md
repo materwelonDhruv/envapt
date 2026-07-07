@@ -60,6 +60,7 @@ This list is illustrative, not exhaustive. When a word isn't on it, apply the ru
 | **without any manual wiring / zero config** | sells absence of work | state what happens automatically |
 | **robust** | empty adjective | name the guarantee: "validates …", "throws on …" |
 | **performant** | vague performance claim | a precise figure: "p99 under 5 ms", "O(1) lookup" |
+| **harden / hardening** | vague security verb, hides the change | name the change: "make private", "remove the export", "block the write" |
 | **does more than X** | tease, not information | just state what it does |
 | **under the hood** | filler | "internally", or delete |
 | **out of the box** | filler | "by default" |
@@ -78,7 +79,7 @@ This list is illustrative, not exhaustive. When a word isn't on it, apply the ru
 | **handle / handling** (vague) | hides behavior | name the action: "parses", "coerces", "rejects" |
 | **rich set of / suite of** | brochure | "a set of", or just list them |
 | **magic / magical** | mystifies behavior | explain the rule |
-| **reach for X** | folksy filler for "use" | "use X", or name the action |
+| **reach for X (or variations of reach)** | folksy filler for "use" | "use X", or name the action |
 | **blast radius** | war metaphor for scope of impact; dramatizes it | name what's affected: "every caller of `parse()`", "all rows in `users`" |
 | **lives in / lives on** | folksy for where something is defined; anthropomorphizes a location | "is defined in", "is set on", name the file or element |
 | **owns** | anthropomorphizes; a module isn't an agent with property | name the relationship: "defines", "sets", "is the only writer of" |
@@ -89,7 +90,9 @@ Rule of thumb: **if an adjective can't be replaced by a measurable fact or a cod
 
 ### Banned punctuation
 
-Three marks are banned in prose (comments, commit bodies, docs, PR descriptions, and chat replies): the em-dash `—`, the semicolon `;`, and the colon `:`. They invite two-clause splices and list-y throat-clearing that read as AI prose. Use a comma, parentheses, or two separate sentences instead. This is a prose rule only. Code syntax that requires a colon or semicolon (type annotations, object keys, statement terminators) is exempt.
+The em-dash `—` and en-dash `–` are banned in prose outright, replace them with a hyphen, a comma, parentheses, or two sentences. The colon `:` and semicolon `;` are banned only as a **clause splice**, where the mark joins two independent clauses into one sentence (the AI-prose tell, two thoughts packed behind a mark instead of ended with a period). A colon that introduces a list, a code block, an enumeration, or a short label (a `two forms:` lead-in, an `npm: envapt` label) is standard and clearer than a period there, so keep it and do not flatten it. A semicolon in running prose is almost always a splice, so avoid it, its one legitimate use is separating list items that already contain commas. This is a prose rule only. Code syntax that requires a colon or semicolon (type annotations, object keys, statement terminators) is exempt.
+
+**Replace a banned mark with punctuation that does the same grammatical job.** A `;`, `—`, or `–` between two complete clauses is holding two independent thoughts apart. A comma cannot join two independent clauses, so swapping one in makes a comma splice. Use a period and two sentences, or reword the sentence. Read the result back on its own.
 
 ```ts
 // Bad: colon splice + semicolon splice

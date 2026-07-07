@@ -12,6 +12,11 @@ on:
             - 'packages/envapt/**'
             - '.github/workflows/deploy-guide.yml'
     workflow_dispatch:
+        inputs:
+            version:
+                description: Version to bake into the wordmark badge. Empty fetches the live npm dist-tag.
+                required: false
+                type: string
 
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
@@ -42,9 +47,11 @@ jobs:
               run: pnpm build
               env:
                   NEXT_PUBLIC_SITE_URL: ${{ github.ref_name == 'next' && 'https://next-envapt.materwelon.dev' || 'https://envapt.materwelon.dev' }}
+                  NEXT_PUBLIC_CHANGELOG_REF: ${{ github.ref_name == 'next' && 'next' || 'main' }}
+                  ENVAPT_BADGE_VERSION: ${{ inputs.version }}
 
             - name: Deploy production
-              if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+              if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
               uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4
               with:
                   apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -55,7 +62,7 @@ jobs:
                   command: deploy
 
             - name: Deploy next docs
-              if: github.event_name == 'push' && github.ref == 'refs/heads/next'
+              if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/next'
               uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4
               with:
                   apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}

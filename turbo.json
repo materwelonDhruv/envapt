@@ -6,7 +6,7 @@
             "dependsOn": ["^build"],
             "inputs": ["$TURBO_DEFAULT$", ".env*"],
             "outputs": ["dist/**", ".next/**", "!.next/cache/**", "out/**"],
-            "env": ["NEXT_PUBLIC_SITE_URL"]
+            "env": ["NEXT_PUBLIC_SITE_URL", "NEXT_PUBLIC_CHANGELOG_REF", "ENVAPT_BADGE_VERSION"]
         },
         "dev": {
             "cache": false,
@@ -21,11 +21,39 @@
             "cache": false
         },
         "tc": {
-            "dependsOn": ["^build"],
+            "dependsOn": ["^build", "build"],
             "inputs": ["$TURBO_DEFAULT$", "tsconfig*.json"]
         },
         "test": {
             "inputs": ["$TURBO_DEFAULT$", "jest.config.*", "vitest.config.*", "src/**", "tests/**"]
+        },
+        "build:verify": {
+            "dependsOn": ["build"],
+            "outputs": []
+        },
+        "test:exports-dedup": {
+            "dependsOn": ["build"],
+            "outputs": []
+        },
+        "test:resolution-matrix": {
+            "dependsOn": ["build"],
+            "outputs": []
+        },
+        "test:cjs-validity": {
+            "dependsOn": ["build"],
+            "outputs": []
+        },
+        "test:tsc-emit": {
+            "dependsOn": ["build"],
+            "outputs": []
+        },
+        "test:stage3-emit": {
+            "dependsOn": ["build"],
+            "outputs": []
+        },
+        "test:tree-shaking": {
+            "dependsOn": ["build"],
+            "outputs": []
         },
         "test:watch": {
             "cache": false,

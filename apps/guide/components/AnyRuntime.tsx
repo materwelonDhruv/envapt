@@ -23,7 +23,6 @@ const beta = Envapter.getBoolean('VITE_BETA', false);`;
 export function AnyRuntime(): ReactNode {
     return (
         <Section
-            eyebrow="// any source"
             title="Bind a source, read it typed."
             lead="A source is any object with a readVars() method. On Node, Bun, and Deno one binds itself on import, reading process.env and your .env files. On Cloudflare Workers, in the browser, or for secrets you fetch from a store at boot, you bind it in one line and read with the same typed API."
         >

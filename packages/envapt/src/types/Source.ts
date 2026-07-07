@@ -1,50 +1,29 @@
-/**
- * A source with no filesystem: an injected object on the browser, or the Cloudflare `env` binding on
- * Workers. The `.env` cascade, profiles, and the `envPaths`/`baseDir`/`configureProfiles` APIs do not
- * apply. Only `readVars()` populates the cache.
- * @public
- */
-interface BareEnvSource {
-    /** Return every variable this source provides, as plain strings. */
+// a source with no filesystem. supportsFiles is the discriminator, absent or false here.
+interface BareSource {
     readVars(): Record<string, string>;
-    /** Leave unset (or `false`) because a bare source has no filesystem. */
     readonly supportsFiles?: false;
+    readVar?(key: string): string | undefined;
 }
 
-/**
- * A filesystem-backed source, like the default {@link NodeEnvSource}. Setting `supportsFiles` to
- * `true` requires all four file capabilities, so the engine can load the `.env` cascade, resolve
- * `baseDir`, and mirror loaded keys back to the ambient environment.
- * @public
- */
-interface FileEnvSource {
-    /** Return every variable this source provides, as plain strings. */
+// a filesystem-backed source. supportsFiles true unlocks the .env cascade and baseDir. FileSource implements it.
+interface FileCapableSource {
     readVars(): Record<string, string>;
-    /** When `true`, the engine loads the `.env` cascade, profiles, and `envPaths` through the methods below. */
     readonly supportsFiles: true;
-    /** Read a file's text, or `undefined` when it is absent or unreadable. Backs the loader and existence checks. */
     readFile(path: string, encoding: string): string | undefined;
-    /** Join a relative `.env` path onto `baseDir`. Absolute paths are returned unchanged. */
     resolvePath(baseDir: string, candidate: string): string;
-    /** Normalize a `baseDir` value (a directory path, or a module / `file:` URL) to an absolute directory path. */
     normalizeBaseDir(value: string | URL): string;
-    /** Mirror loaded keys back to the ambient environment (e.g. `process.env`), backing `Envapter.syncProcessEnv`. */
     writeVars(vars: Record<string, string>): void;
+    readVar?(key: string): string | undefined;
 }
 
 /**
- * A pluggable source of environment variables. The default {@link NodeEnvSource} (a {@link FileEnvSource})
- * reads `process.env` plus the `.env` cascade. A {@link BareEnvSource} lets the same engine run where
- * there is no ambient environment (an injected object on the browser, the Cloudflare `env` binding on
- * Workers). Bind one with `Envapter.useSource`.
+ * A pluggable source of environment variables. The default {@link FileSource} reads `process.env` plus
+ * the `.env` cascade. A {@link PortableSource} lets the same engine run where there is no ambient
+ * environment (an injected object on the browser, the Cloudflare `env` binding on Workers). Bind one
+ * with `Envapter.useSource`.
  * @public
+ * @see {@link https://envapt.materwelon.dev/docs/sources#any-object-can-be-a-source}
  */
-type Source = BareEnvSource | FileEnvSource;
+type Source = BareSource | FileCapableSource;
 
-/**
- * @public
- * @deprecated Renamed to {@link Source} in v8.
- */
-type EnvSource = Source;
-
-export type { Source, EnvSource, BareEnvSource, FileEnvSource };
+export type { Source, BareSource, FileCapableSource };

@@ -3,15 +3,16 @@ import { dirname, isAbsolute, join, resolve } from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
-import type { FileEnvSource } from '../types';
+import type { FileCapableSource } from '../types';
 
 /**
  * Default environment source on Node, Bun, and Deno: a snapshot of `process.env`. Its
  * `supportsFiles` is `true`, so the engine also layers the `.env` cascade on top, resolves
  * `baseDir`, and can mirror loaded keys back to `process.env`.
  * @public
+ * @see {@link https://envapt.materwelon.dev/docs/sources#the-providers}
  */
-export class NodeEnvSource implements FileEnvSource {
+export class FileSource implements FileCapableSource {
     /** Always `true`. The engine layers the `.env` cascade and `baseDir` on top of `process.env`. */
     readonly supportsFiles = true;
 

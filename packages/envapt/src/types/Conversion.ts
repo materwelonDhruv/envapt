@@ -1,38 +1,26 @@
 import type { ArrayOf, ConverterToken, CustomElementConverter } from '../converters/Converters';
 
-/**
- * Scalar built-in converter tokens (e.g. `'number'`, `'time'`).
- * Excludes the array builder (see {@link ArrayOf}).
- * @public
- */
+// scalar tokens only
 type BuiltInConverter = ConverterToken;
 
-/**
- * Primitive types supported by Envapter
- * @public
- */
 type PrimitiveConstructor = typeof String | typeof Number | typeof Boolean | typeof BigInt | typeof Symbol;
 
-/**
- * String value from a .env file or environment variable
- * @public
- */
 type BaseInput = string | undefined;
 
 /**
- * Custom parser function type for environment variables
- * @param raw - Raw string value from environment
- * @param fallback - Fallback value if parsing fails
- * @returns Parsed value of type T
+ * Custom parser function for an environment variable. `TRaw` is the raw input, `string | undefined` by
+ * default, narrowed to `string` by the readers that guarantee a present value (`getRequired`, `getRequiredAll`).
+ * @param raw - Raw value from the environment
+ * @param fallback - Fallback value when parsing is skipped
+ * @returns Parsed value of type `TFallback`
  * @public
+ * @see {@link https://envapt.materwelon.dev/docs/converters#custom-converters}
  */
-type ConverterFunction<TFallback = unknown> = (raw: BaseInput, fallback?: TFallback) => TFallback;
+type ConverterFunction<TFallback = unknown, TRaw extends BaseInput = BaseInput> = (
+    raw: TRaw,
+    fallback?: TFallback
+) => TFallback;
 
-/**
- * Environment variable converter: a primitive constructor, a built-in scalar token, an `ArrayOf<...>`
- * produced by {@link Converters.array}, or a custom parser function.
- * @public
- */
 type EnvaptConverter<TFallback> = PrimitiveConstructor | BuiltInConverter | ArrayOf | ConverterFunction<TFallback>;
 
 type JsonPrimitive = string | number | boolean | null;
@@ -44,6 +32,7 @@ interface JsonObject {
 /**
  * JSON value types for custom converters
  * @public
+ * @see {@link https://envapt.materwelon.dev/docs/converters#json}
  */
 type JsonValue = JsonPrimitive | JsonArray | JsonObject;
 
@@ -60,32 +49,18 @@ interface ConverterMap {
     regexp: RegExp;
     date: Date;
     time: number;
+    port: number;
+    email: string;
 }
 
-/**
- * Type mapping for built-in scalar converters to their return types
- * @internal
- */
 type BuiltInConverterReturnType<ConverterKey extends BuiltInConverter> = ConverterMap[ConverterKey];
 
-/**
- * Return type for built-in converter functions
- * @internal
- */
 type ReturnValuesOfConverterFunctions = ConverterMap[BuiltInConverter];
 
-/**
- * Function type for built-in converter functions
- * @internal
- */
 type BuiltInConverterFunction = (
     ...args: Parameters<(...args: any[]) => ReturnValuesOfConverterFunctions>
 ) => ReturnValuesOfConverterFunctions | undefined;
 
-/**
- * Map of built-in converter functions
- * @internal
- */
 type MapOfConverterFunctions = Record<BuiltInConverter, BuiltInConverterFunction>;
 
 /**
@@ -97,25 +72,12 @@ type TimeUnit = 'ms' | 's' | 'm' | 'h' | 'd' | 'w';
 /**
  * Fallback type for time duration conversions
  * @public
+ * @see {@link https://envapt.materwelon.dev/docs/converters#time-and-durations}
  */
 type TimeFallback = number | `${number}${TimeUnit}`;
 
-/**
- * Helper type for getter methods that conditionally return undefined based on whether a fallback is provided
- * If fallback is provided, return ReturnType. If no fallback (undefined), return ReturnType | undefined.
- * @internal
- */
 type ConditionalReturn<ReturnType, TFallback> = TFallback extends undefined ? ReturnType | undefined : ReturnType;
 
-/**
- * Inferred return type for a converter.
- *
- * - `ArrayOf<E>` resolves to the element type's return as an array. When `E` is a custom
- *   function, the function's return type drives the array element. When `E` is a scalar
- *   token, `ConverterMap` provides the element type.
- * - Bare scalar tokens resolve through `ConverterMap`.
- * @internal
- */
 type InferConverterReturnType<TConverter> =
     TConverter extends ArrayOf<infer Element>
         ? Element extends BuiltInConverter
@@ -127,12 +89,19 @@ type InferConverterReturnType<TConverter> =
           ? BuiltInConverterReturnType<TConverter>
           : never;
 
-/**
- * Type inference for the *fallback* slot of a converter. `Converters.Time` (scalar or array
- * element) accepts {@link TimeFallback} / `TimeFallback[]`; everything else mirrors the
- * return type. Add future asymmetric fallback/return converters to this conditional.
- * @internal
- */
+// raw is `string` here (getRequiredAll throws before converting, so the value is always present).
+type RequiredSpec = Record<string, BuiltInConverter | ArrayOf | ConverterFunction<unknown, string>>;
+
+// InferConverterReturnType is never for a function, so a custom parser recovers its type from the return.
+// Match the bare `(raw) => infer R` form. `ConverterFunction<infer R>` would fail here because a required
+// parser's `raw: string` isn't assignable to ConverterFunction's `raw: string | undefined`, hitting never.
+type InferSpecField<TConverter> = TConverter extends BuiltInConverter | ArrayOf
+    ? InferConverterReturnType<TConverter>
+    : TConverter extends (raw: string) => infer TReturn
+      ? TReturn
+      : never;
+
+// time's fallback (TimeFallback) differs from its return, so add future asymmetric converters here
 type InferConverterFallbackType<TConverter> = TConverter extends 'time'
     ? TimeFallback
     : TConverter extends ArrayOf<infer Element>
@@ -141,19 +110,11 @@ type InferConverterFallbackType<TConverter> = TConverter extends 'time'
           : InferConverterReturnType<TConverter>
       : InferConverterReturnType<TConverter>;
 
-/**
- * Complete type inference for advanced converter methods
- * @internal
- */
 type AdvancedConverterReturn<TConverter, TFallback = undefined> = ConditionalReturn<
     InferConverterReturnType<TConverter>,
     TFallback
 >;
 
-/**
- * Type inference for primitive constructor return types
- * @internal
- */
 type InferPrimitiveReturnType<TConstructor extends PrimitiveConstructor> = TConstructor extends typeof String
     ? string
     : TConstructor extends typeof Number
@@ -180,5 +141,7 @@ export type {
     InferConverterReturnType,
     InferConverterFallbackType,
     AdvancedConverterReturn,
-    InferPrimitiveReturnType
+    InferPrimitiveReturnType,
+    RequiredSpec,
+    InferSpecField
 };

@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -11,7 +11,7 @@ import { describe, expect, it } from 'vitest';
  * SchemaMustBeSync brand relies on a specific literal appearing in the diagnostic, so we run
  * `tsc` directly against fixtures and assert message fragments.
  *
- * Fixtures live in `tests/type-error-fixtures/` and are excluded from both the package's
+ * Fixtures are in `tests/type-error-fixtures/` and are excluded from both the package's
  * tsconfig and eslint. A dedicated tsconfig inside that directory exists so the IDE shows
  * the same diagnostic this test sees (a default tsconfig would emit TS1206 for the
  * decorators and mask the actual error).
@@ -28,34 +28,46 @@ interface ParsedDiagnostic {
     message: string;
 }
 
+// A ts.createProgram per fixture reloads the default libs and re-checks envapt's whole src each time.
+// The fixtures in a dir are isolated modules on one tsconfig, so compile them together once.
+const diagnosticsByDir = new Map<string, Map<string, ParsedDiagnostic[]>>();
+
+function diagnosticsForDir(fixtureDir: string, configFileName: string): Map<string, ParsedDiagnostic[]> {
+    const cached = diagnosticsByDir.get(fixtureDir);
+    if (cached) return cached;
+
+    const configFile = ts.readConfigFile(configFileName, (path) => readFileSync(path, 'utf8'));
+    const parsed = ts.parseJsonConfigFileContent(configFile.config, ts.sys, dirname(configFileName));
+    const rootNames = readdirSync(fixtureDir)
+        .filter((name) => name.endsWith('.ts'))
+        .map((name) => resolve(fixtureDir, name));
+
+    const program = ts.createProgram({ rootNames, options: { ...parsed.options, noEmit: true } });
+
+    const byFile = new Map<string, ParsedDiagnostic[]>();
+    for (const d of ts.getPreEmitDiagnostics(program)) {
+        if (!d.file) continue;
+        const pos = d.start === undefined ? { line: -1, character: -1 } : d.file.getLineAndCharacterOfPosition(d.start);
+        const entry: ParsedDiagnostic = {
+            code: d.code,
+            line: pos.line + 1,
+            message: ts.flattenDiagnosticMessageText(d.messageText, '\n')
+        };
+        const list = byFile.get(d.file.fileName);
+        if (list) list.push(entry);
+        else byFile.set(d.file.fileName, [entry]);
+    }
+
+    diagnosticsByDir.set(fixtureDir, byFile);
+    return byFile;
+}
+
 function compileFixture(
     fixtureRelativePath: string,
     configFileName: string = resolve(PROJECT_ROOT, 'tsconfig.json')
 ): ParsedDiagnostic[] {
     const fixturePath = resolve(FIXTURE_DIR, fixtureRelativePath);
-
-    const configFile = ts.readConfigFile(configFileName, (path) => readFileSync(path, 'utf8'));
-    const parsed = ts.parseJsonConfigFileContent(configFile.config, ts.sys, dirname(configFileName));
-
-    const program = ts.createProgram({
-        rootNames: [fixturePath],
-        options: { ...parsed.options, noEmit: true }
-    });
-
-    return ts
-        .getPreEmitDiagnostics(program)
-        .filter((d) => d.file?.fileName === fixturePath)
-        .map((d) => {
-            const pos =
-                d.file && d.start !== undefined
-                    ? d.file.getLineAndCharacterOfPosition(d.start)
-                    : { line: -1, character: -1 };
-            return {
-                code: d.code,
-                line: pos.line + 1,
-                message: ts.flattenDiagnosticMessageText(d.messageText, '\n')
-            };
-        });
+    return diagnosticsForDir(dirname(fixturePath), configFileName).get(fixturePath) ?? [];
 }
 
 function joinedMessages(diagnostics: readonly ParsedDiagnostic[]): string {
@@ -104,6 +116,16 @@ describe('TS error message verification (compiler API)', () => {
         });
     });
 
+    describe('an empty @Envapt options object produces a no-overload compile error', () => {
+        it('rejects the legacy @Envapt(key, {}) form', { timeout: FIXTURE_TIMEOUT_MS }, () => {
+            const diagnostics = compileFixture('empty-options.ts');
+            expect(
+                diagnostics.some((d) => d.code === 2769),
+                joinedMessages(diagnostics)
+            ).to.be.true;
+        });
+    });
+
     describe('legacy decorator constrains the declared field type to the converter output', () => {
         it('rejects a field whose type cannot hold the converter output', { timeout: FIXTURE_TIMEOUT_MS }, () => {
             const diagnostics = compileFixture('field-type-mismatch.ts');
@@ -112,7 +134,7 @@ describe('TS error message verification (compiler API)', () => {
         });
 
         it(
-            'rejects a non-null field for a no-fallback decorator (the value can be null)',
+            'rejects a field that cannot hold undefined for a no-fallback decorator',
             { timeout: FIXTURE_TIMEOUT_MS },
             () => {
                 const diagnostics = compileFixture('field-type-no-fallback.ts');
@@ -148,7 +170,7 @@ describe('TS error message verification (compiler API)', () => {
         });
 
         it(
-            'rejects a non-null accessor for a no-fallback decorator (the value can be null)',
+            'rejects an accessor that cannot hold undefined for a no-fallback decorator',
             { timeout: FIXTURE_TIMEOUT_MS },
             () => {
                 const diagnostics = compileFixture('modern/accessor-field-type-no-fallback.ts', MODERN_CONFIG);
@@ -175,5 +197,13 @@ describe('TS error message verification (compiler API)', () => {
                 expect(diagnostics, joinedMessages(diagnostics)).to.have.lengthOf(0);
             }
         );
+
+        it('rejects an empty @Envapt options object', { timeout: FIXTURE_TIMEOUT_MS }, () => {
+            const diagnostics = compileFixture('modern/empty-options.ts', MODERN_CONFIG);
+            expect(
+                diagnostics.some((d) => d.code === 2769),
+                joinedMessages(diagnostics)
+            ).to.be.true;
+        });
     });
 });

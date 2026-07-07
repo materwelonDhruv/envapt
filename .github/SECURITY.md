@@ -2,7 +2,7 @@
 
 ## Reporting Security Issues
 
-If you find a security vulnerability in Envapt, please help me fix it responsibly.
+If you find a security vulnerability in envapt, please help me fix it responsibly.
 
 **Please do NOT open a public GitHub issue for security vulnerabilities.**
 
@@ -17,7 +17,6 @@ I'll do my best to respond to security reports within a week.
 - Denial of service attacks
 - Information disclosure bugs
 - Path traversal issues
-- Issues in dependencies (I'll most probably use a different dependency till it's fixed)
 - Any other issue that could compromise user data or system security
 
 ## What I Don't Consider Security Issues
@@ -30,7 +29,7 @@ I'll do my best to respond to security reports within a week.
 
 I provide security updates for the latest major version only.
 
-Older versions may receive security updates. But that will be decided based on the severity of the issue and the impact on users.
+Older versions _may_ receive security updates. But that will be decided based on the severity of the issue and the impact on users.
 
 ## After Reporting
 
@@ -42,7 +41,7 @@ Older versions may receive security updates. But that will be decided based on t
 
 ## Security Best Practices
 
-When using Envapt:
+When using envapt:
 
 - Don't commit `.env` files to version control
 - Use different environment files for different environments
@@ -50,11 +49,3 @@ When using Envapt:
 - Keep your dependencies updated
 - Use the principle of least privilege for environment variables
 - Check out [Security Best Practices for Configs](https://12factor.net/config) for more tips
-
-## Questions?
-
-If you have questions about this security policy or about Envapt's security in general, feel free to open a regular GitHub issue.
-
----
-
-Thanks for helping keep Envapt secure!

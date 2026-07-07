@@ -125,6 +125,19 @@ html.dark .ev-snippet .shiki span {
     color: var(--shiki-dark);
 }
 
+/* smaller code on small screens so long lines fit more before scrolling */
+@media (width < 40rem) {
+    .ev-snippet .shiki {
+        padding: 0.85rem;
+        font-size: 11px;
+        line-height: 1.75;
+    }
+    .ev-snippet-dense .shiki {
+        padding: 0.65rem;
+        font-size: 10.5px;
+    }
+}
+
 /* components/Reveal.tsx toggles data-shown */
 .ev-reveal {
     opacity: 0;

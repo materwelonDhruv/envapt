@@ -5,6 +5,6 @@
         "rootDir": "../..",
         "types": ["@cloudflare/workers-types"]
     },
-    "include": ["**/*.ts", "../../dist/workerd/index.d.mts"],
+    "include": ["**/*.ts", "../../dist/portable/index.d.mts"],
     "exclude": []
 }

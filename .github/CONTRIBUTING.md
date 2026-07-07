@@ -90,7 +90,7 @@ AI tools are fine, I use them too. The bar is just the same as any other code. Y
 
 Same for anything you write in the repo. Issues, PR descriptions, and review replies/comments should come from **you**, the person who read and understood the change. I want to talk through it with the human doing the work.
 
-AI code also has a habit of looking correct while missing edge cases, so the test and coverage rules above matter even more here. Preferably use test-driven development when using AI.
+AI code also has a habit of looking correct while missing edge cases, so the test and coverage rules above matter even more here. I have some 4 skills that your AI agent **has** to use: `/tdd`, `/code-quality`, `/code-commenting-guidelines`, `/writing-voice`.
 
 ## CI and checks
 
@@ -122,15 +122,3 @@ Pull requests that do not pass CI will not be reviewed in detail.
 - `pnpm --filter envapt test:all`, builds once then runs every suite in parallel, skipping the browser suite when Chromium is absent
 
 Build the package before running the workerd or browser suite on its own, or use `test:all`, which builds first. CI runs all of them as parallel jobs.
-
-## Questions?
-
-If you have questions or need help:
-
-- Open an issue on GitHub
-- Check existing issues for similar questions
-- Look at the README for examples
-
----
-
-Thank you for helping improve envapt!

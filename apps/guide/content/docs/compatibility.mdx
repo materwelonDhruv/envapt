@@ -1,17 +1,56 @@
 ---
 title: Compatibility
-description: Runtime support, engine versions, module formats, per-runtime builds, and how decorators behave across runtimes.
+description: Runtime support, engine versions, module formats, the portable and node builds, and how decorators behave across runtimes.
 ---
 
-envapt runs on Node, Bun, and Deno with the same API and zero runtime dependencies. It also runs on Cloudflare Workers (workerd) and in the browser, where you bind the source yourself (a `PortableSource`) and read with the same typed API. The functional reader API works on every runtime with no build step. The default `@Envapt` accessor decorators need no flag either, the legacy `envapt/legacy` decorators have per-runtime requirements covered below.
+envapt runs on Node, Bun, and Deno with the same API and zero runtime dependencies. It also runs on Cloudflare Workers (workerd), other edge runtimes, and the browser, where you bind the source yourself (a `PortableSource`) and read with the same typed API. The functional reader API works on every runtime with no build step. The default `@Envapt` accessor decorators need no flag either, the legacy `envapt/legacy` decorators have per-runtime requirements covered below.
+
+## Binding by runtime
+
+envapt splits into two builds, selected by the package `exports` conditions. On the node build a source binds on import. On the portable build you bind one yourself.
+
+### Node build, binds automatically
+
+`FileSource` binds on import and reads `process.env` plus the `.env` cascade, so the first read works with no setup.
+
+{/* prettier-ignore-start */}
+
+| Runtime | Condition | Reads | Gotcha |
+| --- | --- | --- | --- |
+| Node | `node` | `process.env` and the `.env` cascade | — |
+| Bun | `node` | `process.env` and the `.env` cascade | — |
+| Deno | `deno` | `process.env` and the `.env` cascade | needs Deno 2.5+ |
+| Deno Deploy | `deno` | dashboard vars via `process.env` / `Deno.env` | no `.env` files, set vars in the dashboard |
+
+{/* prettier-ignore-end */}
+
+### Portable build, you bind a source
+
+Bind a `PortableSource` from the object the platform gives you before your first read. An unbound read throws [`NoSourceBound`](/docs/errors), and the file-only APIs warn once and no-op (see `fileApiMode` below).
+
+{/* prettier-ignore-start */}
+
+| Runtime | Condition | Seed from | `process.env` | Gotcha |
+| --- | --- | --- | --- | --- |
+| [Cloudflare Workers](/docs/workers) | `workerd` | the `env` binding | no | bind once at module load |
+| [Vercel Edge](/docs/edge-runtimes) | `edge-light` | `process.env` | yes | deprecated by Vercel, the Node runtime auto-binds |
+| [Fastly Compute](/docs/edge-runtimes) | `fastly` | `env()` keys, no bulk object | no | add the `fastly` condition |
+| [Expo / React Native](/docs/edge-runtimes) | `react-native` | `Constants.expoConfig.extra` | build-inlined | `process.env` is not a runtime object |
+| [Browser](/docs/browser) | `browser` | bundler-injected config | no | ships in the client bundle |
+
+{/* prettier-ignore-end */}
 
 ## Engine versions
 
+{/* prettier-ignore-start */}
+
 | Runtime | Minimum |
-| ------- | ------- |
-| Node    | `>=20`  |
-| Bun     | `>=1.3` |
-| Deno    | `>=2.5` |
+| --- | --- |
+| Node | `>=20` |
+| Bun | `>=1.3` |
+| Deno | `>=2.5` |
+
+{/* prettier-ignore-end */}
 
 Each release is tested against Node 20, 22, and 24, plus Bun and Deno.
 
@@ -29,17 +68,18 @@ The Deno tab installs from JSR; you can also use the npm specifier with `deno ad
 
 envapt ships both ESM and CommonJS with type definitions for each, so `import` and `require` both resolve. There are no runtime dependencies.
 
-## Per-runtime builds
+## Portable and node builds
 
-The package `exports` conditions select a build per runtime:
+The package `exports` conditions select between two builds:
 
-- **Node, Bun, and Deno** resolve the Node build from `envapt`. `NodeEnvSource` is bound on import, so it reads `process.env` and the `.env` cascade, and the file APIs work.
-- **Cloudflare Workers** import from `envapt`. There is no filesystem, so the file APIs are not available. Bind a [`PortableSource`](/docs/sources) from the `env` binding exported via `cloudflare:workers` or in a fetch.
-- **The browser** imports from `envapt`. There is no filesystem or `process.env`, so seed a [`PortableSource`](/docs/sources) with the values your bundler injects.
+- **The portable build** resolves from bare `envapt` on Workers, edge runtimes (`edge-light`, `fastly`, `worker`), the browser, and react-native. It contains no `node:` imports. Bind a [`PortableSource`](/docs/sources) and read with the same typed API.
+- **The node build** also resolves from bare `envapt` on Node, Bun, and Deno. `FileSource` is bound on import, so it reads `process.env` and the `.env` cascade, and the file APIs work.
 
-The workerd and browser builds contain no `node:` imports. Bind a source before your first read; see [Sources](/docs/sources).
+Bind a source before your first read on the portable build; see [Sources](/docs/sources).
 
-On Workers and the browser, import from `envapt` too. Its `workerd` and `browser` export conditions resolve the portable build there. The dedicated `envapt/workerd` and `envapt/browser` subpaths are deprecated and removed in v8. On a plain TypeScript setup bare `envapt` resolves to the Node types, so the file-only APIs stay visible and a stray call off Node throws [`FileApiUnsupported`](/docs/errors) at runtime rather than at build.
+Import from `envapt` on every runtime, no subpath import is needed. On the portable build, the file-only config APIs (`envPaths`, `baseDir`, `envFileOptions`, `configureProfiles`, `resetProfiles`) warn once and no-op by default. Set `Envapter.fileApiMode = 'throw'` to make them throw [`FileApiUnsupported`](/docs/errors) instead. `fileApiMode` governs only the portable file-API behavior. On the node build a bare (non-filesystem) source still throws `FileApiUnsupported` when a file API is called. An unbound read throws `NoSourceBound` on all runtimes regardless of `fileApiMode`.
+
+Deno and Deno Deploy resolve the node build by design. On Deno the `.env` cascade and file APIs work as on Node. Deno Deploy has no `.env` files on disk, so set variables in its dashboard and read them through `process.env` / `Deno.env`.
 
 ## Decorators per runtime
 

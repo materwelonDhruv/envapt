@@ -1,9 +1,9 @@
 ---
 title: Sources
-description: Bind an environment source with useSource, and what the Node and portable providers read.
+description: Bind an environment source with useSource, and what the Node, Worker, and manual providers read.
 ---
 
-A source is the object envapt reads variables from. On Node, Bun, and Deno one is bound automatically on import, reading `process.env` and the `.env` file cascade. On Cloudflare Workers, in the browser, and on the edge runtimes you bind a source yourself with `Envapter.useSource(...)`, then read with the same typed API.
+A source is the object envapt reads variables from. On Node, Bun, and Deno one is bound automatically on import, reading `process.env` and the `.env` file cascade. On Cloudflare Workers and in the browser you bind a source yourself with `Envapter.useSource(...)`, then read with the same typed API.
 
 <Callout type="info">
     On Node, Bun, and Deno you never call `useSource`. The Node entry binds a source that reads a clone of `process.env`
@@ -14,15 +14,10 @@ A source is the object envapt reads variables from. On Node, Bun, and Deno one i
 
 envapt ships two sources.
 
-- `NodeEnvSource` is bound automatically on the Node, Deno, or Bun entry. It reads a clone of `process.env` and the `.env` cascade.
+- `FileSource` is bound automatically on the Node entry and is Node-only. It reads a clone of `process.env` and the `.env` cascade.
 - `PortableSource` wraps any object you pass, for every runtime without a filesystem. Pass the Cloudflare `env` binding on Workers (see [Workers](/docs/workers)), or the config your bundler injects into a browser build like `import.meta.env` (see [Browser](/docs/browser)).
 
 `PortableSource` snapshots the object at construction (so later mutation does not leak in) and JSON-stringifies non-string values so the converters parse them the same way.
-
-<Callout type="warn">
-    `ManualEnvSource` and `WorkerEnvSource` are deprecated aliases of `PortableSource`, kept for backward compatibility
-    and removed in v8. Replace `new ManualEnvSource(obj)` and `new WorkerEnvSource(env)` with `new PortableSource(...)`.
-</Callout>
 
 You pass the source the object the runtime exposes, the Worker `env` binding or the bundler's injected config, not one you write out by hand. The value is the typed read on top:
 
@@ -53,19 +48,58 @@ const apiBase = Envapter.getUsing('API_BASE_URL', Converters.Url);
 const poolSize = Envapter.getNumber('DB_POOL_SIZE', 10);
 ```
 
-An optional `supportsFiles` flag marks a source as backing the file-only config APIs. Only `NodeEnvSource` sets it, which is why the `.env` cascade and `envPaths` work on Node and nowhere else.
+An optional `supportsFiles` flag marks a source as backing the file-only config APIs. Only `FileSource` sets it, which is why the `.env` cascade and `envPaths` work on Node and nowhere else.
 
 For fetching that secrets object from 1Password, Vault, Doppler, AWS Secrets Manager, and others, see [Using secret stores](/docs/secret-stores).
+
+## A function can be a source
+
+Some sources read one key at a time and give you no way to list the keys. Pass a `(key) => string | undefined` reader to `useSource` and envapt calls it per key on the first read, caching the result. No object to assemble.
+
+```ts twoslash
+import { Envapter, Converters } from 'envapt';
+// ---cut---
+declare const store: { get(key: string): string | undefined }; // a keyed config store
+Envapter.useSource((key) => store.get(key));
+
+const region = Envapter.getRequired('REGION', Converters.String);
+```
+
+## Combining sources
+
+`merge` composes several sources into one, read last-wins. A later member overrides an earlier member's key. Keep the `.env` cascade and layer fetched secrets on top in a single bind, with no write to `process.env`.
+
+```ts twoslash
+import { Envapter, FileSource, PortableSource, merge, Converters } from 'envapt';
+// ---cut---
+declare const secrets: Record<string, string>; // fetched and awaited
+Envapter.useSource(merge(new FileSource(), new PortableSource(secrets)));
+
+const dbUrl = Envapter.getUsing('DATABASE_URL', Converters.Url);
+```
+
+At most one member is filesystem-backed, and the `.env` cascade and file APIs route to it. `merge` throws [`InvalidMergedSource`](/docs/errors) with no members or more than one file-backed member.
+
+A member can also be a `(key) => string | undefined` reader, so a keyed store fills any key the `.env` files do not define.
+
+```ts twoslash
+import { Envapter, FileSource, merge, Converters } from 'envapt';
+// ---cut---
+declare const store: { get(key: string): string | undefined };
+Envapter.useSource(merge(new FileSource(), (key) => store.get(key)));
+
+const dbUrl = Envapter.getUsing('DATABASE_URL', Converters.Url);
+```
 
 ## When nothing is bound
 
 Reading a value before you call `useSource` throws `EnvaptError` with code `NoSourceBound`. It cannot happen on Node, where the source is bound on import.
 
-The file-only config APIs (`envPaths`, `baseDir`, `envFileOptions`, `configureProfiles`, `resetProfiles`) need a source that backs the filesystem. Calling one on a bare source throws `EnvaptError` with code `FileApiUnsupported`. See [Errors](/docs/errors) for both.
+The file-only config APIs need a source that backs the filesystem. On the portable build they warn and no-op by default, see [Compatibility](/docs/compatibility) for `fileApiMode`.
 
 <Callout type="warn">
-    Off Node there is no filesystem, so the `.env` cascade and the file-only config APIs are absent. Pass your values
-    through `PortableSource` instead.
+    On the portable build there is no filesystem, so pass your values through `PortableSource`. An unbound read
+    throws `NoSourceBound`.
 </Callout>
 
-For the per-runtime flows see [Workers](/docs/workers) and [Browser](/docs/browser). The build selection is in [Compatibility](/docs/compatibility).
+For the per-runtime flows see [Workers](/docs/workers) and [Browser](/docs/browser); the build selection is in [Compatibility](/docs/compatibility).

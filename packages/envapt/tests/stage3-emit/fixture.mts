@@ -44,22 +44,22 @@ class Config {
     static accessor fallbackValue: number;
 
     @EnvNum(['S3_ABSENT', 'S3_PORT'])
-    static accessor multiKey: number | null;
+    static accessor multiKey: number | undefined;
 
     @EnvStr('S3_GREETING')
-    static accessor greeting: string | null;
+    static accessor greeting: string | undefined;
 
     @Envapt('S3_PORT', { schema: numberSchema })
     static accessor schemaPort: number;
 
     @EnvNum('S3_ABSENT')
-    static accessor noFallback: number | null;
+    static accessor noFallback: number | undefined;
 }
 
 // a subclass reads the inherited instance accessor
 class Base {
     @EnvStr('S3_REGION')
-    accessor region!: string | null;
+    accessor region!: string | undefined;
 }
 class Sub extends Base {}
 const inheritedRegion = new Sub().region;

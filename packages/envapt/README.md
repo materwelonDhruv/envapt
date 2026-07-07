@@ -42,7 +42,7 @@ const port = Envapter.getNumber('PORT', 3000); // number, not string | undefined
 - **Zero runtime dependencies.** The reader, converters, and built-in `.env` parser are self-contained,
   so nothing is added to your dependency tree.
 - **Runs on Node, Bun, Deno, Cloudflare Workers, and the browser.** Node `>=20`, Bun `>=1.3`, Deno
-  `>=2.5` (ESM and CJS). The Workers and browser builds resolve through the package `exports`
+  `>=2.5` (ESM and CJS). The portable build resolves through the package `exports`
   conditions.
 - **`.env` loading built in on Node.** The default Node source adds a per-environment file cascade,
   `${VAR}` templates, and strict / required checks. Off Node there is no filesystem, so you bind

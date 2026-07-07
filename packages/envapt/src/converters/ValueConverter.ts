@@ -1,5 +1,7 @@
 import { BuiltInConverters } from './BuiltInConverters';
+import { state } from '../core/state';
 import { Validator } from '../engine/Validators';
+import { debugVerbose } from '../infra/Debug';
 import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
 
 import type { ArrayOf } from './Converters';
@@ -24,7 +26,7 @@ export class ValueConverter {
         fallback: TFallback | undefined,
         converter: EnvaptConverter<TFallback> | undefined,
         hasFallback: boolean
-    ): TFallback | null | undefined {
+    ): TFallback | undefined {
         const resolvedConverter = this.resolveConverter(converter, fallback);
         const processedFallback = this.processFallbackForConverter(resolvedConverter, fallback);
 
@@ -72,20 +74,18 @@ export class ValueConverter {
         resolvedConverter: BuiltInConverter,
         hasFallback: boolean,
         wasOriginallyConstructor: boolean
-    ): TFallback | null | undefined {
+    ): TFallback | undefined {
         Validator.builtInConverter(resolvedConverter);
 
-        if (hasFallback && fallback !== undefined && !wasOriginallyConstructor) {
+        if (hasFallback && !wasOriginallyConstructor) {
             Validator.validateBuiltInConverterFallback(resolvedConverter, fallback);
         }
 
         const parsed = this.envService.get(key, undefined);
 
         if (parsed === undefined) {
-            if (!hasFallback) return null;
-            // For converters with asymmetric fallback / return types — currently only `time`,
-            // whose fallback may be a string while the return type is `number` — route the
-            // fallback through the converter so it gets coerced to the return type.
+            if (!hasFallback) return undefined;
+            // coerce a string fallback to the number return type through the time converter
             if (resolvedConverter === 'time' && typeof fallback === 'string') {
                 const timeFn = BuiltInConverters.getConverter(resolvedConverter);
                 return timeFn('', fallback) as TFallback;
@@ -94,11 +94,18 @@ export class ValueConverter {
         }
 
         const converterFn = BuiltInConverters.getConverter(resolvedConverter);
-        const result = converterFn(parsed, fallback);
+        const converted = converterFn(parsed, undefined);
 
-        if (result === undefined && !hasFallback) return null;
+        if (converted === undefined) {
+            // key and type only, no value, since env values can be secrets and verbose logs reach stderr
+            debugVerbose(
+                `could not convert ${formatKeyForError(key)} as ${resolvedConverter}${hasFallback ? ', using the fallback' : ''}`
+            );
+            // re-run with the real fallback so time's string-form fallback still coerces to a number
+            return hasFallback ? (converterFn(parsed, fallback) as TFallback) : undefined;
+        }
 
-        return result as TFallback;
+        return converted as TFallback;
     }
 
     private processArrayConverter<TFallback>(
@@ -106,10 +113,10 @@ export class ValueConverter {
         fallback: TFallback | undefined,
         resolvedConverter: ArrayOf,
         hasFallback: boolean
-    ): TFallback | null | undefined {
+    ): TFallback | undefined {
         Validator.arrayConverter(resolvedConverter);
 
-        if (hasFallback && fallback !== undefined && !Array.isArray(fallback)) {
+        if (hasFallback && !Array.isArray(fallback)) {
             throw new EnvaptError(
                 EnvaptErrorCodes.InvalidFallback,
                 `ArrayOf<...> requires that the fallback be an array, got ${typeof fallback}`
@@ -124,10 +131,9 @@ export class ValueConverter {
         const parsed = this.envService.get(key, undefined);
 
         if (parsed === undefined) {
-            if (!hasFallback) return null;
-            // When the array element is `time` and the fallback is a list of time-strings,
-            // coerce each entry through the time converter so the returned array is
-            // `number[]` matching the declared return type.
+            if (!hasFallback) return undefined;
+            // coerce each time-string entry through the time converter so the array is number[]
+            // matching the declared return type
             if (
                 resolvedConverter.of === 'time' &&
                 Array.isArray(fallback) &&
@@ -139,7 +145,7 @@ export class ValueConverter {
             return fallback;
         }
 
-        const result = BuiltInConverters.processArrayConverter(parsed, resolvedConverter, this.envService.isStrict());
+        const result = BuiltInConverters.processArrayConverter(parsed, resolvedConverter, state.strict);
         return result as TFallback;
     }
 
@@ -147,8 +153,8 @@ export class ValueConverter {
         key: EnvKeyInput,
         fallback: TFallback | undefined,
         resolvedConverter: EnvaptConverter<TFallback>,
-        _hasFallback: boolean // hasFallback is not needed because customConverter is called even if the raw value is undefined
-    ): TFallback | null | undefined {
+        _hasFallback: boolean // unused. the custom converter runs even when raw is undefined
+    ): TFallback | undefined {
         Validator.customConvertor(resolvedConverter);
 
         const raw = this.envService.get(key, undefined);

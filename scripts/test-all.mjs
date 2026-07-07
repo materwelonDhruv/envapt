@@ -11,7 +11,7 @@ const captureBytes = 64 * 1024 * 1024;
 
 // build first because every slice below reads the built dist
 process.stdout.write('── build ──\n');
-execFileSync('pnpm', ['--filter', 'envapt', 'build'], { stdio: 'inherit' });
+execFileSync('pnpm', ['exec', 'turbo', 'run', 'build', '--filter=envapt'], { stdio: 'inherit' });
 
 const playwrightCache = [
     process.env.PLAYWRIGHT_BROWSERS_PATH,
@@ -24,10 +24,11 @@ const hasChromium = playwrightCache.some(existsSync);
 const slices = [
     ['unit', ['--filter', 'envapt', 'test']],
     ['integration', ['--filter', 'envapt', 'test:integration']],
-    ['workerd', ['--filter', 'envapt', 'test:workers']],
+    ['portable', ['--filter', 'envapt', 'test:workers']],
     ['consumer-build', ['--filter', 'envapt', 'test:consumer-build']],
     ['tree-shaking', ['--filter', 'envapt', 'test:tree-shaking']],
     ['exports-dedup', ['--filter', 'envapt', 'test:exports-dedup']],
+    ['resolution-matrix', ['--filter', 'envapt', 'test:resolution-matrix']],
     ['cjs-validity', ['--filter', 'envapt', 'test:cjs-validity']],
     ['tsc-emit', ['--filter', 'envapt', 'test:tsc-emit']],
     ['stage3-emit', ['--filter', 'envapt', 'test:stage3-emit']]
