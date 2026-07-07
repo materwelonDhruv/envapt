@@ -43,7 +43,7 @@ import type {
  */
 export function Envapt(
     key: EnvKeyInput,
-    options?: { fallback?: undefined; converter?: undefined }
+    options?: { fallback: undefined; converter?: undefined }
 ): EnvaptAccessorDecorator<string | undefined>;
 export function Envapt<TFallback>(
     key: EnvKeyInput,

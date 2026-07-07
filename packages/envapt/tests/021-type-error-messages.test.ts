@@ -116,6 +116,16 @@ describe('TS error message verification (compiler API)', () => {
         });
     });
 
+    describe('an empty @Envapt options object produces a no-overload compile error', () => {
+        it('rejects the legacy @Envapt(key, {}) form', { timeout: FIXTURE_TIMEOUT_MS }, () => {
+            const diagnostics = compileFixture('empty-options.ts');
+            expect(
+                diagnostics.some((d) => d.code === 2769),
+                joinedMessages(diagnostics)
+            ).to.be.true;
+        });
+    });
+
     describe('legacy decorator constrains the declared field type to the converter output', () => {
         it('rejects a field whose type cannot hold the converter output', { timeout: FIXTURE_TIMEOUT_MS }, () => {
             const diagnostics = compileFixture('field-type-mismatch.ts');
@@ -124,7 +134,7 @@ describe('TS error message verification (compiler API)', () => {
         });
 
         it(
-            'rejects a non-null field for a no-fallback decorator (the value can be null)',
+            'rejects a field that cannot hold undefined for a no-fallback decorator',
             { timeout: FIXTURE_TIMEOUT_MS },
             () => {
                 const diagnostics = compileFixture('field-type-no-fallback.ts');
@@ -160,7 +170,7 @@ describe('TS error message verification (compiler API)', () => {
         });
 
         it(
-            'rejects a non-null accessor for a no-fallback decorator (the value can be null)',
+            'rejects an accessor that cannot hold undefined for a no-fallback decorator',
             { timeout: FIXTURE_TIMEOUT_MS },
             () => {
                 const diagnostics = compileFixture('modern/accessor-field-type-no-fallback.ts', MODERN_CONFIG);
@@ -187,5 +197,13 @@ describe('TS error message verification (compiler API)', () => {
                 expect(diagnostics, joinedMessages(diagnostics)).to.have.lengthOf(0);
             }
         );
+
+        it('rejects an empty @Envapt options object', { timeout: FIXTURE_TIMEOUT_MS }, () => {
+            const diagnostics = compileFixture('modern/empty-options.ts', MODERN_CONFIG);
+            expect(
+                diagnostics.some((d) => d.code === 2769),
+                joinedMessages(diagnostics)
+            ).to.be.true;
+        });
     });
 });

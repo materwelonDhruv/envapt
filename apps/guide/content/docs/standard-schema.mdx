@@ -68,9 +68,8 @@ const port = Envapter.parse('PORT', positiveInt, 3000);
 </Callout>
 
 <Callout type="warn">
-    Passing a third argument at all counts as a fallback, even when that argument is `undefined`. So
-    `Envapter.parse('PORT', schema, undefined)` returns `undefined` on a missing value instead of throwing. Omit the
-    argument entirely when you want the missing-value throw.
+    An explicit `undefined` third argument counts as no fallback. `Envapter.parse('PORT', schema, undefined)` throws
+    `MissingEnvValue` on a missing value, the same as omitting the argument.
 </Callout>
 
 ## What throws

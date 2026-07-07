@@ -24,7 +24,7 @@ const runtime = typeof Deno !== 'undefined' ? 'deno' : typeof Bun !== 'undefined
 assert.equal(Config.port, 3000, `${runtime}: number fallback via static accessor`);
 assert.equal(Config.region, 'us-east-1', `${runtime}: string fallback via static accessor`);
 assert.deepEqual(Config.tags, ['a', 'b'], `${runtime}: array fallback via static accessor`);
-assert.equal(Config.missing, null, `${runtime}: no-fallback resolves to null`);
+assert.equal(Config.missing, undefined, `${runtime}: no-fallback resolves to undefined`);
 
 let readOnlyThrew = false;
 try {

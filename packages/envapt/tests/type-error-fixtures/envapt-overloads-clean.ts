@@ -27,4 +27,7 @@ export class OverloadClean {
 
     @Envapt('H', { converter: Converters.Number, fallback: undefined })
     static readonly h: number | undefined;
+
+    @Envapt('I', { fallback: undefined })
+    static readonly i: string | undefined;
 }
