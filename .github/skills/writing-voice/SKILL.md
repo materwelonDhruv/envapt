@@ -83,6 +83,9 @@ This list is illustrative, not exhaustive. When a word isn't on it, apply the ru
 | **blast radius** | war metaphor for scope of impact; dramatizes it | name what's affected: "every caller of `parse()`", "all rows in `users`" |
 | **lives in / lives on** | folksy for where something is defined; anthropomorphizes a location | "is defined in", "is set on", name the file or element |
 | **owns** | anthropomorphizes; a module isn't an agent with property | name the relationship: "defines", "sets", "is the only writer of" |
+| **drops** ("X drops Y") | anthropomorphizes, a package or type is not an actor that discards | "no longer exports / defines Y", "Y is removed" |
+| **gains** ("X gains Y") | anthropomorphizes, a package or type is not an actor that acquires | "adds Y", "now has Y", "accepts Y" |
+| **exercise / exercised / exercisable** ("the test exercises X") | vague test-jargon for running or calling code | "calls X", "runs X", "tests X" |
 
 <!--prettier-ignore-end-->
 
