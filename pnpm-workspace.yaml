@@ -18,7 +18,7 @@ catalogs:
         '@types/node': 25.9.3
         prettier: 3.8.4
         eslint: 9.39.2
-        typescript: 6.0.3
+        typescript: 7.0.2
         zod: 4.4.3
         vitest: 4.1.10
 
