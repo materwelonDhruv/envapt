@@ -29,6 +29,9 @@ Envapter.getBoolean('DEBUG', false); // boolean; true set: 1/yes/true/on, false 
 Envapter.getBigInt('MAX', 0n); // bigint
 Envapter.get(['CANARY_URL', 'APP_URL']); // ordered fallback
 
+// Presence check, true exactly when a required read of the same key finds a value
+Envapter.has('SENTRY_DSN'); // boolean
+
 // Built-in or array converter:
 Envapter.getUsing('ORIGINS', Converters.array({ of: Converters.String }), []); // string[]
 // Custom function converter (raw is the string, or undefined when unset):

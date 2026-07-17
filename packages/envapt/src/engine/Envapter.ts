@@ -3,6 +3,8 @@ import { resolveRequired } from '../core/AdvancedMethods';
 import { resolveKeyInput, templateResolver } from '../core/engine';
 import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
 
+import type { EnvKeyInput } from '../types';
+
 export { Environment } from '../core';
 
 /**
@@ -97,5 +99,38 @@ export class Envapter extends AdvancedMethods {
      */
     require(...keys: [string, ...string[]]): void {
         Envapter.require(...keys);
+    }
+
+    /**
+     * Check whether `key` has a value, with the same missing semantics as `getRequired`.
+     * Under strict mode an unresolvable template in an ordered key list ends the scan early
+     * and counts as absent. Returns `true` exactly when a required read of the same key
+     * finds a value.
+     *
+     * @example
+     * ```ts
+     * if (!Envapter.has('DATABASE_URL')) throw new MyStartupError('DATABASE_URL');
+     * ```
+     * @see {@link https://envapt.materwelon.dev/docs/envapter#fail-fast-on-missing-values}
+     */
+    static has(key: EnvKeyInput): boolean {
+        const candidates: readonly string[] = typeof key === 'string' ? [key] : key;
+        if (candidates.length === 0) {
+            throw new EnvaptError(EnvaptErrorCodes.InvalidKeyInput, 'At least one environment key must be provided.');
+        }
+        try {
+            return candidates.some((k) => resolveRequired(resolveKeyInput(k), templateResolver).value !== undefined);
+        } catch (error) {
+            // under strict an unresolvable template throws MissingEnvValue, and that read counts as absent
+            if (error instanceof EnvaptError && error.code === EnvaptErrorCodes.MissingEnvValue) return false;
+            throw error;
+        }
+    }
+
+    /**
+     * @see {@link Envapter.has}
+     */
+    has(key: EnvKeyInput): boolean {
+        return Envapter.has(key);
     }
 }
