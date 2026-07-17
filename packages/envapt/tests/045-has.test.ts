@@ -66,6 +66,15 @@ describe('has (v8.1)', () => {
         expect(Envapter.has(['SET_VALUE', 'TEMPLATE_MISSING'])).to.equal(true);
     });
 
+    it('treats a reference to an empty variable as a preserved literal, like getRequired', () => {
+        expect(Envapter.has('TEMPLATE_EMPTY')).to.equal(true);
+        expect(Envapter.getRequired('TEMPLATE_EMPTY', String)).to.equal('${EMPTY_VALUE}');
+
+        Envapter.strict = true;
+        expect(Envapter.has('TEMPLATE_EMPTY')).to.equal(false);
+        expect(() => Envapter.getRequired('TEMPLATE_EMPTY', String)).to.throw(EnvaptError);
+    });
+
     it('falls through an ordered key list like getRequired', () => {
         expect(Envapter.has(['NEVER_SET_KEY', 'SET_VALUE'])).to.equal(true);
         expect(Envapter.has(['EMPTY_VALUE', 'SET_VALUE'])).to.equal(true);

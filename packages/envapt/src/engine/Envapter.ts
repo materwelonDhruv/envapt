@@ -114,12 +114,8 @@ export class Envapter extends AdvancedMethods {
      * @see {@link https://envapt.materwelon.dev/docs/envapter#fail-fast-on-missing-values}
      */
     static has(key: EnvKeyInput): boolean {
-        const candidates: readonly string[] = typeof key === 'string' ? [key] : key;
-        if (candidates.length === 0) {
-            throw new EnvaptError(EnvaptErrorCodes.InvalidKeyInput, 'At least one environment key must be provided.');
-        }
         try {
-            return candidates.some((k) => resolveRequired(resolveKeyInput(k), templateResolver).value !== undefined);
+            return resolveRequired(resolveKeyInput(key), templateResolver).value !== undefined;
         } catch (error) {
             // under strict an unresolvable template throws MissingEnvValue, and that read counts as absent
             if (error instanceof EnvaptError && error.code === EnvaptErrorCodes.MissingEnvValue) return false;
