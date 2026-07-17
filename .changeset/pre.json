@@ -5,5 +5,7 @@
     "@envapt/guide": "1.0.0",
     "envapt": "8.0.0"
   },
-  "changesets": []
+  "changesets": [
+    "has-presence-check"
+  ]
 }

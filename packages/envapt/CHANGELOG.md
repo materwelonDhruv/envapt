@@ -1,5 +1,11 @@
 # envapt
 
+## 8.1.0-next.0
+
+### Minor Changes
+
+- 8d99963: Add `Envapter.has(key)`, a boolean presence check that mirrors `getRequired`'s missing semantics, true exactly when a required read of the same key finds a value. Templates resolve first, empty counts as missing, and whitespace-only counts as missing only under strict mode.
+
 ## 8.0.0
 
 ### Major Changes
