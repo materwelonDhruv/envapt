@@ -1,6 +1,6 @@
 # envapt
 
-## 8.1.0-next.0
+## 8.1.0
 
 ### Minor Changes
 
