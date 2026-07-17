@@ -108,7 +108,7 @@ describe('Sugar decorators', () => {
     });
 
     describe('reject a mismatched fallback at compile time', () => {
-        // These fields are never read; the assertion is that each line fails to type-check.
+        // the assertion is that each @ts-expect-error line fails to type-check, the fields are never read
         class SugarInvalid {
             // @ts-expect-error fallback must be a number
             @EnvNum('X', 'nope')

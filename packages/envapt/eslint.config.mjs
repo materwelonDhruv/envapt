@@ -18,8 +18,8 @@ export default createConfig({
             // intentionally-broken fixtures the compiler-API test reads, and tsc-emit build output
             ignores: [
                 'tests/type-error-fixtures/**',
-                'tests/tsc-emit/out/**',
-                'tests/stage3-emit/out/**',
+                'tests/tsc-emit/out*/**',
+                'tests/stage3-emit/out*/**',
                 'tests/integration/modern-decorator-check.ts'
             ]
         },

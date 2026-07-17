@@ -16,7 +16,8 @@ class Config {
     @EnvStr('TSC_EMIT_INSTANCE', 'fallback')
     readonly instanceNoDeclare!: string;
 
-    // tsc emits `declare static` against the prototype, so a static read never hits the getter.
+    // tsc 6 emits `declare static` against the prototype, so a static read never hits the getter.
+    // tsgo emits it against the constructor and the read resolves.
     @EnvNum('TSC_EMIT_DECLARE_STATIC', 2)
     declare static readonly declareStaticValue: number;
 }

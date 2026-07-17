@@ -9,11 +9,9 @@ describe('template variable resolution', () => {
     beforeEach(() => (Envapter.envPaths = resolve(`${import.meta.dirname}/.env.builtin-test`)));
 
     class TemplateTest {
-        // String converter with templates
         @Envapt('TEST_STRING_TEMPLATE', { converter: Converters.String, fallback: 'default' })
         static readonly stringTemplate: string;
 
-        // Number converters with templates
         @Envapt('TEST_NUMBER_TEMPLATE', { converter: Converters.Number, fallback: 0 })
         static readonly numberTemplate: number;
 
@@ -23,21 +21,18 @@ describe('template variable resolution', () => {
         @Envapt('TEST_FLOAT_TEMPLATE', { converter: Converters.Float, fallback: 0.0 })
         static readonly floatTemplate: number;
 
-        // Boolean converters with templates
         @Envapt('TEST_BOOLEAN_TEMPLATE', { converter: Converters.Boolean, fallback: false })
         static readonly booleanTemplate: boolean;
 
         @Envapt('TEST_BOOLEAN_FALSE_TEMPLATE', { converter: Converters.Boolean, fallback: true })
         static readonly booleanFalseTemplate: boolean;
 
-        // BigInt and Symbol converters with templates
         @Envapt('TEST_BIGINT_TEMPLATE', { converter: Converters.Bigint, fallback: 0n })
         static readonly bigintTemplate: bigint;
 
         @Envapt('TEST_SYMBOL_TEMPLATE', { converter: Converters.Symbol, fallback: Symbol('default') })
         static readonly symbolTemplate: symbol;
 
-        // Array converters with templates
         @Envapt('TEST_ARRAY_COMMA_TEMPLATE', { converter: Converters.array(), fallback: [] })
         static readonly arrayCommaTemplate: string[];
 
@@ -47,15 +42,12 @@ describe('template variable resolution', () => {
         @Envapt('TEST_ARRAY_COMMA_SPACE_TEMPLATE', { converter: Converters.array({ delimiter: ', ' }), fallback: [] })
         static readonly arrayCommaSpaceTemplate: string[];
 
-        // JSON converter with templates
         @Envapt('TEST_JSON_OBJECT_TEMPLATE', { converter: Converters.Json, fallback: {} })
         static readonly jsonObjectTemplate: JsonValue;
 
-        // URL converter with templates
         @Envapt('TEST_URL_TEMPLATE', { converter: Converters.Url, fallback: new URL('http://fallback.com') })
         static readonly urlTemplate: URL;
 
-        // RegExp converter with templates
         @Envapt('TEST_REGEXP_TEMPLATE', { converter: Converters.Regexp, fallback: /fallback/ })
         static readonly regexpTemplate: RegExp;
 
@@ -65,11 +57,9 @@ describe('template variable resolution', () => {
         @Envapt('TEST_REGEXP_PHONE_TEMPLATE', { converter: Converters.Regexp, fallback: /fallback/ })
         static readonly regexpPhoneTemplate: RegExp;
 
-        // Date converter with templates
         @Envapt('TEST_DATE_TEMPLATE', { converter: Converters.Date, fallback: new Date('2020-01-01') })
         static readonly dateTemplate: Date;
 
-        // Time converter with templates
         @Envapt('TEST_TIME_TEMPLATE', { converter: Converters.Time, fallback: 0 })
         static readonly timeTemplate: number;
     }
@@ -135,10 +125,9 @@ describe('template variable resolution', () => {
     it('should resolve templates in RegExp converter', () => {
         expect(TemplateTest.regexpTemplate).to.be.instanceOf(RegExp);
 
-        // The template should resolve from \d{${TEMPLATE_NUM_BASE}} to \d{42}
+        // the template resolves \d{${TEMPLATE_NUM_BASE}} to \d{42}
         expect(TemplateTest.regexpTemplate.source).to.equal('\\d{42}');
 
-        // The pattern \d{42} should match any 42 consecutive digits anywhere in the string
         expect(TemplateTest.regexpTemplate.test('123456789012345678901234567890123456789012')).to.be.true;
         expect(TemplateTest.regexpTemplate.test('abc123456789012345678901234567890123456789012def')).to.be.true; // 42 digits in middle
         expect(TemplateTest.regexpTemplate.test('12345678901234567890123456789012345678901')).to.be.false; // only 41 digits
@@ -149,18 +138,15 @@ describe('template variable resolution', () => {
         const expectedEmailRegexPattern = String.raw`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.example\.com$`;
         expect(TemplateTest.regexpEmailTemplate).to.be.instanceOf(RegExp);
 
-        // Should resolve template variables correctly
         expect(TemplateTest.regexpEmailTemplate.source).to.equal(expectedEmailRegexPattern);
         expect(TemplateTest.regexpEmailTemplate.flags).to.equal('i');
 
-        // Test basic email validation with template-resolved domain (example.com)
         expect(TemplateTest.regexpEmailTemplate.test('user@test.example.com')).to.be.true;
 
         expect(TemplateTest.regexpEmailTemplate.test('user@api.example.com')).to.be.true;
 
-        expect(TemplateTest.regexpEmailTemplate.test('USER@TEST.EXAMPLE.COM')).to.be.true; // case insensitive
+        expect(TemplateTest.regexpEmailTemplate.test('USER@TEST.EXAMPLE.COM')).to.be.true;
 
-        // Test that it rejects different domains
         expect(TemplateTest.regexpEmailTemplate.test('user@otherdomain.com')).to.be.false;
         expect(TemplateTest.regexpEmailTemplate.test('invalid.email')).to.be.false;
     });
@@ -170,18 +156,15 @@ describe('template variable resolution', () => {
 
         expect(TemplateTest.regexpPhoneTemplate).to.be.instanceOf(RegExp);
 
-        // Should resolve template variables correctly
         expect(TemplateTest.regexpPhoneTemplate.source).to.equal(expectedPhoneRegexPattern);
         expect(TemplateTest.regexpPhoneTemplate.flags).to.equal('');
 
-        // Test basic phone number validation with template-resolved format
         expect(TemplateTest.regexpPhoneTemplate.test('555-123-4567')).to.be.true;
         expect(TemplateTest.regexpPhoneTemplate.test('123-456-7890')).to.be.true;
         expect(TemplateTest.regexpPhoneTemplate.test('(555) 123-4567')).to.be.true;
         expect(TemplateTest.regexpPhoneTemplate.test('5551234567')).to.be.true;
 
-        // Test invalid phone numbers
-        expect(TemplateTest.regexpPhoneTemplate.test('not-a-phone')).to.be.false; // not a phone number
+        expect(TemplateTest.regexpPhoneTemplate.test('not-a-phone')).to.be.false;
     });
 
     it('should resolve templates in Date converter', () => {

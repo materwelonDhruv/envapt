@@ -10,8 +10,8 @@ export default async function fallbacks() {
     assert.equal(Envapter.getNumber('MISSING_KEY', 7), 7);
     assert.equal(Envapter.getBoolean('MISSING_KEY', false), false);
 
-    // Fallback-type validation only fires through `getUsing` / decorators, not on
-    // typed primitive getters like `getNumber`.
+    // fallback-type validation fires only through `getUsing` and decorators. Typed primitive
+    // getters like `getNumber` skip it, so the throw below comes from `getUsing`.
     assert.throws(
         () => Envapter.getUsing('MISSING_KEY', Converters.Number, 'not-a-number'),
         (err) => err instanceof EnvaptError && err.code === EnvaptErrorCodes.FallbackConverterTypeMismatch

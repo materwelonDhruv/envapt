@@ -5,12 +5,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { Envapter, Environment } from '../src';
 
-/**
- * The cascade resolves paths relative to `process.cwd()`. These tests chdir into a
- * fixture dir before each case and restore afterward. They also reset `_environment`
- * and `_envPathsExplicitlySet` through the public API surface so the cascade is the
- * active path-resolution mode.
- */
+// the cascade resolves paths relative to process.cwd(), so each case chdirs into a fixture dir
+// and resets through the public API to keep the cascade as the active path mode
 describe('profiles: dotenv-flow auto-cascade', () => {
     const originalCwd = process.cwd();
     const originalEnv = {
@@ -87,8 +83,7 @@ describe('profiles: dotenv-flow auto-cascade', () => {
     });
 
     it('silently skips missing cascade files', () => {
-        // The `default` fixture only has `.env`, no `.env.local`, `.env.development`, etc.
-        // Cascade should NOT throw on missing files; it just loads what exists.
+        // the `default` fixture has only `.env`, so this proves the cascade loads what exists and skips the rest
         process.chdir(resolve(import.meta.dirname, 'cascade-fixtures', 'default'));
         Envapter.environment = Environment.Development;
         Envapter.resetProfiles();
@@ -98,8 +93,6 @@ describe('profiles: dotenv-flow auto-cascade', () => {
     });
 
     it('reads process.env.NODE_ENV when Envapter.environment was never explicitly set', () => {
-        // Clear the explicit environment by resetting, then ensure cascade picks the env
-        // file based purely on process.env.NODE_ENV.
         process.chdir(resolve(import.meta.dirname, 'cascade-fixtures', 'all-layers'));
         process.env.NODE_ENV = 'production';
         Envapter.resetProfiles(); // also clears _environment via super.refreshCache override

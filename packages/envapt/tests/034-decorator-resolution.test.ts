@@ -40,7 +40,7 @@ describe('decorator value resolution', () => {
                 required: false,
                 schema: undefined
             });
-            // a transform that drops the accessor name (vitest's oxc transform does this)
+            // a transform that leaves the accessor name unset (vitest's oxc transform does this)
             const context = {
                 name: undefined,
                 kind: 'accessor',

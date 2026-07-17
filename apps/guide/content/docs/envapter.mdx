@@ -120,6 +120,16 @@ import { Envapter } from 'envapt';
 Envapter.require('DATABASE_URL', 'API_KEY', 'SENTRY_DSN');
 ```
 
+`has` returns `boolean` with the same missing semantics as `getRequired`. An ordered key list falls through to the first present key. It returns `true` exactly when a required read of the same key would find a value.
+
+```ts twoslash
+import { Envapter } from 'envapt';
+// ---cut---
+if (!Envapter.has('SENTRY_DSN')) {
+    throw new Error('Set SENTRY_DSN in your .env before deploying.');
+}
+```
+
 For a typed fail-fast that returns the parsed value, use `getRequired`:
 
 ```ts twoslash

@@ -18,7 +18,7 @@ describe('the read cache builds once per bound source', () => {
             }
         };
         Envapter.useSource(source);
-        // useSource builds the cache once; count only the reads after that point.
+        // useSource builds the cache once, so zero the counter and measure only later reads
         reads = 0;
 
         Envapter.get('A');

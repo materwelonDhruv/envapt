@@ -23,13 +23,11 @@ describe('Envapter', () => {
         });
 
         it('should allow setting custom .env path', () => {
-            // Use existing test file instead of non-existent custom/.env
             const testPath = resolve(import.meta.dirname, '.env.envapter-test');
             Envapter.envPaths = testPath;
             expect(Envapter.envPaths).to.deep.equal([testPath]);
         });
 
-        // reset to test path
         it('should set to list of .env files', () => {
             Envapter.envPaths = [
                 resolve(`${import.meta.dirname}/.env.envapter-test`),
@@ -65,7 +63,7 @@ describe('Envapter', () => {
 
         const instance = new TestEnvapter();
 
-        // should work now since we set the extra .env path above
+        // relies on the earlier test that added .env.extra to envPaths
         it('should load variable from .env.extra file', () => {
             expect(TestEnvapter.varInExtraFile).to.be.true;
         });
@@ -145,7 +143,6 @@ describe('Envapter', () => {
             });
 
             afterEach(() => {
-                // Reset to original config after each test
                 Envapter.envFileOptions = originalConfig;
             });
         });
@@ -154,8 +151,7 @@ describe('Envapter', () => {
             const testPath = resolve(`${import.meta.dirname}/.env.envapt-test`);
 
             it('should get default envPaths', () => {
-                // Default should be ['.env'] but we can't test it because .env doesn't exist
-                // So we just test that envPaths getter works
+                // the ['.env'] default can't be asserted here, no .env exists, so just check the getter returns paths
                 const currentPaths = Envapter.envPaths;
                 expect(currentPaths).to.be.an('array');
                 expect(currentPaths.length).to.be.greaterThan(0);
@@ -167,7 +163,7 @@ describe('Envapter', () => {
             });
 
             it('should set multiple env file paths', () => {
-                const paths = [testPath, testPath]; // Using same file twice for testing
+                const paths = [testPath, testPath];
                 Envapter.envPaths = paths;
                 expect(Envapter.envPaths).to.deep.equal(paths);
             });

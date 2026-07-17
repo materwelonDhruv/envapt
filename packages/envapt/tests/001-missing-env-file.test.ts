@@ -3,8 +3,6 @@ import { describe, expect, it } from 'vitest';
 import { Envapter } from '../src';
 import { Envapt } from '../src/legacy';
 
-// Testing what happens when env paths aren't explicitly set AND no .env file exists
-// Basically, it should work regardless.
 describe('Missing .env file handling', () => {
     describe('when no .env file exists at default location', () => {
         class TestEnvWithoutFile {

@@ -65,7 +65,6 @@ describe('Source portability (v5.2)', () => {
         });
 
         it('skips values that stringify to undefined', () => {
-            // undefined value exercises the skip branch
             const source = new PortableSource({ KEEP: 'yes', DROP: undefined });
             expect(source.readVars()).to.deep.equal({ KEEP: 'yes' });
         });

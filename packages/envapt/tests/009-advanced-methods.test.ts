@@ -129,7 +129,6 @@ describe('Advanced Converter Methods', () => {
                 return map;
             };
 
-            // Use a test that has key=value format
             const result = Envapter.getWith('TEST_STRING', mapConverter, new Map([['default', 'value']]));
             expect(result).to.be.instanceOf(Map);
         });
@@ -202,7 +201,6 @@ describe('Advanced Converter Methods', () => {
             }).to.not.throw();
 
             expect(() => {
-                // Bypass TS to simulate a hand-rolled ArrayOf with an invalid `of`.
                 // intentionally malformed for runtime validation -- justified
                 Envapter.getUsing('TEST_STRING', {
                     __envaptKind: 'array',
@@ -227,7 +225,6 @@ describe('Advanced Converter Methods', () => {
             const bool = Envapter.getUsing('TEST_BOOLEAN', Converters.Boolean);
             const arr = Envapter.getUsing('TEST_ARRAY_COMMA', Converters.array());
 
-            // With fallbacks should not be undefined
             const strWithFallback = Envapter.getUsing('TEST_STRING', Converters.String, 'default');
             const numWithFallback = Envapter.getUsing('TEST_NUMBER', Converters.Number, 0);
 
@@ -240,7 +237,6 @@ describe('Advanced Converter Methods', () => {
         });
 
         it('should work with template resolution', () => {
-            // Add a test value that uses template variables if available
             const result = Envapter.getUsing('TEST_STRING', Converters.String);
             expect(result).to.equal('hello world');
         });

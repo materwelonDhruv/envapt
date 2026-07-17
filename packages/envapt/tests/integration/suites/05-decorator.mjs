@@ -4,7 +4,7 @@ import { FIXTURE_PATH } from './_helpers.mjs';
 import { Envapter } from '../../../dist/node/index.mjs';
 import { Envapt } from '../../../dist/node/legacy.mjs';
 
-// `.mjs` has no `@Envapt` syntax. Calling the decorator as a function exercises
+// `.mjs` has no `@Envapt` syntax. Calling the decorator as a function runs
 // the same install path tsdown-emitted user code hits at runtime.
 export default async function decorator() {
     Envapter.envPaths = FIXTURE_PATH;

@@ -53,7 +53,7 @@ describe('ArrayConverter typesafety (v5) — runtime', () => {
         }
 
         it('filters empty/whitespace items before conversion', () => {
-            // env value is `1, , 2, ,,3` per the fixture; permissive default trims empties first
+            // fixture LIST_WITH_GAPS is `1, , 2, ,,3`, and the permissive default trims empties first
             expect(F2Tests.list).to.deep.equal([1, 2, 3]);
         });
     });

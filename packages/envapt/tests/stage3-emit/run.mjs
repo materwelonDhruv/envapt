@@ -1,20 +1,20 @@
 /* eslint-disable no-magic-numbers */
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
+import { resolveTsc } from '../_guard.mjs';
+
 // Modern (TC39 Stage 3) accessor decorators need a real compiler emit. node runs a tsc compile with
-// experimentalDecorators off. bun and deno run the source directly so each exercises its own Stage 3
+// experimentalDecorators off. bun and deno run the source directly through their own Stage 3
 // transform, so a green run proves Bun's old "ignores decorators" issue does not apply to the modern
 // form. vitest's oxc transform leaves the accessor `context.name` unset, so it cannot run this.
 const here = dirname(fileURLToPath(import.meta.url));
-const require = createRequire(import.meta.url);
-const tsc = require.resolve('typescript/bin/tsc');
+const { tsc, outDir } = resolveTsc(here);
 
-execFileSync('node', [tsc, '-p', join(here, 'tsconfig.json')], { stdio: 'inherit' });
+execFileSync('node', [tsc, '-p', join(here, 'tsconfig.json'), '--outDir', outDir], { stdio: 'inherit' });
 
 const env = {
     ...process.env,
@@ -29,7 +29,7 @@ const env = {
     // S3_MISSING and S3_ABSENT_REQUIRED are intentionally absent
 };
 
-const out = join(here, 'out/fixture.mjs');
+const out = join(outDir, 'fixture.mjs');
 const source = join(here, 'fixture.mts');
 
 /** @param {Record<string, unknown>} reads @param {string} runtime */

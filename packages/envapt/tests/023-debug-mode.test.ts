@@ -10,12 +10,12 @@ import { EnvaptError } from '../src/infra/Error';
 
 import type { DebugLevel, StandardSchemaV1 } from '../src';
 
-// Minimal inline Standard Schema (avoids a zod/valibot dep just to exercise the parse warn path).
+// inline Standard Schema, so the parse-warn test needs no zod/valibot dep
 const passThroughSchema: StandardSchemaV1<string, string> = {
     '~standard': { version: 1, vendor: 'test', validate: (v) => ({ value: v as string }) }
 };
 
-// loadDotenv takes an injected reader; reuse the library's Node reader rather than re-implementing fs.
+// loadDotenv takes an injected reader, so reuse the library's Node reader
 const reader = new FileSource();
 const nodeReadFile = reader.readFile.bind(reader);
 
@@ -389,9 +389,8 @@ describe('Debug mode (v5)', () => {
     });
 
     describe('Failed file reads (warn)', () => {
-        // The envPaths setter validates that the file exists, so we hit the loader's
-        // catch-and-warn path directly. This is the realistic case: a path slips past the
-        // validator (e.g., race-deleted between checks) and the loader has to log + skip.
+        // the envPaths setter validates existence, so call loadDotenv directly to reach its
+        // catch-and-warn path (a real path race-deleted between the check and the read)
         it('emits a "could not read" warn when loadDotenv hits a missing file', () => {
             Envapter.debug = 'warn';
             const ghost = resolve(import.meta.dirname, '.env.does-not-exist-at-all');
