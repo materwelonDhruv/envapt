@@ -45,9 +45,19 @@
         },
         "test:tsc-emit": {
             "dependsOn": ["build"],
+            "env": ["ENVAPT_TSC_PACKAGE"],
+            "outputs": []
+        },
+        "test:tsc-emit:ts7": {
+            "dependsOn": ["build"],
             "outputs": []
         },
         "test:stage3-emit": {
+            "dependsOn": ["build"],
+            "env": ["ENVAPT_TSC_PACKAGE"],
+            "outputs": []
+        },
+        "test:stage3-emit:ts7": {
             "dependsOn": ["build"],
             "outputs": []
         },
