@@ -7,7 +7,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { FileSource } from '../src';
 import { loadDotenv, parseDotenv } from '../src/infra/Dotenv';
 
-// loadDotenv takes an injected reader; reuse the library's Node reader rather than re-implementing fs.
+// loadDotenv takes an injected reader, so reuse the library's Node reader
 const reader = new FileSource();
 const nodeReadFile = reader.readFile.bind(reader);
 

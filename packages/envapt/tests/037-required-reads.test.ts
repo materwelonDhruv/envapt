@@ -272,8 +272,8 @@ describe('Required reads (v8)', () => {
                 .with.property('code', EnvaptErrorCodes.MissingEnvValue);
         });
 
-        // under strict, resolveTemplate throws on the unresolved ${VAR} before the aggregation finishes,
-        // so getRequiredAll surfaces that template error rather than the combined missing-key list.
+        // under strict, resolveTemplate throws on the unresolved ${VAR} before aggregation finishes,
+        // so getRequiredAll surfaces that template error and the combined missing-key list never forms
         it('surfaces the template error, not the aggregated list, when a spec value is unresolvable under strict', () => {
             Envapter.strict = true;
             try {

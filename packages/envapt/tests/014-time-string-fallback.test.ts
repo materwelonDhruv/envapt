@@ -12,8 +12,7 @@ describe('Converters.Time — time-string fallbacks', () => {
 
     describe('valid time-string fallbacks (one per supported unit)', () => {
         class Strings extends Envapter {
-            // Each TEST_TIME_STRING_FALLBACK_* key is intentionally absent from the
-            // fixture file so the string-fallback path is exercised.
+            // every TEST_TIME_STRING_FALLBACK_* key is absent from the fixture, so each read takes the string-fallback path
             @Envapt('TEST_TIME_STRING_FALLBACK_MS', { converter: Converters.Time, fallback: '1500ms' })
             static readonly ms: number;
 
@@ -42,14 +41,14 @@ describe('Converters.Time — time-string fallbacks', () => {
         it('parses h', () => expect(Strings.h).to.equal(3 * 60 * 60 * 1000));
         it('parses d', () => expect(Strings.d).to.equal(24 * 60 * 60 * 1000));
         it('parses w', () => expect(Strings.w).to.equal(7 * 24 * 60 * 60 * 1000));
-        // Decimals parse the same as a raw value; the only string-fallback constraint is the explicit unit.
+        // a decimal parses like any raw value, the only string-fallback constraint is the explicit unit
         it('parses a decimal value', () => expect(Strings.decimal).to.equal(1.5 * 60 * 60 * 1000));
     });
 
     describe('absent fallback', () => {
         class NoFallback extends Envapter {
-            // Env value is malformed (`TEST_TIME_INVALID=5x` in the fixture) and no fallback
-            // is provided, the converter returns undefined and the decorator surfaces that.
+            // the env value is malformed (`TEST_TIME_INVALID=5x`) and there's no fallback. The converter
+            // returns undefined and the decorator surfaces that.
             @Envapt('TEST_TIME_INVALID', { converter: Converters.Time })
             static readonly noFallback: number | undefined;
         }
@@ -69,8 +68,8 @@ describe('Converters.Time — time-string fallbacks', () => {
     describe('malformed time-string fallbacks', () => {
         it('throws MalformedTimeFallback for a bogus string fallback', () => {
             class BogusFallback extends Envapter {
-                // 'bogus' isn't a valid TimeFallback — cast to bypass the compile-time guard
-                // so we can exercise the runtime throw path (JS callers / dynamic strings).
+                // 'bogus' is not a valid TimeFallback, so the cast bypasses the compile-time guard
+                // to reach the runtime throw path (JS callers, dynamic strings)
                 @Envapt('UNDEFINED_TIME_FOR_BOGUS_FALLBACK', {
                     converter: Converters.Time,
                     fallback: 'bogus' as unknown as TimeFallback

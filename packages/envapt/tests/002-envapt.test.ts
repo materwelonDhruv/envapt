@@ -157,7 +157,7 @@ describe('Envapt', () => {
         });
 
         it('should resolve template variables in environment values', () => {
-            // expecting it to combine VAR_1, VAR_2, VAR_3 into TEST_VAR
+            // TEST_VAR concatenates VAR_1, VAR_2, VAR_3
             expect(TestEnv.testVar).to.equal('var1var2var3');
         });
 

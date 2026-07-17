@@ -25,7 +25,8 @@ describe('Envapter.load()', () => {
 
 describe('envapt/config side-effect entry', () => {
     beforeEach(() => {
-        // Scrub before envPaths triggers the rebuild: the loader only tracks keys absent from process.env as "added", and only added keys get mirrored.
+        // scrub before envPaths triggers the rebuild. The loader tracks only keys absent from
+        // process.env as "added", and only added keys get mirrored.
         Envapter.syncProcessEnv = false;
         Envapter.envFileOptions = {};
         cleanFixtureKeys();

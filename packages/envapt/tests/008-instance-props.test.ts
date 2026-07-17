@@ -195,7 +195,7 @@ describe('Instance Properties with @Envapt', () => {
         const instance = new EdgeCasesInstance();
 
         it('should use fallback for empty string (expected behavior)', () => {
-            // Empty strings are treated as falsy and use fallback
+            // an empty string reads as falsy, so it takes the fallback
             expect(instance.emptyString).to.equal('not-empty');
         });
 
@@ -222,7 +222,6 @@ describe('Instance Properties with @Envapt', () => {
             const instance2 = new MultiInstanceTest();
             const instance3 = new MultiInstanceTest();
 
-            // All instances should have the same values
             expect(instance1.prop1).to.equal('value1');
             expect(instance2.prop1).to.equal('value1');
             expect(instance3.prop1).to.equal('value1');
@@ -303,13 +302,11 @@ describe('Instance Properties with @Envapt', () => {
         it('should cache property values across multiple accesses', () => {
             const instance = new PerformanceTestInstance();
 
-            // Access properties multiple times
             const firstAccess1 = instance.prop1;
             const firstAccess2 = instance.prop2;
             const secondAccess1 = instance.prop1;
             const secondAccess2 = instance.prop2;
 
-            // Values should be consistent (and internally cached)
             expect(firstAccess1).to.equal(secondAccess1);
             expect(firstAccess2).to.equal(secondAccess2);
             expect(firstAccess1).to.equal('value1');

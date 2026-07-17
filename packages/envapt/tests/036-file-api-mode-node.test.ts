@@ -28,14 +28,14 @@ describe('Envapter.fileApiMode (node build)', () => {
     });
 
     it('rejects an invalid value with InvalidUserDefinedConfig (302)', () => {
-        // justified: bypass the compile-time union to exercise the runtime guard
+        // justified: bypass the compile-time union to reach the runtime guard
         expect(() => (Envapter.fileApiMode = 'loud' as unknown as FileApiMode))
             .to.throw(EnvaptError)
             .with.property('code', EnvaptErrorCodes.InvalidUserDefinedConfig);
     });
 
     it('names the type of a non-string invalid value in the error (302)', () => {
-        // justified: bypass the compile-time union to exercise the non-string guard branch
+        // justified: bypass the compile-time union to reach the non-string guard branch
         expect(() => (Envapter.fileApiMode = 42 as unknown as FileApiMode)).to.throw(EnvaptError, /got number/);
     });
 

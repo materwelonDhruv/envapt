@@ -235,7 +235,6 @@ describe('Built-in Converters', () => {
             expect(RegexpTest.simpleRegexp?.source).to.equal('\\d+');
             expect(RegexpTest.simpleRegexp?.flags).to.equal('');
 
-            // Test actual regex functionality
             expect(RegexpTest.simpleRegexp?.test('123')).to.be.true;
             expect(RegexpTest.simpleRegexp?.test('abc')).to.be.false;
             expect(RegexpTest.simpleRegexp?.test('42')).to.be.true;
@@ -246,19 +245,18 @@ describe('Built-in Converters', () => {
             expect(RegexpTest.regexpWithFlags?.source).to.equal('[a-z]+');
             expect(RegexpTest.regexpWithFlags?.flags).to.equal('gi');
 
-            // Reset regex state before each test due to global flag
+            // the g flag keeps lastIndex, so reset before each test()
             RegexpTest.regexpWithFlags!.lastIndex = 0;
             expect(RegexpTest.regexpWithFlags?.test('hello')).to.be.true;
 
             RegexpTest.regexpWithFlags!.lastIndex = 0;
-            expect(RegexpTest.regexpWithFlags?.test('WORLD')).to.be.true; // case insensitive with 'i' flag
+            expect(RegexpTest.regexpWithFlags?.test('WORLD')).to.be.true;
 
             RegexpTest.regexpWithFlags!.lastIndex = 0;
             expect(RegexpTest.regexpWithFlags?.test('123')).to.be.false;
 
-            // Test case insensitive behavior specifically
             RegexpTest.regexpWithFlags!.lastIndex = 0;
-            expect(RegexpTest.regexpWithFlags?.test('ABC')).to.be.true; // uppercase letters should match due to 'i' flag
+            expect(RegexpTest.regexpWithFlags?.test('ABC')).to.be.true;
 
             RegexpTest.regexpWithFlags!.lastIndex = 0;
             expect(RegexpTest.regexpWithFlags?.test('MixedCase')).to.be.true;
@@ -268,7 +266,6 @@ describe('Built-in Converters', () => {
             expect(RegexpTest.emailRegexp).to.be.instanceOf(RegExp);
             expect(RegexpTest.emailRegexp?.flags).to.equal('i');
 
-            // Test actual email validation functionality
             expect(RegexpTest.emailRegexp?.test('user@example.com')).to.be.true;
             expect(RegexpTest.emailRegexp?.test('test.email+tag@domain.co.uk')).to.be.true;
             expect(RegexpTest.emailRegexp?.test('user123@subdomain.example.org')).to.be.true;
@@ -280,7 +277,6 @@ describe('Built-in Converters', () => {
         it('should parse complex URL regexp', () => {
             expect(RegexpTest.urlRegexp).to.be.instanceOf(RegExp);
 
-            // Test actual URL validation functionality
             expect(RegexpTest.urlRegexp?.test('https://www.example.com')).to.be.true;
             expect(RegexpTest.urlRegexp?.test('http://api.test.co')).to.be.true;
             expect(RegexpTest.urlRegexp?.test('https://subdomain.example.org/path/to/resource')).to.be.true;
@@ -292,7 +288,6 @@ describe('Built-in Converters', () => {
         it('should parse complex phone regexp', () => {
             expect(RegexpTest.phoneRegexp).to.be.instanceOf(RegExp);
 
-            // Test actual phone number validation functionality
             expect(RegexpTest.phoneRegexp?.test('(555) 123-4567')).to.be.true;
             expect(RegexpTest.phoneRegexp?.test('555-123-4567')).to.be.true;
             expect(RegexpTest.phoneRegexp?.test('555.123.4567')).to.be.true;
@@ -307,9 +302,8 @@ describe('Built-in Converters', () => {
             expect(RegexpTest.invalidRegexp.source).to.equal('fallback');
             expect(RegexpTest.invalidRegexp.flags).to.equal('i');
 
-            // Test fallback regex functionality
             expect(RegexpTest.invalidRegexp.test('fallback')).to.be.true;
-            expect(RegexpTest.invalidRegexp.test('FALLBACK')).to.be.true; // case insensitive
+            expect(RegexpTest.invalidRegexp.test('FALLBACK')).to.be.true; // matches via the i flag
             expect(RegexpTest.invalidRegexp.test('other')).to.be.false;
         });
 
@@ -317,7 +311,6 @@ describe('Built-in Converters', () => {
             expect(RegexpTest.nonexistentRegexp).to.be.instanceOf(RegExp);
             expect(RegexpTest.nonexistentRegexp.source).to.equal('default');
 
-            // Test fallback regex functionality
             expect(RegexpTest.nonexistentRegexp.test('default')).to.be.true;
             expect(RegexpTest.nonexistentRegexp.test('other')).to.be.false;
         });
@@ -371,15 +364,15 @@ describe('Built-in Converters', () => {
         });
 
         it('should reject non-ISO date strings and use fallback', () => {
-            // Test reject "December 25, 2023" format
+            // fixture: "December 25, 2023"
             expect(DateTest.nonIsoDate1).to.be.instanceOf(Date);
             expect(DateTest.nonIsoDate1.getUTCFullYear()).to.equal(2024);
 
-            // Test reject "12/25/2023" format
+            // fixture: "12/25/2023"
             expect(DateTest.nonIsoDate2).to.be.instanceOf(Date);
             expect(DateTest.nonIsoDate2.getUTCFullYear()).to.equal(2024);
 
-            // Test reject ISO format without Z
+            // fixture: ISO without the trailing Z
             expect(DateTest.noZDate).to.be.instanceOf(Date);
             expect(DateTest.noZDate.getUTCFullYear()).to.equal(2024);
         });

@@ -10,7 +10,7 @@ import { Envapt } from '../src/legacy';
 
 import type { JsonValue } from '../src';
 
-// validateEnvFilesExist takes an existence probe; this suite supplies the Node fs check.
+// validateEnvFilesExist takes an injected existence probe, so pass the Node fs check
 const nodeExists = (path: string): boolean => existsSync(path);
 
 describe('Runtime Validation', () => {
@@ -27,7 +27,7 @@ describe('Runtime Validation', () => {
         });
 
         it('should throw for invalid built-in converter types', () => {
-            // Note: 'array' is no longer a scalar token in v5 (use Converters.array() instead).
+            // 'array' stopped being a scalar token in v5, so it now rejects (use Converters.array())
             const invalidTypes = ['invalid', 'str', 'num', 'array'];
 
             const testFunction = (type: string) => () => Validator.builtInConverter(type);
@@ -83,7 +83,6 @@ describe('Runtime Validation', () => {
         });
 
         it('should throw when a hand-rolled ArrayOf has an unknown `of` token', () => {
-            // Bypass TS to feed a malformed token through runtime validation.
             // intentionally malformed for runtime validation -- justified
             const malformed = { __envaptKind: 'array', of: 'not-a-real-token', delimiter: ',' };
             expect(() => Validator.arrayConverter(malformed))
@@ -193,7 +192,6 @@ describe('Runtime Validation', () => {
             @Envapt('NONEXISTENT_JSON_VAR', { converter: Converters.Json, fallback: Symbol('not-a-json') })
             static readonly jsonWithStringFallback: JsonValue;
 
-            // Valid fallbacks for comparison
             @Envapt('NONEXISTENT_STRING_VAR', { converter: Converters.String, fallback: 'valid-string' })
             static readonly stringWithValidFallback: string;
 

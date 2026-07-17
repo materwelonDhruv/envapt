@@ -12,7 +12,7 @@ describe('Strict mode + required (v5)', () => {
     });
 
     afterEach(() => {
-        // reset strict so it doesn't leak into the next file, where strict=true would change get* semantics globally.
+        // reset strict so it doesn't leak into the next file and change get* semantics globally
         Envapter.strict = false;
     });
 
@@ -127,7 +127,7 @@ describe('Strict mode + required (v5)', () => {
             static readonly url: URL;
         }
 
-        // both keys must be absent so the required throw runs, exercising the `Array.isArray(key)` arm of `formatKeyForError`.
+        // both keys absent so the required throw runs the `Array.isArray(key)` arm of formatKeyForError
         class RequiredArrayKeyAllMissing {
             @Envapt(['NEVER_SET_KEY', 'ALSO_NEVER_SET'], { required: true })
             static readonly key: string;

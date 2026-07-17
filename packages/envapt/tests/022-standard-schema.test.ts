@@ -11,7 +11,7 @@ import { Envapt } from '../src/legacy';
 
 import type { StandardSchemaV1 } from '../src/infra/StandardSchema';
 
-// Hand-rolled implementation proves the adapter has zero library dependence.
+// hand-rolled to prove the adapter needs no schema library
 const handRolledUpper: StandardSchemaV1<string, string> = {
     '~standard': {
         version: 1,
@@ -25,7 +25,7 @@ const handRolledUpper: StandardSchemaV1<string, string> = {
     }
 };
 
-// Exercises the SchemaThrew (209) path.
+// drives the SchemaThrew (209) path
 const handRolledThrower: StandardSchemaV1<string, string> = {
     '~standard': {
         version: 1,
@@ -36,9 +36,8 @@ const handRolledThrower: StandardSchemaV1<string, string> = {
     }
 };
 
-// Returns a failure with an empty issues array; spec-non-compliant but Standard Schema's
-// `FailureResult.issues` is typed as `readonly Issue[]` (no min-length constraint), so the
-// Parser has to fall back to a placeholder message when there's no first issue to read.
+// an empty issues array is spec-non-compliant, but `FailureResult.issues` is typed
+// `readonly Issue[]` with no min-length, so the Parser must fall back to a placeholder message
 const handRolledEmptyIssues: StandardSchemaV1<string, string> = {
     '~standard': {
         version: 1,
@@ -49,8 +48,8 @@ const handRolledEmptyIssues: StandardSchemaV1<string, string> = {
     }
 };
 
-// Async-only schemas are caught by the `SchemaMustBeSync` brand at the type level; this
-// union-typed fixture squeezes past the brand and exercises the runtime Promise check.
+// the `SchemaMustBeSync` brand rejects async schemas at the type level, so this union-typed
+// fixture squeezes past the brand to reach the runtime Promise check
 const handRolledAsync: StandardSchemaV1<string, string> = {
     '~standard': {
         version: 1,
@@ -124,8 +123,7 @@ describe('Standard Schema adapter (v5)', () => {
         });
 
         it('does NOT validate the fallback through the schema', () => {
-            // Fallback `'not-a-number'` would FAIL the schema if it were validated. The
-            // contract says missing+fallback returns fallback as-is; verifying that here.
+            // `'not-a-number'` would fail the schema if validated, so a pass proves missing+fallback returns it as-is
             const fallback = 'not-a-number';
             const result = Envapter.parse(
                 'NEVER_SET',
@@ -192,8 +190,8 @@ describe('Standard Schema adapter (v5)', () => {
             } catch (err) {
                 expect(err).to.be.instanceOf(EnvaptError);
                 const e = err as EnvaptError;
-                // EMPTY is treated as missing before the schema runs, so it throws MissingEnvValue,
-                // not SchemaValidationFailed. The "issues" assertion goes through INVALID_PORT below.
+                // EMPTY reads as missing before the schema runs, so this throws MissingEnvValue. The
+                // issues-passthrough assertion runs through INVALID_PORT below.
                 expect(e.code).to.equal(EnvaptErrorCodes.MissingEnvValue);
             }
         });
@@ -357,8 +355,8 @@ describe('Standard Schema adapter (v5)', () => {
         it('throws InvalidUserDefinedConfig when both schema + converter are provided', () => {
             const buildBadDecorator = (): void => {
                 class Bad {
-                    // No overload accepts both `schema` and `converter`. Cast simulates a
-                    // dynamic-object bypass so the runtime check fires.
+                    // no overload accepts both schema and converter, so the cast forges a dynamic-object
+                    // bypass to reach the runtime check
                     @Envapt('PORT', {
                         schema: z.coerce.number(),
                         converter: Number
@@ -423,8 +421,6 @@ describe('Standard Schema adapter (v5)', () => {
 
     describe('Validator.isStandardSchema: runtime shape check', () => {
         it('accepts real schema objects', () => {
-            // Reach into the running config to exercise the guard directly via the runtime
-            // mutex path. Already tested above through the decorator; this is the smoke test.
             expect(
                 () => Envapter.parse('PORT', z.coerce.number()) // happy path proves the guard implicitly
             ).to.not.throw();
