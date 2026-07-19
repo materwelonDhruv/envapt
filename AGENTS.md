@@ -133,21 +133,20 @@ import type { Foo } from 'pkg'; // not import('pkg').Foo
 
 ## Repo Surface (where things live)
 
-- `packages/envapt/src/` — the library source:
-    - `index.ts` — public surface (barrel)
-    - `config.ts` — side-effect entry (`import 'envapt/config'`): mirrors the loaded cascade into `process.env`
-    - `Envapter.ts` — public class, adds `resolve` tagged template
-    - `TemplateResolver.ts` — template `${VAR}` resolution (circular-reference + missing-variable handling)
-    - `Validators.ts` — runtime guards for converters/fallbacks/env-file options
-    - `Dotenv.ts` — internal `.env` loader + `EnvFileOptions` type
-    - `Debug.ts` — debug logging helpers (`debugWarn`/`debugVerbose`) keyed off `Envapter.debug`
-    - `StandardSchema.ts` — inlined Standard Schema V1 interface (sync-only)
-    - `Error.ts` — `EnvaptError` + `EnvaptErrorCodes` enum
-    - `converters/` — converter subsystem (barrel `index.ts`): `Converters` (scalar tokens + `array` builder + `ConverterToken`), `BuiltInConverters` (every built-in: string/number/bool/bigint/symbol/json/array/url/regexp/date/time), `ListOfBuiltInConverters` (converter list + runtime typeof checkers), `ValueConverter` (converter + Standard Schema dispatch)
-    - `decorators/` — decorator surface (barrel `index.ts`): `Envapt` (`@Envapt` + overload tower), `SugarDecorators` (`@EnvNum`/`@EnvStr`/`@EnvBool`/`@EnvUrl`/`@EnvTime`), `createPropertyDecorator` (shared getter-install factory)
-    - `core/` — the mixin chain (barrel `index.ts`): `EnvapterBase` → `EnvironmentMethods` → `PrimitiveMethods` → `AdvancedMethods`
-    - `types/` — all public + internal types (barrel `index.ts`): `Conversion` (converter type system), `Schema` (Standard Schema brand + guards), `Options` (`@Envapt` options + profile config), `Env` (`EnvKeyInput` + internal `EnvapterService` contract)
-- `packages/envapt/tests/` — vitest tests, numbered `001-`–`025-`, each paired with a fixture `.env.*` file.
+- `packages/envapt/src/`, the library source.
+    - `index.ts`, default Node/Bun/Deno entry (barrel) that binds `Envapter` to `FileSource`
+    - `index.portable.ts`, the portable build the `browser`/`workerd`/`edge-light` export conditions resolve to. `Envapter` is `PortableEnvapter`, file APIs no-op until `useSource` binds a source
+    - `common.ts`, shared re-exports both entries pull in (converters, errors, `PortableSource`, `merge`, public types)
+    - `legacy.ts`, the `envapt/legacy` entry, experimental-decorator `@Envapt` + sugar
+    - `config.ts`, side-effect entry (`import 'envapt/config'`) that mirrors the loaded cascade into `process.env`
+    - `engine/`, the runtime engines. `Envapter` (base class + `resolve` tagged template + `Environment`), `NodeEnvapter` and `PortableEnvapter` (the two exported classes), `TemplateResolver` (`${VAR}` resolution), `Validators` (runtime guards), `fileApiStub` (portable no-op/throw file APIs)
+    - `sources/`, the pluggable `Source` layer. `FileSource` (Node `process.env` + `.env` cascade + fs), `PortableSource` (an injected object), `UnboundSource` (throws until a source binds), `merge` (last-wins precedence across members), `normalizeSource`, `coerce`
+    - `infra/`, runtime-agnostic helpers. `Dotenv` (`.env` loader + `EnvFileOptions`), `runtime` (`envReader`/`varReader`, rebound whenever the source changes), `Debug` (`debugWarn`/`debugVerbose`), `StandardSchema` (inlined V1 interface), `Error` (`EnvaptError` + `EnvaptErrorCodes`), `recase`
+    - `converters/`, converter subsystem (barrel `index.ts`). `Converters` (scalar tokens + `array` builder + `ConverterToken`), `BuiltInConverters` (every built-in), `ListOfBuiltInConverters` (converter list + runtime typeof checkers), `ValueConverter` (converter + Standard Schema dispatch)
+    - `decorators/`, decorator surface (barrel `index.ts`), split `modern/` (TC39 accessor decorators via `createAccessorDecorator`) and `legacy/` (property decorators via `createPropertyDecorator`), plus `parseEnvaptOptions` and `resolveDecoratorValue`
+    - `core/`, the mixin chain (barrel `index.ts`) `EnvapterBase` → `EnvironmentMethods` → `PrimitiveMethods` → `AdvancedMethods`, plus module `state`, the cache and process.env-mirror `engine`, `Environment`, `paths`, `missing`
+    - `types/`, public + internal types (barrel `index.ts`). `Conversion`, `Schema`, `Options`, `Env`, `Source`, `Casing`, `Decorator`
+- `packages/envapt/tests/`, vitest tests numbered `001-` through `045-`, each paired with a fixture `.env.*` file, plus cross-runtime suites in `browser/`, `workers/`, and `integration/`.
 - `scripts/` — `bump-jsr.ts`, `release-metadata.ts` (the JSR sync + release-metadata helpers used by the publish workflow).
 - `.changeset/` — pending changesets. Don't edit by hand.
 - `.github/workflows/` — CI. `checks.yml` (lint + tc + test + coverage), `publish.yml` (npm + JSR on push to main), `commitlint.yml`, `cleanup-cache.yml`, etc.
