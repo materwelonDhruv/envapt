@@ -3,25 +3,26 @@
         // Essential formatting and linting
         "esbenp.prettier-vscode",
         "dbaeumer.vscode-eslint",
-        "editorconfig.editorconfig",
+        "EditorConfig.EditorConfig",
         "DavidAnson.vscode-markdownlint",
 
-        // TypeScript/JavaScript development
+        // Lang Tooling
         "christian-kohler.path-intellisense",
         "christian-kohler.npm-intellisense",
         "yoavbls.pretty-ts-errors",
+        "bradlc.vscode-tailwindcss",
 
-        // Git and AI assistance
-        "eamodio.gitlens",
-        "github.copilot-chat",
+        // Git
+        "GitHub.copilot-chat",
         "github.vscode-github-actions",
-        "github.vscode-pull-request-github",
-        "Upstash.context7-mcp",
+        "GitHub.vscode-pull-request-github",
 
-        // Project-specific tools
+        // Syntax highlighting
+        "kennylong.kubernetes-yaml-formatter",
         "mikestead.dotenv",
+        "redhat.vscode-yaml",
 
-        // Testing
+        // Vitest
         "vitest.explorer"
     ]
 }
