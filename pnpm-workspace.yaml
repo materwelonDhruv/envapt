@@ -5,22 +5,22 @@ packages:
 embedReadme: true
 
 allowBuilds:
-    esbuild: true
-    msgpackr-extract: true
-    sharp: false
-    unrs-resolver: true
-    workerd: true
+  esbuild: true
+  msgpackr-extract: true
+  sharp: false
+  unrs-resolver: true
+  workerd: true
 
 catalogs:
-    dev:
-        '@cloudflare/workers-types': ^5.20260706.1
-        '@seedcord/eslint-config': 1.4.3
-        '@types/node': 25.9.3
-        prettier: 3.8.4
-        eslint: 9.39.2
-        typescript: 6.0.3
-        zod: 4.4.3
-        vitest: 4.1.10
+  dev:
+    '@cloudflare/workers-types': ^5.20260706.1
+    '@seedcord/eslint-config': 1.4.3
+    '@types/node': 25.9.3
+    prettier: 3.8.4
+    eslint: 9.39.2
+    typescript: 6.0.3
+    zod: 4.4.3
+    vitest: 4.1.10
 
 minimumReleaseAgeExclude:
   - '@cloudflare/vitest-pool-workers@0.18.0'
