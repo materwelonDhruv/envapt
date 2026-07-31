@@ -5,6 +5,10 @@ node_modules/
 .eslintcache
 .eslintrc.js
 
+# pnpm files
+pnpm-workspace.yaml
+pnpm-lock.yaml
+
 .env
 
 CODEOWNERS
