@@ -1,5 +1,13 @@
 # envapt
 
+## 8.1.1-next.0
+
+### Patch Changes
+
+- 0213f74: Use a better example in the README and update docs to use the correct converters in some places
+
+    Also update dependencies and format pnpm workspace file
+
 ## 8.1.0
 
 ### Minor Changes
