@@ -3,7 +3,7 @@ title: Decorators
 description: Bind a class property to an environment variable with the @Envapt decorator. Modern TC39 accessor decorators by default, legacy decorators at envapt/legacy.
 ---
 
-`@Envapt` binds a class property to an environment variable. It's the class-based counterpart to the [`Envapter`](/docs/envapter) readers, the same parsing, converters, and cache, declared as typed fields instead of method calls.
+`@Envapt` binds a class property to an environment variable. It's the class-based counterpart to the [`Envapter`](/docs/envapter) readers, with the same parsing, converters, and cache, declared as typed fields.
 
 The default import is a TC39 Stage 3 accessor decorator. Declare the field with the `accessor` keyword.
 
@@ -11,7 +11,7 @@ The default import is a TC39 Stage 3 accessor decorator. Declare the field with 
 import { Envapt, Converters } from 'envapt';
 // ---cut---
 class Config {
-    @Envapt('PORT', { converter: Converters.Number, fallback: 3000 })
+    @Envapt('PORT', { converter: Converters.Port, fallback: 3000 })
     static accessor port: number;
 
     @Envapt('DEBUG', { converter: Converters.Boolean, fallback: false })
@@ -48,7 +48,7 @@ If your project already runs on `experimentalDecorators`, import the legacy deco
 import { Envapt, Converters } from 'envapt/legacy';
 
 class Config {
-    @Envapt('PORT', { converter: Converters.Number, fallback: 3000 })
+    @Envapt('PORT', { converter: Converters.Port, fallback: 3000 })
     static readonly port: number;
 
     @Envapt('SESSION_TTL', { converter: Converters.Time, fallback: '15m' })
@@ -103,8 +103,8 @@ import { EnvNum } from 'envapt';
 // ---cut---
 class Config {
     // with a fallback, the output is number
-    @EnvNum('PORT', 3000)
-    static accessor port: number;
+    @EnvNum('MAX_RETRIES', 3)
+    static accessor maxRetries: number;
 
     // without a fallback the value can be missing, so the output is number | undefined
     @EnvNum('TIMEOUT')
@@ -122,8 +122,8 @@ A no-fallback read makes the output `T | undefined`, and `fallback: undefined` c
 import { EnvNum, EnvStr, EnvBool, EnvUrl, EnvTime } from 'envapt';
 // ---cut---
 class Config {
-    @EnvNum('PORT', 3000)
-    static accessor port: number;
+    @EnvNum('MAX_RETRIES', 3)
+    static accessor maxRetries: number;
 
     @EnvStr('AWS_REGION', 'us-east-1')
     static accessor region: string;
@@ -141,11 +141,11 @@ class Config {
 
 The second argument is the fallback, typed to the converter, `@EnvUrl` takes a `URL`, `@EnvTime` takes a millisecond number or a time string, the rest take their primitive. Omit it and the property resolves to the converted value or `undefined`. The key can also be an [ordered list](#ordered-keys).
 
-These are accessor decorators like `@Envapt`, so the same [declaration rule](#declaring-decorated-fields) applies. They take a fallback only. For `required`, a `schema`, an array, or a custom function, use `@Envapt` with the options object.
+These are accessor decorators like `@Envapt`, so the same [declaration rule](#declaring-decorated-fields) applies. They take a fallback only. For `required`, a `schema`, an array, a port, or a custom function, use `@Envapt` with the options object.
 
 ## Required values
 
-Pass `required: true` to throw `EnvaptError` on a missing or empty value (or, under strict mode, a whitespace-only value) instead of returning a fallback. It's mutually exclusive with `fallback`.
+Pass `required: true` to throw `EnvaptError` on a missing or empty value, or on a whitespace-only value under strict mode. It's mutually exclusive with `fallback`.
 
 ```ts twoslash
 import { Envapt, Converters } from 'envapt';
@@ -159,7 +159,7 @@ class Config {
 The throw happens on first access to the property. An unset or empty value throws in any mode. A whitespace-only value throws only under strict mode. See [Strict mode](/docs/strict-mode) for the global switch and how `required` relates to it.
 
 <Callout type="warn">
-    First access can be deep in a request, not at boot. A missing required value then surfaces as a runtime error
+    First access can happen deep inside a request, so a missing required value surfaces as a runtime error
     mid-request. Read the property once during startup to fail early.
 </Callout>
 
@@ -203,7 +203,7 @@ Extend `Envapter` when you also want the reader methods on the same class:
 import { Envapt, Converters, Envapter } from 'envapt';
 // ---cut---
 class Config extends Envapter {
-    @Envapt('PORT', { converter: Converters.Number, fallback: 3000 })
+    @Envapt('PORT', { converter: Converters.Port, fallback: 3000 })
     accessor port!: number;
 
     // mix decorator fields with reader calls

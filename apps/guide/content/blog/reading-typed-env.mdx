@@ -3,7 +3,7 @@ title: Reading typed config in TypeScript
 description: Read config from any source as numbers, URLs, durations, and schema-validated values in TypeScript, with fallbacks that narrow the type and any Standard Schema validator you already use.
 author: Dhruv
 date: '2026-06-01'
-updated: '2026-07-01'
+updated: '2026-07-31'
 ---
 
 `Number(process.env.PORT) || 3000`
@@ -19,26 +19,26 @@ I got tired of writing that coercion by hand and keeping it correct, so I built 
 Here's the same port, read so the fallback only fires when the value is actually missing:
 
 ```ts twoslash
-import { Envapter } from 'envapt';
+import { Converters, Envapter } from 'envapt';
 // ---cut---
-const port = Envapter.getNumber('PORT', 3000); // number, not string | undefined
+const port = Envapter.getUsing('PORT', Converters.Port, 3000); // number, 0-65535 checked
 const debug = Envapter.getBoolean('DEBUG', false); // 1/yes/true/on -> true
 ```
 
-`getNumber` returns `number`. `PORT=0` reads as `0`. A typo in `PORT` is unparseable, so it takes the fallback, but `0` is a perfectly good number and keeps it. The `Number(x) || default` trap is gone because there's no `||` deciding what counts as empty.
+`Converters.Port` returns `number`. `PORT=0` reads as `0`, the ephemeral-bind wildcard. A typo in `PORT` is unparseable, so it takes the fallback, and so does `PORT=99999`, which is outside the valid range. The `Number(x) || default` trap is gone because there's no `||` deciding what counts as empty.
 
 The fallback also does something to the type. Passing one strips `undefined` from the return, so nothing downstream needs a `?? 3000`:
 
 ```ts twoslash
-import { Envapter } from 'envapt';
+import { Converters, Envapter } from 'envapt';
 // ---cut---
-const withFallback = Envapter.getNumber('PORT', 3000);
+const withFallback = Envapter.getUsing('PORT', Converters.Port, 3000);
 //    ^?
-const noFallback = Envapter.getNumber('PORT');
+const noFallback = Envapter.getUsing('PORT', Converters.Port);
 //    ^?
 ```
 
-Leave the fallback off and you get `number | undefined`. The type makes you handle the missing case instead of letting you forget. And `getBoolean` reads `1`, `yes`, `true`, `on` as true and `0`, `no`, `false`, `off` as false, case-insensitively, so `DEBUG=1` is `true` and not the silent `false` that `=== 'true'` gives you.
+Leave the fallback off and you get `number | undefined`. The type makes you handle the missing case. And `getBoolean` reads `1`, `yes`, `true`, `on` as true and `0`, `no`, `false`, `off` as false, case-insensitively, so `DEBUG=1` is `true` and not the silent `false` that `=== 'true'` gives you.
 
 ## The shapes that aren't primitives
 
@@ -55,9 +55,9 @@ const ttl = Envapter.getUsing('CACHE_TTL', Converters.Time, '5m'); // "5m" -> 30
 //    ^?
 ```
 
-`Converters.Url` runs the value through `new URL`, so a non-absolute URL takes the fallback instead of slipping through as a string. `Converters.array({ of: Converters.Url })` splits on the delimiter and converts each element, so the type is `URL[]`, not the `string[]` you'd `.split(',')` your way to. `Converters.Time` reads `5m` and returns `300000`, which means a timeout in config reads the way you'd write it in code rather than as a pile of zeroes you have to count.
+`Converters.Url` runs the value through `new URL`, so a non-absolute URL takes the fallback and never slips through as a string. `Converters.array({ of: Converters.Url })` splits on the delimiter and converts each element, so the type is `URL[]`. A hand-rolled `.split(',')` leaves you at `string[]`. `Converters.Time` reads `5m` and returns `300000`, so a timeout in config reads the way you'd write it in code, with no pile of zeroes to count.
 
-The built-in tokens cover number, integer, float, boolean, bigint, symbol, JSON, URL, RegExp, Date, duration, and arrays. When none of them fit, `getWith` takes a plain `(raw, fallback) => T`:
+The built-in tokens cover number, integer, float, boolean, bigint, symbol, JSON, URL, RegExp, Date, duration, port, email, and arrays. When none of them fit, `getWith` takes a plain `(raw, fallback) => T`:
 
 ```ts twoslash
 import { Envapter } from 'envapt';
@@ -87,9 +87,9 @@ const port = Envapter.parse('PORT', z.coerce.number().int().min(1024));
 //    ^? number
 ```
 
-t3-env and znv do this job too, and do it well, but they're built on zod: the validator is the dependency. envapt uses the Standard Schema interface instead, so which validator you bring is your call, and envapt itself adds nothing to your lockfile.
+t3-env and znv do this job too, and do it well, but they're built on zod, where the validator is the dependency. envapt uses the Standard Schema interface, so which validator you bring is your call, and envapt itself adds nothing to your lockfile.
 
-`parse` runs the value through the schema and returns whatever the schema outputs, typed. A bad `PORT` throws on the `parse` line with the validator's own message, not a `NaN` that some later arithmetic turns into garbage. A third argument is an optional fallback, returned as-is on a missing value, so it has to already satisfy the type because the schema never sees it:
+`parse` runs the value through the schema and returns whatever the schema outputs, typed. A bad `PORT` throws on the `parse` line with the validator's own message. The hand-written version gives you a `NaN` that some later arithmetic turns into garbage. A third argument is an optional fallback, returned as-is on a missing value, so it has to already satisfy the type because the schema never sees it:
 
 ```ts twoslash
 import { z } from 'zod/v4';
@@ -108,7 +108,7 @@ import { z } from 'zod/v4';
 import { Envapt, Converters } from 'envapt';
 // ---cut---
 class Config {
-    @Envapt('PORT', { converter: Converters.Number, fallback: 3000 })
+    @Envapt('PORT', { converter: Converters.Port, fallback: 3000 })
     static accessor port: number;
 
     @Envapt('LOG_LEVEL', { schema: z.enum(['debug', 'info', 'warn']) })
@@ -122,7 +122,7 @@ For the common types there's sugar that takes the key and an optional fallback.
 import { EnvNum, EnvUrl, EnvTime } from 'envapt';
 // ---cut---
 class Config {
-    @EnvNum('PORT', 3000) static accessor port: number;
+    @EnvNum('MAX_RETRIES', 3) static accessor maxRetries: number;
     @EnvUrl('APP_URL', new URL('http://localhost:3000')) static accessor appUrl: URL;
     @EnvTime('CACHE_TTL', '5m') static accessor ttl: number; // ms
 }
@@ -149,7 +149,7 @@ class Bot {
 }
 ```
 
-t3-env centralizes: you declare every variable up front in one `createEnv` call, validated once at startup. envapt puts the check on the field that uses the value. Centralizing is the right call when one app owns all its env. seedcord's config is spread across independently-built pieces (the `Bot` owns the token, a webhook subscriber owns its URL), so each piece validates its own variable where it lives, and a malformed token throws the moment that field resolves instead of in a central config module three files away.
+t3-env centralizes: you declare every variable up front in one `createEnv` call, validated once at startup. envapt puts the check on the field that uses the value. Centralizing is the right call when one app owns all its env. seedcord's config is spread across independently-built pieces (the `Bot` owns the token, a webhook subscriber owns its URL), so each piece validates its own variable where it belongs, and a malformed token throws the moment that field resolves. A central config module would surface the same error three files away from the code that cares.
 
 On Node, Bun, and Deno, envapt reads `process.env` and the `.env` cascade with no setup. On Cloudflare Workers and in the browser there is no filesystem, so you bind the source yourself, a `PortableSource` over the Worker `env` binding or the config your bundler injects in the browser. The typed reads, converters, and validators are identical across all of them. The `.env` cascade and the file-only config APIs are the part that stays on Node.
 
@@ -170,8 +170,8 @@ That import reads the cascade and mirrors the result into `process.env`, the sam
 .env
 ```
 
-`${VAR}` references expand while the file is parsed, so `DATABASE_URL=postgres://${DB_HOST}/${DB_NAME}` resolves on its own. You don't strictly need that import, either. Drop it and the typed reads still work; they read the cascade directly. The import is only there for the libraries that read `process.env` straight, before envapt does.
+`${VAR}` references expand while the file is parsed, so `DATABASE_URL=postgres://${DB_HOST}/${DB_NAME}` resolves on its own. You don't strictly need that import, either. Drop it and the typed reads still work, reading the cascade directly. The import is only there for the libraries that read `process.env` straight, before envapt does.
 
 ## So, finally
 
-What envapt gives you is typed reads from any source (`process.env`, a Worker binding, a browser bundle, or a secrets object you supply), a fallback that narrows the type and tells missing from zero, converters for the shapes that aren't strings, and validation through the schema you already wrote rather than the one a helper chose for you. If that's the shape of your problem, it's on [npm](https://www.npmjs.com/package/envapt) and [JSR](https://jsr.io/@materwelon/envapt), and the source is on [GitHub](https://github.com/materwelonDhruv/envapt). Please feel free to ask questions, report bugs, or suggest features in the repo! I'm always open to feedback and contributions.
+What envapt gives you is typed reads from any source (`process.env`, a Worker binding, a browser bundle, or a secrets object you supply), a fallback that narrows the type and tells missing from zero, converters for the shapes that aren't strings, and validation through the schema you already wrote. It's on [npm](https://www.npmjs.com/package/envapt) and [JSR](https://jsr.io/@materwelon/envapt), and the source is on [GitHub](https://github.com/materwelonDhruv/envapt). Please feel free to ask questions, report bugs, or suggest features in the repo! I'm always open to feedback and contributions.

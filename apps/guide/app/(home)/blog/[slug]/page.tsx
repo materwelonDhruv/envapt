@@ -2,6 +2,7 @@ import { DocsBody } from 'fumadocs-ui/page';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
+import { formatDate } from '@/lib/date';
 import { canonicalUrl, DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL } from '@/lib/site';
 import { blog } from '@/lib/source';
 import { getMDXComponents } from '@/mdx-components';
@@ -9,12 +10,8 @@ import { getMDXComponents } from '@/mdx-components';
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 
-// need this so dev build shows 404 page for unlisted slug instead of crashing
+// without this the dev build crashes on an unlisted slug
 export const dynamicParams = false;
-
-function formatDate(date: string): string {
-    return new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-}
 
 export default async function Page(props: { params: Promise<{ slug: string }> }): Promise<ReactNode> {
     const { slug } = await props.params;

@@ -1,13 +1,14 @@
 import Link from 'next/link';
 
+import { formatDate } from '@/lib/date';
 import { canonicalUrl, DEFAULT_OG_IMAGE, SITE_NAME } from '@/lib/site';
 import { blog } from '@/lib/source';
 
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 
-// Next.js replaces (not deep-merges) the root layout's openGraph when a route sets its own,
-// so the full block is redeclared here to keep og:url pointing at /blog instead of the homepage.
+// Next.js replaces the root layout's openGraph when a route sets its own, so the whole block is
+// redeclared here to keep og:url on /blog.
 export const metadata: Metadata = {
     title: 'Blog',
     description: `Release notes and tutorials from the ${SITE_NAME} project.`,
@@ -20,10 +21,6 @@ export const metadata: Metadata = {
         images: DEFAULT_OG_IMAGE
     }
 };
-
-function formatDate(date: string): string {
-    return new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-}
 
 export default function BlogIndex(): ReactNode {
     const posts = blog.getPages().toSorted((a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime());

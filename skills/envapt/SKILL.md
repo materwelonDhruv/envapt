@@ -24,7 +24,7 @@ import { Envapter, Converters } from 'envapt';
 
 Envapter.get('API_KEY'); // string | undefined
 Envapter.get('API_KEY', 'dev-key'); // string
-Envapter.getNumber('PORT', 3000); // number
+Envapter.getNumber('MAX_RETRIES', 3); // number
 Envapter.getBoolean('DEBUG', false); // boolean; true set: 1/yes/true/on, false set: 0/no/false/off
 Envapter.getBigInt('MAX', 0n); // bigint
 Envapter.get(['CANARY_URL', 'APP_URL']); // ordered fallback
@@ -39,12 +39,14 @@ Envapter.getWith('FLAGS', (raw) => (raw ? raw.split(',') : [])); // string[]
 
 // Throw instead of returning a fallback:
 Envapter.require('DATABASE_URL', 'JWT_SECRET'); // throws EnvaptError listing every missing key
-Envapter.getRequired('PORT', Converters.Number); // throws if unset
+Envapter.getRequired('PORT', Converters.Port); // throws if unset
 // throws if any key is unset (aggregates all missing keys so only one error), returns a typed object if all are present
 Envapter.getRequiredAll(
     {
-        PORT: Converters.Number,
-        DATABASE_URL: Converters.Url
+        PORT: Converters.Port,
+        DATABASE_URL: Converters.Url,
+        CACHE_TTL: Converters.Time,
+        ALLOWED_ORIGINS: Converters.array()
     },
     'camelCase'
 );
@@ -60,7 +62,7 @@ Envapter.getRequiredAll(
 import { Envapt, Converters } from 'envapt';
 
 class Config {
-    @Envapt('PORT', { converter: Converters.Number, fallback: 3000 })
+    @Envapt('PORT', { converter: Converters.Port, fallback: 3000 })
     static accessor port: number;
 
     @Envapt('DATABASE_URL', { converter: Converters.Url, required: true })
@@ -86,7 +88,7 @@ The legacy form (`envapt/legacy`) differs. Static fields use a plain `static rea
 import { EnvNum, EnvBool, EnvUrl, EnvTime } from 'envapt';
 
 class Config {
-    @EnvNum('PORT', 3000) static accessor port: number;
+    @EnvNum('MAX_RETRIES', 3) static accessor maxRetries: number;
     @EnvBool('DEBUG', false) static accessor debug: boolean;
     @EnvUrl('APP_URL', new URL('http://localhost:3000')) static accessor url: URL; // fallback is a URL, not a string
     @EnvTime('CACHE_TTL', '15m') static accessor cacheTtl: number; // resolves to milliseconds
@@ -95,7 +97,12 @@ class Config {
 
 ## Converters
 
-`Converters` carries the scalar tokens: `String`, `Number`, `Integer`, `Float`, `Boolean`, `Bigint`, `Symbol`, `Json`, `Url`, `Regexp`, `Date`, `Time`. `Time` resolves to **milliseconds** (fallback is a ms number or a time string like `'10s'`/`'15m'`), and `Url` resolves to a **`URL` instance** (its fallback must be a `URL`, not a string).
+`Converters` carries the scalar tokens `String`, `Number`, `Integer`, `Float`, `Boolean`, `Bigint`, `Symbol`, `Json`, `Url`, `Regexp`, `Date`, `Time`, `Port`, `Email`. Four carry semantics the token name alone does not give.
+
+- `Time` resolves to **milliseconds**. Its fallback is a ms number or a time string like `'10s'`/`'15m'`.
+- `Url` resolves to a **`URL` instance**. Its fallback must be a `URL`, and a string fails to compile.
+- `Port` resolves to a `number` and returns the fallback for anything outside the `0-65535` integer range. Use it for every port variable.
+- `Email` resolves to the raw `string` and returns the fallback for an address that fails the WHATWG email pattern.
 
 Arrays use the builder. `of` defaults to `Converters.String`, `delimiter` to `','`; `of` accepts any scalar token except `json` and `regexp`, or a custom element function.
 
@@ -199,7 +206,7 @@ envapt loads `.env` **and** returns typed, validated values from one API, with n
 | `require('dotenv').config()` | `import 'envapt/config'` |
 | `-r dotenv/config` | `-r envapt/config` (CJS) / `--import envapt/config` (ESM) |
 | `process.env.API_KEY` | `Envapter.get('API_KEY')` / `Envapter.require('API_KEY')` |
-| `Number(process.env.PORT) \|\| 3000` | `Envapter.getNumber('PORT', 3000)` |
+| `Number(process.env.PORT) \|\| 3000` | `Envapter.getUsing('PORT', Converters.Port, 3000)` |
 | `process.env.DEBUG === 'true'` | `Envapter.getBoolean('DEBUG', false)` |
 
 <!--prettier-ignore-end-->
@@ -213,6 +220,7 @@ envapt loads `.env` **and** returns typed, validated values from one API, with n
 | Wrong decorator field form | Modern uses `static accessor x: T` / `accessor x!: T`. Legacy (`envapt/legacy`) uses `static readonly x: T` / `declare readonly x: T`, both no initializer |
 | Legacy decorator on Bun | The `envapt/legacy` form reads `undefined` on Bun-direct `.ts` (bun#27575). The default accessor decorators on `envapt` work there |
 | `@EnvUrl` fallback | It's a `URL` instance, not a string: `new URL('...')` |
+| Reading a port | Use `Converters.Port`, which range-checks `0-65535`. `getNumber` accepts `-1` and `99999` |
 | `Time` / `@EnvTime` | Resolves to milliseconds; fallback is a ms number or a time string (`'15m'`) |
 | Schema fallback | A fallback is returned as-is; only present env values pass through the schema |
 | `required` + `fallback` | Mutually exclusive; so are `schema` + `converter` |

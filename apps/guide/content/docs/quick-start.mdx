@@ -20,9 +20,9 @@ PORT=8080
 Read it as a number, with a fallback for when it is unset:
 
 ```ts twoslash
-import { Envapter } from 'envapt';
+import { Envapter, Converters } from 'envapt';
 // ---cut---
-const port = Envapter.getNumber('PORT', 3000);
+const port = Envapter.getUsing('PORT', Converters.Port, 3000);
 //    ^?
 ```
 
@@ -36,7 +36,7 @@ The [`@Envapt`](/docs/decorators) decorator binds a value to a typed field. The 
 import { Envapt, Converters } from 'envapt';
 // ---cut---
 class Config {
-    @Envapt('PORT', { converter: Converters.Number, fallback: 3000 })
+    @Envapt('PORT', { converter: Converters.Port, fallback: 3000 })
     static accessor port: number;
 }
 ```
@@ -46,6 +46,27 @@ class Config {
     `experimentalDecorators`, import the legacy form from `envapt/legacy` instead. See
     [Decorators](/docs/decorators#declaring-decorated-fields).
 </Callout>
+
+## Read a whole config at startup
+
+`getRequiredAll` reads a group in one call and returns a typed record. A missing key throws an error that specifies every key that was missing.
+
+```ts twoslash
+import { Envapter, Converters } from 'envapt';
+// ---cut---
+const config = Envapter.getRequiredAll(
+    {
+        PORT: Converters.Port,
+        DATABASE_URL: Converters.Url,
+        CACHE_TTL: Converters.Time,
+        ALLOWED_ORIGINS: Converters.array()
+    },
+    'PascalCase'
+);
+
+config;
+// ^?
+```
 
 ## Mirror loaded values to process.env
 
@@ -57,7 +78,7 @@ import 'envapt/config';
 const port = process.env.PORT; // the loaded keys are now on process.env
 ```
 
-It is the side-effect form of `Envapter.syncProcessEnv = true` plus an eager load, and follows the same collision rules. Unlike `dotenv/config`, it loads the whole per-environment [cascade](/docs/environment), not a single `.env`.
+It is the side-effect form of `Envapter.syncProcessEnv = true` plus an eager load, and follows the same collision rules. `dotenv/config` loads a single `.env`. This loads the whole per-environment [cascade](/docs/environment).
 
 Preload it without editing your entry file:
 

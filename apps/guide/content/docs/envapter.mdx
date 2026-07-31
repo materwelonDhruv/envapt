@@ -9,7 +9,7 @@ description: Read environment variables as typed values with Envapter's static a
 import { Envapter } from 'envapt';
 
 // static, for a one-off read
-const port = Envapter.getNumber('PORT', 3000);
+const maxRetries = Envapter.getNumber('MAX_RETRIES', 3);
 //    ^?
 
 // instance, when you hold a reference
@@ -26,7 +26,7 @@ Five readers cover the primitive types. Each parses the raw string and returns t
 import { Envapter } from 'envapt';
 // ---cut---
 const name = Envapter.get('APP_NAME', 'envapt'); // string
-const port = Envapter.getNumber('PORT', 3000); // number
+const maxRetries = Envapter.getNumber('MAX_RETRIES', 3); // number
 const debug = Envapter.getBoolean('DEBUG', false); // boolean
 const maxBytes = Envapter.getBigInt('MAX_UPLOAD_BYTES', 0n); // bigint
 const key = Envapter.getSymbol('KEY', Symbol.for('envapt:key')); // symbol
@@ -147,7 +147,7 @@ import { Envapter, Converters } from 'envapt';
 const config = Envapter.getRequiredAll(
     {
         DATABASE_URL: Converters.Url,
-        PORT: Converters.Number,
+        PORT: Converters.Port,
         FEATURE_FLAGS: (raw) => new Set(raw.split(','))
     },
     'camelCase'
@@ -174,7 +174,7 @@ Statics suit scattered, one-off reads. Create an instance to carry an env reader
 import { Envapter } from 'envapt';
 // ---cut---
 class Config extends Envapter {
-    readonly port = this.getNumber('PORT', 3000);
+    readonly maxUploadMb = this.getNumber('MAX_UPLOAD_MB', 25);
     readonly debug = this.getBoolean('DEBUG', false);
 }
 ```

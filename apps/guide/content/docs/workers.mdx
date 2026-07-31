@@ -16,10 +16,10 @@ The filesystem-only config APIs have nothing to do on Workers, so they warn and 
 /// <reference types="@cloudflare/workers-types" />
 // ---cut---
 import { env } from 'cloudflare:workers';
-import { Envapter, PortableSource } from 'envapt';
+import { Converters, Envapter, PortableSource } from 'envapt';
 
 Envapter.useSource(new PortableSource(env));
-Envapter.getNumber('PORT', 3000); // readers work once a source is bound
+Envapter.getUsing('CACHE_TTL', Converters.Time, '1m'); // readers work once a source is bound
 Envapter.envPaths = ['.env']; // warns once and no-ops on Workers
 ```
 
@@ -27,7 +27,7 @@ Envapter.envPaths = ['.env']; // warns once and no-ops on Workers
 
 ## Bind once at module load
 
-Env vars and secrets are readable at module scope through `cloudflare:workers`, and they are constant for a deployment. Bind the source in a config module and export the typed values the Worker needs, so binding happens once per isolate instead of on every request.
+Env vars and secrets are readable at module scope through `cloudflare:workers`, and they are constant for a deployment. Bind the source in a config module and export the typed values the Worker needs. Binding then happens once per isolate, and every request reads the exported values.
 
 ```ts title="src/config.ts" twoslash
 // @lib: esnext
@@ -113,7 +113,7 @@ export default {
 
 ## Non-string bindings
 
-A Cloudflare `vars` entry can be JSON, not only a string. `PortableSource` JSON-stringifies any non-string binding so the converters parse it the same way. A binding whose value stringifies to `undefined` is dropped, and anything you read this way must be JSON-serializable.
+A Cloudflare `vars` entry can hold JSON as well as a string. `PortableSource` JSON-stringifies any non-string binding so the converters parse it the same way. A binding whose value stringifies to `undefined` is dropped, and anything you read this way must be JSON-serializable.
 
 ```ts twoslash
 import { Envapter, PortableSource, Converters } from 'envapt';

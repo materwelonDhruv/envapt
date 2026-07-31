@@ -3,7 +3,7 @@ title: What changed in envapt v6, v7, and v8
 description: Three majors of envapt, and the dogfooding behind each one, from removing a decorator footgun to one universal import that reads config the same on Node and the edge.
 author: Dhruv
 date: '2026-07-07'
-updated: '2026-07-07'
+updated: '2026-07-31'
 ---
 
 Every change in envapt's last three majors started the same way. I hit something annoying while using envapt in my own projects, and I fixed it.
@@ -17,19 +17,19 @@ The old decorator took its fallback and converter by position.
 ```ts
 // v5... which one comes first again?
 // And why are only primitives supported in this positional API?
-@Envapt('PORT', 3000, Converters.Number)
-static readonly port: number;
+@Envapt('MAX_RETRIES', 3, Converters.Number)
+static readonly maxRetries: number;
 ```
 
 I wrote that line across a few services and got the order wrong often enough to stop trusting it. There is no good reason a reader should have to remember whether the fallback or the converter comes second. So v6 removed the positional form and kept the one that names its arguments. And, to keep things simple, envapt shipped [sugar-decorators](/docs/decorators) for the most common converters which only have 2 arguments.
 
 ```ts
 // now
-@EnvNum('PORT', 3000)
-static accessor port: number;
+@EnvNum('MAX_RETRIES', 3)
+static accessor maxRetries: number;
 ```
 
-For converters without a sugar shortcut, the named form `@Envapt('PORT', { converter: Converters.Number, fallback: 3000 })` is what the positional one became, and the bare `@Envapt('KEY')` form never changed. v6 also wrote down a behavior that had shipped by accident in a 5.x minor, that `NODE_ENV=test` resolves to `Environment.Test` and does not fall through to development. It was already the behavior, so I just had v6 document it as intended.
+For converters without a sugar shortcut, the named form `@Envapt('MAX_RETRIES', { converter: Converters.Number, fallback: 3 })` is what the positional one became, and the bare `@Envapt('KEY')` form never changed. v6 also wrote down a behavior that had shipped by accident in a 5.x minor, that `NODE_ENV=test` resolves to `Environment.Test` and does not fall through to development. It was already the behavior, so I just had v6 document it as intended.
 
 The [v5-to-v6 migration guide](/docs/migration-v5-to-v6) has the full list of breaking changes.
 
@@ -41,7 +41,7 @@ v7 made the modern Stage 3 accessor decorators the default. They need no flag, n
 
 ```ts
 class Config {
-    @EnvNum('PORT', 3000) static accessor port: number;
+    @Envapt('PORT', { converter: Converters.Port, fallback: 3000 }) static accessor port: number;
 }
 ```
 
@@ -50,12 +50,12 @@ The legacy form is still there for anyone who wants it, moved to `envapt/legacy`
 But at the same time, Stage 3 decorators are new enough that some bundlers still do not handle them cleanly. That would be a real problem if decorators were the only way to use envapt. They are not. Decorators are just sugar. The functional API is the floor, and it works everywhere.
 
 ```ts
-const port = Envapter.getNumber('PORT', 3000);
+const port = Envapter.getUsing('PORT', Converters.Port, 3000);
 ```
 
 So if your toolchain is not ready for Stage 3 decorators yet, you skip them and lose nothing but the syntax sugar.
 
-Two smaller v7 changes came out of the same dogfooding. The legacy decorators now typecheck the field against what the converter returns, so a field typed `number` with no fallback no longer compiles, because the converter can return `null`. And the portable builds became side-effect-free, so importing one thing like `EnvaptError` from envapt ships about 1.3 kB instead of pulling in the whole reader.
+Two smaller v7 changes came out of the same dogfooding. The legacy decorators now typecheck the field against what the converter returns, so a field typed `number` with no fallback no longer compiles, because the converter can return `null`.
 
 The [v6-to-v7 migration guide](/docs/migration-v6-to-v7) has the full list.
 

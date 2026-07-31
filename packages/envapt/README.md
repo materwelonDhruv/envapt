@@ -24,18 +24,31 @@ Workers, in the browser, or for a secrets object you fetched at boot, you bind t
 `Envapter.useSource(...)`.
 
 ```ts
-import { Envapter } from 'envapt';
+import { Converters, Envapter } from 'envapt';
 
-const port = Envapter.getNumber('PORT', 3000); // number, not string | undefined
+const { port, databaseUrl, cacheTtl, allowedOrigins } = Envapter.getRequiredAll(
+    {
+        PORT: Converters.Port, // number, checked against 0-65535
+        DATABASE_URL: Converters.Url, // URL
+        CACHE_TTL: Converters.Time, // "15m" parsed to 900000
+        ALLOWED_ORIGINS: Converters.array() // string[]
+        // ... and many more built-in converters
+    },
+    'camelCase'
+);
 ```
+
+Call that at startup and a missing value fails the boot, with one error naming every key that was
+missing. Reads with a fallback (`Envapter.getNumber('WORKERS', 4)`) never throw.
 
 **[Read the docs →](https://envapt.materwelon.dev)**
 
 ## What you get
 
 - **Typed values.** A fallback removes `undefined` from the return type. Built-in converters cover
-  numbers, booleans, bigint, JSON, URLs, regular expressions, dates, durations, and arrays, or pass
-  your own function or a Standard Schema validator (zod, valibot, arktype).
+  numbers, integers, floats, booleans, bigint, symbols, JSON, URLs, regular expressions, dates,
+  durations, ports, emails, and arrays, or pass your own function or a Standard Schema validator
+  (zod, valibot, arktype).
 - **Any source.** A source is any object with a `readVars()` method, so you can bind `process.env`, a
   Cloudflare Workers binding, a browser bundle, or a secrets payload you fetched from a store at boot.
   On Node, Bun, and Deno one binds on import.
@@ -69,10 +82,11 @@ Read a value from any call site, in JavaScript or TypeScript. No build step. On 
 bound for you. On Workers and in the browser, call `Envapter.useSource(...)` first.
 
 ```ts
-import { Envapter, Converters } from 'envapt';
+import { Converters, Envapter } from 'envapt';
 
-const port = Envapter.getNumber('PORT', 3000);
-const origins = Envapter.getUsing('ALLOWED_ORIGINS', Converters.array(), []);
+const requestTimeout = Envapter.getUsing('REQUEST_TIMEOUT', Converters.Time, '30s'); // 30000
+const maxRetries = Envapter.getNumber('MAX_RETRIES', 3);
+const debug = Envapter.getBoolean('DEBUG', false);
 ```
 
 On Cloudflare Workers, `env` is importable at module scope, so bind it once in a config module, and in
@@ -92,11 +106,14 @@ export const apiToken = Envapter.get('API_TOKEN');
 Bind a value to a class field with a TC39 accessor decorator. No `experimentalDecorators` flag, and it runs on Bun and Deno from `.ts` directly.
 
 ```ts
-import { EnvNum } from 'envapt';
+import { Converters, Envapt, EnvTime } from 'envapt';
 
 class Config {
-    @EnvNum('PORT', 3000)
+    @Envapt('PORT', { converter: Converters.Port, fallback: 3000 })
     static accessor port: number;
+
+    @EnvTime('CACHE_TTL', '15m')
+    static accessor cacheTtl: number;
 }
 ```
 
