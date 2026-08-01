@@ -1,6 +1,6 @@
 # envapt
 
-## 8.1.1-next.0
+## 8.1.1
 
 ### Patch Changes
 
