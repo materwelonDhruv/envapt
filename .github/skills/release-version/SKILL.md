@@ -41,7 +41,7 @@ git commit -am "chore(release): vX.Y.Z"
 git push origin main
 ```
 
-Then **wait for the `main` publish workflow to finish green**, because CI does the actual publish. If `main` is branch-protected, do the same steps on a branch and merge the PR instead of pushing.
+Then **wait for the `main` publish workflow to finish green**, because CI does the actual publish. The `Protect Publishers` ruleset requires a PR with one approval on `main`. Push directly with a bypass, or run the same steps on a branch and merge the PR.
 
 ```sh
 npm dist-tag ls envapt               # latest now points at X.Y.Z
@@ -55,7 +55,8 @@ Bring the clean version back and re-enter pre mode for the next cycle.
 git switch next && git pull
 git merge main                       # brings the clean X.Y.Z and changelog
 pnpm changeset pre enter next        # re-enter pre mode
-git commit -am "chore: re-enter pre mode"
+git add .changeset/pre.json          # pre enter writes a new file, -a would skip it
+git commit -m "chore: re-enter pre mode"
 git push origin next
 ```
 
