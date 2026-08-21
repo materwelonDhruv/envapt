@@ -3,7 +3,7 @@ title: What changed in envapt v6, v7, and v8
 description: Three majors of envapt, and the dogfooding behind each one, from removing a decorator footgun to one universal import that reads config the same on Node and the edge.
 author: Dhruv
 date: '2026-07-07'
-updated: '2026-07-31'
+updated: '2026-08-21'
 ---
 
 Every change in envapt's last three majors started the same way. I hit something annoying while using envapt in my own projects, and I fixed it.
@@ -35,7 +35,7 @@ The [v5-to-v6 migration guide](/docs/migration-v5-to-v6) has the full list of br
 
 ## v7 made the decorators run on Bun
 
-envapt's decorators were the legacy TypeScript kind, the ones that need `experimentalDecorators`. They did not work on Bun at all. Bun ignores that tsconfig flag and emits the TC39 Stage 3 form instead, so the call shapes never matched and the decorator just broke when you ran your `.ts` directly.
+envapt's decorators were the legacy TypeScript kind, the ones that need `experimentalDecorators`. They did not work on Bun at all. Bun ignored that tsconfig flag and emitted the TC39 Stage 3 form, so the call shapes never matched and the decorator just broke when you ran your `.ts` directly.
 
 v7 made the modern Stage 3 accessor decorators the default. They need no flag, no build step, and they run the same on Node, Bun, and Deno.
 

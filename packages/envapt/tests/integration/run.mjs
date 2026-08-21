@@ -19,10 +19,7 @@ const suites = [
 const runtime = detectRuntime();
 process.stdout.write(`[integration] runtime=${runtime}\n`);
 
-// Bun 1.3.10+ ignores `experimentalDecorators` (bun#27575) and emits Stage 3, which
-// envapt's legacy decorator helper can't accept. The Deno deprecation warning is the
-// canary: when Deno removes the flag, this suite will break.
-if (runtime === 'deno') {
+if (transpilesTypeScript(runtime)) {
     const mod = await import('./suites/05b-decorator-syntax.ts');
     suites.push(['05b-decorator-syntax', mod.default]);
 }
@@ -49,4 +46,8 @@ function detectRuntime() {
     if (typeof Deno !== 'undefined') return 'deno';
     if (typeof Bun !== 'undefined') return 'bun';
     return 'node';
+}
+
+function transpilesTypeScript(runtime) {
+    return runtime === 'deno' || runtime === 'bun';
 }

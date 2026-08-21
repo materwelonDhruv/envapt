@@ -17,11 +17,10 @@
 
 <br clear="left"/>
 
-envapt returns config as the type you asked for instead of the `string | undefined` you get raw, with
-a fallback that removes `undefined` from the return type. It reads from whatever source you bind. On
-Node, Bun, and Deno that is `process.env` and your `.env` files, bound on import. On Cloudflare
-Workers, in the browser, or for a secrets object you fetched at boot, you bind the source with
-`Envapter.useSource(...)`.
+envapt returns config as the type you asked for, with a fallback that removes `undefined` from the
+return type. It reads from whatever source you bind. On Node, Bun, and Deno that is `process.env`
+and your `.env` files, bound on import. On Cloudflare Workers, in the browser, or for a secrets
+object you fetched at boot, you bind the source with `Envapter.useSource(...)`.
 
 ```ts
 import { Converters, Envapter } from 'envapt';
@@ -54,7 +53,7 @@ missing. Reads with a fallback (`Envapter.getNumber('WORKERS', 4)`) never throw.
   On Node, Bun, and Deno one binds on import.
 - **Zero runtime dependencies.** The reader, converters, and built-in `.env` parser are self-contained,
   so nothing is added to your dependency tree.
-- **Runs on Node, Bun, Deno, Cloudflare Workers, and the browser.** Node `>=20`, Bun `>=1.3`, Deno
+- **Runs on Node, Bun, Deno, Cloudflare Workers, and the browser.** Node `>=20`, Bun `>=1.3.11`, Deno
   `>=2.5` (ESM and CJS). The portable build resolves through the package `exports`
   conditions.
 - **`.env` loading built in on Node.** The default Node source adds a per-environment file cascade,

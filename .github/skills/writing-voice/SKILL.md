@@ -1,220 +1,286 @@
 ---
 name: writing-voice
-description: Use this when writing or reviewing any prose in a repo - reference docs, conceptual guides, READMEs, code comments, commit messages, or PR descriptions. Defines a precise, anti-marketing voice - a ban-list of hype words (powers, seamless, loudly, robust, leverage, easy, ...), an anthropomorphism verb-swap, before/after rewrites, worked comment and commit examples, and a one-line test for whether a sentence states a behavior or just sells one.
+description: Use this when writing or reviewing any prose - docs, READMEs, code comments, commit messages, PR descriptions, changesets, and chat replies. Defines plain words over compressed abstractions, verbs over invented nouns, a test for anthropomorphism you can apply to any verb, the punctuation bans, and a hype ban-list.
 ---
 
 # Writing Voice
 
-A house style for technical prose: word-choice rules, before/after rewrites, and reference examples cited to source. The same rules apply to a field description, a `//` comment, and a commit body.
+Write the sentence you would say out loud to another developer. Then check it against the rules below.
 
-**Where this applies:** reference docs, conceptual guides, READMEs, code comments, commit messages, and PR descriptions. A commit body that says "massively improves performance" fails the same test as a doc that says "blazing-fast": give the number or name the mechanism.
-
-Reference voices to model: **Stripe** (field descriptions), **esbuild** (imperative how-to), **Prisma** (behavioral facts). For conceptual prose, **React (react.dev)** and **Tailwind** are warmer but stay factual. **Drizzle** and **Astro** show the voice to avoid: "a good friend", "magic", personality in place of fact.
+This covers everything a human reads. A field description, a `//` comment, a commit body, a changeset, a PR, and a reply in chat all get the same voice.
 
 ---
 
-## 1. Voice principles
+## 1. Plain words beat short words
 
-1. **Address the reader as "you"; name the thing, never make it an actor with intent.** Write what _you_ do and what _the value_ is, not what the library "powers" or "empowers." Stripe states facts about the object: "Whether the charge has been disputed."
-2. **Lead with the reader's action or the plain fact, then the reason.** esbuild: "Your build command is something you will be running repeatedly, so you will want to automate it." Action first, justification second.
-3. **Active voice, present tense, indicative mood.** Plain verbs for behavior: loads, reads, returns, fails, throws, matches. Vue: "Vue automatically detects the change and updates the DOM." Not "will detect", not "is detected by". No "leverages", "harnesses", "drives", "powers".
-4. **State constraints and failure modes as bald facts.** Prisma: "Be aware that this query will fail if the user has any related records." This is the biggest tell of good reference docs: they tell you what breaks, flatly.
-5. **No anthropomorphizing.** A library is not an agent: it does not "want", "know", "see", "try", "believe", or "power" anything. It specifies, detects, stores, reads, and throws. See the verb-swap below.
-6. **One claim per sentence. Cut the intensifier.** Stripe: "Three-letter ISO currency code, in lowercase. Must be a supported currency."
-7. **Show the condition precisely instead of selling smoothness.** Replace "without any manual wiring" with the rule: "on a 429 response, the client waits `Retry-After` seconds before the next attempt." Tailwind: "Notice how this class does nothing _unless_ the element is hovered?"
-8. **Reassurance is allowed, rarely, and only with a reason.** React: "It takes a bit of practice for it to really stick!" Fine for a conceptual intro; never in API field descriptions.
-9. **Prefer the concrete noun over the abstract benefit.** Not "robust error handling" but "throws `TimeoutError` when no response arrives within `timeout` ms." Benefits are inferred from precise behavior, not asserted.
-10. **Start each statement with a verb or its subject; cut "there is" / "there are" and throat-clearing openers.** Microsoft: front-load the action so the sentence scans. Not "There is a `timeout` option that controls the deadline" but "The `timeout` option sets the deadline." Prefer a bare imperative over a weak "you can" opener where it reads cleaner: "Use `retry()` to..." over "You can use `retry()` to...".
+This is the rule that matters most and the one that gets broken most.
 
-### Anthropomorphism: swap the human verb for the mechanical one
+An abstract phrase is shorter than the plain sentence it replaces. Any rule that rewards brevity will pull you toward abstraction. Resist it. **Cut whole ideas. Keep common words.**
 
-Google's rule: "Don't attribute human qualities to software or hardware." The fix is mechanical, replace the human verb with what the code actually does.
+A sentence improves when you drop a point the reader did not need. A sentence gets worse when you compress a point into a technical-sounding noun phrase. The second one looks like editing and is the opposite of it.
 
-| Human verb                  | Mechanical replacement |
-| --------------------------- | ---------------------- |
-| tells / lets                | specifies              |
-| sees / watches              | detects                |
-| knows / remembers           | stores, reads, uses    |
-| wants / needs               | requires               |
-| thinks / assumes / believes | uses, treats as        |
-
-> "I think anthropomorphism is the worst of all. I have now seen programs 'trying to do things', 'wanting to do things', 'believing things to be true', 'knowing things' etc. Don't be so naive as to believe that this use of language is harmless." Dijkstra, EWD854.
-
----
-
-## 2. Ban-list (word/construction → plain replacement)
-
-This list is illustrative, not exhaustive. When a word isn't on it, apply the rule of thumb below and the one-line test at the end.
+Real failures, all written by an assistant explaining its own behavior:
 
 <!--prettier-ignore-start-->
 
-| Banned | Why it fails | Replacement |
-|---|---|---|
-| **powers** ("X powers Y") | anthropomorphizes; hides the mechanism | "X sets Y" / "Y reads X" / state the relationship |
-| **drives / fuels / underpins** | same | "determines", "controls", "sets" |
-| **leverage** | corporate for "use" | "use" |
-| **seamless / seamlessly** | unfalsifiable | delete, or name the condition |
-| **effortless / effortlessly** | hype | delete; show the one step it takes |
-| **loud / loudly / fails loudly / throws loudly** | intensifier with no measurable meaning; dramatizes the failure | name the mechanism: "throws `X`", "logs a warning", "exits non-zero" |
-| **easy / easily / simple / intuitive / fun** | reader-relative; what's easy for you may not be for them | delete, or state the steps it takes |
-| **without any manual wiring / zero config** | sells absence of work | state what happens automatically |
-| **robust** | empty adjective | name the guarantee: "validates …", "throws on …" |
-| **performant** | vague performance claim | a precise figure: "p99 under 5 ms", "O(1) lookup" |
-| **harden / hardening** | vague security verb, hides the change | name the change: "make private", "remove the export", "block the write" |
-| **does more than X** | tease, not information | just state what it does |
-| **under the hood** | filler | "internally", or delete |
-| **out of the box** | filler | "by default" |
-| **first-class** | jargon | name the support: "supports gzip and brotli directly" |
-| **simply / just** | minimizes reader effort, often wrong | delete |
-| **in order to** | wordiness | "to" |
-| **utilize** | pompous for "use" | "use" |
-| **please / please note** | filler; never "please note" | delete |
-| **allow / allows you to** | feature-centric and wordy | "lets you", or rewrite from the reader's side: "You can …" |
-| **enable** (= make available) | vague; reserve for feature flags and security | "turn on" |
-| **unlock / enable you to** | hype | "lets you" / "you can" |
-| **empower / supercharge / blazing-fast / lightning** | pure marketing | delete; if speed matters, give a number |
-| **powerful / flexible / elegant** | self-praise | show the capability instead |
-| **notably / clearly / of course / actually / essentially** | editorializing; tells the reader how to feel | delete |
-| **"some say" / "it is believed" / "research shows"** (unattributed) | weasel; implies a claim without making one | name the source, or delete |
-| **handle / handling** (vague) | hides behavior | name the action: "parses", "coerces", "rejects" |
-| **rich set of / suite of** | brochure | "a set of", or just list them |
-| **magic / magical** | mystifies behavior | explain the rule |
-| **reach for X (or variations of reach)** | folksy filler for "use" | "use X", or name the action |
-| **blast radius** | war metaphor for scope of impact; dramatizes it | name what's affected: "every caller of `parse()`", "all rows in `users`" |
-| **lives in / lives on** | folksy for where something is defined; anthropomorphizes a location | "is defined in", "is set on", name the file or element |
-| **owns** | anthropomorphizes; a module isn't an agent with property | name the relationship: "defines", "sets", "is the only writer of" |
-| **drops** ("X drops Y") | anthropomorphizes, a package or type is not an actor that discards | "no longer exports / defines Y", "Y is removed" |
-| **gains** ("X gains Y") | anthropomorphizes, a package or type is not an actor that acquires | "adds Y", "now has Y", "accepts Y" |
-| **exercise / exercised / exercisable** ("the test exercises X") | vague test-jargon for running or calling code | "calls X", "runs X", "tests X" |
+| Compressed | Plain |
+|---|---|
+| local optimum, global monotony | every comment passes on its own. the file reads like one sentence repeated. |
+| per-comment conformance | every comment matching the rules |
+| the gradient toward variety is zero | nothing pushes toward variety |
+| the tails of the distribution | the unusual ones |
+| the variance carriers | the things that make writing sound different |
+| epistemic posture | how sure the writer sounds |
+| uniquely determined by the constraints | the only shape the rules leave |
+| rejection criteria | rules about what to cut |
+| uniform density | the same number of comments everywhere |
+| optimizing against an auditor | writing to pass the check |
 
 <!--prettier-ignore-end-->
 
-Rule of thumb: **if an adjective can't be replaced by a measurable fact or a code reference, delete it.**
+Every phrase on the left is shorter. Every phrase on the left costs the reader more.
 
-### Banned punctuation
+Those ten are examples of one move, and checking against them catches nothing. Apply the tests below to every phrase you write.
 
-The em-dash `—` and en-dash `–` are banned in prose outright, replace them with a hyphen, a comma, parentheses, or two sentences. The colon `:` and semicolon `;` are banned only as a **clause splice**, where the mark joins two independent clauses into one sentence (the AI-prose tell, two thoughts packed behind a mark instead of ended with a period). A colon that introduces a list, a code block, an enumeration, or a short label (a `two forms:` lead-in, an `npm: envapt` label) is standard and clearer than a period there, so keep it and do not flatten it. A semicolon in running prose is almost always a splice, so avoid it, its one legitimate use is separating list items that already contain commas. This is a prose rule only. Code syntax that requires a colon or semicolon (type annotations, object keys, statement terminators) is exempt.
+### Three tests
 
-Comma splices are also banned: a comma cannot join two independent clauses, so a comma splice is always a grammar error. Rearrange the sentence into more coherent, natural prose or split as needed with simple punctuation. Comma spliced sentences really confuse the reader because they don't make a lot of sense when read on their own.
+**Say it out loud.** Would you use this phrase talking to someone at a keyboard? "The gradient toward variety is zero" fails. "Nothing pushes toward variety" passes.
 
-**Replace a banned mark with punctuation that does the same grammatical job.** A `;`, `—`, or `–` between two complete clauses is holding two independent thoughts apart. A comma cannot join two independent clauses, so swapping one in makes a comma splice. Use a period and two sentences, or reword the sentence. Read the result back on its own.
+**Did you invent the noun?** Two abstract nouns stuck together to name an idea you had thirty seconds ago is jargon, whatever it means. "comment density", "variance carrier", "conformance pressure". Say what happens with a verb.
 
-```ts
-// Bad: colon splice + semicolon splice
-// turn the value into its slot: out of range would corrupt neighbours; check first.
-// Good: one fact, plain comma
-// out of range would carry into the neighbouring field on decode.
-```
+**Did you borrow it as a picture?** A word carried in from maths, physics, war, or biology to stand for what you mean is a picture, and the reader has to unpack it to get back to the thing. Name the thing.
 
-**Do not reflexively replace a `;` or `:` with ", so".** A semicolon often just sets two related facts side by side, and ", so" asserts a cause the original never claimed. It reads wrong when the real link is a design choice or a plain sequence, and stacking two "so"s in one sentence is a tell. Use ", so" only when the second clause genuinely results from the first. Otherwise use a period, or ", and" for a neutral join.
-
-- BAD, invented cause: "meaningless without a filesystem, so it throws" (the throw is a design choice, and ", so" overstates it as a consequence).
-- GOOD: "meaningless without a filesystem, and it throws instead of ignoring it".
-- BAD, stacked "so": "binds a source per file, so restore it after any swap so later tests see a clean default".
-- GOOD: "binds a source per file. Tests here swap it, so restore it afterward for a clean default."
+No list will cover this. Apply the test to every phrase. The question is whether the word already meant this here before you wrote the sentence. Cascade, converter, source, and fallback pass, because they are the real names of real things in this codebase. A word you reached past the domain for does not.
 
 ---
 
-## 3. BEFORE → AFTER rewrites
+## 2. Say it with a verb
 
-The running example is a generic HTTP client. Substitute your own domain; the transformation is the point.
+A verb turned into a noun makes the sentence longer and vaguer at once, and it usually drags in a weak `is` or `are` to hold it up.
 
-1. BEFORE: "The same base URL POWERS every request, interceptor, and retry helper."
-   AFTER: "The client reads `baseURL` once at construction. Every request method prepends it; pass the `url` option to override it per call." (Prisma)
-2. BEFORE: "A default header does MORE THAN set a value."
-   AFTER: "A default header is sent on every request unless the per-call `headers` option overrides that key." (Stripe)
-3. BEFORE: "retries failed requests WITHOUT ANY MANUAL WIRING."
-   AFTER: "The client retries on 429 and 503 up to `retries` times with exponential backoff. Other status codes are returned as-is." (esbuild)
-4. BEFORE: "the client seamlessly handles JSON out of the box."
-   AFTER: "If the response `Content-Type` is `application/json`, the client parses the body and returns the parsed value. Otherwise it returns the raw text." (Vue)
-5. BEFORE: "Our powerful interceptor layer ensures your requests are always robust."
-   AFTER: "If a request interceptor throws, the request is never sent and the error propagates to the caller." (Prisma)
-6. BEFORE: "The `@retry` decorator empowers you to effortlessly add resilience to any method."
-   AFTER: "Annotate a method with `@retry(3)` to re-invoke it up to three times on a thrown error. It re-throws the last error if every attempt fails." (esbuild)
-7. BEFORE: "Under the hood, the client leverages a smart pool to unlock connection reuse."
-   AFTER: "The client keeps up to `maxSockets` open connections per host and reuses them across requests." (Vue)
-8. BEFORE: "Helper methods like `client.json()` give you a first-class, blazing-fast developer experience."
-   AFTER: "`client.json(url)` is shorthand for `client.get(url)` followed by `.json()` on the response. It returns the parsed body." (Stripe)
-9. BEFORE: "the client simply works with your existing setup, just drop it in."
-   AFTER: "The client reads proxy settings from `HTTP_PROXY` and `NO_PROXY`, so it respects the same environment your shell already uses." (Prisma)
-10. BEFORE: "A rich set of built-in adapters lets you handle any transport with ease."
-    AFTER: "The client ships adapters for `fetch`, `XMLHttpRequest`, and Node's `http`/`https`. You can register your own adapter." (esbuild/Stripe)
+<!--prettier-ignore-start-->
 
----
+| Noun form | Verb form |
+|---|---|
+| performs a validation of the payload | validates the payload |
+| the deletion of stale rows happens on startup | startup deletes stale rows |
+| provides an improvement in readability | is easier to read |
+| there is a requirement that callers await this | callers must await this |
+| the implementation of retry logic | retries |
 
-## 4. Comments follow the same voice
+<!--prettier-ignore-end-->
 
-A code comment is prose; every rule above applies to it. The most common comment-voice failure is the intensifier dressed up as information: `loudly`, `aggressively`, `properly`. State the mechanism instead.
+Scan a draft for words ending in `-tion`, `-ment`, `-ance`, and `-ility`. Most of them are a verb in hiding. This is Helen Sword's "zombie nouns", and the fix is always to find the verb underneath and use it.
 
-```ts
-// Bad: intensifier + dramatized failure
-// Validate the payload and fail loudly so callers notice.
-// Good: name what is thrown and who catches it
-// Throws `ValidationError` on the first invalid field; the route handler catches it.
-```
+Cut "there is" and "there are" openers. Start with the subject or the verb.
 
-```ts
-// Bad: "powers" hides the mechanism
-// This flag powers the entire retry subsystem.
-// Good: state the effect
-// When false, `request()` skips the retry loop and returns the first response.
-```
+### Lead with who does what
 
-```ts
-// Bad: anthropomorphized ("wants")
-// The parser wants a trailing newline here.
-// Good: state the requirement
-// The parser requires a trailing newline to terminate the last record.
-```
+The other way a verb goes missing is a split sentence, where one clause becomes two and the real verb sits behind an `is`. It feels like emphasis while you write it. It costs the reader a whole clause to unpack. Don't write cleft sentences, basically.
 
-```ts
-// Bad: "loudly" + "magic"
-// Logs loudly when the cache magically warms itself.
-// Good
-// Logs a warning via `logger.warn` on the first miss after a cold start.
-```
+<!--prettier-ignore-start-->
 
-This skill governs how a comment reads once you've decided to write it. For whether a comment is warranted at all (density, placement, when it's noise), see the `code-commenting-guidelines` skill. The two compose: that one decides _if_, this one decides _how_.
+| Split | Direct |
+|---|---|
+| an empty target is what lets the cleanup work | scaffold deletes the directory when a step fails |
+| what this does is reset the cache | this resets the cache |
+| it is the config that sets the port | the config sets the port |
+| the reason it fails is the missing shebang | it fails because the shebang is missing |
+
+<!--prettier-ignore-end-->
 
 ---
 
-## 5. Commit and PR voice
+## 3. Anthropomorphism, with a test you can apply
 
-A PR description is prose: the full ban-list and every principle above apply, no hype, no narrating the diff. Commit _subjects_ add one rule on top: **imperative mood**.
+Code performs no human act. The ban is strict and it keeps leaking, because a word list only catches the words on it.
 
-- **The test (cbeams):** a subject must complete the sentence "If applied, this commit will \_\_\_." "Add", "Fix", "Drop", "Rename" pass; "Added", "Fixes", "Changing", and noun phrases like "Sweet new API methods" fail.
-- **The Conventional Commits type prefix is orthogonal to mood.** `feat: add retry backoff`, not `feat: adds retry backoff` and not `feat: blazing-fast retries`.
-- **Bodies state what changed and why, plainly.** The reasons, the old behavior and what was wrong with it, the new behavior. The diff already shows the how.
+**The test: could you write that function?** `stop()`, `throws()`, `reads()`, `stores()`, `returns()`. Yes. `land()`, `want()`, `know()`, `see()`, `care()`. No. A verb with no possible implementation is a metaphor, and the metaphor is standing where the mechanism should be.
 
-Bad → good subjects:
+Real leaks, all of which passed a word-list check:
 
-- "Fixed bug with retries" → "Fix retry loop hang on an empty 503 body"
-- "Massive perf win on the hot path" → "Cache compiled regexes to avoid recompiling per call"
-- "Sweet new API methods" → "Add list and get methods to the Widgets API"
-- "Changing behavior of parse()" → "Make parse() reject negative offsets"
+<!--prettier-ignore-start-->
+
+| Written | Fixed |
+|---|---|
+| the record lands ~2.5s later | cloudflare publishes the record ~2.5s later |
+| the client waits out an exhausted bucket | the client blocks until the rate limit resets |
+| abort contains the stop | abort also stops the tunnel |
+| a later onPort holds no handle on this tunnel | a later onPort cannot reach this tunnel |
+| zigzag keeps a small negative number short | zigzag encodes a small negative number in fewer chars |
+
+<!--prettier-ignore-end-->
+
+The standing swaps:
+
+<!--prettier-ignore-start-->
+
+| Human verb | Mechanical replacement |
+|---|---|
+| tells / lets | specifies |
+| sees / watches | detects |
+| knows / remembers | stores, reads, uses |
+| wants / needs | requires |
+| thinks / assumes / believes | uses, treats as |
+| owns | defines, sets, is the only writer of |
+| lives in / lands in / sits on | is defined in, is set on |
+| handles | parses, coerces, rejects, retries |
+| powers / drives / fuels | sets, determines, controls |
+
+<!--prettier-ignore-end-->
+
+### A company is an actor
+
+Discord, Cloudflare, and a browser vendor are people and servers. They do act. "Discord rejects a hostname it already rejected" is correct and precise. "The parser wants a trailing newline" is the banned thing. The line falls between an organization that made a choice and a function that executes one.
+
+> "I have now seen programs 'trying to do things', 'wanting to do things', 'believing things to be true', 'knowing things' etc. Don't be so naive as to believe that this use of language is harmless." Dijkstra, EWD854.
 
 ---
 
-## 6. Verbatim target-voice sentences (tuning forks)
+## 4. One claim per sentence, then stop
 
-### Docs and API prose
+Write the claim and end the sentence. Reach for a second clause only when the reader would get the first one wrong without it.
 
-1. Stripe, flat field fact: "If the charge was created without capturing, this Boolean represents whether it is still uncaptured or has since been captured." <https://docs.stripe.com/api/charges/object>
-2. Prisma, failure as a bald fact: "Be aware that this query will fail if the user has any related records (such as posts)." <https://www.prisma.io/docs/orm/prisma-client/queries/crud>
-3. esbuild, imperative how-to with the exact constraint: "If you are bundling code that will be run in node, you should configure the `platform` setting by passing `--platform=node` to esbuild." <https://esbuild.github.io/getting-started/>
-4. Tailwind, names the precise condition: "Notice how this class does nothing _unless_ the element is hovered?" <https://tailwindcss.com/docs/styling-with-utility-classes>
-5. Vue, present-tense mechanism: "When you use a ref in a template, and change the ref's value later, Vue automatically detects the change and updates the DOM accordingly." <https://vuejs.org/guide/essentials/reactivity-fundamentals.html>
+Before a sentence ships, cut it at the connective and read what is left. When the shorter version still carries the point, that was the sentence.
 
-### Comments and commits
+Prose written to a rule set collapses toward whichever single form satisfies every rule, and the collapse is invisible from inside one sentence. So judge it as a block, a paragraph or a changeset or a file's comments read end to end.
 
-1. Clean Code (Martin), on redundant comments: "Redundant comments are just places to collect lies and misinformation." <https://www.goodreads.com/quotes/909630-redundant-comments-are-just-places-to-collect-lies-and-misinformation>
-2. Google Python style guide, on what a comment is for: "never describe the code. Assume the person reading the code knows the language (though not what you're trying to do) better than you do." <https://google.github.io/styleguide/pyguide.html>
-3. cbeams, on commit subjects: "A properly formed Git commit subject line should always be able to complete the following sentence: If applied, this commit will _your subject line here_." <https://cbea.ms/git-commit/>
+A person writes unevenly. Some sentences land in four words. One runs long because the thing was genuinely hard. One admits uncertainty. That unevenness gives it a natural feel.
+
+Aim for a spread in length, in how sentences open, and in what each one is doing. When two sentences in a row run the same length and turn at the same joint, rewrite one.
 
 ---
 
-## One-line test for any sentence
+## 5. State behavior, never sell it
 
-Can a reader predict the exact behavior from this sentence, or are they just being told it's good? If the latter, rewrite it as a fact, a step, or a failure mode. A sharper variant for the subtle cases: does the word only create an impression that something was said (weasel, puffery), or does it assign a human act to code (anthropomorphism)? If so, cut it.
+1. Address the reader as "you". Name the thing, and give it no intent.
+2. Lead with the action or the plain fact, then the reason.
+3. Active voice, present tense. Plain verbs: loads, reads, returns, fails, throws, matches.
+4. Say what breaks, flatly. Prisma does this well: "Be aware that this query will fail if the user has any related records."
+5. One claim per sentence. Cut the intensifier.
+6. Give the condition, never the smoothness. Replace "no manual wiring" with "on a 429 the client waits `Retry-After` seconds before the next attempt".
+7. Prefer the concrete noun over the promised benefit. "Throws `TimeoutError` when no response arrives within `timeout` ms" beats any adjective.
 
-Sources: Tailwind, React, Vite, Prisma, esbuild, Stripe, Vue (voice models); the Google, GitLab, and Microsoft developer style guides and Wikipedia "Words to watch" (word bans); Google's anthropomorphism page and Dijkstra's EWD854 (anthropomorphism); Clean Code, the Google Python style guide, and the cbeams / Angular commit conventions (comments and commits). Drizzle and Astro rejected as too marketing-voiced.
+Rule of thumb: if an adjective cannot be replaced by a measurable fact or a code reference, delete it.
+
+---
+
+## 6. Punctuation
+
+Em-dash `—` and en-dash `–` are banned in prose. Use a comma, parentheses, a hyphen, or two sentences.
+
+Colon `:` and semicolon `;` are banned as a clause splice, where the mark joins two complete clauses into one sentence. A colon introducing a list, a code block, or a short label is standard. Keep it.
+
+Comma splices are banned. A comma cannot join two complete clauses. Every comma carries a connector after it, separates list items, or becomes a period. Also, prefer to use not-negation over no-negation. "does not throw" is better than "throws no error" for example.
+
+**The comma gets no carve-out.** The colon exemption above covers the colon and nothing else. A comma joining two clauses in parallel shape (`A is X, B is Y`), a two-item enumeration, a pair of contrasting cases, or a before-and-after is still a splice. Matching structure only makes the error easier to miss. If you catch yourself arguing that a particular splice reads fine, that argument is the tell. Rewrite it.
+
+**Fix a splice by rewriting it shorter, in this order.**
+
+1. **Collapse to one clause.** Most splices are one fact stretched over two. This is almost always the best result and the one to try first.
+2. **Add the connector that names the real relation** (`because`, `since`, `and`, `then`). Keeps one sentence when both halves genuinely earn their place.
+3. **Two sentences.** The fallback when the halves are independent facts that both matter.
+
+Going to a period first produces two stubby sentences carrying what one short line said better.
+
+```ts
+// Bad: parallel shape, still a splice
+// null is a failed reload, [] is a file that registered nothing
+// Good (1): one clause carries it, the empty array needs no gloss
+// only a failed reload returns null
+```
+
+```ts
+// Bad: two facts jammed with a comma
+// the cache is keyed by file, a rename lands as a fresh entry
+// Good (2): the connector names the relation
+// a rename lands as a fresh entry because the cache is keyed by file
+```
+
+**Replace a banned mark with punctuation that does the same job.** A `;` or `—` between two complete clauses is holding two thoughts apart, and a bare comma cannot do that. Use a period.
+
+**A connector that claims a cause has to earn it.** Reaching for one to hold a second clause on is how a sentence grows a consequence the reader was about to read anyway. Name the reason for the first clause with `because` or `since`, join two facts with `and`, or end the sentence.
+
+- BAD, invented cause: "it is meaningless without a filesystem and it throws".
+- GOOD: "it throws because it is meaningless without a filesystem".
+- BAD, stacked: "binds a source per file and restore it after any swap and later tests see a clean default".
+- GOOD: "binds a source per file. Tests here swap it, then restore it for a clean default."
+
+### Contrast
+
+State the positive claim on its own. Defining a thing by first naming what it is not costs the reader a rejected idea they then have to discard. This covers "not X, but Y", "X, not Y", "rather than X", "instead of X", and every variant.
+
+- BAD: "the slot is load-bearing, not decoration".
+- GOOD: "the slot keeps the ids unique".
+
+When a contrast genuinely carries weight, write two plain sentences.
+
+---
+
+## 7. Ban-list
+
+Illustrative. When a word is missing from the table, apply section 1 and the test at the bottom.
+
+<!--prettier-ignore-start-->
+
+| Banned | Replacement |
+|---|---|
+| powers / drives / fuels / underpins | determines, controls, sets |
+| leverage / utilize | use |
+| seamless / effortless / frictionless | delete, or name the condition |
+| loud / loudly / fails loudly | name the mechanism: throws `X`, logs a warning, exits non-zero |
+| easy / simple / intuitive / fun | delete, or state the steps |
+| robust | name the guarantee: validates X, throws on Y |
+| performant | give a figure: p99 under 5 ms, O(1) lookup |
+| harden / hardening | name the change: make private, remove the export |
+| under the hood | internally, or delete |
+| out of the box | by default |
+| first-class | name the support |
+| simply / just | delete |
+| in order to | to |
+| please / please note | delete |
+| enable / unlock / empower | turn on, lets you, you can |
+| powerful / flexible / elegant | show the capability |
+| notably / clearly / of course / actually / essentially | delete |
+| magic / magical | explain the rule |
+| reach for X | use X |
+| blast radius | name what is affected: every caller of `parse()` |
+| rich set of / suite of | list them |
+| exercises (a test exercises X) | calls X, runs X, tests X |
+| does more than X | state what it does |
+| worth noting / surprisingly / you may notice | delete, state the fact |
+| good catch / fair point / great question | delete |
+| to be honest / frankly | delete |
+
+<!--prettier-ignore-end-->
+
+---
+
+## 8. Rewrites
+
+1. BEFORE: "The same base URL powers every request." AFTER: "The client reads `baseURL` once at construction. Every request method prepends it."
+2. BEFORE: "retries failed requests without any manual wiring." AFTER: "The client retries on 429 and 503 up to `retries` times with exponential backoff. Other status codes are returned as-is."
+3. BEFORE: "the client seamlessly handles JSON out of the box." AFTER: "If the response `Content-Type` is `application/json`, the client parses the body. Otherwise it returns the raw text."
+4. BEFORE: "Our powerful interceptor layer ensures your requests are always robust." AFTER: "If a request interceptor throws, the request is never sent and the error propagates to the caller."
+5. BEFORE: "The `@retry` decorator empowers you to effortlessly add resilience." AFTER: "Annotate a method with `@retry(3)` to re-invoke it up to three times on a thrown error. It re-throws the last error if every attempt fails."
+6. BEFORE: "Under the hood, the client leverages a smart pool to unlock connection reuse." AFTER: "The client keeps up to `maxSockets` open connections per host and reuses them across requests."
+
+---
+
+## 9. Chat counts
+
+A reply in chat follows every rule above. Section 1 applies hardest here, because explaining something you just worked out is exactly when a compressed abstraction feels earned.
+
+Two or more named things go in a list, never in a prose sentence. Counted things ("all four", "the three internal ones") force the reader to rebuild the set.
+
+Acknowledge in as few words as possible, then go to the content. No opener rating the question, no flag about being honest, no repeating the correction back.
+
+---
+
+## The test
+
+Can a reader predict the exact behavior from this sentence, or do they only get an impression that something was said?
+
+If the sentence only creates an impression, rewrite it as a fact, a step, or a failure mode. If a word in it would make a reader stop and work out what it means, replace it with the plain thing.
+
+Sources: Stripe, Prisma, esbuild, Vue, and Tailwind for reference voice. Google, GitLab, and Microsoft developer style guides plus Wikipedia "Words to watch" for the word bans. Google's anthropomorphism guidance and Dijkstra EWD854. Helen Sword on nominalizations. Clean Code and the Google Python style guide on comments.

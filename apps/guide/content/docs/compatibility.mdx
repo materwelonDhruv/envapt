@@ -3,7 +3,7 @@ title: Compatibility
 description: Runtime support, engine versions, module formats, the portable and node builds, and how decorators behave across runtimes.
 ---
 
-envapt runs on Node, Bun, and Deno with the same API and zero runtime dependencies. It also runs on Cloudflare Workers (workerd), other edge runtimes, and the browser, where you bind the source yourself (a `PortableSource`) and read with the same typed API. The functional reader API works on every runtime with no build step. The default `@Envapt` accessor decorators need no flag either, the legacy `envapt/legacy` decorators have per-runtime requirements covered below.
+envapt runs on Node, Bun, and Deno with the same API and zero runtime dependencies. It also runs on Cloudflare Workers (workerd), other edge runtimes, and the browser, where you bind the source yourself (a `PortableSource`) and read with the same typed API. The functional reader API works on every runtime with no build step. The default `@Envapt` accessor decorators need no flag either. The legacy `envapt/legacy` decorators need `experimentalDecorators` on every runtime.
 
 ## Binding by runtime
 
@@ -17,8 +17,8 @@ envapt splits into two builds, selected by the package `exports` conditions. On 
 
 | Runtime | Condition | Reads | Gotcha |
 | --- | --- | --- | --- |
-| Node | `node` | `process.env` and the `.env` cascade | — |
-| Bun | `node` | `process.env` and the `.env` cascade | — |
+| Node | `node` | `process.env` and the `.env` cascade | -- |
+| Bun | `node` | `process.env` and the `.env` cascade | -- |
 | Deno | `deno` | `process.env` and the `.env` cascade | needs Deno 2.5+ |
 | Deno Deploy | `deno` | dashboard vars via `process.env` / `Deno.env` | no `.env` files, set vars in the dashboard |
 
@@ -47,14 +47,14 @@ Bind a `PortableSource` from the object the platform gives you before your first
 | Runtime | Minimum |
 | --- | --- |
 | Node | `>=20` |
-| Bun | `>=1.3` |
+| Bun | `>=1.3.11` |
 | Deno | `>=2.5` |
 
 {/* prettier-ignore-end */}
 
 Each release is tested against Node 20, 22, and 24, plus Bun and Deno.
 
-Cloudflare Workers and the browser have no semver engine; the right build is selected by the package `exports` conditions (below), not by an engine version.
+Cloudflare Workers and the browser have no semver engine. The package `exports` conditions (below) select the build there.
 
 ## Install
 
@@ -62,7 +62,7 @@ Cloudflare Workers and the browser have no semver engine; the right build is sel
 npm install envapt
 ```
 
-The Deno tab installs from JSR; you can also use the npm specifier with `deno add npm:envapt`.
+The Deno tab installs from JSR. You can also use the npm specifier with `deno add npm:envapt`.
 
 ## Module formats
 
@@ -75,9 +75,9 @@ The package `exports` conditions select between two builds:
 - **The portable build** resolves from bare `envapt` on Workers, edge runtimes (`edge-light`, `fastly`, `worker`), the browser, and react-native. It contains no `node:` imports. Bind a [`PortableSource`](/docs/sources) and read with the same typed API.
 - **The node build** also resolves from bare `envapt` on Node, Bun, and Deno. `FileSource` is bound on import, so it reads `process.env` and the `.env` cascade, and the file APIs work.
 
-Bind a source before your first read on the portable build; see [Sources](/docs/sources).
+Bind a source before your first read on the portable build. See [Sources](/docs/sources).
 
-Import from `envapt` on every runtime, no subpath import is needed. On the portable build, the file-only config APIs (`envPaths`, `baseDir`, `envFileOptions`, `configureProfiles`, `resetProfiles`) warn once and no-op by default. Set `Envapter.fileApiMode = 'throw'` to make them throw [`FileApiUnsupported`](/docs/errors) instead. `fileApiMode` governs only the portable file-API behavior. On the node build a bare (non-filesystem) source still throws `FileApiUnsupported` when a file API is called. An unbound read throws `NoSourceBound` on all runtimes regardless of `fileApiMode`.
+Import from `envapt` on every runtime, no subpath import is needed. On the portable build, the file-only config APIs (`envPaths`, `baseDir`, `envFileOptions`, `configureProfiles`, `resetProfiles`) warn once and no-op by default. Set `Envapter.fileApiMode = 'throw'` to make them throw [`FileApiUnsupported`](/docs/errors). `fileApiMode` governs only the portable file-API behavior. On the node build a bare (non-filesystem) source still throws `FileApiUnsupported` when a file API is called. An unbound read throws `NoSourceBound` on all runtimes regardless of `fileApiMode`.
 
 Deno and Deno Deploy resolve the node build by design. On Deno the `.env` cascade and file APIs work as on Node. Deno Deploy has no `.env` files on disk, so set variables in its dashboard and read them through `process.env` / `Deno.env`.
 
@@ -93,11 +93,10 @@ The legacy decorators at `envapt/legacy` are the older TypeScript decorators, so
 { "compilerOptions": { "experimentalDecorators": true } }
 ```
 
-**Bun.** The functional API and the default accessor decorators both work when you run a `.ts` file directly. Only the legacy form does not.
+**Bun.** The functional API and both decorator forms work when you run a `.ts` file directly. The legacy form reads `experimentalDecorators` from `tsconfig.json`, same as Node.
 
-<Callout type="danger">
-    Bun emits TC39 (Stage 3) decorators and ignores `experimentalDecorators`
-    ([bun#27575](https://github.com/oven-sh/bun/issues/27575)), so the legacy `envapt/legacy` decorators do not work when
-    you run a `.ts` entry through Bun directly. The default accessor decorators on `envapt` are themselves Stage 3, so
-    they work. To use the legacy form on Bun, precompile with `tsc`, tsdown, or Vite and run the compiled JavaScript.
+<Callout>
+    Bun honors `experimentalDecorators` from 1.3.11 onward ([bun#27575](https://github.com/oven-sh/bun/issues/27575)).
+    Bun 1.3.10 ignores the flag and emits Stage 3 decorators, so a legacy `@Envapt` field throws a `TypeError` when the
+    class is defined.
 </Callout>
