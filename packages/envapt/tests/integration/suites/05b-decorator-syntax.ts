@@ -4,9 +4,7 @@ import { FIXTURE_PATH } from './_helpers.mjs';
 import { Envapter } from '../../../dist/node/index.mjs';
 import { Envapt } from '../../../dist/node/legacy.mjs';
 
-// Deno-only suite. Bun 1.3.10+ permanently emits Stage 3 decorators (bun#27575),
-// incompatible with envapt's legacy install signature. Node has no native TS.
-// Pairs with the runtime-helper test in 05-decorator.mjs.
+// experimentalDecorators comes from deno.json and tsconfig.json in the parent directory
 class Config {
     @Envapt('BASIC_KEY', { fallback: 'default' })
     static readonly BASIC_KEY: string;

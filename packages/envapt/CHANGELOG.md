@@ -1,5 +1,11 @@
 # envapt
 
+## 8.2.0
+
+### Minor Changes
+
+- Raise the bun engine floor to 1.3.11. They finally fixed the decorator bug.
+
 ## 8.1.1
 
 ### Patch Changes
