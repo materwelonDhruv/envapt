@@ -3,7 +3,16 @@ import './global.css';
 import { RootProvider } from 'fumadocs-ui/provider/next';
 import { Hanken_Grotesk, JetBrains_Mono } from 'next/font/google';
 
-import { DEFAULT_OG_IMAGE, REPO_URL, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from '@/lib/site';
+import {
+    AUTHOR_URL,
+    DEFAULT_OG_IMAGE,
+    JSR_URL,
+    NPM_URL,
+    REPO_URL,
+    SITE_DESCRIPTION,
+    SITE_NAME,
+    SITE_URL
+} from '@/lib/site';
 
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
@@ -31,10 +40,11 @@ const structuredData = {
     description: SITE_DESCRIPTION,
     url: SITE_URL,
     codeRepository: REPO_URL,
+    sameAs: [NPM_URL, JSR_URL, REPO_URL],
     programmingLanguage: 'TypeScript',
     runtimePlatform: ['Node.js', 'Bun', 'Deno', 'Cloudflare Workers', 'Browser'],
     license: 'https://www.apache.org/licenses/LICENSE-2.0',
-    author: { '@type': 'Person', name: 'Dhruv' }
+    author: { '@type': 'Person', name: 'Dhruv', url: AUTHOR_URL }
 };
 
 export default function RootLayout({ children }: { children: ReactNode }): ReactNode {
