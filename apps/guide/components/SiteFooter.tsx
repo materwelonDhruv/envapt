@@ -1,14 +1,14 @@
 import Link from 'next/link';
 
 import { BrandLockup } from '@/components/BrandLockup';
-import { ENVAPT_VERSION, NPM_URL, npmVersionUrl } from '@/lib/site';
+import { AUTHOR_URL, ENVAPT_VERSION, JSR_URL, NPM_URL, npmVersionUrl, REPO_URL } from '@/lib/site';
 
 import type { ReactNode } from 'react';
 
 const RELEASES = [
     { label: 'npm', href: ENVAPT_VERSION ? npmVersionUrl(ENVAPT_VERSION) : NPM_URL },
-    { label: 'JSR', href: 'https://jsr.io/@materwelon/envapt' },
-    { label: 'GitHub', href: 'https://github.com/materwelonDhruv/envapt' }
+    { label: 'JSR', href: JSR_URL },
+    { label: 'GitHub', href: REPO_URL }
 ];
 
 const DOCS = [
@@ -85,7 +85,7 @@ export function SiteFooter(): ReactNode {
                     <span>
                         Built by{' '}
                         <a
-                            href="https://github.com/materwelondhruv"
+                            href={AUTHOR_URL}
                             target="_blank"
                             rel="noreferrer"
                             className="text-(--ev-link) hover:underline"
