@@ -5,8 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { Envapter, Environment } from '../src';
 
-// the cascade resolves paths relative to process.cwd(), so each case chdirs into a fixture dir
-// and resets through the public API to keep the cascade as the active path mode
+// the cascade resolves paths against process.cwd()
 describe('profiles: dotenv-flow auto-cascade', () => {
     const originalCwd = process.cwd();
     const originalEnv = {
@@ -23,7 +22,7 @@ describe('profiles: dotenv-flow auto-cascade', () => {
 
     afterEach(() => {
         process.chdir(originalCwd);
-        // Restore every detection key a test may have set or deleted, so none leak to the next case.
+        // tests here set and delete detection keys
         for (const [key, value] of Object.entries(originalEnv)) {
             if (value === undefined) Reflect.deleteProperty(process.env, key);
             else process.env[key] = value;
@@ -41,26 +40,26 @@ describe('profiles: dotenv-flow auto-cascade', () => {
         expect(Envapter.get('BASE_ONLY')).to.equal('set-by-dot-env');
     });
 
-    it('applies full layer precedence: `.env.${env}.local` > `.env.local` > `.env.${env}` > `.env`', () => {
+    it('applies full layer precedence: `.env.${env}.local` > `.env.${env}` > `.env.local` > `.env`', () => {
         process.chdir(resolve(import.meta.dirname, 'cascade-fixtures', 'all-layers'));
         process.env.NODE_ENV = 'development';
         Envapter.environment = Environment.Development;
         Envapter.resetProfiles();
 
-        // Highest layer: .env.development.local wins where it sets a key
+        // .env.development.local wins where it sets a key
         expect(Envapter.get('CASCADE_KEY')).to.equal('dev-local');
         // Each layer's unique key surfaces
         expect(Envapter.get('ONLY_BASE')).to.equal('base');
         expect(Envapter.get('ONLY_LOCAL')).to.equal('local');
         expect(Envapter.get('ONLY_DEV')).to.equal('dev');
         expect(Envapter.get('ONLY_DEV_LOCAL')).to.equal('dev-local');
-        // Pairwise precedence: .env.local beats .env
+        // .env.local beats .env
         expect(Envapter.get('SHARED_BASE_LOCAL')).to.equal('local');
         // .env.${env} beats .env
         expect(Envapter.get('SHARED_BASE_ENV')).to.equal('dev');
         // .env.${env}.local beats .env
         expect(Envapter.get('SHARED_BASE_ENV_LOCAL')).to.equal('dev-local');
-        // .env.${env} beats .env.local (env-specific is higher than non-env-specific local)
+        // .env.${env} beats .env.local
         expect(Envapter.get('SHARED_LOCAL_ENV')).to.equal('dev');
         // .env.${env}.local beats .env.local
         expect(Envapter.get('SHARED_LOCAL_ENV_LOCAL')).to.equal('dev-local');
@@ -83,7 +82,7 @@ describe('profiles: dotenv-flow auto-cascade', () => {
     });
 
     it('silently skips missing cascade files', () => {
-        // the `default` fixture has only `.env`, so this proves the cascade loads what exists and skips the rest
+        // the default fixture has only .env
         process.chdir(resolve(import.meta.dirname, 'cascade-fixtures', 'default'));
         Envapter.environment = Environment.Development;
         Envapter.resetProfiles();
@@ -95,7 +94,7 @@ describe('profiles: dotenv-flow auto-cascade', () => {
     it('reads process.env.NODE_ENV when Envapter.environment was never explicitly set', () => {
         process.chdir(resolve(import.meta.dirname, 'cascade-fixtures', 'all-layers'));
         process.env.NODE_ENV = 'production';
-        Envapter.resetProfiles(); // also clears _environment via super.refreshCache override
+        Envapter.resetProfiles(); // also clears the environment
 
         expect(Envapter.get('CASCADE_KEY')).to.equal('prod');
         expect(Envapter.get('ONLY_PROD')).to.equal('prod');

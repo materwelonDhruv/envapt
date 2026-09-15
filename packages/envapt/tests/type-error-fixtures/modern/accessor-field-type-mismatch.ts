@@ -1,6 +1,6 @@
 import { EnvNum } from '../../../src/decorators/modern';
 
-// @EnvNum produces a number, which a string accessor cannot hold, so this must fail to compile.
+// @EnvNum returns a number, and this accessor is a string
 export class FieldTypeMismatch {
     @EnvNum('PORT', 3000)
     static accessor port: string;

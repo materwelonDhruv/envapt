@@ -3,9 +3,6 @@ import { EnvironmentMethods } from './EnvironmentMethods';
 
 import type { ConditionalReturn, EnvKeyInput } from '../types';
 
-/**
- * @internal
- */
 export class PrimitiveMethods extends EnvironmentMethods {
     /**
      * Get a string environment variable with optional fallback.

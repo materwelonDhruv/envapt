@@ -183,12 +183,9 @@ describe('Strict mode + required (v5)', () => {
         it('rejects required + fallback at runtime with InvalidUserDefinedConfig', () => {
             const buildBadDecorator = (): void => {
                 class Bad {
-                    // The overload tower has no branch that accepts `required: true` alongside
-                    // `fallback`, so the type system rejects this at the call site. The runtime
-                    // check is defense for dynamic objects that bypass the types.
+                    // cast past the overloads, since none accepts required with fallback
                     @Envapt('NEVER_SET_KEY', {
                         required: true,
-                        // intentionally bad combo, runtime should reject -- justified
                         fallback: 'should-not-be-here'
                     } as unknown as { required: true })
                     static readonly key: string;
@@ -293,8 +290,7 @@ describe('Strict mode + required (v5)', () => {
     });
 
     describe('Strict mode does NOT make missing keys throw on get*', () => {
-        // locked behavior. strict tightens "empty value" semantics but doesn't auto-require absent keys.
-        // requiring stays opt-in via `@Envapt`'s `required:`, `getRequired`/`getRequiredAll`, or `Envapter.require()`.
+        // strict changes what counts as empty and does not make absent keys throw
         it('returns undefined for missing keys under strict (no fallback)', () => {
             Envapter.strict = true;
             expect(Envapter.get('NEVER_SET_KEY')).to.equal(undefined);

@@ -28,8 +28,7 @@ function formatKeyForError(key: EnvKeyInput): string {
     return Array.isArray(key) ? `[${key.join(', ')}]` : String(key);
 }
 
-// missing check runs after template resolution so a value that resolves to blank falls through
-// (empty always, whitespace-only under strict)
+// check after template resolution because a template can resolve to an empty string
 export function resolveRequired(
     resolved: { key: string; value: string | undefined },
     templateResolver: TemplateResolver
@@ -39,10 +38,6 @@ export function resolveRequired(
     return { key: resolved.key, value: isMissing(value) ? undefined : value };
 }
 
-/**
- * Mixin for advanced methods for environment variable conversion using built-in and custom converters
- * @internal
- */
 export class AdvancedMethods extends PrimitiveMethods {
     /**
      * Get an environment variable using a built-in converter.
@@ -53,8 +48,7 @@ export class AdvancedMethods extends PrimitiveMethods {
      * @see {@link https://envapt.materwelon.dev/docs/envapter#converters}
      * @see {@link https://envapt.materwelon.dev/docs/converters#custom-converters}
      */
-    // Time-specific overload must precede the generic BuiltInConverter overload so it wins
-    // overload resolution (TimeFallback accepts time-strings like `'10s'`).
+    // TypeScript uses the first overload that matches. Keep 'time' above the generic one.
     static getUsing<TFallback extends TimeFallback | undefined = undefined>(
         key: EnvKeyInput,
         converter: 'time',
@@ -73,8 +67,7 @@ export class AdvancedMethods extends PrimitiveMethods {
     ): AdvancedConverterReturn<TConverter, TFallback> {
         const { key: resolvedKey, value } = resolveKeyInput(key);
 
-        // a missing value with a fallback falls through to the parser so asymmetric types
-        // (TimeFallback, TimeFallback[] for `of: time`) coerce to the return type
+        // a time fallback can be a string that still needs converting to a number
         if (isMissing(value) && !hasFallback(fallback)) {
             debugWarn(`${resolvedKey} is missing or empty`);
             return undefined as AdvancedConverterReturn<TConverter, TFallback>;
@@ -151,7 +144,7 @@ export class AdvancedMethods extends PrimitiveMethods {
         key: EnvKeyInput,
         converter: TConverter | ConverterFunction<TReturnType, string>
     ): InferConverterReturnType<TConverter> | TReturnType {
-        // a required read treats empty as missing, so an empty value falls through to the next candidate.
+        // an empty value falls through to the next key
         const candidates: readonly string[] = typeof key === 'string' ? [key] : key;
         let resolvedKey = '';
         let value: string | undefined;
@@ -169,14 +162,14 @@ export class AdvancedMethods extends PrimitiveMethods {
                 `Required environment variable "${formatKeyForError(key)}" is missing or empty.`
             );
         }
-        // cast widens the raw-string parser back to convertValue's ConverterFunction<T> (value proven present above).
+        // the string-only parser is safe to widen because the value is present
         const result = valueConverter.convertValue<TReturnType>(
             resolvedKey,
             undefined,
             converter as EnvaptConverter<TReturnType>,
             false
         );
-        // a built-in yields undefined for a present value it cannot convert, a custom converter can return null, both break the non-undefined return
+        // a built-in returns undefined when it cannot convert, and a custom converter can return null
         if (result === undefined || result === null) {
             throw new EnvaptError(
                 EnvaptErrorCodes.MissingEnvValue,
@@ -206,8 +199,8 @@ export class AdvancedMethods extends PrimitiveMethods {
      * converter (a token, an `array()` token, or a custom parser), and the returned record holds
      * every converted value, all non-undefined. Collects every missing or empty key and throws one
      * `MissingEnvValue` listing them all. Pass a `casing` (`'camelCase'`, `'PascalCase'`, or
-     * `'kebab-case'`) to rename the record keys, splitting on underscores, which assumes the
-     * conventional SCREAMING_SNAKE env-var names. With no casing the keys stay as-is.
+     * `'kebab-case'`) to rename the record keys. The rename splits each key on underscores, as in
+     * SCREAMING_SNAKE env-var names. With no casing the keys stay as-is.
      * @see {@link https://envapt.materwelon.dev/docs/envapter#fail-fast-on-missing-values}
      * @see {@link https://envapt.materwelon.dev/docs/converters#require-a-converted-value}
      */
@@ -228,7 +221,7 @@ export class AdvancedMethods extends PrimitiveMethods {
 
         const result: Record<string, unknown> = {};
         for (const key of keys) {
-            // same widening cast as getRequired, every value was proven present above.
+            // safe to widen because every value is present by now
             const converted = valueConverter.convertValue<unknown>(
                 key,
                 undefined,
@@ -259,11 +252,10 @@ export class AdvancedMethods extends PrimitiveMethods {
     /**
      * Validate an environment variable through a {@link StandardSchemaV1}-conformant schema
      * (zod, valibot, arktype, etc). Throws `MissingEnvValue` if the env value is absent and
-     * no fallback is provided. The fallback, when provided, is returned as-is on missing.
-     * It does NOT pass through the schema, mirroring custom-converter behavior.
+     * no fallback is provided. When the value is missing, the fallback is returned as-is and does
+     * not pass through the schema.
      *
-     * Synchronous schemas only. A Promise-returning `validate` triggers an
-     * `InvalidUserDefinedConfig` throw at the call site.
+     * Synchronous schemas only. A `validate` that returns a Promise throws `InvalidUserDefinedConfig`.
      *
      * @example
      * ```ts
@@ -277,8 +269,7 @@ export class AdvancedMethods extends PrimitiveMethods {
         schema: SchemaConstraint<Schema>,
         fallback?: InferSchemaOutput<Schema>
     ): InferSchemaOutput<Schema> {
-        // SchemaConstraint resolves to the unsatisfiable SchemaMustBeSync brand for async
-        // schemas, so reaching this body means the input is structurally a sync Schema.
+        // SchemaConstraint rejects async schemas at compile time
         const result = valueConverter.convertWithSchema(
             key,
             schema as unknown as StandardSchemaV1,

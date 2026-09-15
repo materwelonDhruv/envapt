@@ -23,7 +23,7 @@ describe('profiles — Envapter.configureProfiles overrides', () => {
     });
 
     it('loads profile-configured paths for the active environment (partial override)', () => {
-        // chdir to a dir with no cascade files, so only the configured profile path loads
+        // the default fixture has no staging cascade files
         process.chdir(resolve(import.meta.dirname, 'cascade-fixtures', 'default'));
 
         // set env before configureProfiles, so its refresh runs under the right env
@@ -77,7 +77,7 @@ describe('profiles — Envapter.configureProfiles overrides', () => {
             }
         });
 
-        // dotenv is first-defined-wins, so .env.production loads first and .env.staging only fills gaps
+        // .env.staging only fills keys that .env.production left unset
         expect(Envapter.get('PROFILE_NAME')).to.equal('production-profile');
     });
 

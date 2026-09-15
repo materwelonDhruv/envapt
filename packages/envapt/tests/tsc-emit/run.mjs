@@ -6,11 +6,8 @@ import { fileURLToPath } from 'node:url';
 
 import { resolveTsc } from '../_guard.mjs';
 
-// envapt's vitest suite transpiles with OXC and the only @-syntax static integration case runs on Deno
-// (SWC). Both emit static decorators against the constructor and pass, so they never see this split.
-// tsc 6 puts a `declare static` decorator on the prototype, where a static read misses the getter.
-// tsgo (typescript7) puts it on the constructor and the read resolves. Only a real compile-and-run
-// surfaces either behavior.
+// tsc 6 puts a `declare static` decorator on the prototype and tsgo (typescript7) puts it on the
+// constructor. vitest (oxc) and the Deno integration case (swc) both use the constructor.
 const here = dirname(fileURLToPath(import.meta.url));
 const { tsc, outDir } = resolveTsc(here);
 
@@ -43,7 +40,6 @@ assert.equal(
     undefined,
     'a plain instance field (no `declare`) is shadowed by useDefineForClassFields, so `declare` is required on instance fields'
 );
-// tsc 6 applies the `declare static` decorator to the prototype, tsgo (typescript7) to the constructor
 assert.equal(
     reads.declareStaticValue,
     process.env.ENVAPT_TSC_PACKAGE === 'typescript7' ? Number(env.TSC_EMIT_DECLARE_STATIC) : undefined,

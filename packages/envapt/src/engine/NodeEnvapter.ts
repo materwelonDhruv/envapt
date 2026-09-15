@@ -19,9 +19,7 @@ import type { ProfilesConfig } from '../types';
  * @public
  */
 export class NodeEnvapter extends Envapter {
-    // A static block (not a top-level statement in a separate entry) keeps the bind intrinsic to this
-    // class: tree-shaken out of `import { EnvaptError }`, run whenever `Envapter` is referenced, with no
-    // sideEffects entry. Depends on the es2022 native static-block emit.
+    // bundlers drop this block with the class when Envapter is unused. needs the native es2022 static-block emit.
     static {
         setRuntimeSink((line) => process.stderr.write(`${line}\n`));
         NodeEnvapter.useSource(new FileSource());
@@ -59,12 +57,12 @@ export class NodeEnvapter extends Envapter {
     /**
      * Set a base directory that relative `.env` paths resolve against instead of
      * `process.cwd()`: the auto-cascade, `Envapter.configureProfiles` paths, and relative
-     * `envPaths`. Absolute paths always bypass it. Pass a directory, or a module URL
-     * (`import.meta.url`, ESM) / `import.meta.dirname` / `__dirname` (CJS) to anchor
-     * resolution next to the calling file regardless of launch directory.
+     * `envPaths`. Absolute paths always bypass it. Pass a directory path (`import.meta.dirname`,
+     * or `__dirname` in CJS) or a module URL (`import.meta.url`) to resolve paths next to the
+     * calling file regardless of launch directory.
      *
      * Set this before `envPaths` so relative `envPaths` validate against the right directory.
-     * Unset (`undefined`) restores `process.cwd()` resolution.
+     * Setting `undefined` restores `process.cwd()` resolution.
      * @see {@link https://envapt.materwelon.dev/docs/configuration#reading-from-a-fixed-directory}
      */
     static set baseDir(value: string | URL | undefined) {

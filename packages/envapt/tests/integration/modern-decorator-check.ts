@@ -3,8 +3,8 @@ import process from 'node:process';
 
 import { Converters, Envapt, EnvBool, EnvNum } from '../../dist/node/index.mjs';
 
-// excluded from tc and eslint, both run experimentalDecorators which rejects the accessor form. bun and
-// deno transpile this with their native Stage 3, so running it on each verifies the modern decorators there.
+// tc and eslint skip this file because experimentalDecorators rejects accessor decorators.
+// bun and deno compile it with their own Stage 3 transform.
 class Config {
     @EnvNum('MD_PORT_ABSENT', 3000)
     static accessor port: number;

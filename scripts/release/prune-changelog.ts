@@ -11,9 +11,7 @@ function sectionVersion(section: string): string | undefined {
     return section.match(/^## (\S+)/)?.[1];
 }
 
-/**
- * Removes `## X.Y.Z-pre.N` sections whose stable `## X.Y.Z` already exists, so there aren't duplicate sections in the CHANGELOG
- */
+// a prerelease is superseded once the changelog has its stable version
 export function pruneSupersededPrereleases(changelog: string): string {
     const sections = changelog.split(/(?=^## )/m);
     const stable = new Set<string>();

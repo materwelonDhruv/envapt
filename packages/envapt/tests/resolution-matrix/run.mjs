@@ -1,5 +1,4 @@
-// Build gate. Each (moduleResolution x condition) cell must resolve the right build and types, so a
-// consumer on any runtime gets the matching surface. Run after build.
+// each (moduleResolution x condition) cell must resolve the matching build and types. run after build.
 import { createRequire } from 'node:module';
 import { basename, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -102,8 +101,7 @@ for (const { specifier, named } of JS_ENTRIES) {
     gate.check(`js ${specifier} [] build`, (await buildDir(specifier, named, [])).dir, 'node');
 }
 
-// A "No matching export" build error means the name is genuinely absent from the surface. Any other
-// build error is a real failure, so rethrow it rather than reporting a false absence.
+// esbuild reports an absent name as "No matching export". any other build error rethrows.
 async function namedExportResolves(named, conditions) {
     try {
         await esbuild.build({

@@ -73,7 +73,7 @@ describe('Semantic converters (v8): port and email', () => {
         });
 
         it('throws on a non-number fallback', () => {
-            // cast bypasses the compile-time guard so the runtime port type-checker reject path runs
+            // cast past the type to reach the runtime check
             expect(() => Envapter.getUsing('PORT_VALID', Converters.Port, 'nope' as unknown as number))
                 .to.throw(EnvaptError)
                 .with.property('code', EnvaptErrorCodes.FallbackConverterTypeMismatch);
@@ -156,7 +156,7 @@ describe('Semantic converters (v8): port and email', () => {
         });
 
         it('throws on a non-string fallback', () => {
-            // cast bypasses the compile-time guard so the runtime email type-checker reject path runs
+            // same cast as the port test
             expect(() => Envapter.getUsing('EMAIL_VALID', Converters.Email, 42 as unknown as string))
                 .to.throw(EnvaptError)
                 .with.property('code', EnvaptErrorCodes.FallbackConverterTypeMismatch);

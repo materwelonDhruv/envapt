@@ -99,11 +99,11 @@ export function Envapt<TReturnType>(
  *   \@Envapt('APP_PORT', { converter: Converters.Number, fallback: 3000 })
  *   static accessor port: number;
  *
- *   // the Url fallback is a URL instance, not a string
+ *   // the Url fallback is a URL instance
  *   \@Envapt('APP_URL', { converter: Converters.Url, fallback: new URL('http://localhost:3000') })
  *   static accessor url: URL;
  *
- *   // prefers CANARY_URL when present, otherwise APP_URL
+ *   // reads CANARY_URL when present, otherwise APP_URL
  *   \@Envapt(['CANARY_URL', 'APP_URL'], { converter: Converters.Url })
  *   static accessor canaryUrl: URL | undefined;
  *
@@ -163,9 +163,8 @@ export function Envapt<TConstructor extends PrimitiveConstructor>(
 
 /**
  * Required, no converter (raw string). Throws `MissingEnvValue` on first access when the env
- * value is missing or empty after trimming, independent of the global `Envapter.strict` flag.
- * Pairing `required: true` with `fallback` matches no overload at compile time, and the runtime
- * Validator rejects dynamic objects that bypass the types.
+ * value is missing or empty. Pairing `required: true` with `fallback` matches no overload at
+ * compile time, and a call that bypasses the types throws `InvalidUserDefinedConfig` at runtime.
  *
  * @param key - Environment variable name(s) to load
  * @param options - `{ required: true }`
@@ -181,10 +180,10 @@ export function Envapt<TConstructor extends PrimitiveConstructor>(
 export function Envapt(key: EnvKeyInput, options: { required: true }): EnvaptAccessorDecorator<string>;
 
 /**
- * A Standard Schema v1 adapter (zod, valibot, arktype, hand-rolled). Synchronous schemas only,
- * so a Promise-returning `validate` throws `InvalidUserDefinedConfig` at runtime. Pairing
- * `schema` with `converter` matches no overload at compile time, and the runtime Validator
- * rejects dynamic objects that bypass the types.
+ * A Standard Schema v1 adapter (zod, valibot, arktype, hand-rolled). Synchronous schemas only.
+ * A `validate` that returns a Promise throws `InvalidUserDefinedConfig` at runtime. Pairing
+ * `schema` with `converter` matches no overload at compile time, and a call that bypasses the
+ * types throws `InvalidUserDefinedConfig` at runtime.
  * @public
  */
 export function Envapt<Schema extends StandardSchemaV1>(
@@ -197,7 +196,7 @@ export function Envapt<Schema extends StandardSchemaV1>(
 /**
  * Modern (TC39 Stage 3) accessor decorator that loads and converts an environment variable. The
  * decorated property uses the `accessor` keyword and needs no `experimentalDecorators` flag.
- * Instance accessors need the definite-assignment `!`, static accessors do not.
+ * Instance accessors need the definite-assignment `!`. Static accessors do not.
  *
  * @param key - Environment variable name(s) to load
  * @param options - Converter, fallback, `required`, or `schema`. See the overloads.
@@ -216,7 +215,7 @@ export function Envapt<Schema extends StandardSchemaV1>(
  * ```
  * @see {@link https://envapt.materwelon.dev/docs/decorators#declaring-decorated-fields}
  */
-/* v8 ignore start -- @preserve oxc (vitest's transform) breaks modern accessor decorators (context.name unset), so the tsc stage3-emit harness covers these, not vitest */
+/* v8 ignore start -- @preserve the tsc stage3-emit tests cover these because oxc (vitest's transform) leaves context.name unset on modern accessor decorators */
 export function Envapt<TFallback = unknown>(key: EnvKeyInput, options?: unknown): EnvaptAccessorDecorator<unknown> {
     return createAccessorDecorator(key, parseEnvaptOptions<TFallback>(options)) as EnvaptAccessorDecorator<unknown>;
 }

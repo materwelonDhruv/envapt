@@ -193,8 +193,7 @@ describe('ArrayConverter typesafety (v5) — compile-time (expect-type)', () => 
     });
 
     it('@Envapt accepts TimeFallback[] (string[]) fallback for of:Time arrays', () => {
-        // If this class type-checks, time-array fallback symmetry holds (the decorator's
-        // fallback slot typechecks as TimeFallback[] for `of: Converters.Time`).
+        // the test passes if this class type-checks
         class TimeArrayFallbackCheck extends Envapter {
             @Envapt('X', {
                 converter: Converters.array({ of: Converters.Time }),

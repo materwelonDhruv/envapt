@@ -2,10 +2,7 @@ export function isPrerelease(version: string): boolean {
     return /^\d+\.\d+\.\d+-/.test(version);
 }
 
-/**
- * Returns an error message when the branch, pre-mode, tag, and version don't match up for a
- * publish, or `null` when it is safe to publish.
- */
+// returns null when the publish is safe
 export function branchGuardError(
     branch: string,
     mode: string,
@@ -17,7 +14,7 @@ export function branchGuardError(
         if (!tag || tag === 'latest')
             return `next pre-mode tag must be a dedicated prerelease channel, never 'latest'; got '${tag ?? '(none)'}'.`;
         // 7.0.1 reached the next tag because `changeset pre exit` turned the prerelease into a plain
-        // `7.0.1` and pre mode was re-entered afterward. on next the version must stay a prerelease.
+        // `7.0.1` and pre mode was re-entered afterward
         if (!isPrerelease(version))
             return `next must publish a prerelease (X.Y.Z-${tag}.N), got plain '${version}'. Run the clean release from main.`;
     }
@@ -29,12 +26,7 @@ export function branchGuardError(
     return null;
 }
 
-/**
- * {@link branchGuardError}, applied only when a publish is actually about to run. The Action opens a
- * version PR while changesets are pending and skips a version already on the registry, and CI bumps
- * the version later, so neither of those pushes should be checked against the version. Returns the
- * message, or `null`.
- */
+// the changesets Action does not publish while changesets are pending or when the version is already on the registry
 export function publishGuardError(
     branch: string,
     mode: string,

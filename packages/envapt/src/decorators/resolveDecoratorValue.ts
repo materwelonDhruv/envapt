@@ -22,8 +22,7 @@ function formatKeyForError(key: EnvKeyInput): string {
 const classIds = new WeakMap<object, number>();
 let nextClassId = 0;
 
-// keyed on the constructor object's identity so two same-named classes (and a same-named
-// static/instance pair) stay in separate cache slots
+// keyed on the class object because two classes can share a name
 export function decoratorCacheKey(owner: object, isStatic: boolean, prop: string): string {
     let id = classIds.get(owner);
     if (id === undefined) {
@@ -40,8 +39,7 @@ export function resolveDecoratorValue<TFallback>(
 ): TFallback | undefined {
     const { fallback, converter, hasFallback, required, schema } = config;
 
-    // cache.has guards the read so a cached undefined counts as resolved (a converter returning
-    // undefined, or a missing no-fallback read) and later accesses skip re-resolving
+    // has() because a resolved value can be undefined
     if (cache.has(cacheKey)) return cache.get(cacheKey) as TFallback | undefined;
 
     const envapter = new Envapter();

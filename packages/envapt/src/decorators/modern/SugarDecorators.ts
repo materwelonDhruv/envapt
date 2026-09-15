@@ -4,14 +4,13 @@ import { Converters } from '../../converters';
 import type { ConverterToken } from '../../converters';
 import type { EnvaptAccessorDecorator, EnvKeyInput, TimeFallback } from '../../types';
 
-/* v8 ignore start -- @preserve oxc (vitest's transform) breaks modern accessor decorators (context.name unset), so the tsc stage3-emit harness covers these, not vitest */
+/* v8 ignore start -- @preserve the tsc stage3-emit tests cover these because oxc (vitest's transform) leaves context.name unset on modern accessor decorators */
 function sugar<TFallback>(
     converter: ConverterToken,
     key: EnvKeyInput,
     fallback: TFallback | undefined
 ): EnvaptAccessorDecorator<TFallback> {
-    // the runtime installer is a plain accessor decorator, so the cast only adds a
-    // compile-time field-type constraint with no runtime counterpart
+    // the cast only adds a compile-time check on the field type
     return createAccessorDecorator<TFallback>(key, {
         converter,
         fallback,
@@ -67,8 +66,8 @@ export function EnvTime(key: EnvKeyInput, fallback?: TimeFallback): EnvaptAccess
 }
 
 /**
- * Shorthand for `@Envapt(key, { converter: Converters.Url, fallback })`. The fallback is a `URL`
- * instance, not a URL string.
+ * Shorthand for `@Envapt(key, { converter: Converters.Url, fallback })`. The fallback must be a
+ * `URL` instance.
  * @public
  * @see {@link https://envapt.materwelon.dev/docs/decorators#shorthand-decorators}
  */

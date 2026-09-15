@@ -1,5 +1,5 @@
 /**
- * The default Node, Bun, and Deno entry. Re-exports the full public surface, the {@link Envapter}
+ * The default Node, Bun, and Deno entry. Re-exports the full public surface: the {@link Envapter}
  * class (bound to {@link FileSource} so `.env` files load with no setup), the modern TC39 `@Envapt`
  * decorators, the converter tokens, and Standard Schema validation.
  *

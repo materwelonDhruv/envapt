@@ -4,7 +4,6 @@ import { Environment, Envapter, FileSource, PortableSource } from '../src';
 
 describe('Environment detection (v5.2)', () => {
     afterEach(() => {
-        // Restore the Node default and clear any explicitly-set environment between cases.
         Envapter.useSource(new FileSource());
         Envapter.resetProfiles();
         Envapter.strict = false;
@@ -34,11 +33,11 @@ describe('Environment detection (v5.2)', () => {
         });
 
         it('skips a whitespace-only higher-precedence key only under strict', () => {
-            // non-strict keeps a whitespace ENVIRONMENT as a real (unrecognized) value, so it shadows NODE_ENV
+            // non-strict keeps a whitespace ENVIRONMENT as an unrecognized value
             Envapter.useSource(new PortableSource({ ENVIRONMENT: '   ', NODE_ENV: 'production' }));
             expect(Envapter.environment).to.equal(Environment.Development);
 
-            // strict treats it as blank, so detection falls through to NODE_ENV
+            // under strict it counts as blank
             Envapter.strict = true;
             Envapter.useSource(new PortableSource({ ENVIRONMENT: '   ', NODE_ENV: 'production' }));
             expect(Envapter.environment).to.equal(Environment.Production);

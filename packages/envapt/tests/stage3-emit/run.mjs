@@ -7,10 +7,8 @@ import { fileURLToPath } from 'node:url';
 
 import { resolveTsc } from '../_guard.mjs';
 
-// Modern (TC39 Stage 3) accessor decorators need a real compiler emit. node runs a tsc compile with
-// experimentalDecorators off. bun and deno run the source directly through their own Stage 3
-// transform, so a green run proves Bun's old "ignores decorators" issue does not apply to the modern
-// form. vitest's oxc transform leaves the accessor `context.name` unset, so it cannot run this.
+// vitest's oxc transform leaves context.name unset on accessor decorators. this compiles with tsc,
+// then also runs the source on bun and deno.
 const here = dirname(fileURLToPath(import.meta.url));
 const { tsc, outDir } = resolveTsc(here);
 
@@ -53,9 +51,7 @@ function assertReads(reads, runtime) {
     assert.equal(reads.requiredThrew, true, `${runtime}: required throws when the value is absent`);
 }
 
-// node is the hard requirement (tsc emit). bun and deno run the source directly with their own Stage 3
-// transforms when present. Only a missing binary (ENOENT) is skipped. A present runtime that crashes
-// or returns a wrong value fails the suite, so a real Bun/Deno decorator regression is caught.
+// bun and deno are optional. a missing binary skips, and any other failure fails the suite.
 const optional = ['bun', 'deno'];
 const reads = JSON.parse(execFileSync('node', [out], { env }).toString());
 assertReads(reads, 'node');

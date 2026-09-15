@@ -1,6 +1,5 @@
 import type { Source } from '../types';
 
-// importing Debug back into EnvapterBase would cycle, so the source and sink are injected via the setters below.
 /* v8 ignore start -- @preserve replaced at load on Node so the Node suite never runs these defaults */
 let sink: (line: string) => void = (line) => {
     // eslint-disable-next-line no-console -- the off-Node fallback log sink
@@ -18,11 +17,11 @@ export function writeRuntimeLine(line: string): void {
     sink(line);
 }
 
-// check snapshot first, then the source's per-key reader, so a reader source (empty snapshot) still resolves a key
+// a reader source has an empty snapshot
 export function readRuntimeVar(key: string): string | undefined {
     const fromSnapshot = envReader()[key];
     if (fromSnapshot !== undefined) return fromSnapshot;
-    // ENVAPT_DEBUG resolves through here, so a throwing reader must not abort the config load that triggered it
+    // ENVAPT_DEBUG reads go through here and must not throw during a config load
     try {
         return varReader?.(key);
     } catch {

@@ -13,8 +13,7 @@ const program = (specifier) =>
     `import { Envapter, PortableSource, Converters } from '${specifier}';` +
     `globalThis.__envapt = [Envapter, PortableSource, Converters];`;
 
-// the browser/neutral platform makes esbuild fail the build on any unresolved node built-in, so a
-// clean build proves the resolved bundle is node-free. The output check below is a backup.
+// esbuild fails a browser or neutral build on any node built-in it cannot resolve
 const cases = [
     { name: "import 'envapt' (browser)", specifier: 'envapt', platform: 'browser', conditions: [] },
     { name: "import 'envapt' (workerd)", specifier: 'envapt', platform: 'neutral', conditions: ['workerd'] },

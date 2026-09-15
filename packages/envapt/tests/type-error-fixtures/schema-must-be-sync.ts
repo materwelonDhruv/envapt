@@ -2,9 +2,7 @@ import { Envapt } from '../../src/legacy';
 
 import type { StandardSchemaV1 } from '../../src/infra/StandardSchema';
 
-// Schema whose `~standard.validate` is explicitly typed as returning Promise<Result>.
-// Reproduces the shape an async-only schema library would expose. The `SchemaConstraint`
-// brand resolves the @Envapt schema slot to `SchemaMustBeSync` for this shape.
+// validate returns a Promise here, like an async-only schema library
 declare const asyncSchema: StandardSchemaV1<string, string> & {
     readonly '~standard': {
         readonly validate: (value: unknown) => Promise<StandardSchemaV1.Result<string>>;

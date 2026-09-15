@@ -1,8 +1,7 @@
 import { Converters } from '../../src';
 import { Envapt } from '../../src/legacy';
 
-// Correct declarations across the overloads, including no-fallback `| undefined` and a deliberately wider
-// field, must all compile cleanly.
+// every field here must compile, including the wider ones
 export class OverloadClean {
     @Envapt('A', { converter: Converters.Number, fallback: 3000 })
     static readonly a: number;

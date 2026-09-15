@@ -9,8 +9,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { Envapter, EnvaptErrorCodes, Environment } from '../src';
 import { EnvaptError } from '../src/infra/Error';
 
-// in a monorepo cwd is the repo root, so a cwd-relative `.env` lookup misses the package file.
-// baseDir anchors resolution to the package dir whatever cwd is.
+// a cwd-relative lookup misses the package's .env when cwd is the monorepo root
 const PKG_DIR = resolve(import.meta.dirname, 'basedir-fixtures', 'pkg');
 const ABS_ENV = resolve(import.meta.dirname, 'basedir-fixtures', 'abs', '.env.abs');
 
@@ -18,16 +17,14 @@ describe('Envapter.baseDir', () => {
     const originalCwd = process.cwd();
 
     beforeAll(() => {
-        // Bare `.env` is gitignored, so the fixture ships as `.env.base` and is materialized here
-        // (same convention as the cascade fixtures in 016).
+        // the fixture ships as .env.base because .env is gitignored
         fs.copyFileSync(join(PKG_DIR, '.env.base'), join(PKG_DIR, '.env'));
     });
 
     beforeEach(() => {
         // start from a dir with no `.env`, so any successful load proves baseDir did the resolving
         process.chdir(os.tmpdir());
-        // resetProfiles before clearing baseDir, a leftover relative profile would re-resolve
-        // against cwd on the baseDir refresh and throw EnvFilesNotFound
+        // a leftover relative profile would throw EnvFilesNotFound when the baseDir refresh resolves it against cwd
         Envapter.resetProfiles();
         Envapter.baseDir = undefined;
         Envapter.environment = Environment.Development;
@@ -91,8 +88,7 @@ describe('Envapter.baseDir', () => {
         });
 
         it('validates a relative envPath at set-time, so baseDir must be set first', () => {
-            // Set-time validation runs against the resolution base in effect at assignment.
-            // With baseDir still unset, '.env.custom' validates against cwd (the no-`.env` tmpdir) and throws.
+            // with baseDir unset, '.env.custom' resolves against the tmpdir cwd
             expect(() => (Envapter.envPaths = '.env.custom'))
                 .to.throw(EnvaptError)
                 .with.property('code', EnvaptErrorCodes.EnvFilesNotFound);

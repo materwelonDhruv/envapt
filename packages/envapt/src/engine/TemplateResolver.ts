@@ -5,11 +5,6 @@ import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
 
 import type { EnvapterService } from '../types/Env';
 
-/**
- * Resolve `${VAR}` template references in environment values, guarding against circular
- * references and missing variables.
- * @internal
- */
 export class TemplateResolver {
     private readonly TEMPLATE_REGEX = /\${\w*}/g;
 
@@ -38,10 +33,10 @@ export class TemplateResolver {
 
             const resolved = this.resolveTemplate(variable, raw, new Set(stack));
 
-            // If resolution still references the current key, skip replacement (indirect cycle)
+            // indirect cycle
             if (resolved.includes(`\${${key}}`)) return template;
 
-            // If nothing changed (unresolved placeholders stayed), also preserve original template
+            // the nested value still has unresolved placeholders
             if (resolved === raw && /\$\{[^}]*\}/.test(resolved)) return template;
 
             return resolved;

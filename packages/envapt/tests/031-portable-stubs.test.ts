@@ -37,8 +37,7 @@ describe('portable file-API behavior', () => {
         throws306(() => Envapter.resetProfiles());
     });
 
-    // Fresh module so the module-level warned set is empty and the warning routes to console.error (a
-    // NodeEnvapter import anywhere in the graph would route it to process.stderr instead).
+    // a fresh module graph starts with an empty warned set and no NodeEnvapter sink
     it('warns once per api under warn mode', async () => {
         vi.resetModules();
         const { Envapter: Portable } = await import('../src/index.portable');

@@ -4,7 +4,7 @@ import { decoratorCacheKey, resolveDecoratorValue } from '../resolveDecoratorVal
 import type { EnvKeyInput } from '../../types';
 import type { DecoratorConfig } from '../resolveDecoratorValue';
 
-/* v8 ignore start -- @preserve oxc (vitest's transform) breaks modern accessor decorators (context.name unset), so the tsc stage3-emit harness covers these, not vitest */
+/* v8 ignore start -- @preserve the tsc stage3-emit tests cover these because oxc (vitest's transform) leaves context.name unset on modern accessor decorators */
 export function createAccessorDecorator<TFallback>(key: EnvKeyInput, config: DecoratorConfig<TFallback>) {
     return function <This, Value>(
         _target: ClassAccessorDecoratorTarget<This, Value>,
@@ -23,8 +23,7 @@ export function createAccessorDecorator<TFallback>(key: EnvKeyInput, config: Dec
         return {
             get(this: This): Value {
                 const self = this as object;
-                // derive static-ness from `this` (the class is a function, an instance is not) rather than
-                // context.static, which some transformers (oxc) leave unset, collapsing every owner to Function
+                // some transforms (oxc) leave context.static unset
                 const isStatic = typeof self === 'function';
                 const owner = isStatic ? self : self.constructor;
                 const cacheKey = decoratorCacheKey(owner, isStatic, propKey);

@@ -51,7 +51,7 @@ const readChangesetReleaseCount = async (): Promise<number | null> => {
             (error) => {
                 const message = error instanceof Error ? error.message : String(error);
                 debug(`changeset status command failed: ${message}`);
-                // Ignore failures; the file may still contain useful data.
+                // the status file can still have data after a failed command
             }
         );
         const raw = await fs.readFile(statusFileAbsolute, 'utf8');

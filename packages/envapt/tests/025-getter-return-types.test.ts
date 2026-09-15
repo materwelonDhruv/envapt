@@ -2,12 +2,7 @@ import { describe, expectTypeOf, it } from 'vitest';
 
 import { Envapter } from '../src';
 
-/**
- * Regression guard: instance `get` once carried a stray `get(key, def?: string): string | undefined`
- * overload that shadowed its conditional return, so `env.get('K', 'fallback')` widened to
- * `string | undefined`. These compile-time assertions pin the fallback-narrowing of every
- * primitive getter (static and instance), so reintroducing the overload fails `pnpm tc`.
- */
+// instance get once had an extra overload that widened get('K', 'fallback') to string | undefined
 describe('getter return-type narrowing (compile-time)', () => {
     const env = new Envapter();
 

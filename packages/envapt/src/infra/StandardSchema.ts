@@ -3,9 +3,8 @@
  * so envapt has zero runtime peer dependencies on any specific schema library
  * (zod / valibot / arktype / etc).
  *
- * envapt narrows usage to SYNCHRONOUS schemas only: env loading is boot-time,
- * `validate` returning `Promise<Result>` is rejected at the type level (see
- * `SchemaMustBeSync` brand in `Types.ts`) and at runtime by the Parser dispatch.
+ * envapt accepts synchronous schemas only. A `validate` that returns a Promise fails to
+ * type-check and throws `InvalidUserDefinedConfig` at runtime.
  *
  * @public
  * @see {@link https://envapt.materwelon.dev/docs/standard-schema#any-conformant-validator-or-none}

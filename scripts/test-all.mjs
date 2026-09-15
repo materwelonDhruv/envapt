@@ -37,7 +37,7 @@ const slices = [
 ];
 if (hasChromium) slices.push(['browser', ['--filter', 'envapt', 'test:browser']]);
 
-// each slice is its own process with no shared state, so they can run in parallel
+// each slice runs in its own process with no shared state
 const results = await Promise.all(
     slices.map(async ([label, args]) => {
         try {

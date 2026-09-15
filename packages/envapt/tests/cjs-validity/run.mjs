@@ -1,6 +1,4 @@
-// Build gate. Every emitted `.cjs` must parse and `require()` as CommonJS. ESM syntax leaking into a
-// `.cjs` (a `shims`/banner regression) still loads as ESM, so the runtime builds pass while every
-// `require('envapt')` consumer breaks.
+// every emitted .cjs must parse and load as CommonJS
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { readdirSync } from 'node:fs';

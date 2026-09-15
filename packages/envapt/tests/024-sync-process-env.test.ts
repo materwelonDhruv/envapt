@@ -34,8 +34,7 @@ describe('syncProcessEnv (v5)', () => {
     });
 
     beforeEach(() => {
-        // Scrub fixture keys BEFORE rebuilding the cache so the loader observes a clean
-        // process.env snapshot and tracks every fixture key as added.
+        // clean the keys before the rebuild because the loader only tracks keys absent from process.env
         Envapter.syncProcessEnv = false;
         Envapter.envFileOptions = {};
         cleanFixtureKeys();
@@ -65,7 +64,7 @@ describe('syncProcessEnv (v5)', () => {
             const cases: unknown[] = ['true', 1, 0, null, undefined, {}];
             for (const bad of cases) {
                 expect(() => {
-                    // pragmatic cast: the whole point is asserting the setter rejects non-boolean -- justified
+                    // cast so a non-boolean reaches the setter
                     Envapter.syncProcessEnv = bad as boolean;
                 })
                     .to.throw(EnvaptError)
@@ -96,8 +95,7 @@ describe('syncProcessEnv (v5)', () => {
 
     describe('on: flag set before cache build', () => {
         it('mirrors keys on the first cache build after the flag goes on', () => {
-            // Wipe between the setter mirror and the rebuild so the assertions can only
-            // pass if the config-getter mirror path fires too.
+            // cleaning after the setter means only the rebuild can mirror the keys
             Envapter.syncProcessEnv = true;
             cleanFixtureKeys();
             Envapter.envPaths = FIXTURE_PATH;
@@ -141,8 +139,7 @@ describe('syncProcessEnv (v5)', () => {
             Envapter.syncProcessEnv = true;
             expect(process.env.SYNC_KEY_A).to.equal('value-a');
             Envapter.envPaths = resolve(import.meta.dirname, '.env.debug-mode');
-            // SYNC_KEY_A drops out of the new tracked delta but stays in process.env
-            // because the mirror is one-way.
+            // SYNC_KEY_A is not in the new file but stays in process.env
             expect(process.env.SYNC_KEY_A).to.equal('value-a');
         });
     });
@@ -202,8 +199,7 @@ describe('syncProcessEnv (v5)', () => {
         });
 
         it('skips the loop and emits no mirror lines when the tracked delta is empty', () => {
-            // Pre-populate every fixture key so default override:false skips every loader
-            // write and the tracked delta lands empty.
+            // the loader skips every fixture key because each one already exists
             process.env.SYNC_KEY_A = 'shell-a';
             process.env.SYNC_KEY_B = 'shell-b';
             process.env.SYNC_KEY_COLLISION = 'shell-c';

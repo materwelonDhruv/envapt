@@ -1,9 +1,7 @@
-// The returned record is fresh, so a caller mutating its object
-// later cannot leak into the source, and non-string values are JSON-stringified.
+// copies the entries so a later change to the caller's object does not reach the source
 export function coerceToStringRecord(env: object): Record<string, string> {
     const snapshot: Record<string, string> = {};
-    // `object` so a Cloudflare `Env` (an interface with no index signature) is accepted. cast to a record
-    // to read entries as `unknown` rather than `any`.
+    // takes `object` because a Cloudflare Env interface has no index signature
     for (const [key, value] of Object.entries(env as Record<string, unknown>)) {
         if (typeof value === 'string') {
             snapshot[key] = value;

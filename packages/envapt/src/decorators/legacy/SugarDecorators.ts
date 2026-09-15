@@ -9,8 +9,7 @@ function sugar<TFallback>(
     key: EnvKeyInput,
     fallback: TFallback | undefined
 ): EnvaptFieldDecorator<TFallback> {
-    // the runtime installer is a plain (target, key) decorator, so the cast only adds a
-    // compile-time field-type constraint with no runtime counterpart
+    // the cast only adds a compile-time check on the field type
     return createPropertyDecorator<TFallback>(key, {
         converter,
         fallback,
@@ -66,8 +65,8 @@ export function EnvTime(key: EnvKeyInput, fallback?: TimeFallback): EnvaptFieldD
 }
 
 /**
- * Shorthand for `@Envapt(key, { converter: Converters.Url, fallback })`. The fallback is a `URL`
- * instance, not a URL string.
+ * Shorthand for `@Envapt(key, { converter: Converters.Url, fallback })`. The fallback must be a
+ * `URL` instance.
  * @public
  * @see {@link https://envapt.materwelon.dev/docs/decorators#shorthand-decorators}
  */

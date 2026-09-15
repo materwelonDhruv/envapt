@@ -63,10 +63,6 @@ type BuiltInConverterFunction = (
 
 type MapOfConverterFunctions = Record<BuiltInConverter, BuiltInConverterFunction>;
 
-/**
- * Time unit types for duration conversions
- * @internal
- */
 type TimeUnit = 'ms' | 's' | 'm' | 'h' | 'd' | 'w';
 
 /**
@@ -89,19 +85,17 @@ type InferConverterReturnType<TConverter> =
           ? BuiltInConverterReturnType<TConverter>
           : never;
 
-// raw is `string` here (getRequiredAll throws before converting, so the value is always present).
+// raw is a string because getRequiredAll throws on a missing value before converting
 type RequiredSpec = Record<string, BuiltInConverter | ArrayOf | ConverterFunction<unknown, string>>;
 
-// InferConverterReturnType is never for a function, so a custom parser recovers its type from the return.
-// Match the bare `(raw) => infer R` form. `ConverterFunction<infer R>` would fail here because a required
-// parser's `raw: string` isn't assignable to ConverterFunction's `raw: string | undefined`, hitting never.
+// a required parser's `raw: string` does not fit ConverterFunction's `raw: string | undefined`
 type InferSpecField<TConverter> = TConverter extends BuiltInConverter | ArrayOf
     ? InferConverterReturnType<TConverter>
     : TConverter extends (raw: string) => infer TReturn
       ? TReturn
       : never;
 
-// time's fallback (TimeFallback) differs from its return, so add future asymmetric converters here
+// add any converter whose fallback type differs from its return type here
 type InferConverterFallbackType<TConverter> = TConverter extends 'time'
     ? TimeFallback
     : TConverter extends ArrayOf<infer Element>

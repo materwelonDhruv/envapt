@@ -7,7 +7,6 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { FileSource } from '../src';
 import { loadDotenv, parseDotenv } from '../src/infra/Dotenv';
 
-// loadDotenv takes an injected reader, so reuse the library's Node reader
 const reader = new FileSource();
 const nodeReadFile = reader.readFile.bind(reader);
 
@@ -80,17 +79,13 @@ describe('Dotenv parser', () => {
         });
 
         it('skips a quote escaped by an odd number of backslashes and picks an earlier valid close', () => {
-            // Buffer: opening `"`, `a`, closing `"`, then `\"` (escaped trailing quote).
-            // The rightmost `"` is escaped (one `\` before it), so the parser must walk back
-            // and pick the earlier closing `"` at index 2.
+            // the parser skips the escaped last quote and closes right after `a`
             const result = parseDotenv(String.raw`FOO="a"\"`);
             expect(result.get('FOO')).to.equal('a');
         });
 
         it('treats a quote after an even number of backslashes as the closing quote', () => {
-            // Buffer is `"a\\"` (raw): opening, `a`, two literal backslashes (escape for `\`),
-            // closing quote. The backslash counter has to walk through both `\` before deciding
-            // the closing `"` is unescaped.
+            // two backslashes before the quote leave it unescaped
             const result = parseDotenv(String.raw`FOO="a\\"`);
             expect(result.get('FOO')).to.equal('a\\');
         });
@@ -205,10 +200,10 @@ describe('Dotenv parser', () => {
         });
 
         afterEach(() => {
-            // No-op cleanup hook to keep parity with other tests that may need state resets.
+            // nothing to reset
         });
 
-        // Reference `written` so the watcher in CI doesn't flag it as unused.
+        // keeps `written` from being flagged as unused
         afterAll(() => {
             written.length = 0;
         });

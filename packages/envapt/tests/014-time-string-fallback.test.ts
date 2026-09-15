@@ -41,14 +41,13 @@ describe('Converters.Time — time-string fallbacks', () => {
         it('parses h', () => expect(Strings.h).to.equal(3 * 60 * 60 * 1000));
         it('parses d', () => expect(Strings.d).to.equal(24 * 60 * 60 * 1000));
         it('parses w', () => expect(Strings.w).to.equal(7 * 24 * 60 * 60 * 1000));
-        // a decimal parses like any raw value, the only string-fallback constraint is the explicit unit
+        // a string fallback only has to name its unit
         it('parses a decimal value', () => expect(Strings.decimal).to.equal(1.5 * 60 * 60 * 1000));
     });
 
     describe('absent fallback', () => {
         class NoFallback extends Envapter {
-            // the env value is malformed (`TEST_TIME_INVALID=5x`) and there's no fallback. The converter
-            // returns undefined and the decorator surfaces that.
+            // TEST_TIME_INVALID=5x in the fixture, and there is no fallback
             @Envapt('TEST_TIME_INVALID', { converter: Converters.Time })
             static readonly noFallback: number | undefined;
         }
@@ -60,7 +59,7 @@ describe('Converters.Time — time-string fallbacks', () => {
 
     describe('present-but-invalid value with a string fallback', () => {
         it('coerces the string fallback when the raw value is malformed', () => {
-            // TEST_TIME_INVALID=5x in the fixture is present but malformed, so the '10s' fallback must still coerce
+            // TEST_TIME_INVALID=5x is present but malformed
             expect(Envapter.getUsing('TEST_TIME_INVALID', 'time', '10s')).to.equal(10000);
         });
     });
@@ -68,8 +67,7 @@ describe('Converters.Time — time-string fallbacks', () => {
     describe('malformed time-string fallbacks', () => {
         it('throws MalformedTimeFallback for a bogus string fallback', () => {
             class BogusFallback extends Envapter {
-                // 'bogus' is not a valid TimeFallback, so the cast bypasses the compile-time guard
-                // to reach the runtime throw path (JS callers, dynamic strings)
+                // cast past the type to reach the runtime check that JS callers hit
                 @Envapt('UNDEFINED_TIME_FOR_BOGUS_FALLBACK', {
                     converter: Converters.Time,
                     fallback: 'bogus' as unknown as TimeFallback
@@ -84,8 +82,7 @@ describe('Converters.Time — time-string fallbacks', () => {
 
         it('throws MalformedTimeFallback for a unit-less time-string', () => {
             class UnitLessFallback extends Envapter {
-                // The TimeFallback type rejects '1500' (TimeUnit is required in the template).
-                // Cast to bypass for the runtime-throw check.
+                // TimeFallback rejects a string without a unit
                 @Envapt('UNDEFINED_TIME_FOR_UNITLESS_FALLBACK', {
                     converter: Converters.Time,
                     fallback: '1500' as unknown as TimeFallback

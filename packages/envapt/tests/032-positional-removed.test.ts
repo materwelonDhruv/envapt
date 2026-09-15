@@ -3,10 +3,9 @@ import { describe, expect, it } from 'vitest';
 import { EnvaptError } from '../src';
 import { Envapt } from '../src/legacy';
 
-// The positional `@Envapt(key, fallback, converter)` form was removed in v6. The type overloads
-// reject it, so this guards the runtime path a caller still reaches through a cast or plain JS.
+// v6 removed the positional `@Envapt(key, fallback, converter)` form. plain JS can still call it.
 describe('removed positional @Envapt form', () => {
-    // recreate the removed positional signature so the cast can call the runtime guard directly
+    // the old positional signature
     const positional = Envapt as unknown as (key: string, fallback: unknown, converter?: unknown) => PropertyDecorator;
 
     it('throws when a non-options second argument is passed', () => {

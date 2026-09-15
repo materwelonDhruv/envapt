@@ -18,14 +18,14 @@ export class FileSource implements FileCapableSource {
 
     /** Returns a snapshot clone of `process.env` as plain strings. */
     readVars(): Record<string, string> {
-        // Clone so the loader and downstream reads never mutate process.env.
+        // the loader writes into the returned object
         return { ...(process.env as Record<string, string>) };
     }
 
     /** Reads a file with `fs.readFileSync`, or `undefined` when it is missing or unreadable. */
     readFile(path: string, encoding: string): string | undefined {
         try {
-            // justified: our public encoding type is `string`; fs needs the BufferEncoding subset.
+            // EnvFileOptions.encoding is a plain string
             return fs.readFileSync(path, encoding as BufferEncoding);
         } catch {
             return undefined;

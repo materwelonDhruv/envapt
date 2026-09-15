@@ -1,8 +1,7 @@
 import { debugVerbose, debugWarn } from './Debug';
 
 /**
- * Public options for the internal `.env` loader. Mirrors the subset of dotenv's
- * `config()` options that envapt actually supports (no DOTENV_KEY, no quiet).
+ * Options for the `.env` loader, matching the dotenv `config()` options of the same name.
  * For debug output, use `Envapter.debug` (or the `ENVAPT_DEBUG` env var).
  *
  * @public
@@ -15,45 +14,18 @@ export interface EnvFileOptions {
     override?: boolean;
 }
 
-/**
- * Internal call signature used by `EnvapterBase`. The `path` and `processEnv`
- * fields are managed by envapt and never user-supplied.
- * @internal
- */
 export interface LoadDotenvInput extends EnvFileOptions {
     path: string | string[];
     processEnv: Record<string, string>;
-    // Injected so the loader stays free of `node:fs`. Returns `undefined` when the file is absent.
+    // passed in because this file must not import node:fs
     readFile(path: string, encoding: string): string | undefined;
 }
 
-// Matches: optional `export`, KEY name, optional whitespace, `=`, optional whitespace, value tail.
-// Multi-line quoted values are handled by re-buffering subsequent lines below.
-// Bounded by anchors with linear-time quantifiers; no catastrophic backtracking risk -- justified
+// the anchors and linear quantifiers rule out catastrophic backtracking
 // eslint-disable-next-line security/detect-unsafe-regex
 const KEY_LINE_RE = /^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=(.*)$/u;
 
-/**
- * Parse a `.env` text blob into a `Map<string, string>`.
- *
- * Supported syntax:
- * - `KEY=value` and `export KEY=value`
- * - blank lines and full-line `# comments`
- * - single-quoted `'literal'` values (no escape interpretation)
- * - double-quoted `"value"` values (interprets `\n`, `\r`, `\t`, `\\`, `\"`)
- * - backtick-quoted values (literal, like single quotes)
- * - quoted values may span multiple lines
- * - inline `# comment` after an unquoted value (requires whitespace before `#`)
- * - empty values resolve to `""`
- *
- * Mirrors dotenv's quirk where unescaped inner quotes inside a quoted value
- * are tolerated by greedy-matching to the rightmost matching quote on the
- * (possibly multi-line) value buffer. This is what lets a value like
- * `JSON="{"name":"x"}"` round-trip without escaping.
- *
- * Does NOT perform `${VAR}` expansion — envapt's `Parser` handles that downstream.
- * @internal
- */
+// does not expand `${VAR}`, TemplateResolver does that on read
 export function parseDotenv(src: string): Map<string, string> {
     const out = new Map<string, string>();
     const lines = src.split(/\r?\n/u);
@@ -82,9 +54,7 @@ function parseEntry(lines: string[], start: number): { entry: ParsedEntry | unde
     if (!match) return { entry: undefined, endLine: start };
 
     const key = match[1] as string;
-    // Drop only leading whitespace before the value; trailing whitespace and inline comments
-    // are dealt with below depending on whether the value is quoted.
-    /* v8 ignore next -- @preserve regex group 2 always matches via `(.*)`, fallback is defensive */
+    /* v8 ignore next -- @preserve regex group 2 always matches via `(.*)` */
     const rest = (match[2] ?? '').replace(/^\s+/u, '');
     const firstChar = rest[0];
 
@@ -130,11 +100,7 @@ function findInlineCommentStart(value: string): number {
     return -1;
 }
 
-/**
- * Find the rightmost matching closing quote in `buffer` (skipping index 0 which is the
- * opening quote). For `"`, a quote preceded by an odd number of backslashes is escaped
- * and ignored. Single and backtick quotes do not unescape.
- */
+// closes on the last quote, like dotenv. JSON="{"name":"x"}" parses without escaping.
 function findLastUnescapedQuote(buffer: string, quote: string): number {
     for (let i = buffer.length - 1; i > 0; i--) {
         if (buffer[i] !== quote) continue;
@@ -186,16 +152,6 @@ function unescapeDouble(raw: string): string {
     return out;
 }
 
-/**
- * Load one or more `.env` files into a target `processEnv` map. Mirrors the
- * subset of dotenv's `config()` semantics that envapt depends on: first-wins
- * across multiple paths by default, optional `override: true`, optional
- * non-UTF8 encoding, missing files are skipped silently.
- *
- * Returns the set of keys actually written into `input.processEnv`. Skipped
- * collisions (under default `override: false`) are NOT included.
- * @internal
- */
 export function loadDotenv(input: LoadDotenvInput): Set<string> {
     const paths = Array.isArray(input.path) ? input.path : [input.path];
     const encoding = input.encoding ?? 'utf8';
