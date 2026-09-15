@@ -73,9 +73,9 @@ jobs:
             - name: Setup workspace
               uses: ./.github/actions/setup
             - name: Setup Deno
-              uses: denoland/setup-deno@667a34cdef165d8d2b2e98dde39547c9daac7282 # v2
+              uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
               with:
-                  deno-version: 2.7.14
+                  deno-version: 2.9.6
             - name: Deno publish dry run
               uses: ./.github/actions/deno-publish-all
               with:
@@ -170,9 +170,9 @@ jobs:
             - name: Setup workspace
               uses: ./.github/actions/setup
             - name: Setup Deno
-              uses: denoland/setup-deno@667a34cdef165d8d2b2e98dde39547c9daac7282 # v2
+              uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
               with:
-                  deno-version: 2.7.14
+                  deno-version: 2.9.6
                   cache: true
             - name: Publish to JSR
               uses: ./.github/actions/deno-publish-all

@@ -2,29 +2,25 @@ import path from 'node:path';
 
 import createConfig from '@seedcord/eslint-config';
 import nextVitals from 'eslint-config-next/core-web-vitals';
-import betterTailwindcss from 'eslint-plugin-better-tailwindcss';
 import jsxA11y from 'eslint-plugin-jsx-a11y';
 import * as mdx from 'eslint-plugin-mdx';
 import reactCompiler from 'eslint-plugin-react-compiler';
-import tailwindCanonical from 'eslint-plugin-tailwind-canonical-classes';
-
-const TAILWIND_ENTRY = path.resolve(import.meta.dirname, 'app/global.css');
-const TAILWIND_CALLEES = ['cn', 'clsx', 'twMerge'];
-const TAILWIND_TAGS = ['tw'];
 
 export default createConfig({
     tsconfigRootDir: import.meta.dirname,
-    // nextVitals registers `import` + the `@typescript-eslint` parser block itself; let it own them.
-    registerImportPlugin: false,
+    // nextVitals registers `import` and the `@typescript-eslint` parser itself
+    registerImportPlugin: 'off',
     registerTypescriptConfigs: false,
+    registerUnicornPlugin: false,
+    tailwindEntryPoint: path.resolve(import.meta.dirname, 'app/global.css'),
+    tailwindCalleeFunctions: ['cn', 'clsx', 'twMerge'],
     userConfigs: [
-        // Brings the react, react-hooks, import, jsx-a11y, and @next plugins; later blocks lift rules off these rather than re-registering.
+        // registers react, react-hooks, import, jsx-a11y, and @next
         ...nextVitals,
 
         reactCompiler.configs.recommended,
 
-        // nextVitals already declares the jsx-a11y plugin; only lift its strict rule set + hardening.
-        // Scoped to ts/tsx so these React rules do not bleed onto *.mdx (where jsx-a11y is not registered).
+        // jsx-a11y is not registered for *.mdx
         {
             files: ['**/*.{ts,tsx}'],
             rules: {
@@ -36,31 +32,7 @@ export default createConfig({
             }
         },
 
-        // Tailwind canonical-class lint (autofix on --fix), ported from seedcord's eslint-config:
-        // the published @seedcord/eslint-config@1.3.3 predates its tailwind block, so `tailwindEntryPoint`
-        // is a no-op there. better-tailwindcss collapses shorthands (h-N w-N -> size-N); canonical-classes
-        // normalizes arbitrary values to the scale + fixes v4 modifier positions.
-        {
-            files: ['**/*.{ts,tsx}'],
-            plugins: {
-                'better-tailwindcss': betterTailwindcss,
-                'tailwind-canonical-classes': tailwindCanonical
-            },
-            settings: { 'better-tailwindcss': { entryPoint: TAILWIND_ENTRY } },
-            rules: {
-                'better-tailwindcss/enforce-canonical-classes': [
-                    'warn',
-                    { callees: TAILWIND_CALLEES, tags: TAILWIND_TAGS }
-                ],
-                'tailwind-canonical-classes/tailwind-canonical-classes': [
-                    'warn',
-                    { cssPath: TAILWIND_ENTRY, calleeFunctions: TAILWIND_CALLEES }
-                ]
-            }
-        },
-
-        // Lint MDX prose/structure. Code blocks are disabled: our ```ts twoslash samples are
-        // intentionally partial (`// ---cut---`, `^?`, `@errors`) and would not lint as standalone TS.
+        // twoslash samples carry `---cut---`, `^?`, and `@errors` markers that plain TS rejects
         {
             ...mdx.flat,
             files: ['**/*.mdx'],

@@ -28,18 +28,22 @@ The field splits into two jobs. Loaders like the dotenv family read a `.env` fil
 
 **Per-field binding.** A variable lives on the field that uses it, not in one central schema object that every consumer imports. Adding or removing one touches one field.
 
-| Feature                                    | envapt | t3-env | envin | envalid | znv | env-var | env-schema | convict | dotenv | dotenvx |
-| ------------------------------------------ | :----: | :----: | :---: | :-----: | :-: | :-----: | :--------: | :-----: | :----: | :-----: |
-| Typed reads                                |   ✅   |   ✅   |  ✅   |   ✅    | ✅  |   ✅    |     ✅     |   🟡    |   ❌   |   ❌    |
-| Built-in coercion, no validator dep        |   ✅   |   ❌   |  ❌   |   ✅    | ❌  |   ✅    |     ✅     |   ✅    |   ❌   |   ❌    |
-| Bring-your-own validator (Standard Schema) |   ✅   |   ✅   |  ✅   |   ❌    | ❌  |   ❌    |     ❌     |   ❌    |   ❌   |   ❌    |
-| Runs anywhere                              |   ✅   |   🟡   |  🟡   |   ❌    | ❌  |   🟡    |     ❌     |   ❌    |   ❌   |   🟡    |
-| Loads `.env`                               |   ✅   |   ❌   |  🟡   |   ❌    | ❌  |   ❌    |     ✅     |   ❌    |   ✅   |   ✅    |
-| Cascade + per-env profiles                 |   ✅   |   ❌   |  ❌   |   ❌    | ❌  |   ❌    |     ❌     |   ❌    |   ❌   |   🟡    |
-| Templating `${VAR}`                        |   ✅   |   ❌   |  ❌   |   ❌    | ❌  |   ❌    |     ✅     |   ❌    |   ❌   |   ✅    |
-| Decorators                                 |   ✅   |   ❌   |  ❌   |   ❌    | ❌  |   ❌    |     ❌     |   ❌    |   ❌   |   ❌    |
-| Client/server split                        |   ❌   |   ✅   |  ✅   |   ❌    | ❌  |   ❌    |     ❌     |   ❌    |   ❌   |   ❌    |
-| Zero runtime deps                          |   ✅   |   ✅   |  ✅   |   🟡    | ✅  |   ✅    |     🟡     |   ❌    |   ✅   |   ❌    |
+{/* prettier-ignore-start */}
+
+| Feature | envapt | t3-env | envin | envalid | znv | env-var | env-schema | convict | dotenv | dotenvx |
+| --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+| Typed reads | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | 🟡 | ❌ | ❌ |
+| Built-in coercion, no validator dep | ✅ | ❌ | ❌ | ✅ | ❌ | ✅ | ✅ | ✅ | ❌ | ❌ |
+| Bring-your-own validator (Standard Schema) | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Runs anywhere | ✅ | 🟡 | 🟡 | ❌ | ❌ | 🟡 | ❌ | ❌ | ❌ | 🟡 |
+| Loads `.env` | ✅ | ❌ | 🟡 | ❌ | ❌ | ❌ | ✅ | ❌ | ✅ | ✅ |
+| Cascade + per-env profiles | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | 🟡 |
+| Templating `${VAR}` | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ✅ |
+| Decorators | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Client/server split | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Zero runtime deps | ✅ | ✅ | ✅ | 🟡 | ✅ | ✅ | 🟡 | ❌ | ✅ | ❌ |
+
+{/* prettier-ignore-end */}
 
 ✅ yes, 🟡 partial or manual, ❌ no. A few of the 🟡 cells. Off Node, t3-env, envin, env-var, and dotenvx all work, but you wire the source per target (t3-env's `runtimeEnv`, env-var's `from()`). envin loads `.env` only through its separate CLI. convict's typed reads come from community `@types`. dotenvx does the cascade by convention. The Standard-Schema tools ship zero deps but you bring a validator, and envalid and env-schema each carry one small dependency. Download counts and the longer tail of tools (@fastify/env, dotenv-flow, ts-dotenv) are in the prose below.
 

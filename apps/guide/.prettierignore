@@ -1,7 +1,8 @@
 node_modules/
 .next/
 out/
+coverage/
 .source/
 next-env.d.ts
-# twoslash code blocks are line-position sensitive (^? queries); don't let prettier reflow them
+# twoslash `^?` queries point at exact line positions
 content/

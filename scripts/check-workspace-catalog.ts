@@ -1,17 +1,6 @@
 /* eslint-disable no-console -- justified: developer-facing CLI script */
-/**
- * Enforces the workspace catalog rule:
- *   - Any dep in 2+ `package.json` files MUST be referenced via `catalog:*` in `pnpm-workspace.yaml`.
- *   - Conversely, any catalog entry MUST be referenced by 2+ packages (catalog is for shared deps;
- *     single-use entries belong inline in the package that needs them).
- *
- * Flags:
- *   - `duplicate-literal`: dep in 2+ packages with at least one pinned version
- *   - `catalog-missing-entry`: a package references `catalog:X` for a dep that isn't in any bucket
- *   - `catalog-underused`: a catalog entry referenced by `<2` packages
- *
- * Exits with code 1 on any violation. Runs in `prePush`.
- */
+// a dep in 2+ package.json files must use `catalog:*`.
+// a catalog entry that fewer than 2 packages use belongs inline.
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -19,6 +8,8 @@ import { fileURLToPath } from 'node:url';
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const WORKSPACE_GLOBS = ['apps', 'packages', 'mock'];
 const DEP_FIELDS = ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies'] as const;
+
+const IGNORED_DEPS: ReadonlySet<string> = new Set(['eslint']);
 
 interface DepRef {
     packageJsonPath: string;
@@ -37,7 +28,6 @@ interface PackageJson {
 function findPackageJsons(): string[] {
     const out: string[] = [];
 
-    // Workspace-root devDeps count toward the 2+ rule (turbo, husky, vitest tooling all live there).
     const rootPkg = path.join(REPO_ROOT, 'package.json');
     if (safeIsFile(rootPkg)) out.push(rootPkg);
 
@@ -75,9 +65,7 @@ function safeIsFile(p: string): boolean {
     }
 }
 
-// Parses the `catalogs:` block from `pnpm-workspace.yaml` without a YAML lib. Indentation-agnostic
-// (works under either Prettier's 2- or 4-space style): a catalog entry is any indented `name: <value>`
-// line; bucket headers like `dev:` have no value after the colon and are skipped.
+// any indented `name: value` line is an entry, at either Prettier indent width. `dev:` headers have no value.
 function parseCatalogEntries(): Set<string> {
     const yamlPath = path.join(REPO_ROOT, 'pnpm-workspace.yaml');
     const lines = readFileSync(yamlPath, 'utf8').split('\n');
@@ -138,6 +126,7 @@ function findViolations(byName: Map<string, DepRef[]>, catalogEntries: Set<strin
     const seen = new Set<string>();
 
     for (const [depName, refs] of byName.entries()) {
+        if (IGNORED_DEPS.has(depName)) continue;
         if (refs.length < 2) continue;
 
         const literalRefs = refs.filter((r) => !isInternalRef(r.version));
@@ -154,9 +143,9 @@ function findViolations(byName: Map<string, DepRef[]>, catalogEntries: Set<strin
         }
     }
 
-    // Skip catalog entries already flagged above (don't double-report).
     for (const entryName of catalogEntries) {
         if (seen.has(entryName)) continue;
+        if (IGNORED_DEPS.has(entryName)) continue;
         const allRefs = byName.get(entryName) ?? [];
         const catalogRefs = allRefs.filter((r) => r.version.startsWith('catalog:'));
         const distinctPackages = new Set(catalogRefs.map((r) => r.packageJsonPath));

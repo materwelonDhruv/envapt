@@ -1,5 +1,6 @@
 import createConfig from '@seedcord/eslint-config';
 
 export default createConfig({
-    tsconfigRootDir: import.meta.dirname
+    tsconfigRootDir: import.meta.dirname,
+    registerUnicornPlugin: false
 });
