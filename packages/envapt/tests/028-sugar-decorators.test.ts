@@ -108,7 +108,7 @@ describe('Sugar decorators', () => {
     });
 
     describe('reject a mismatched fallback at compile time', () => {
-        // the assertion is that each @ts-expect-error line fails to type-check, the fields are never read
+        // each @ts-expect-error line is the assertion
         class SugarInvalid {
             // @ts-expect-error fallback must be a number
             @EnvNum('X', 'nope')
@@ -122,7 +122,7 @@ describe('Sugar decorators', () => {
             @EnvBool('X', 1)
             static readonly c: boolean;
 
-            // @ts-expect-error fallback is a URL instance, not the string form
+            // @ts-expect-error fallback must be a URL instance
             @EnvUrl('X', 'http://x')
             static readonly d: URL;
 

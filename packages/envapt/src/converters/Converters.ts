@@ -25,11 +25,10 @@ export type ConverterToken = (typeof SCALAR)[keyof typeof SCALAR];
  */
 export type CustomElementConverter<TReturn = unknown> = (raw: string) => TReturn;
 
-// json/regexp are not allowed as array elements because they consume the whole string and cannot be split into slots
-export type ArrayElement = Exclude<ConverterToken, 'json' | 'regexp'> | CustomElementConverter;
+// json and regexp always parse the whole string
+type ArrayElement = Exclude<ConverterToken, 'json' | 'regexp'> | CustomElementConverter;
 
-// phantom type branded with __envaptKind for runtime dispatch. TElement preserves
-// element converter type through variable indirection for type inference
+// TElement keeps the element type when the converter is stored in a variable first
 export interface ArrayOf<TElement extends ArrayElement = ArrayElement> {
     readonly __envaptKind: 'array';
     readonly of: TElement;

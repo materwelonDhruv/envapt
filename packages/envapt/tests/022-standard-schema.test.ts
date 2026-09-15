@@ -36,8 +36,7 @@ const handRolledThrower: StandardSchemaV1<string, string> = {
     }
 };
 
-// an empty issues array is spec-non-compliant, but `FailureResult.issues` is typed
-// `readonly Issue[]` with no min-length, so the Parser must fall back to a placeholder message
+// the spec expects at least one issue, and the `readonly Issue[]` type still allows an empty array
 const handRolledEmptyIssues: StandardSchemaV1<string, string> = {
     '~standard': {
         version: 1,
@@ -48,8 +47,7 @@ const handRolledEmptyIssues: StandardSchemaV1<string, string> = {
     }
 };
 
-// the `SchemaMustBeSync` brand rejects async schemas at the type level, so this union-typed
-// fixture squeezes past the brand to reach the runtime Promise check
+// the union type gets past the SchemaMustBeSync brand to reach the runtime Promise check
 const handRolledAsync: StandardSchemaV1<string, string> = {
     '~standard': {
         version: 1,
@@ -123,7 +121,7 @@ describe('Standard Schema adapter (v5)', () => {
         });
 
         it('does NOT validate the fallback through the schema', () => {
-            // `'not-a-number'` would fail the schema if validated, so a pass proves missing+fallback returns it as-is
+            // the schema would reject 'not-a-number'
             const fallback = 'not-a-number';
             const result = Envapter.parse(
                 'NEVER_SET',
@@ -140,8 +138,7 @@ describe('Standard Schema adapter (v5)', () => {
         });
 
         it('throws MissingEnvValue on empty even when the schema would accept it', () => {
-            // z.string() accepts "", so a MissingEnvValue rather than a schema error proves the missing
-            // check runs before the schema, the same path @Envapt({ required: true, schema }) relies on.
+            // z.string() accepts an empty string
             expect(() => Envapter.parse('EMPTY', z.string()))
                 .to.throw(EnvaptError)
                 .with.property('code', EnvaptErrorCodes.MissingEnvValue);
@@ -190,8 +187,7 @@ describe('Standard Schema adapter (v5)', () => {
             } catch (err) {
                 expect(err).to.be.instanceOf(EnvaptError);
                 const e = err as EnvaptError;
-                // EMPTY reads as missing before the schema runs, so this throws MissingEnvValue. The
-                // issues-passthrough assertion runs through INVALID_PORT below.
+                // EMPTY counts as missing before the schema runs
                 expect(e.code).to.equal(EnvaptErrorCodes.MissingEnvValue);
             }
         });
@@ -355,8 +351,7 @@ describe('Standard Schema adapter (v5)', () => {
         it('throws InvalidUserDefinedConfig when both schema + converter are provided', () => {
             const buildBadDecorator = (): void => {
                 class Bad {
-                    // no overload accepts both schema and converter, so the cast forges a dynamic-object
-                    // bypass to reach the runtime check
+                    // no overload accepts schema with converter
                     @Envapt('PORT', {
                         schema: z.coerce.number(),
                         converter: Number

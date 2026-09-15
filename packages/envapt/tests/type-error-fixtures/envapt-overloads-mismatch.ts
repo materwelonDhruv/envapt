@@ -1,8 +1,7 @@
 import { Converters } from '../../src';
 import { Envapt } from '../../src/legacy';
 
-// Every decorated field below declares a type that cannot hold the converter output, so each must
-// fail to compile (one diagnostic per field).
+// every field here must fail to compile, one diagnostic each
 export class OverloadMismatch {
     @Envapt('A', { converter: Converters.Number, fallback: 3000 })
     static readonly a: string;

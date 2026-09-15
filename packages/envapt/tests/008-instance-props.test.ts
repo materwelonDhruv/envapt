@@ -195,7 +195,7 @@ describe('Instance Properties with @Envapt', () => {
         const instance = new EdgeCasesInstance();
 
         it('should use fallback for empty string (expected behavior)', () => {
-            // an empty string reads as falsy, so it takes the fallback
+            // an empty string counts as missing
             expect(instance.emptyString).to.equal('not-empty');
         });
 

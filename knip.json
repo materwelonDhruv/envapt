@@ -3,19 +3,21 @@
     "workspaces": {
         ".": {
             "entry": ["scripts/**/*.ts"],
-            "project": ["scripts/**/*.ts"]
+            "project": ["scripts/**/*.ts"],
+            "ignoreBinaries": ["run.mjs"]
         },
         "packages/envapt": {
-            "ignore": ["tests/type-error-fixtures/**"]
+            "entry": ["scripts/*.ts", "tests/integration/modern-decorator-check.ts", "tests/*-emit/fixture.mts"],
+            "vitest": {
+                "config": ["../../vitest.config.ts", "vitest.browser.config.ts", "vitest.workers.config.ts"]
+            },
+            "ignore": ["tests/type-error-fixtures/**"],
+            "ignoreDependencies": ["cloudflare"]
         },
         "apps/guide": {
-            "entry": [
-                "app/**/{page,layout,route,not-found}.{ts,tsx}",
-                "source.config.ts",
-                "mdx-components.tsx"
-            ],
-            "project": ["app/**/*.{ts,tsx}", "components/**/*.{ts,tsx}", "lib/**/*.{ts,tsx}"],
-            "ignoreDependencies": ["envapt", "twoslash"]
+            "entry": ["app/**/{page,layout,route,not-found}.{ts,tsx}", "mdx-components.tsx"],
+            "project": ["app/**/*.{ts,tsx,css}", "components/**/*.{ts,tsx}", "lib/**/*.{ts,tsx}", "content/**/*.mdx"],
+            "ignoreDependencies": ["envapt"]
         }
     }
 }

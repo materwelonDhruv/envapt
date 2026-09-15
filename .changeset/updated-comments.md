@@ -1,0 +1,5 @@
+---
+'envapt': patch
+---
+
+Updated comments.

@@ -2,8 +2,8 @@ import type { EnvaptConverter } from './Conversion';
 import type { Environment } from '../core/Environment';
 
 /**
- * Options for the \@Envapt decorator (modern API). `required: true` is mutually exclusive
- * with `fallback`; see the per-converter overloads in `Envapt.ts` for the type-level mutex.
+ * Options for the \@Envapt decorator (modern API). `required: true` and `fallback` cannot be
+ * used together, and the `@Envapt` overloads reject the pair at compile time.
  * @public
  * @see {@link https://envapt.materwelon.dev/docs/decorators#declaring-decorated-fields}
  */
@@ -22,29 +22,29 @@ interface EnvaptOptions<TFallback = string> {
  * @see {@link https://envapt.materwelon.dev/docs/environment#custom-profiles}
  */
 interface EnvProfile {
-    /** One or more `.env` paths to load for this environment. Order matters: earlier paths take precedence. */
+    /** One or more `.env` paths to load for this environment. Earlier paths take precedence. */
     paths: string | string[];
 }
 
 /**
  * Configuration object for `Envapter.configureProfiles`. Maps each `Environment` to an optional
  * profile override. Unspecified environments fall through to the default cascade behavior
- * (`.env.${env}.local`, `.env.local`, `.env.${env}`, `.env`).
+ * (`.env.${env}.local`, `.env.${env}`, `.env.local`, `.env`).
  * @public
  * @see {@link https://envapt.materwelon.dev/docs/environment#custom-profiles}
  */
 type ProfilesConfig = Partial<Record<Environment, EnvProfile>> & {
     /**
      * When `false`, disables the default dotenv-flow cascade entirely. Only the explicitly
-     * configured paths are loaded. Defaults to `true` (cascade still runs, configured paths
-     * are layered on top with higher precedence).
+     * configured paths are loaded. Defaults to `true` (the cascade still runs and configured
+     * paths take higher precedence).
      */
     useDefaults?: boolean;
 };
 
 /**
  * How the portable build's filesystem-only config APIs behave when called. `'warn'` (the default)
- * warns once and no-ops, `'throw'` throws `FileApiUnsupported`. The node build runs these APIs
+ * warns once and no-ops. `'throw'` throws `FileApiUnsupported`. The node build runs these APIs
  * normally and is unaffected by this value.
  * @public
  * @see {@link https://envapt.materwelon.dev/docs/compatibility#binding-by-runtime}

@@ -10,7 +10,6 @@ import { Envapt } from '../src/legacy';
 
 import type { JsonValue } from '../src';
 
-// validateEnvFilesExist takes an injected existence probe, so pass the Node fs check
 const nodeExists = (path: string): boolean => existsSync(path);
 
 describe('Runtime Validation', () => {
@@ -27,7 +26,7 @@ describe('Runtime Validation', () => {
         });
 
         it('should throw for invalid built-in converter types', () => {
-            // 'array' stopped being a scalar token in v5, so it now rejects (use Converters.array())
+            // 'array' stopped being a scalar token in v5
             const invalidTypes = ['invalid', 'str', 'num', 'array'];
 
             const testFunction = (type: string) => () => Validator.builtInConverter(type);
@@ -102,7 +101,7 @@ describe('Runtime Validation', () => {
     describe('Converter fallback validation', () => {
         class FallbackTests {
             @Envapt('NONEXISTENT_ARRAY_VAR', {
-                // @ts-expect-error fallback must be string[] (matches `of: Converters.String`), not a bare string
+                // @ts-expect-error fallback must be string[] to match `of: Converters.String`
                 converter: Converters.array(),
                 fallback: 'not-an-array'
             })
@@ -320,7 +319,7 @@ describe('Runtime Validation', () => {
             static readonly arrayWithWrongElementType: string | undefined;
 
             @Envapt('NONEXISTENT_ARRAY_VAR', {
-                // @ts-expect-error default `Converters.array()` returns string[]; `42` and `true` are not strings
+                // @ts-expect-error `Converters.array()` defaults to string[] and `42` and `true` are not strings
                 converter: Converters.array(),
                 fallback: ['string', 42, true]
             })

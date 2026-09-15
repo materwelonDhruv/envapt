@@ -62,24 +62,22 @@ describe('User-defined errors', () => {
         }
 
         it('should throw error for static property with fallback when env var is missing', () => {
-            // a custom converter runs even when a fallback is set, so it can throw
+            // custom converters run even when a fallback is set
             expect(() => TestCustomErrors.secretToken).to.throw('Missing SECRET_TOKEN');
         });
 
         it('should throw error for static property without fallback when env var is missing', () => {
-            // no fallback, so the converter runs with raw undefined
+            // the converter runs with raw undefined
             expect(() => TestCustomErrors.requiredConfig).to.throw('REQUIRED_CONFIG is required');
         });
 
         it('should throw error for instance property with fallback when env var is missing', () => {
             const instance = new TestCustomErrors();
-            // a custom converter runs even when a fallback is set, so it can throw
             expect(() => instance.missingInstanceVar).to.throw('Missing MISSING_INSTANCE_VAR');
         });
 
         it('should throw error for instance property without fallback when env var is missing', () => {
             const instance = new TestCustomErrors();
-            // no fallback, so the converter runs with raw undefined
             expect(() => instance.missingRequiredInstance).to.throw('MISSING_REQUIRED_INSTANCE is required');
         });
 
@@ -101,7 +99,6 @@ describe('User-defined errors', () => {
                 public static readonly testVar: string;
             }
 
-            // the converter runs despite the fallback, so its throw propagates
             expect(() => UpdatedBehaviorTest.testVar).to.throw('This should now be thrown');
         });
     });

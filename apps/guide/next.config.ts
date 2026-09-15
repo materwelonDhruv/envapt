@@ -35,8 +35,8 @@ async function nextConfig(): Promise<NextConfig> {
         images: { unoptimized: true },
         reactStrictMode: true,
         env: { NEXT_PUBLIC_ENVAPT_VERSION: await badgeVersion() },
-        // typescript + twoslash run at build time only (in transformerTwoslash)
-        serverExternalPackages: ['typescript', 'twoslash']
+        // only transformerTwoslash loads typescript, during the build
+        serverExternalPackages: ['typescript']
     };
     return withMDX(config);
 }

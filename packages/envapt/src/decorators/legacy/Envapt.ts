@@ -99,11 +99,11 @@ export function Envapt<TReturnType>(
  *   \@Envapt('APP_PORT', { converter: Converters.Number, fallback: 3000 })
  *   static readonly port: number;
  *
- *   // the Url fallback is a URL instance, not a string
+ *   // the Url fallback is a URL instance
  *   \@Envapt('APP_URL', { converter: Converters.Url, fallback: new URL('http://localhost:3000') })
  *   static readonly url: URL;
  *
- *   // prefers CANARY_URL when present, otherwise APP_URL
+ *   // reads CANARY_URL when present, otherwise APP_URL
  *   \@Envapt(['CANARY_URL', 'APP_URL'], { converter: Converters.Url })
  *   static readonly canaryUrl: URL | undefined;
  *
@@ -163,9 +163,8 @@ export function Envapt<TConstructor extends PrimitiveConstructor>(
 
 /**
  * Required, no converter (raw string). Throws `MissingEnvValue` on first access when the env
- * value is missing or empty after trimming, independent of the global `Envapter.strict` flag.
- * Pairing `required: true` with `fallback` matches no overload at compile time, and the runtime
- * Validator rejects dynamic objects that bypass the types.
+ * value is missing or empty. Pairing `required: true` with `fallback` matches no overload at
+ * compile time, and a call that bypasses the types throws `InvalidUserDefinedConfig` at runtime.
  *
  * @param key - Environment variable name(s) to load
  * @param options - `{ required: true }`
@@ -181,10 +180,10 @@ export function Envapt<TConstructor extends PrimitiveConstructor>(
 export function Envapt(key: EnvKeyInput, options: { required: true }): EnvaptFieldDecorator<string>;
 
 /**
- * A Standard Schema v1 adapter (zod, valibot, arktype, hand-rolled). Synchronous schemas only,
- * so a Promise-returning `validate` throws `InvalidUserDefinedConfig` at runtime. Pairing
- * `schema` with `converter` matches no overload at compile time, and the runtime Validator
- * rejects dynamic objects that bypass the types.
+ * A Standard Schema v1 adapter (zod, valibot, arktype, hand-rolled). Synchronous schemas only.
+ * A `validate` that returns a Promise throws `InvalidUserDefinedConfig` at runtime. Pairing
+ * `schema` with `converter` matches no overload at compile time, and a call that bypasses the
+ * types throws `InvalidUserDefinedConfig` at runtime.
  * @public
  */
 export function Envapt<Schema extends StandardSchemaV1>(

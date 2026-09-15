@@ -9,11 +9,10 @@ import { createGate } from '../_guard.mjs';
 const resolveDir = dirname(fileURLToPath(import.meta.url));
 const gate = createGate('tree-shaking');
 
-// A leaf import that touches none of the reader machinery. If the entry is side-effect-free the bundler
-// drops the whole Envapter graph, leaving only the error type.
+// importing only EnvaptError should let the bundler drop the whole Envapter graph
 const leafProgram = (specifier) => `import { EnvaptError } from '${specifier}';globalThis.__envapt = EnvaptError;`;
 
-// Markers for code that must NOT survive a leaf import, a converter body and the Standard Schema dispatch.
+// a converter body and the Standard Schema check must not survive a leaf import
 const HEAVY_MARKERS = [/new URL\(/, /~standard/, /JSON\.parse/];
 const MAX_LEAF_BYTES = 4000;
 

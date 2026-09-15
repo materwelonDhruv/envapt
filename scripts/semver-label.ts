@@ -1,7 +1,4 @@
-/**
- * Applies one semver label (🩹 patch / ✨ minor / 💥 major) to a pull request from its changeset bumps.
- * The semver-labeler workflow runs this with `tsx`. The token, repo, PR number, and head sha come from env.
- */
+// the semver-labeler workflow runs this with tsx and passes the token, repo, PR number, and head sha as env
 import { fileURLToPath } from 'node:url';
 
 import { Envapter, Converters } from 'envapt';
@@ -10,7 +7,7 @@ const RANK = { patch: 1, minor: 2, major: 3 } as const;
 type Bump = keyof typeof RANK;
 const LABEL: Record<Bump, string> = { patch: '🩹 patch', minor: '✨ minor', major: '💥 major' };
 
-/** The highest semver bump across a set of changeset file bodies, or null when none carry one. */
+// takes the text of each changeset file
 export function maxBump(changesets: string[]): Bump | null {
     let top: Bump | null = null;
     for (const body of changesets) {
@@ -26,7 +23,6 @@ export function maxBump(changesets: string[]): Bump | null {
     return top;
 }
 
-/** The changeset files this PR adds or edits. */
 export function changesetPathsFromFiles(files: { filename: string; status: string }[]): string[] {
     return files
         .filter((file) => {
@@ -79,7 +75,7 @@ async function prChangedFiles(ctx: Ctx): Promise<{ filename: string; status: str
             'GET',
             `/repos/${ctx.owner}/${ctx.repo}/pulls/${ctx.pr}/files?per_page=100&page=${page}`
         );
-        // a failed listing must stop the job, an empty list here would silently apply no label.
+        // throw because an empty list would strip the PR's semver label
         if (!res.ok)
             throw new Error(`[semver-label] listing PR #${ctx.pr} files failed: ${res.status} ${res.statusText}`);
         // justified: GitHub "list pull request files" returns an array of file entries
@@ -94,7 +90,7 @@ async function changesetBodies(ctx: Ctx): Promise<string[]> {
     const bodies: string[] = [];
     for (const path of changesetPathsFromFiles(await prChangedFiles(ctx))) {
         const file = await api(ctx.token, 'GET', `/repos/${ctx.owner}/${ctx.repo}/contents/${path}?ref=${ctx.sha}`);
-        // same reason as the listing, a skipped changeset would drop its bump and mislabel the PR.
+        // a skipped changeset would drop its bump and mislabel the PR
         if (!file.ok) throw new Error(`[semver-label] reading ${path} failed: ${file.status} ${file.statusText}`);
         // justified: GitHub "get file contents" returns base64 content
         const { content } = (await file.json()) as { content: string };

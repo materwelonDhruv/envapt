@@ -6,9 +6,7 @@ import { Converters, Envapter, EnvaptErrorCodes } from '../src';
 import { EnvaptError } from '../src/infra/Error';
 import { Envapt } from '../src/legacy';
 
-// A rejected value makes the converter return the fallback it was given, and that becomes the decorator field.
-// The fallbacks (99, 1.5) are values no leading-number parse of the fixtures would produce, so a loose parse
-// would surface the wrong number and fail these assertions.
+// a loose leading-number parse of the fixtures would never produce the fallbacks 99 and 1.5
 describe('Numeric converter strictness (v8)', () => {
     beforeAll(() => {
         Envapter.envPaths = resolve(import.meta.dirname, '.env.038-numeric-strictness');

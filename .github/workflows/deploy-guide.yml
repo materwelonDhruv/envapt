@@ -57,7 +57,7 @@ jobs:
                   apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
                   accountId: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
                   workingDirectory: apps/guide
-                  wranglerVersion: '4.95.0'
+                  wranglerVersion: '4.131.1'
                   packageManager: pnpm
                   command: deploy
 
@@ -68,7 +68,7 @@ jobs:
                   apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
                   accountId: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
                   workingDirectory: apps/guide
-                  wranglerVersion: '4.95.0'
+                  wranglerVersion: '4.131.1'
                   packageManager: pnpm
                   command: deploy --env next
 
@@ -93,7 +93,7 @@ jobs:
                   apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
                   accountId: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
                   workingDirectory: apps/guide
-                  wranglerVersion: '4.95.0'
+                  wranglerVersion: '4.131.1'
                   packageManager: pnpm
                   command: versions upload --preview-alias ${{ steps.alias.outputs.alias }}
             - name: Comment preview URL

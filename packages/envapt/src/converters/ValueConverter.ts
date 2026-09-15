@@ -13,11 +13,6 @@ function formatKeyForError(key: EnvKeyInput): string {
     return Array.isArray(key) ? `[${key.join(', ')}]` : String(key);
 }
 
-/**
- * Convert a resolved environment value to its declared type via built-in, primitive, array,
- * custom, or Standard Schema converters.
- * @internal
- */
 export class ValueConverter {
     constructor(private readonly envService: EnvapterService) {}
 
@@ -85,7 +80,7 @@ export class ValueConverter {
 
         if (parsed === undefined) {
             if (!hasFallback) return undefined;
-            // coerce a string fallback to the number return type through the time converter
+            // time returns a number even when the fallback is a string
             if (resolvedConverter === 'time' && typeof fallback === 'string') {
                 const timeFn = BuiltInConverters.getConverter(resolvedConverter);
                 return timeFn('', fallback) as TFallback;
@@ -97,11 +92,11 @@ export class ValueConverter {
         const converted = converterFn(parsed, undefined);
 
         if (converted === undefined) {
-            // key and type only, no value, since env values can be secrets and verbose logs reach stderr
+            // leave the value out because env values can be secrets
             debugVerbose(
                 `could not convert ${formatKeyForError(key)} as ${resolvedConverter}${hasFallback ? ', using the fallback' : ''}`
             );
-            // re-run with the real fallback so time's string-form fallback still coerces to a number
+            // time needs the real fallback to turn a string fallback into a number
             return hasFallback ? (converterFn(parsed, fallback) as TFallback) : undefined;
         }
 
@@ -132,8 +127,7 @@ export class ValueConverter {
 
         if (parsed === undefined) {
             if (!hasFallback) return undefined;
-            // coerce each time-string entry through the time converter so the array is number[]
-            // matching the declared return type
+            // a time array returns number[] even when its fallback holds strings
             if (
                 resolvedConverter.of === 'time' &&
                 Array.isArray(fallback) &&
@@ -176,8 +170,7 @@ export class ValueConverter {
         return 'string';
     }
 
-    // Single dispatch site for decorator + `Envapter.parse()` so error codes (208 / 209 / 305)
-    // stay consistent. Missing+no-fallback throws here so callers don't duplicate the check.
+    // the decorators and `Envapter.parse()` both run schema reads through here
     convertWithSchema(key: EnvKeyInput, schema: StandardSchemaV1, fallback: unknown, hasFallback: boolean): unknown {
         const raw = this.envService.get(key, undefined);
 

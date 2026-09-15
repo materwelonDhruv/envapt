@@ -59,8 +59,7 @@ const isVersionOnJsr = (name: string, version: string): boolean => {
         const parsed = JSON.parse(meta) as { versions?: Record<string, unknown> };
         return parsed.versions !== undefined && version in parsed.versions;
     } catch {
-        // deno publish skips a version already on jsr, so a duplicate attempt is a safe no-op. returning
-        // false here to attempt the publish so we don't accidentally drop a release.
+        // deno publish skips a version jsr already has. trying again is safer than dropping a release.
         return false;
     }
 };
@@ -79,8 +78,7 @@ const pendingChangesets = hasPendingChangesets();
 const needsPublish = !isVersionPublished(name, version);
 const run = pendingChangesets || needsPublish;
 
-// stop a publish when the branch, pre mode, tag, and version don't match up, so a release can't land
-// on the wrong tag. only when a publish is really about to run, since CI versions later. see release-guards.ts
+// stops a release from going out on the wrong npm tag
 const guardError = publishGuardError(branch, mode, tag, version, { pendingChangesets, needsPublish });
 if (guardError) {
     console.error(`::error::${guardError} Refusing to publish.`);
@@ -90,8 +88,7 @@ if (guardError) {
 console.log(`pendingChangesets=${pendingChangesets} needsPublish=${needsPublish} (${name}@${version}) run=${run}`);
 setOutput('run', String(run));
 
-// publish whenever the version is not yet on jsr. changeset pre mode keeps the .md files after a
-// prerelease is versioned, so a pending-changesets check would never let jsr publish.
+// pending changesets cannot gate jsr because pre mode keeps the .md files after versioning
 const { name: jsrName, version: jsrVersion } = readDenoConfig();
 const publishJsr = !isVersionOnJsr(jsrName, jsrVersion);
 console.log(`jsr ${jsrName}@${jsrVersion} publish_jsr=${publishJsr}`);

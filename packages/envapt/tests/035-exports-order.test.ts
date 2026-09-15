@@ -44,7 +44,7 @@ function nodeTarget(kind: 'index' | 'legacy'): NodeTarget {
 }
 
 describe('package exports map (v8)', () => {
-    // justified: both subpaths map to the object form here, the string form is only './package.json'
+    // justified: only './package.json' uses the string form
     const dot = pkg.exports['.'] as SubpathMap;
     const legacy = pkg.exports['./legacy'] as SubpathMap;
 

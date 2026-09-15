@@ -151,7 +151,7 @@ describe('Envapter', () => {
             const testPath = resolve(`${import.meta.dirname}/.env.envapt-test`);
 
             it('should get default envPaths', () => {
-                // the ['.env'] default can't be asserted here, no .env exists, so just check the getter returns paths
+                // can't assert the ['.env'] default here because no .env exists
                 const currentPaths = Envapter.envPaths;
                 expect(currentPaths).to.be.an('array');
                 expect(currentPaths.length).to.be.greaterThan(0);

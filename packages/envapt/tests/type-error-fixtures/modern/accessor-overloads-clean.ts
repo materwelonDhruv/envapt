@@ -1,8 +1,7 @@
 import { Converters } from '../../../src';
 import { Envapt } from '../../../src/decorators/modern';
 
-// Correct declarations across the overloads, including no-fallback `| undefined`, `fallback: undefined`
-// `| undefined`, and a deliberately wider field, must all compile cleanly.
+// every accessor here must compile, including the wider ones
 export class OverloadClean {
     @Envapt('A', { converter: Converters.Number, fallback: 3000 })
     static accessor a: number;

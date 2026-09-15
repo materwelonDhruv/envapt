@@ -48,8 +48,7 @@ describe('release branch guards', () => {
         expect(branchGuardError('feature/x', 'exit', undefined, '7.0.1')).to.equal(null);
     });
 
-    // The publish job versions later in CI, so the version at preflight is mid-flight unless a publish
-    // is actually about to run (no changesets pending and the version not yet on the registry).
+    // CI bumps the version after preflight unless a publish is about to run
     describe('publishGuardError (only enforces on a real publish)', () => {
         it('refuses a clean version on next when a publish is about to happen', () => {
             const err = publishGuardError('next', 'pre', 'next', '7.0.1', {

@@ -1,5 +1,4 @@
-// Build gate. A public name must resolve to a single declaration across the runtime entry points so
-// an editor offers a single auto-import per name across the runtime builds.
+// an editor offers one auto-import per name only when each public name has one declaration
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';

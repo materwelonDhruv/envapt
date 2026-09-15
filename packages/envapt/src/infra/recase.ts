@@ -1,6 +1,6 @@
 import type { KeyCasing } from '../types';
 
-// underscore-delimited words, kept in step with the RecaseKey type transforms in types/Casing.ts.
+// if you change this, change the RecaseKey type in types/Casing.ts to match
 export function recase(name: string, casing?: KeyCasing): string {
     if (casing === undefined) return name;
     const words = name.split('_').filter((word) => word.length > 0);

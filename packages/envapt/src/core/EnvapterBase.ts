@@ -8,11 +8,9 @@ import { normalizeSource } from '../sources/normalizeSource';
 import type { DebugLevel } from '../infra/Debug';
 import type { EnvKeyInput, FileApiMode, Source } from '../types';
 
-/** @internal */
 export abstract class EnvapterBase {
     /**
-     * Enable or disable strict mode. Default `false`. Setting refreshes the cache so
-     * previously-cached converted values get re-evaluated under the new rule.
+     * Enable or disable strict mode. Default `false`. Setting it clears and rebuilds the cache.
      * @see {@link https://envapt.materwelon.dev/docs/strict-mode#what-strict-mode-changes}
      */
     static set strict(value: boolean) {
@@ -41,13 +39,13 @@ export abstract class EnvapterBase {
     /**
      * Opt-in mirror of dotenv-loaded keys back to `process.env`. Default `false`.
      *
-     * Only keys the loader actually wrote are mirrored, so collision behavior follows
-     * `envFileOptions.override`: with the default `false`, pre-existing `process.env` values
-     * are preserved. With `true`, the file value wins in both the cache and the mirror.
+     * `envFileOptions.override` controls collisions because only keys the loader wrote are mirrored.
+     * With the default `false`, existing `process.env` values stay. With `true`, the file value
+     * wins in both the cache and the mirror.
      *
-     * Flipping `false → true` mirrors the existing tracked delta immediately (no cache
-     * refresh). Flipping `true → false` is one-way: previously mirrored keys remain in
-     * `process.env` until the process exits.
+     * Flipping `false → true` mirrors the loaded keys immediately without a cache refresh.
+     * Flipping `true → false` does not remove anything. Mirrored keys stay in `process.env`
+     * until the process exits.
      * @see {@link https://envapt.materwelon.dev/docs/configuration#mirroring-to-processenv}
      */
     static set syncProcessEnv(value: boolean) {
@@ -64,13 +62,13 @@ export abstract class EnvapterBase {
     /**
      * On the portable build, this controls the filesystem-only config APIs (`envPaths`, `baseDir`,
      * `envFileOptions`, `configureProfiles`, `resetProfiles`). `'warn'` (the default) warns once and
-     * no-ops, `'throw'` throws {@link EnvaptError} `FileApiUnsupported`. The node build runs these
+     * no-ops. `'throw'` throws {@link EnvaptError} `FileApiUnsupported`. The node build runs these
      * APIs normally and this value has no effect there.
      * @see {@link https://envapt.materwelon.dev/docs/compatibility#binding-by-runtime}
      */
     static set fileApiMode(mode: FileApiMode) {
         Validator.validateFileApiMode(mode);
-        // no refreshCache, this only gates the portable stubs.
+        // only the portable stubs read this
         state.fileApiMode = mode;
     }
 

@@ -1,6 +1,6 @@
 import { EnvNum } from '../../src/legacy';
 
-// @EnvNum produces a number; a string field cannot hold it, so this must fail to compile.
+// a string field cannot hold the number @EnvNum returns
 export class FieldTypeMismatch {
     @EnvNum('PORT', 3000)
     static readonly port: string;

@@ -3,9 +3,8 @@ import { readRuntimeVar, writeRuntimeLine } from './runtime';
 
 /**
  * Debug log levels for {@link Envapter.debug}. `silent` (default) emits nothing.
- * `warn` covers signals that might indicate misconfiguration, failed file reads,
- * unresolved templates (when not strict), and any read of a missing or empty variable
- * (whether it returns a fallback or `undefined`). `verbose` adds every loaded file,
+ * `warn` logs failed file reads, unresolved templates (when not strict), and any read of a
+ * missing or empty variable, whether it returns a fallback or `undefined`. `verbose` adds every loaded file,
  * per-file key count, per-key load lines, and effective-paths / cache-rebuild notices.
  * @public
  * @see {@link https://envapt.materwelon.dev/docs/configuration#debug-logging}
@@ -31,7 +30,6 @@ function resolveLevel(): DebugLevel {
     return currentLevel;
 }
 
-/** @internal */
 export function setDebugLevel(level: DebugLevel): void {
     if (!isDebugLevel(level)) {
         throw new EnvaptError(
@@ -43,18 +41,15 @@ export function setDebugLevel(level: DebugLevel): void {
     initialized = true;
 }
 
-/** @internal */
 export function getDebugLevel(): DebugLevel {
     return resolveLevel();
 }
 
-/** @internal */
 export function resetDebugForTesting(): void {
     currentLevel = 'silent';
     initialized = false;
 }
 
-/** @internal */
 export function debugWarn(message: string): void {
     const level = resolveLevel();
     if (level === 'warn' || level === 'verbose') {
@@ -62,7 +57,6 @@ export function debugWarn(message: string): void {
     }
 }
 
-/** @internal */
 export function debugVerbose(message: string): void {
     if (resolveLevel() === 'verbose') {
         writeRuntimeLine(`[envapt] ${message}`);

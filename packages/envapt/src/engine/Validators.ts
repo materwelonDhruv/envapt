@@ -1,5 +1,4 @@
-// Import the converter modules directly, not via the `./converters` barrel: that barrel pulls in
-// ValueConverter, which imports this Validator, so a barrel import here would cycle.
+// the ./converters barrel imports ValueConverter, which imports this file
 import { isArrayOf } from '../converters/Converters';
 import { ListOfBuiltInConverters, BuiltInConverterTypeCheckers } from '../converters/ListOfBuiltInConverters';
 import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
@@ -11,23 +10,15 @@ import type { BuiltInConverter, ConverterFunction, EnvaptConverter, FileApiMode 
 
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class -- cohesive dispatch of stateless type guards, same shape as BuiltInConverters
 export class Validator {
-    /**
-     * Check if a value is a built-in scalar converter token
-     */
     static isBuiltInConverter<TFallback>(value: EnvaptConverter<TFallback>): value is BuiltInConverter {
         if (typeof value === 'string') return ListOfBuiltInConverters.includes(value);
         return false;
     }
 
-    /**
-     * Check if a value is an `ArrayOf<...>` token produced by {@link Converters.array}.
-     */
     static isArrayConverter(value: unknown): value is ArrayOf {
         return isArrayOf(value);
     }
 
-    // Structural check: `version === 1` + callable `validate` is the minimum dispatchable
-    // shape per the Standard Schema spec.
     static isStandardSchema(value: unknown): value is StandardSchemaV1 {
         if (typeof value !== 'object' || value === null) return false;
         if (!('~standard' in value)) return false;
@@ -48,9 +39,6 @@ export class Validator {
         }
     }
 
-    /**
-     * Runtime validation that the `ArrayOf<...>` configuration is well-formed.
-     */
     static arrayConverter(value: unknown): asserts value is ArrayOf {
         if (!isArrayOf(value)) {
             throw new EnvaptError(
@@ -77,9 +65,6 @@ export class Validator {
         }
     }
 
-    /**
-     * Validate that a string is a valid built-in scalar converter token
-     */
     static builtInConverter(value: unknown): asserts value is BuiltInConverter {
         if (typeof value !== 'string') {
             throw new EnvaptError(EnvaptErrorCodes.InvalidConverterType, `Expected string, got ${typeof value}`);
@@ -93,9 +78,6 @@ export class Validator {
         }
     }
 
-    /**
-     * Validate that fallback type matches the converter's return type for built-in converters
-     */
     static validateBuiltInConverterFallback(converter: BuiltInConverter, fallback: unknown): void {
         const typeChecker = BuiltInConverterTypeCheckers[converter];
         if (!typeChecker(fallback)) {
@@ -106,9 +88,6 @@ export class Validator {
         }
     }
 
-    /**
-     * Validate that all elements in an array fallback have consistent types
-     */
     static validateArrayFallbackElementTypes(fallback: unknown[]): void {
         if (fallback.length === 0) return;
 
@@ -126,22 +105,16 @@ export class Validator {
         }
     }
 
-    /**
-     * Validate that an `ArrayOf<...>` element converter matches the runtime types of its
-     * fallback elements. For `Converters.Time` arrays the element-time-string format is also
-     * checked here.
-     */
     static validateArrayConverterElementTypeMatch(elementOf: ArrayOf['of'], fallback: unknown[]): void {
         if (fallback.length === 0) return;
 
         if (typeof elementOf === 'function') {
-            // Custom element converters can return anything; we can't statically validate the fallback shape.
+            // a custom element converter can return any type
             return;
         }
 
         const elementToken = elementOf;
 
-        // Time array fallbacks may be number[] OR string[] (TimeFallback[]).
         if (elementToken === 'time') {
             const everyNumber = fallback.every((v) => typeof v === 'number');
             const everyString = fallback.every((v) => typeof v === 'string');
@@ -164,18 +137,12 @@ export class Validator {
         }
     }
 
-    /**
-     * Check if a value is a primitive constructor
-     */
     static isPrimitiveConstructor(
         value: unknown
     ): value is typeof String | typeof Number | typeof Boolean | typeof BigInt | typeof Symbol {
         return value === String || value === Number || value === Boolean || value === BigInt || value === Symbol;
     }
 
-    /**
-     * Safely coerce a fallback value using a primitive constructor
-     */
     static coercePrimitiveFallback<CoercedType>(
         converter: typeof String | typeof Number | typeof Boolean | typeof BigInt | typeof Symbol,
         fallback: unknown
@@ -221,10 +188,7 @@ export class Validator {
         );
     }
 
-    /**
-     * Reject non-boolean inputs to `Envapter.syncProcessEnv` so a truthy typo
-     * (`'true'`, `1`, etc.) does not silently enable the mirror.
-     */
+    // a truthy typo like 'true' or 1 would turn the mirror on
     static validateSyncProcessEnv(value: unknown): asserts value is boolean {
         if (typeof value !== 'boolean') {
             throw new EnvaptError(
@@ -244,9 +208,6 @@ export class Validator {
         }
     }
 
-    /**
-     * Make sure the user hasn't provided prohibited options in their dotenv config
-     */
     static validateEnvFileOptions(config: object): config is EnvFileOptions {
         const validKeys = new Set(['encoding', 'override']);
         const invalidKeys = Object.keys(config).filter((key) => !validKeys.has(key));
@@ -261,8 +222,7 @@ export class Validator {
         return true;
     }
 
-    // Existence is probed through the caller-supplied `fileExists` (backed by the bound source) so
-    // this stays free of `node:fs`.
+    // fileExists comes from the caller because this file must not import node:fs
     static validateEnvFilesExist(paths: string[], fileExists: (path: string) => boolean): void {
         const missing = paths.filter((p) => !fileExists(p));
 

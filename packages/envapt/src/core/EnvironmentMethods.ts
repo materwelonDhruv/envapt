@@ -3,10 +3,6 @@ import { EnvapterBase } from './EnvapterBase';
 import { Environment } from './Environment';
 import { state } from './state';
 
-/**
- * Mixin for environment detection and checking methods
- * @internal
- */
 export class EnvironmentMethods extends EnvapterBase {
     /**
      * Get the current application environment

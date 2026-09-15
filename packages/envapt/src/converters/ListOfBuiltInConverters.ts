@@ -3,11 +3,7 @@ import { EMAIL_RE, MAX_PORT } from './BuiltInConverters';
 import type { ConverterToken } from './Converters';
 import type { JsonValue } from '../types';
 
-/**
- * List of built-in scalar converters for Envapt. Arrays are handled separately via
- * the {@link Converters.array} builder and the `ArrayOf<...>` brand.
- * @internal
- */
+// arrays go through Converters.array and are not listed here
 export const ListOfBuiltInConverters: ConverterToken[] = [
     'string',
     'number',
@@ -25,10 +21,6 @@ export const ListOfBuiltInConverters: ConverterToken[] = [
     'email'
 ] as const;
 
-/**
- * Type checking functions for built-in scalar converter return types.
- * @internal
- */
 export const BuiltInConverterTypeCheckers: Record<ConverterToken, (value: unknown) => boolean> = {
     string: (value: unknown): value is string => typeof value === 'string',
     number: (value: unknown): value is number => typeof value === 'number' && !Number.isNaN(value),

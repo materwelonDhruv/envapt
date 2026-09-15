@@ -8,7 +8,7 @@ import { UnboundSource } from '../src/sources/UnboundSource';
 
 import type { Source } from '../src';
 
-// An interface has no index signature, mirroring a Cloudflare `Env` binding, the shape PortableSource must accept.
+// like a Cloudflare Env binding, this interface has no index signature
 interface CloudflareLikeEnv {
     APP_NAME: string;
     PORT: string;
@@ -16,8 +16,7 @@ interface CloudflareLikeEnv {
 
 describe('Source portability (v5.2)', () => {
     afterEach(() => {
-        // setup.ts binds FileSource per file, so restore it and reset path config after any swap
-        // so later tests see a clean Node default.
+        // setup.ts binds FileSource per file, and tests here swap it
         Envapter.useSource(new FileSource());
         Envapter.resetProfiles();
     });

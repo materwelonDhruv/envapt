@@ -10,7 +10,7 @@ describe('a reader source reads one key at a time', () => {
         Envapter.resetProfiles();
     });
 
-    // resolve the debug level once up front so its one-time ENVAPT_DEBUG probe never ends up on a tracked reader
+    // reads the debug level first so its ENVAPT_DEBUG lookup does not count as a tracked read
     beforeEach(() => {
         void Envapter.debug;
     });

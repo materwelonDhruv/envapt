@@ -1,4 +1,4 @@
-// Build gate, the portable build must stay node-free and keep the file-API guards.
+// checks that the portable build stays node-free and keeps the file-API guards
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -18,9 +18,9 @@ const WARN_READS: Record<(typeof ACCESSOR_APIS)[number], unknown> = {
 const METHOD_APIS = ['configureProfiles', 'resetProfiles'] as const;
 const FILE_APIS = [...ACCESSOR_APIS, ...METHOD_APIS] as const;
 
-// `from "node:fs"`, `import("node:url")`, `require("node:path")`, the quotes keep prose `node:fs` out.
+// the quotes keep a prose mention of node:fs from matching
 const NODE_SPECIFIER = /['"]node:[\w/.-]+['"]/;
-// `processEnv` has no dot so it stays clean, import.meta.url/.env are web-standard and intentionally unmatched.
+// import.meta.url and import.meta.env are allowed
 const RUNTIME_NODE =
     /\bprocess\.\w+|\bBuffer\b|\b__dirname\b|\b__filename\b|globalThis\.process|import\.meta\.(?:dirname|filename)|\b(?:readFileSync|writeFileSync|existsSync|accessSync|fileURLToPath)\b/;
 
@@ -81,8 +81,7 @@ function isCode(file: string): boolean {
     return ['.mjs', '.cjs', '.js'].includes(extname(file));
 }
 
-// Declaration files skip RUNTIME_NODE because TSDoc prose legitimately mentions `process.env`/`node:fs`.
-// Runtime files are safe to full-scan because the build minifies them (no comments survive).
+// TSDoc in the .d.mts files mentions process.env and node:fs. the minified JS has no comments.
 function grepGate(): void {
     const violations: string[] = [];
     let scanned = 0;
@@ -108,7 +107,7 @@ function grepGate(): void {
     process.stdout.write(`verify-no-node: ${scanned} portable files clean (no node:* / node globals).\n`);
 }
 
-// On the built artifact, warn mode no-ops and throw mode raises 306, for JS callers that bypass the types.
+// runs the built stubs because JS callers can bypass the types
 async function stubProof(): Promise<void> {
     for (const target of TARGETS) {
         const url = pathToFileURL(join(DIST, target, 'index.mjs')).href;
@@ -158,8 +157,7 @@ async function stubProof(): Promise<void> {
     process.stdout.write('verify-no-node: portable file APIs no-op under warn and throw 306 under throw.\n');
 }
 
-// Generated at runtime because it imports built artifacts absent at `tc` time. A dts regression that drops
-// a file API from either surface makes a reference below fail to resolve, so tsc errors.
+// written at runtime because the built types do not exist at tc time
 function inclusionProof(): void {
     const localRequire = createRequire(import.meta.url);
     const tscPath = join(dirname(localRequire.resolve('typescript/package.json')), 'lib', 'tsc.js');
@@ -205,8 +203,7 @@ function inclusionProof(): void {
     );
 }
 
-// The public types are all emitted to dist/types, shims-free, so no entry carries a node:* import. A
-// leak here would reach portable consumers without appearing in the portable grep above.
+// grepGate only scans dist/portable, and portable consumers also load dist/types
 function typesNodeFreeProof(): void {
     const violations: string[] = [];
     for (const file of walk(join(DIST, 'types'))) {

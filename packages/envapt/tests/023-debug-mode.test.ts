@@ -15,7 +15,6 @@ const passThroughSchema: StandardSchemaV1<string, string> = {
     '~standard': { version: 1, vendor: 'test', validate: (v) => ({ value: v as string }) }
 };
 
-// loadDotenv takes an injected reader, so reuse the library's Node reader
 const reader = new FileSource();
 const nodeReadFile = reader.readFile.bind(reader);
 
@@ -238,8 +237,7 @@ describe('Debug mode (v5)', () => {
         });
 
         it('logs "(none)" when the resolver returns zero effective paths', () => {
-            // `configureProfiles({ useDefaults: false })` with no per-env profile entry
-            // collapses the resolver to an empty array. Triggers the `(none)` arm.
+            // useDefaults: false with no profile entry leaves no paths
             Envapter.debug = 'verbose';
             const capture = captureStderr();
             try {
@@ -389,8 +387,7 @@ describe('Debug mode (v5)', () => {
     });
 
     describe('Failed file reads (warn)', () => {
-        // the envPaths setter validates existence, so call loadDotenv directly to reach its
-        // catch-and-warn path (a real path race-deleted between the check and the read)
+        // the envPaths setter rejects a missing file before loadDotenv can warn
         it('emits a "could not read" warn when loadDotenv hits a missing file', () => {
             Envapter.debug = 'warn';
             const ghost = resolve(import.meta.dirname, '.env.does-not-exist-at-all');

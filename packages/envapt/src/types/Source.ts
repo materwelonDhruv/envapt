@@ -1,11 +1,11 @@
-// a source with no filesystem. supportsFiles is the discriminator, absent or false here.
+// a source with no filesystem
 interface BareSource {
     readVars(): Record<string, string>;
     readonly supportsFiles?: false;
     readVar?(key: string): string | undefined;
 }
 
-// a filesystem-backed source. supportsFiles true unlocks the .env cascade and baseDir. FileSource implements it.
+// supportsFiles: true turns on the .env cascade and baseDir
 interface FileCapableSource {
     readVars(): Record<string, string>;
     readonly supportsFiles: true;

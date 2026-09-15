@@ -27,8 +27,7 @@ export function resolveKeyInput(keyInput: EnvKeyInput): { key: string; value: st
         throw new EnvaptError(EnvaptErrorCodes.InvalidKeyInput, 'Environment keys cannot be empty strings.');
     }
 
-    // An ordered read keeps trying so a present-but-empty candidate falls through to the next, matching
-    // getRequired and firstEnvKeyValue. A single key or an all-empty list resolves to the first present value.
+    // an empty value falls through to the next key and only comes back when every key is empty
     let firstPresent: { key: string; value: string } | undefined;
     for (const candidate of normalizedKeys) {
         const value = readCached(candidate);
@@ -43,15 +42,13 @@ export function resolveKeyInput(keyInput: EnvKeyInput): { key: string; value: st
 export function ensureLoaded(): Map<string, unknown> {
     if (!state.cacheBuilt) {
         const source = state.source;
-        // Clone so the loader and downstream reads never mutate the source's backing object.
+        // the loader writes into this object
         const isolatedEnv: Record<string, string> = { ...source.readVars() };
 
         let added = new Set<string>();
-        // Sources without a filesystem (injected objects on the browser or Workers) skip the .env
-        // cascade, profiles, and envPaths. Only the readVars() snapshot populates the cache.
         if (source.supportsFiles) {
             debugVerbose(`base dir: ${state.baseDir ?? 'working directory'}`);
-            // Outside the try below so a missing configured profile path surfaces its EnvaptError. Only dotenv parse errors stay caught.
+            // outside the try because a missing profile path has to throw
             const effectivePaths = resolveEffectivePaths();
             debugVerbose(`effective .env paths: ${effectivePaths.length === 0 ? '(none)' : effectivePaths.join(', ')}`);
             try {
@@ -68,7 +65,7 @@ export function ensureLoaded(): Map<string, unknown> {
         state.dotenvAddedKeys = added;
         for (const [key, value] of Object.entries(isolatedEnv)) cache.set(key, value);
         debugVerbose(`cache populated: ${cache.size} keys total`);
-        // set before mirroring, whose template expansion reads the cache and would re-enter this build otherwise
+        // set before mirroring because template expansion reads the cache
         state.cacheBuilt = true;
         if (state.syncProcessEnv) mirrorToProcessEnv();
     }
@@ -86,14 +83,13 @@ function readCached(key: string): string | undefined {
     const source = state.source;
     if (typeof source.readVar !== 'function') return undefined;
     const value = source.readVar(key);
-    // cache a miss too, so a later read of an absent key skips the reader
+    // caches misses too
     c.set(key, value);
     return value;
 }
 
 export function refreshCache(): void {
-    // Reset an inferred environment so re-hydration re-determines it from current state. An explicit
-    // Envapter.environment = X is preserved through the refresh and used for cascade selection.
+    // an inferred environment can change once the new vars load
     if (!state.environmentExplicitlySet) state.environment = undefined;
     cache.clear();
     state.cacheBuilt = false;
@@ -110,7 +106,7 @@ export function mirrorToProcessEnv(): void {
     const mirrored: Record<string, string> = {};
     for (const key of state.dotenvAddedKeys) {
         const value = cache.get(key);
-        /* v8 ignore next -- @preserve loader only writes strings, defensive against future cache contents */
+        /* v8 ignore next -- @preserve the loader only writes strings */
         if (typeof value !== 'string') continue;
         mirrored[key] = resolveForMirror(key, value);
         debugVerbose(`mirrored ${key} to the ambient environment`);
@@ -150,9 +146,6 @@ export function determineEnvironment(env?: string | Environment): void {
     state.environment = parsed;
 }
 
-/**
- * @internal
- */
 export enum Primitive {
     String,
     Number,
@@ -169,9 +162,7 @@ const PRIMITIVE_NAMES: Record<Primitive, string> = {
     [Primitive.Symbol]: 'symbol'
 };
 
-// getRaw is the raw string lookup, get is the template-resolved string read. Lazy arrows so the
-// resolver singletons below store envService without calling readPrimitive, which reads
-// templateResolver before it is assigned.
+// arrows because readPrimitive reads templateResolver, which is assigned below
 const envService: EnvapterService = {
     getRaw: (key) => resolveKeyInput(key).value,
     get: (key, def) => readPrimitive<string, string | undefined>(key, Primitive.String, def)
@@ -202,7 +193,7 @@ export function readPrimitive<EnvVarReturnType, DefaultType extends EnvVarReturn
     else converted = BuiltInConverters.string(parsed) as EnvVarReturnType | undefined;
 
     if (converted === undefined) {
-        // key and type only, no value: env values can be secrets and verbose logs reach stderr
+        // leave the value out because env values can be secrets
         debugVerbose(
             `could not convert ${resolvedKey} as ${PRIMITIVE_NAMES[type]}${def !== undefined ? ', using the fallback' : ''}`
         );

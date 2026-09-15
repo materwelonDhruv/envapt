@@ -401,7 +401,7 @@ describe('Envapt', () => {
         }
 
         it('throws an EnvaptError when assigning to a decorated property', () => {
-            // pragmatic cast to a mutable view so the assignment compiles, the decorator installs a throwing setter
+            // cast so the assignment compiles
             expect(() => ((ReadOnlyConfig as { port: number }).port = 9999)).to.throw(EnvaptError, 'read-only');
         });
     });

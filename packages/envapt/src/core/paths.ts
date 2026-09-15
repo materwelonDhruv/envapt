@@ -4,8 +4,7 @@ import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
 
 import type { EnvProfile, FileCapableSource, Source } from '../types';
 
-// No baseDir: candidate returned unchanged so the source resolves it against its own default
-// (process.cwd() on Node). Resolution goes through the source to keep this node-free.
+// without a baseDir the source resolves the path against its own default, process.cwd() on Node
 export function resolveAgainstBase(candidate: string): string {
     const baseDir = state.baseDir;
     if (baseDir === undefined) return candidate;
@@ -15,9 +14,6 @@ export function resolveAgainstBase(candidate: string): string {
     return source.resolvePath(baseDir, candidate);
 }
 
-// File-based config (envPaths/baseDir/configureProfiles) is meaningless without a filesystem, and it
-// throws instead of silently ignoring it on the browser or Workers. Narrows the source so callers
-// can use the file capabilities (resolvePath/normalizeBaseDir) after the check.
 export function assertFileApiSupported(api: string, source: Source): asserts source is FileCapableSource {
     if (!source.supportsFiles) {
         throw new EnvaptError(
@@ -27,8 +23,6 @@ export function assertFileApiSupported(api: string, source: Source): asserts sou
     }
 }
 
-// Existence via the bound source instead of fs.existsSync/accessSync: a file "exists" when the source
-// can read it.
 export function sourceFileExists(path: string): boolean {
     const source = state.source;
     /* v8 ignore next -- @preserve every caller is file-gated, so this never sees a bare source */
@@ -36,10 +30,7 @@ export function sourceFileExists(path: string): boolean {
     return source.readFile(path, 'utf8') !== undefined;
 }
 
-// Precedence is most-specific-wins (matches Vite / Astro / Vocs): `.env.${env}.local` > `.env.${env}`
-// > `.env.local` > `.env`. This differs from dotenv-flow / Next.js, which put `.env.local` above
-// `.env.${env}`. Most-specific-wins keeps a committed `.env.production` authoritative regardless of a
-// stray `.env.local`. Missing files are filtered.
+// most specific first, since the loader keeps the first value per key unless override is on
 function buildCascadePaths(env: Environment): string[] {
     const envName = Environment[env].toLowerCase();
     return [`.env.${envName}.local`, `.env.${envName}`, '.env.local', '.env']
@@ -52,7 +43,7 @@ function normalizeProfilePaths(profile: EnvProfile | undefined): string[] {
     return Array.isArray(profile.paths) ? profile.paths : [profile.paths];
 }
 
-// the cache is not built yet here, so read the reader directly (readCached would re-enter this build)
+// reads the source directly because readCached would re-enter the cache build
 function getCascadeEnvironment(): Environment {
     if (state.environment !== undefined) return state.environment;
 
@@ -62,11 +53,6 @@ function getCascadeEnvironment(): Environment {
     return raw === undefined ? Environment.Development : (parseEnvironment(raw) ?? Environment.Development);
 }
 
-/**
- * Resolve the `.env` paths to load. When `envPaths` was explicitly set, only those load. Otherwise
- * layer any `configureProfiles` paths for the active environment (higher precedence) over the
- * dotenv-flow cascade, all in dotenv first-wins order. `useDefaults: false` drops the cascade.
- */
 export function resolveEffectivePaths(): string[] {
     if (state.envPathsExplicitlySet) return state.envPaths.map((p) => resolveAgainstBase(p));
 
@@ -74,7 +60,6 @@ export function resolveEffectivePaths(): string[] {
     const profileEntry = state.profiles?.[env];
     const profilePaths = normalizeProfilePaths(profileEntry);
 
-    // Validate that explicitly configured profile paths exist for the active env.
     if (profilePaths.length > 0) {
         const missing = profilePaths.filter((p) => !sourceFileExists(resolveAgainstBase(p)));
         if (missing.length > 0) {

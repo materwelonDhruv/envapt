@@ -43,15 +43,7 @@ export const EMAIL_RE = new RegExp(
 
 export const MAX_PORT = 65535;
 
-/**
- * Parse a time string (e.g. `"30s"`, `"1.5h"`) into milliseconds.
- *
- * @param input - The string to parse.
- * @param strict - When `true`, require an explicit unit (used for fallback strings).
- *                 When `false` (default), treat a missing unit as `ms` (used for raw env values). Both allow decimals.
- * @returns The duration in milliseconds, or `undefined` if the input does not match the expected format.
- * @internal
- */
+// strict is for fallback strings and requires a unit. a raw env value with no unit reads as ms.
 function parseTimeString(input: string, strict = false): number | undefined {
     const match = input.match(strict ? TIME_STRICT_RE : TIME_LOOSE_RE);
     if (!match) return undefined;
@@ -66,16 +58,12 @@ function parseTimeString(input: string, strict = false): number | undefined {
     return value * TIME_UNIT_MS[unit];
 }
 
-// undefined for an empty or whitespace-only value, so each numeric converter maps that to its own fallback
+// Number('') returns 0
 function parseTrimmedNumber(raw: string): number | undefined {
     const trimmed = raw.trim();
     return trimmed === '' ? undefined : Number(trimmed);
 }
 
-/**
- * Built-in converter implementations
- * @internal
- */
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class -- dispatch-table helper, the documented exception to the no-static-class rule
 export class BuiltInConverters {
     static string(raw: string, _fallback?: string): string | undefined {
@@ -116,7 +104,7 @@ export class BuiltInConverters {
 
     static integer(raw: string, fallback?: number): number | undefined {
         const parsed = parseTrimmedNumber(raw);
-        // isSafeInteger also guards the 2^53 boundary, past which an integer value silently loses precision.
+        // integers past 2^53 lose precision as JS numbers
         return parsed !== undefined && Number.isSafeInteger(parsed) ? parsed : fallback;
     }
 
@@ -144,7 +132,7 @@ export class BuiltInConverters {
 
     static regexp(raw: string, fallback?: RegExp): RegExp | undefined {
         try {
-            // Handle flags if provided in format: /pattern/flags
+            // `/pattern/flags` form
             const match = raw.match(new RegExp(String.raw`^\/(.+)\/([gimsuvy]*)$`));
             if (match) return new RegExp(match[1] as string, match[2]);
 
@@ -155,14 +143,13 @@ export class BuiltInConverters {
     }
 
     static date(raw: string, fallback?: Date): Date | undefined {
-        // Try parsing as timestamp first (if it's all digits)
         if (new RegExp(String.raw`^\d+$`).test(raw)) {
             const timestamp = parseInt(raw, 10);
             const parsed = new Date(timestamp);
             return Number.isNaN(parsed.getTime()) ? fallback : parsed;
         }
 
-        // Only accept ISO 8601 date strings (strict format)
+        // Date also parses loose, engine-specific formats
         const isoRegex = new RegExp(String.raw`^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z$`, 'u');
         if (!isoRegex.test(raw)) return fallback;
 
@@ -174,10 +161,8 @@ export class BuiltInConverters {
         const parsedRaw = parseTimeString(raw);
         if (parsedRaw !== undefined) return parsedRaw;
 
-        // Raw didn't parse so apply fallback
         if (typeof fallback === 'number') return fallback;
         if (typeof fallback === 'string') {
-            // A string fallback must name a unit; a unitless number is expressed as a number fallback, not a string.
             const parsedFallback = parseTimeString(fallback, true);
             if (parsedFallback === undefined) {
                 throw new EnvaptError(
@@ -251,9 +236,6 @@ export class BuiltInConverters {
         });
     }
 
-    /**
-     * Get the converter function for a built-in converter type
-     */
     static getConverter<TFallback extends BuiltInConverter>(type: TFallback): BuiltInConverterFunction {
         const converters: MapOfConverterFunctions = {
             string: BuiltInConverters.string,

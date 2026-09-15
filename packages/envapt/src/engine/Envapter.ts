@@ -117,7 +117,7 @@ export class Envapter extends AdvancedMethods {
         try {
             return resolveRequired(resolveKeyInput(key), templateResolver).value !== undefined;
         } catch (error) {
-            // under strict an unresolvable template throws MissingEnvValue, and that read counts as absent
+            // strict mode throws MissingEnvValue for an unresolvable template
             if (error instanceof EnvaptError && error.code === EnvaptErrorCodes.MissingEnvValue) return false;
             throw error;
         }

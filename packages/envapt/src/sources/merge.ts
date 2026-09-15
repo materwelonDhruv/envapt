@@ -40,7 +40,7 @@ export function merge(...members: (Source | ((key: string) => string | undefined
         readers.length === 0
             ? undefined
             : (key: string): string | undefined => {
-                  // last reader that answers wins, so scan from the end and return the first defined value
+                  // the last reader with a value wins
                   for (let i = readers.length - 1; i >= 0; i--) {
                       const found = readers[i]?.readVar(key);
                       if (found !== undefined) return found;

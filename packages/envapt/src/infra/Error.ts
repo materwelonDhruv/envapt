@@ -41,7 +41,6 @@ export enum EnvaptErrorCodes {
 
     // Other errors
     /** Thrown when delimiter is missing in array converter configuration */
-    // This doesn't happen because 203 is thrown when object without delimiter is passed
     MissingDelimiter = 301,
     /** Thrown when invalid user-defined configuration is provided */
     InvalidUserDefinedConfig = 302,
@@ -49,7 +48,7 @@ export enum EnvaptErrorCodes {
     EnvFilesNotFound = 303,
     /** Thrown when no valid environment key is provided */
     InvalidKeyInput = 304,
-    /** Thrown when a required environment value is missing or empty (post-trim) */
+    /** Thrown when a required environment value is missing or empty */
     MissingEnvValue = 305,
     /** Thrown when a file-based API (envPaths, baseDir, configureProfiles) is used on a source without filesystem support */
     FileApiUnsupported = 306,
@@ -65,7 +64,7 @@ interface EnvaptErrorOptions {
 }
 
 /**
- * Custom error for better DX and debugging when using Envapt.
+ * The error envapt throws. Its `code` identifies the failure.
  *
  * @example
  * ```ts

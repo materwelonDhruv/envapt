@@ -4,7 +4,7 @@ import type { Environment } from './Environment';
 import type { EnvFileOptions } from '../infra/Dotenv';
 import type { FileApiMode, ProfilesConfig, Source } from '../types';
 
-// The engine's mutable state that should not be exposed in the package exports map.
+// keep this out of the package exports map
 export const state = {
     envPaths: ['.env'] as string[],
     envPathsExplicitlySet: false,
@@ -15,7 +15,7 @@ export const state = {
     fileApiMode: 'warn' as FileApiMode,
     // loader-written keys only (collisions skipped), refilled on every cache rebuild.
     dotenvAddedKeys: new Set<string>(),
-    // cache.size can't tell built-and-empty from not-built, so a source resolving to no keys would rebuild on every read without this.
+    // cache.size is 0 both before the build and after a build that found no keys
     cacheBuilt: false,
     // unbound by default so non-Node builds throw NoSourceBound on read until useSource() runs.
     source: new UnboundSource() as Source,

@@ -2,7 +2,7 @@ import { EnvapterBase } from '../core/EnvapterBase';
 import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
 import { writeRuntimeLine } from '../infra/runtime';
 
-// EnvapterBase must never import this module back, or the chain cycles.
+// importing this from EnvapterBase would create an import cycle
 const warned = new Set<string>();
 
 function fileApiUnsupported(api: string): never {
@@ -12,7 +12,7 @@ function fileApiUnsupported(api: string): never {
     );
 }
 
-// warns regardless of Envapter.debug (debugWarn would gate on it)
+// writes even when Envapter.debug is silent
 function warnOnce(api: string): void {
     if (warned.has(api)) return;
     warned.add(api);
@@ -25,7 +25,6 @@ function warnOnce(api: string): void {
 export function portableFileApiRead<Value>(api: string, fallback: Value): Value {
     if (EnvapterBase.fileApiMode === 'throw') fileApiUnsupported(api);
     warnOnce(api);
-    // warn mode no-ops, so the read returns the getter's empty default rather than undefined
     return fallback;
 }
 

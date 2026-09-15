@@ -89,6 +89,23 @@ The other way a verb goes missing is a split sentence, where one clause becomes 
 
 <!--prettier-ignore-end-->
 
+### Keep the subject next to its verb
+
+A noun made from a verb can take the subject slot, and then a clause slips in between that subject and its own verb. The reader reaches the end, finds they attached the object to the wrong verb, and has to go back and parse the sentence a second time. This is a garden path sentence. Put the action back in a verb and the sentence reads in one pass.
+
+<!--prettier-ignore-start-->
+
+| Reparsed | Direct |
+|---|---|
+| a read before the host resolves it throws | throws if you read before the host resolves it |
+| a write after the buffer flushes it fails | the write fails once the buffer has flushed it |
+| a lookup while the cache evicts it misses | the lookup misses if the cache evicted the key first |
+| a connect before the server binds it hangs | connecting before the server binds hangs |
+
+<!--prettier-ignore-end-->
+
+The tell is a sentence that starts with `a` plus a verb-derived noun, then puts more than three words before the verb. Examples non-exhaustively include `a read`, `a write`, `a fetch`, `a lookup`, and `a connect`. Read the draft once at speed. If you stop and start over, rewrite the sentence.
+
 ---
 
 ## 3. Anthropomorphism, with a test you can apply
@@ -160,6 +177,7 @@ Aim for a spread in length, in how sentences open, and in what each one is doing
 5. One claim per sentence. Cut the intensifier.
 6. Give the condition, never the smoothness. Replace "no manual wiring" with "on a 429 the client waits `Retry-After` seconds before the next attempt".
 7. Prefer the concrete noun over the promised benefit. "Throws `TimeoutError` when no response arrives within `timeout` ms" beats any adjective.
+8. Count a list only when the set is closed. "The four lifecycle phases" is right when there are four. A sample of three out of thirty reads as all thirty unless the sentence says otherwise.
 
 Rule of thumb: if an adjective cannot be replaced by a measurable fact or a code reference, delete it.
 
@@ -215,6 +233,10 @@ State the positive claim on its own. Defining a thing by first naming what it is
 
 When a contrast genuinely carries weight, write two plain sentences.
 
+**One test separates the tic from a real substitution. Was the reader already holding the alternative?**
+
+An `instead of` naming a swap the reader is actually making stays, since naming what they replace is the instruction. "Pass an options object instead of the positional arguments" is written for someone still passing positional arguments. The ban covers an alternative nobody raised, as in "the source is one typed interface instead of a raw object", where the reader loads the raw object and then throws it away.
+
 ---
 
 ## 7. Ban-list
@@ -236,7 +258,8 @@ Illustrative. When a word is missing from the table, apply section 1 and the tes
 | under the hood | internally, or delete |
 | out of the box | by default |
 | first-class | name the support |
-| simply / just | delete |
+| simply / just, minimizing the work | delete |
+| just, meaning only | only |
 | in order to | to |
 | please / please note | delete |
 | enable / unlock / empower | turn on, lets you, you can |
@@ -253,6 +276,8 @@ Illustrative. When a word is missing from the table, apply section 1 and the tes
 | to be honest / frankly | delete |
 
 <!--prettier-ignore-end-->
+
+A word can carry more than one sense, and the ban follows the sense. `just` minimizing the work is the defect, since "just add the decorator" rates how hard the step is for someone whose keyboard you are not at. `just` meaning only carries a real restriction, so write `only`, which nobody can misread. The temporal `just` is a third word again, as in "the file just loaded".
 
 ---
 

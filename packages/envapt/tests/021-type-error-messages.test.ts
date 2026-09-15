@@ -5,17 +5,8 @@ import { fileURLToPath } from 'node:url';
 import * as ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 
-/**
- * Compile-time TS error verification via the TypeScript compiler API. Neither `expect-type`
- * nor `tsd` checks the TEXT of a diagnostic message, only that an error is produced. The
- * SchemaMustBeSync brand relies on a specific literal appearing in the diagnostic, so we run
- * `tsc` directly against fixtures and assert message fragments.
- *
- * Fixtures are in `tests/type-error-fixtures/` and are excluded from both the package's
- * tsconfig and eslint. A dedicated tsconfig inside that directory exists so the IDE shows
- * the same diagnostic this test sees (a default tsconfig would emit TS1206 for the
- * decorators and mask the actual error).
- */
+// expect-type and tsd do not check diagnostic text, and the SchemaMustBeSync brand depends on it.
+// type-error-fixtures has its own tsconfig so the IDE shows the same diagnostics as this test.
 
 const TEST_DIR = dirname(fileURLToPath(import.meta.url));
 const FIXTURE_DIR = resolve(TEST_DIR, 'type-error-fixtures');
@@ -28,8 +19,7 @@ interface ParsedDiagnostic {
     message: string;
 }
 
-// A ts.createProgram per fixture reloads the default libs and re-checks envapt's whole src each time.
-// The fixtures in a dir are isolated modules on one tsconfig, so compile them together once.
+// one program per fixture would reload the libs and re-check all of src every time
 const diagnosticsByDir = new Map<string, Map<string, ParsedDiagnostic[]>>();
 
 function diagnosticsForDir(fixtureDir: string, configFileName: string): Map<string, ParsedDiagnostic[]> {
@@ -81,7 +71,6 @@ describe('TS error message verification (compiler API)', () => {
         () => {
             const diagnostics = compileFixture('clean-baseline.ts');
             if (diagnostics.length > 0) {
-                // Surface the actual diagnostics so a harness misconfiguration is visible.
                 throw new Error(
                     `clean-baseline.ts should compile cleanly but produced:\n${joinedMessages(diagnostics)}`
                 );

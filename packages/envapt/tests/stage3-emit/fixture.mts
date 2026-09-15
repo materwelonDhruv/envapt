@@ -15,9 +15,7 @@ const numberSchema: StandardSchemaV1<string, number> = {
     }
 };
 
-// Compiled with experimentalDecorators off, so tsc emits TC39 Stage 3 accessor decorators, the path
-// real consumers (and Bun running .ts directly) get. It must resolve env values without the
-// `declare static` workaround the legacy tsc emit needs.
+// tsc emits Stage 3 accessor decorators because this tsconfig turns experimentalDecorators off
 class Config {
     @EnvNum('S3_PORT', 3000)
     static accessor port: number;

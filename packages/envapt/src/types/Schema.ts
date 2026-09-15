@@ -1,9 +1,9 @@
 import type { StandardSchemaV1 } from '../infra/StandardSchema';
 
-// Msg rides in the alias name so a TS error surfaces the human-readable explanation.
+// a pasted copy of the message string cannot carry this brand
 declare const _envaptErrBrand: unique symbol;
 
-// the unique-symbol brand can't be produced from user code, so the message can't be copy-pasted to satisfy the type.
+// tsc prints Msg in the error
 type Err<Msg extends string> = Msg & { readonly [_envaptErrBrand]: never };
 
 type SchemaMustBeSync =
@@ -12,4 +12,4 @@ type SchemaMustBeSync =
 type SchemaConstraint<Schema extends StandardSchemaV1> =
     ReturnType<Schema['~standard']['validate']> extends Promise<unknown> ? SchemaMustBeSync : Schema;
 
-export type { Err, SchemaMustBeSync, SchemaConstraint };
+export type { SchemaConstraint };
