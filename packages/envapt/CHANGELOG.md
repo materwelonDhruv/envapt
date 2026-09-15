@@ -1,5 +1,12 @@
 # envapt
 
+## 8.2.1-next.0
+
+### Patch Changes
+
+- ed74814: Remove unused internal re-exports.
+- 3df9da4: Updated comments.
+
 ## 8.2.0
 
 ### Minor Changes
@@ -76,8 +83,7 @@
 
 ### Minor Changes
 
-- Add `PortableSource` and the `Source` type, the v8 names for the no-filesystem source class and the general source type.
-  `PortableSource` replaces both `ManualEnvSource` and `WorkerEnvSource`, which are now deprecated subclasses of it, so migrate `new ManualEnvSource(obj)` and `new WorkerEnvSource(env)` to `new PortableSource(...)`. `Source` replaces the now-deprecated `EnvSource` type. `PortableSource`'s constructor accepts any `object`, so a Cloudflare `Env` binding (an interface with no index signature) can be passed directly without a cast. Every deprecated name still works and is removed or renamed in v8.
+- Add `PortableSource` and the `Source` type, the v8 names for the no-filesystem source class and the general source type. `PortableSource` replaces both `ManualEnvSource` and `WorkerEnvSource`, which are now deprecated subclasses of it, so migrate `new ManualEnvSource(obj)` and `new WorkerEnvSource(env)` to `new PortableSource(...)`. `Source` replaces the now-deprecated `EnvSource` type. `PortableSource`'s constructor accepts any `object`, so a Cloudflare `Env` binding (an interface with no index signature) can be passed directly without a cast. Every deprecated name still works and is removed or renamed in v8.
 
 ## 7.0.3
 
@@ -324,19 +330,10 @@
     No public API change.
 
 - 9711554: Instance `get` now narrows its return type on a fallback. A redundant overload made `env.get('KEY', 'fallback')` resolve to `string | undefined` instead of `string`; removing it makes instance `get` match static `get`.
-- 9711554: Minify the published build and mark the package side-effect-free except the `envapt/config` entry. The
-  `dist` output is now minified (roughly halving the npm install size), and the `sideEffects` field lets
-  bundlers tree-shake the parts of the surface a consumer does not import. No API or behavior change.
-- 9711554: Rewrite the README for v5. The package README is now a short, docs-first landing page: hero, the
-  `process.env` to typed-value pitch, install for npm/pnpm/yarn/bun/Deno (JSR), and one quick start each
-  for the functional and decorator APIs, an agent-skill install line, with the full reference linked at
-  the docs site. Removes the stale v4 surface (the old converter enum, `dotenvConfig`, Node `>=22`, "dotenv bundled").
+- 9711554: Minify the published build and mark the package side-effect-free except the `envapt/config` entry. The `dist` output is now minified (roughly halving the npm install size), and the `sideEffects` field lets bundlers tree-shake the parts of the surface a consumer does not import. No API or behavior change.
+- 9711554: Rewrite the README for v5. The package README is now a short, docs-first landing page: hero, the `process.env` to typed-value pitch, install for npm/pnpm/yarn/bun/Deno (JSR), and one quick start each for the functional and decorator APIs, an agent-skill install line, with the full reference linked at the docs site. Removes the stale v4 surface (the old converter enum, `dotenvConfig`, Node `>=22`, "dotenv bundled").
 
-    Also refresh the npm `description` and `keywords` for registry and search discoverability (adds
-    `typescript`, `type-safe`, `deno`, `bun`, `zod`, `valibot`, `arktype`, `validation`, `decorator`,
-    `cross-runtime`, and related terms), and fix the `@Envapt` url-converter `@example` to pass a `URL`
-    instance for the fallback instead of a string (the previous example would throw at runtime, since the
-    url converter validates the fallback as `instanceof URL`).
+    Also refresh the npm `description` and `keywords` for registry and search discoverability (adds `typescript`, `type-safe`, `deno`, `bun`, `zod`, `valibot`, `arktype`, `validation`, `decorator`, `cross-runtime`, and related terms), and fix the `@Envapt` url-converter `@example` to pass a `URL` instance for the fallback instead of a string (the previous example would throw at runtime, since the url converter validates the fallback as `instanceof URL`).
 
 ## 4.1.1
 

@@ -5,5 +5,8 @@
     "@envapt/guide": "1.0.0",
     "envapt": "8.1.1"
   },
-  "changesets": []
+  "changesets": [
+    "unused-internal-exports",
+    "updated-comments"
+  ]
 }
