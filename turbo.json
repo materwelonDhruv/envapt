@@ -43,6 +43,10 @@
             "dependsOn": ["build"],
             "outputs": []
         },
+        "test:babel-emit": {
+            "dependsOn": ["build"],
+            "outputs": []
+        },
         "test:tsc-emit": {
             "dependsOn": ["build"],
             "env": ["ENVAPT_TSC_PACKAGE"],
