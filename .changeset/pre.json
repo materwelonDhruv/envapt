@@ -5,5 +5,7 @@
     "@envapt/guide": "1.0.0",
     "envapt": "8.2.1"
   },
-  "changesets": []
+  "changesets": [
+    "quiet-moons-return"
+  ]
 }
