@@ -2,7 +2,7 @@ import { Converters, Envapter } from 'envapt';
 import { Envapt } from 'envapt/legacy';
 
 // babel rejects a decorated `declare` field
-export class Vars extends Envapter {
+class Vars extends Envapter {
     @Envapt('BABEL_EMIT_STATIC', { fallback: 1 })
     public static readonly staticValue: number;
 
