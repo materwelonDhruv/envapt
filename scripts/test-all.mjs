@@ -31,6 +31,7 @@ const slices = [
     ['resolution-matrix', ['--filter', 'envapt', 'test:resolution-matrix']],
     ['cjs-validity', ['--filter', 'envapt', 'test:cjs-validity']],
     ['tsc-emit', ['--filter', 'envapt', 'test:tsc-emit']],
+    ['babel-emit', ['--filter', 'envapt', 'test:babel-emit']],
     ['stage3-emit', ['--filter', 'envapt', 'test:stage3-emit']],
     ['tsc-emit-ts7', ['--filter', 'envapt', 'test:tsc-emit:ts7']],
     ['stage3-emit-ts7', ['--filter', 'envapt', 'test:stage3-emit:ts7']]

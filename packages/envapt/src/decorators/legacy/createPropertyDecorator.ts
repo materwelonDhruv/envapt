@@ -8,13 +8,13 @@ export function createPropertyDecorator<TFallback>(
     key: EnvKeyInput,
     config: DecoratorConfig<TFallback>
 ): PropertyDecorator {
-    return function (target: object, prop: string | symbol): void {
+    return function (target: object, prop: string | symbol): PropertyDescriptor {
         const propKey = String(prop);
         const isStatic = typeof target === 'function';
         const owner = isStatic ? target : target.constructor;
         const cacheKey = decoratorCacheKey(owner, isStatic, propKey);
 
-        Object.defineProperty(target, propKey, {
+        const descriptor: PropertyDescriptor = {
             get: function () {
                 return resolveDecoratorValue(key, config, cacheKey);
             },
@@ -26,6 +26,11 @@ export function createPropertyDecorator<TFallback>(
             },
             configurable: false,
             enumerable: true
-        });
+        };
+
+        Object.defineProperty(target, propKey, descriptor);
+
+        // babel's legacy lowering redefines with whatever this returns. undefined restores the plain field
+        return descriptor;
     };
 }

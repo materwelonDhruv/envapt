@@ -7,7 +7,12 @@
             "ignoreBinaries": ["run.mjs"]
         },
         "packages/envapt": {
-            "entry": ["scripts/*.ts", "tests/integration/modern-decorator-check.ts", "tests/*-emit/fixture.mts"],
+            "entry": [
+                "scripts/*.ts",
+                "tests/integration/modern-decorator-check.ts",
+                "tests/*-emit/fixture.mts",
+                "tests/*-emit/load.mjs"
+            ],
             "vitest": {
                 "config": ["../../vitest.config.ts", "vitest.browser.config.ts", "vitest.workers.config.ts"]
             },
