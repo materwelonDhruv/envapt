@@ -1,5 +1,11 @@
 # envapt
 
+## 8.2.2
+
+### Patch Changes
+
+- ff56deb: Fixed a legacy decorator throwing `Cannot redefine property` under a Babel-based loader. The decorator now returns the descriptor it installed, and Babel reapplies that one.
+
 ## 8.2.1
 
 ### Patch Changes
