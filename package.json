@@ -43,7 +43,7 @@
         "bump:deps": "pnpm run bump:deps:pkgs && pnpm run bump:deps:apps && pnpm run bump:deps:root"
     },
     "devDependencies": {
-        "@changesets/cli": "^2.31.1",
+        "@changesets/cli": "^3.0.3",
         "@commitlint/cli": "^21.2.2",
         "@commitlint/config-conventional": "^21.2.2",
         "@seedcord/eslint-config": "catalog:dev",
