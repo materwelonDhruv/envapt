@@ -1,5 +1,11 @@
 # envapt
 
+## 8.2.3
+
+### Patch Changes
+
+- Shorten the package desc
+
 ## 8.2.2
 
 ### Patch Changes
