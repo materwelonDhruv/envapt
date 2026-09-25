@@ -52,23 +52,23 @@ jobs:
 
             - name: Deploy production
               if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
-              uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4
+              uses: cloudflare/wrangler-action@953926a2e2182532811c01a25e53647d93bf07c0 # v4
               with:
                   apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
                   accountId: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
                   workingDirectory: apps/guide
-                  wranglerVersion: '4.131.1'
+                  wranglerVersion: '4.139.0'
                   packageManager: pnpm
                   command: deploy
 
             - name: Deploy next docs
               if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/next'
-              uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4
+              uses: cloudflare/wrangler-action@953926a2e2182532811c01a25e53647d93bf07c0 # v4
               with:
                   apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
                   accountId: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
                   workingDirectory: apps/guide
-                  wranglerVersion: '4.131.1'
+                  wranglerVersion: '4.139.0'
                   packageManager: pnpm
                   command: deploy --env next
 
@@ -88,12 +88,12 @@ jobs:
                   echo "url=https://$alias-envapt.materwelon.workers.dev" >> "$GITHUB_OUTPUT"
             - name: Deploy preview
               if: github.event_name == 'pull_request'
-              uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4
+              uses: cloudflare/wrangler-action@953926a2e2182532811c01a25e53647d93bf07c0 # v4
               with:
                   apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
                   accountId: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
                   workingDirectory: apps/guide
-                  wranglerVersion: '4.131.1'
+                  wranglerVersion: '4.139.0'
                   packageManager: pnpm
                   command: versions upload --preview-alias ${{ steps.alias.outputs.alias }}
             - name: Comment preview URL
