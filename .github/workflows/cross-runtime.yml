@@ -68,7 +68,7 @@ jobs:
         steps:
             - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
               with:
-                  bun-version: 1.4.x
+                  bun-version: 1.4.2
             - uses: actions/download-artifact@v8
               with:
                   name: envapt-dist-and-suites
@@ -85,7 +85,7 @@ jobs:
         steps:
             - uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
               with:
-                  deno-version: v2.9.x
+                  deno-version: 2.9.6
             - uses: actions/download-artifact@v8
               with:
                   name: envapt-dist-and-suites
