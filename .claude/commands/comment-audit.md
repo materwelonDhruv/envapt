@@ -19,8 +19,8 @@ You are auditing code comments for quality. Apply the project's commenting guide
 
 Read these first, they are the standard you enforce:
 
-- `.github/skills/code-commenting-guidelines/SKILL.md` (and anything it references): decides _whether_ a comment belongs
-- `.github/skills/writing-voice/SKILL.md`: decides _how_ a comment reads: the ban-list (hype, anthropomorphism, `loudly`-style intensifiers, vague verbs) applies to comment text the same as to docs
+- `.agents/skills/code-commenting-guidelines/SKILL.md` (and anything it references): decides _whether_ a comment belongs
+- `.agents/skills/writing-voice/SKILL.md`: decides _how_ a comment reads: the ban-list (hype, anthropomorphism, `loudly`-style intensifiers, vague verbs) applies to comment text the same as to docs
 - `~/.claude/CLAUDE.md` (the "## Comments" and "## Em-dashes" sections, global rules that also apply)
 - `CLAUDE.md` (repo conventions)
 
@@ -30,11 +30,11 @@ Strictness for this run: **<LEVEL>**. Apply that level's threshold and ignore th
 
 - **lenient**: fix only unambiguous violations: narrate-then-justify, type-paraphrase, "I'm doing X" wrappers, em-dashes, stale/contradictory comments, and clear writing-voice violations (hype/marketing words, anthropomorphism, `loudly`-style intensifiers). Leave every borderline or judgment-call comment alone.
 - **standard**: the full guidelines as written: also trim decorative TSDoc on internal helpers and per-overload captions, cut any comment that fails "would a careful reader misunderstand this code without it?", and rewrite any surviving comment whose phrasing trips the writing-voice ban-list down to the plain mechanism. Keep genuine guardrails and invariants.
-- **strict**: minimalist. For every comment apply "if someone deleted this AND mechanically refactored, would they reintroduce a bug?", if no, cut it. Collapse multi-line whys to one line. Every surviving comment must earn its place and pass the writing-voice ban-list.
+- **strict**: minimalist. For every comment apply "if someone deleted this AND mechanically refactored, would they reintroduce a bug?", if no, cut it. Collapse multi-line whys to one line. Every surviving comment must earn its place and pass the writing-voice ban-list. Check if the TSDoc is applicable based on whether the function is public or internal, and its importance.
 
 Mode for this run: **<MODE>**.
 
-- **edit**: edit the in-scope files in place: remove, tighten, or rewrite comments per the level above, and add a comment only where the guidelines say a load-bearing one is missing. Also fix the justification text on any `eslint-disable` / `ts-*` directives if needed. Comments and directive-justification text ONLY, never change runtime logic, types, or behavior. Then run the per-package gates for every package you touched and confirm clean (plain `lint`, never `lint:fix` or `--fix`): `pnpm -C <pkg> lint && pnpm -C <pkg> tc`. Fix by hand any lint failure your edits cause.
+- **edit**: edit the in-scope files in place: remove, tighten, or rewrite comments per the level above, and add a comment only where the guidelines say a load-bearing one is missing. Also fix the justification text on any `eslint-disable` / `ts-*` directives if needed. When a better name makes a comment unneeded, rename the commented symbol (a variable, parameter, private member, or a function or type that nothing outside its package imports) and delete the comment. Update every reference to it. Never rename anything public facing. Beyond those renames, change comments and directive-justification text ONLY, never runtime logic, types, or behavior. Then run the per-package gates for every package you touched and confirm clean (plain `lint`, never `lint:fix` or `--fix`): `pnpm lint && pnpm tc`. Fix by hand any lint failure your edits cause.
 - **dry-run**: edit NOTHING and run nothing that writes. Produce a per-file list of every change you WOULD make: the comment's location, the action (cut / rewrite / add), and a before→after for rewrites.
 
 Do NOT commit. Do NOT run git writes.

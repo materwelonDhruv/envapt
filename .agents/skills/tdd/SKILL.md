@@ -41,22 +41,22 @@ RIGHT (vertical):
 
 ## Where tests live in this repo
 
-Tests sit in `<package>/tests/`, mirroring `src/`. Never `src/**/*.test.ts`. A test for `packages/services/src/CooldownManager.ts` is `packages/services/tests/cooldown-manager.test.ts`.
+Tests sit in `packages/envapt/tests/`. Never `src/**/*.test.ts`. Each file takes the next number, like `046-required-schema.test.ts`, and reads its own `.env.046-required-schema` fixture when it needs env values. Extend an existing numbered file when the behavior already has one.
 
-Vitest is the runner. `pnpm -C <pkg> test` runs the suite once. `pnpm -C <pkg> test:watch` watches and reruns on change, which is the loop you want during a TDD cycle.
+Vitest is the runner. `pnpm --filter envapt test` runs the suite once. `pnpm --filter envapt test:watch` watches and reruns on change, which is the loop you want during a TDD cycle.
 
 Run `lint:fix` and `tc` before you run tests. A test file that does not type-check has not run yet.
 
 ```sh
-pnpm -C <pkg> lint:fix
-pnpm -C <pkg> tc
-pnpm -C <pkg> test:watch   # during the loop
-pnpm -C <pkg> test         # once before you commit
+pnpm lint:fix
+pnpm tc
+pnpm --filter envapt test:watch   # during the loop
+pnpm test                         # once before you commit
 ```
 
-Tests reach the framework through public exports (`@seedcord/types`, the package `@src` alias) and may use a pragmatic fixture cast (`as unknown as T`) with a one-line justification comment. No `as any` in tests. The ESLint rule rewrites `any` to `unknown`, which surfaces a real type error if the cast was wrong.
+Tests reach the library through `../src` (the same modules the barrel exports) and may use a pragmatic fixture cast (`as unknown as T`) with a one-line justification comment. No `as any` in tests. The ESLint rule rewrites `any` to `unknown`, which surfaces a real type error if the cast was wrong.
 
-For framework-level behavior that needs a running bot, `mock/` is the runnable Discord-bot harness. Wire integration tests into it rather than faking the client by hand.
+Some behavior only shows up outside vitest. Modern decorators go through `tests/stage3-emit` (tsc output run on node, bun and deno). A diagnostic message goes through the compiler-API fixtures in `tests/type-error-fixtures`. Workers and the browser have their own suites in `tests/workers` and `tests/browser`.
 
 ## Workflow
 

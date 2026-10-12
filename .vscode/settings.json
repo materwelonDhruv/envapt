@@ -1,6 +1,7 @@
 {
     // Editor Settings
     "editor.detectIndentation": false,
+    "editor.tabSize": 4,
     "editor.trimAutoWhitespace": true,
     "files.trimTrailingWhitespace": true,
     "files.insertFinalNewline": true,
@@ -14,6 +15,7 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "prettier.requireConfig": true,
     "prettier.useEditorConfig": true,
+    "prettier.prettierPath": "node_modules/prettier",
 
     // ESLint Settings
     "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
@@ -21,13 +23,12 @@
     "eslint.format.enable": false,
     "eslint.lintTask.enable": true,
     "eslint.codeActionsOnSave.mode": "all",
-    "eslint.codeActionsOnSave.rules": ["!prettier/prettier", "*"],
     "eslint.workingDirectories": [{ "mode": "auto" }],
 
     // EditorConfig Support
     "editorconfig.generateAuto": false,
 
-    // TypeScript Settings (namespaced — TS 5+ form)
+    // TypeScript Settings
     "js/ts.preferences.importModuleSpecifier": "relative",
     "js/ts.suggest.autoImports": true,
     "js/ts.updateImportsOnFileMove.enabled": "prompt",
@@ -38,7 +39,8 @@
         "**/dist": true,
         "**/coverage": true,
         "**/.eslintcache": true,
-        "**/.turbo": true
+        "**/.turbo": true,
+        "**/.pnpm-store": true
         // "**/logs": true
     },
 

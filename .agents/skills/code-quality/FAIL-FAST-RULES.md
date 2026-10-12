@@ -7,7 +7,7 @@ description: Use this when writing, refactoring, or reviewing code paths that in
 
 Extracted from AGENTS.md, section "Fail-Fast Principle".
 
-Do not silently swallow missing values. If a reference is assumed to exist, use it directly. If it's missing, let the error surface and fix the root cause — do not paper over it with a cast or a silent fallback.
+Do not silently swallow missing values. If a reference is assumed to exist, use it directly. If it's missing, let the error surface and fix the root cause. Do not paper over it with a cast or a silent fallback.
 
 **Explicit checks are only warranted in two cases:**
 
@@ -16,18 +16,18 @@ Do not silently swallow missing values. If a reference is assumed to exist, use 
 
 Everything else: use directly, let it throw, fix the root cause.
 
-**On `?.` and `??`:** these are valid and preferred over casts — but only when the nullish case is a genuinely expected branch with intentional handling. Do not reach for them as a reflexive way to suppress errors. Never use them as a substitute for fixing a broken assumption.
+**On `?.` and `??`:** these are valid and preferred over casts, but only when the nullish case is a genuinely expected branch with intentional handling. Do not reach for them as a reflexive way to suppress errors. Never use them as a substitute for fixing a broken assumption.
 
 ```ts
-// Bad — silently swallows a missing dependency; hides a broken contract
+// Bad: silently swallows a missing dependency; hides a broken contract
 const result = service?.doThing() ?? null;
 
-// Good — null is a documented valid state with real handling
+// Good: null is a documented valid state with real handling
 const user = session?.user ?? guestUser;
 
-// Bad — casts away the problem instead of fixing it
+// Bad: casts away the problem instead of fixing it
 const name = (obj as any).name;
 
-// Good — let it throw if the contract is violated
+// Good: let it throw if the contract is violated
 const name = obj.name;
 ```

@@ -1,15 +1,17 @@
 ---
 name: oop
-description: Use this when deciding between classes and functions, designing service layers, or applying OOP principles in seedcord. Covers the class-vs-function rule, SOLID in TypeScript, access modifiers, composition over inheritance, service pattern, and common OOP antipatterns to avoid.
+description: Use this when deciding between classes and functions, designing service layers, or applying OOP principles in envapt. Covers the class-vs-function rule, SOLID in TypeScript, access modifiers, composition over inheritance, service pattern, and common OOP antipatterns to avoid.
 ---
 
-# OOP in TypeScript — Seedcord Conventions
+# OOP in TypeScript: envapt Conventions
 
-The repo's rule (from AGENTS.md): **OOP for complex domain logic** (inheritance + composition); **plain functions for small, stateless utilities.** The line is complexity and statefulness — not a preference for one style.
+The repo's rule (from AGENTS.md): **OOP for complex domain logic** (inheritance + composition). **Plain functions for small, stateless utilities.** The line is complexity and statefulness. Style preference decides nothing here.
 
 ---
 
-## Rule 1 — When to use a class vs a function
+## Rule 1: When to use a class vs a function
+
+<!--prettier-ignore-start-->
 
 | Situation | Use |
 |---|---|
@@ -20,22 +22,24 @@ The repo's rule (from AGENTS.md): **OOP for complex domain logic** (inheritance 
 | React hook | Function |
 | Module-level configuration or constants | Named exports |
 
+<!--prettier-ignore-end-->
+
 ```ts
-// Bad — class wrapping a single stateless transform
+// Bad: class wrapping a single stateless transform
 export class PriceFormatter {
     static format(cents: number): string {
         return `$${(cents / 100).toFixed(2)}`;
     }
 }
 
-// Good — plain function
+// Good: plain function
 export function formatCentsToCad(cents: number): string {
     return `$${(cents / 100).toFixed(2)}`;
 }
 ```
 
 ```ts
-// Good — class for stateful service with lifecycle
+// Good: class for stateful service with lifecycle
 export class CartSyncService {
     private readonly queue: SyncOperation[] = [];
     private isFlushing = false;
@@ -48,29 +52,29 @@ export class CartSyncService {
 
 ---
 
-## Rule 2 — No static-only classes (namespace antipattern)
+## Rule 2: No static-only classes (namespace antipattern)
 
-A class where every member is `static` is just a module masquerading as a class. Use named exports instead.
+A class where every member is `static` behaves like a plain module wrapped in class syntax. Use named exports instead.
 
 ```ts
-// Bad — static namespace class
+// Bad: static namespace class
 export class Utils {
     static parseDate(s: string): Date { ... }
     static formatCurrency(n: number): string { ... }
 }
 
-// Good — named exports from a module
+// Good: named exports from a module
 export function parseDate(s: string): Date { ... }
 export function formatCurrency(n: number): string { ... }
 ```
 
 ---
 
-## Rule 3 — SOLID in practice
+## Rule 3: SOLID in practice
 
 ### Single Responsibility
 
-Each class has one reason to change. If a class knows how to fetch data AND format it AND validate it, split it.
+Each class has one reason to change. If a class fetches data, formats it, AND validates it, split it.
 
 ```ts
 // Bad
@@ -80,26 +84,26 @@ export class OrderService {
     validate(order: Order): boolean { ... }
 }
 
-// Good — each responsibility in its own unit
+// Good: each responsibility in its own unit
 export class OrderService { async fetch(id: string): Promise<Order> { ... } }
 export class OrderPresenter { format(order: Order): DisplayOrder { ... } }
 export function validateOrder(order: Order): boolean { ... }
 ```
 
-### Open/Closed — extend via composition, not modification
+### Open/Closed: extend via composition
 
-Add behavior by composing, not by modifying the class. New use cases should add new code, not rewrite existing classes.
+Add behavior by composing, and leave the class itself unmodified. New use cases add new code, and existing classes stay untouched.
 
 ### Liskov Substitution
 
-Subclasses must be usable wherever the base class is expected — without callers knowing which subclass they have. If a subclass throws on a method the base class exposes, that's a violation.
+Subclasses must be usable wherever the base class is expected, without callers knowing which subclass they have. If a subclass throws on a method the base class exposes, that's a violation.
 
 ### Interface Segregation
 
 Prefer narrow interfaces over one fat interface.
 
 ```ts
-// Bad — fat interface; every consumer gets methods they don't need
+// Bad: fat interface; every consumer gets methods they don't need
 interface Repository<T> {
     findById(id: string): Promise<T>;
     findAll(): Promise<T[]>;
@@ -109,22 +113,26 @@ interface Repository<T> {
     search(query: string): Promise<T[]>;
 }
 
-// Good — segregated interfaces
-interface Readable<T> { findById(id: string): Promise<T>; }
-interface Writable<T> { save(entity: T): Promise<void>; }
+// Good: segregated interfaces
+interface Readable<T> {
+    findById(id: string): Promise<T>;
+}
+interface Writable<T> {
+    save(entity: T): Promise<void>;
+}
 ```
 
 ### Dependency Inversion
 
-Depend on interfaces/abstractions, not concrete implementations. Pass dependencies in (constructor injection) rather than constructing them inside.
+Depend on interfaces and abstractions. Pass dependencies in through the constructor (constructor injection).
 
 ```ts
-// Bad — hard-wired dependency
+// Bad: hard-wired dependency
 export class OrderService {
     private readonly db = new PostgresDatabase(); // can't be mocked, can't be swapped
 }
 
-// Good — injected dependency
+// Good: injected dependency
 export class OrderService {
     constructor(private readonly db: Database) {}
 }
@@ -132,23 +140,29 @@ export class OrderService {
 
 ---
 
-## Rule 4 — Composition over inheritance
+## Rule 4: Composition over inheritance
 
 Inheritance is appropriate for genuine "is-a" relationships (a `PulsesProduct` is a `Product`). Use composition for "has-a" or "does-a" (a service that has a logger, does retries).
 
 ```ts
-// Fragile inheritance — adding behavior by subclassing
+// Fragile inheritance: adding behavior by subclassing
 class BaseService {
-    protected log(msg: string): void { console.log(msg); }
+    protected log(msg: string): void {
+        console.log(msg);
+    }
 }
 class OrderService extends BaseService {
-    fetch() { this.log('fetching'); }
+    fetch() {
+        this.log('fetching');
+    }
 }
 
-// Better — compose the logger in
+// Better: compose the logger in
 class OrderService {
     constructor(private readonly logger: Logger) {}
-    fetch() { this.logger.info('fetching'); }
+    fetch() {
+        this.logger.info('fetching');
+    }
 }
 ```
 
@@ -156,41 +170,54 @@ Max inheritance depth: 2 (base + one subclass). If you're 3 levels deep, refacto
 
 ---
 
-## Rule 5 — Access modifiers
+## Rule 5: Access modifiers
 
 Use the narrowest access modifier that satisfies the requirement:
 
 ```ts
 export class ProductService {
-    // Public — part of the API contract
+    // Public: part of the API contract
     async findById(id: string): Promise<Product> { ... }
 
-    // Private — implementation detail, not part of the contract
+    // Private: implementation detail, not part of the contract
     private buildQuery(id: string): string { ... }
 
-    // Readonly — set once in the constructor, never reassigned
+    // Readonly: set once in the constructor, never reassigned
     constructor(private readonly client: ApiClient) {}
 }
 ```
 
 **`#name` (ECMAScript private)** vs **`private` (TypeScript keyword):**
 
-- `private` is erased at runtime — still accessible via `(obj as any).name`
-- `#name` is a true runtime private field — use it for genuinely sensitive state
+- `private` is erased at runtime. A cast still reaches it, as in `(obj as any).name`.
+- `#name` is a true runtime private field. Use it for genuinely sensitive state.
+
+envapt's classes use `private` today, as in `PortableSource`'s `private readonly vars`.
 
 ```ts
 class AuthSession {
     #token: string; // truly private at runtime
 
-    constructor(token: string) { this.#token = token; }
+    constructor(token: string) {
+        this.#token = token;
+    }
 
-    getAuthHeader(): string { return `Bearer ${this.#token}`; }
+    getAuthHeader(): string {
+        return `Bearer ${this.#token}`;
+    }
+}
+
+// internal: only the two http Seedcord classes import it
+export class InteractionsService {
+    private token?: string;
+
+    constructor(private readonly host: Core) {}
 }
 ```
 
 ---
 
-## Rule 6 — Interface vs abstract class
+## Rule 6: Interface vs abstract class
 
 **Use an interface** when you want to define a contract that multiple unrelated classes can implement, and you don't need any shared implementation:
 
@@ -215,7 +242,7 @@ abstract class BaseRepository<T> {
         return this.db.execute(sql);
     }
 
-    // Contract — subclasses must implement
+    // Contract: subclasses must implement
     abstract findById(id: string): Promise<T>;
 }
 
@@ -226,13 +253,13 @@ class OrderRepository extends BaseRepository<Order> {
 }
 ```
 
-Do not use abstract classes just to share a logger or config — that's what constructor injection is for.
+Do not use abstract classes just to share a logger or config. Constructor injection exists for that.
 
 ---
 
-## Rule 7 — Service pattern (how this repo uses it)
+## Rule 7: Service pattern (how this repo uses it)
 
-Services encapsulate business logic around an entity or domain concept. They are injected where needed; they don't create their own dependencies.
+Services encapsulate business logic around an entity or domain concept. They are injected where needed. They don't create their own dependencies.
 
 ```ts
 export class AddressService {
@@ -253,7 +280,7 @@ Conventions:
 
 - One service per domain entity or bounded context
 - Services are instantiated once (singletons in DI or module-level instances)
-- No presentation logic inside services — they return domain types, not display strings
+- No presentation logic inside services. They return domain types, and formatting into display strings happens elsewhere
 - No state that leaks between requests/users
 
 ---
@@ -264,7 +291,7 @@ Conventions:
 // ❌ Static namespace class
 export class MathUtils { static add(a, b) { return a + b; } }
 
-// ❌ God class — one class doing everything
+// ❌ God class: one class doing everything
 export class AppService { /* auth, products, cart, checkout, analytics */ }
 
 // ❌ Constructor doing async work

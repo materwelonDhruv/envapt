@@ -18,7 +18,6 @@
         "GitHub.vscode-pull-request-github",
 
         // Syntax highlighting
-        "kennylong.kubernetes-yaml-formatter",
         "mikestead.dotenv",
         "redhat.vscode-yaml",
 

@@ -17,7 +17,7 @@ This is the rule that matters most and the one that gets broken most.
 
 An abstract phrase is shorter than the plain sentence it replaces. Any rule that rewards brevity will pull you toward abstraction. Resist it. **Cut whole ideas. Keep common words.**
 
-A sentence improves when you drop a point the reader did not need. A sentence gets worse when you compress a point into a technical-sounding noun phrase. The second one looks like editing and is the opposite of it.
+A sentence improves when you cut a point the reader did not need. A sentence gets worse when you compress a point into a technical-sounding noun phrase. The second one looks like editing and is the opposite of it.
 
 Real failures, all written by an assistant explaining its own behavior:
 
@@ -178,6 +178,19 @@ Aim for a spread in length, in how sentences open, and in what each one is doing
 6. Give the condition, never the smoothness. Replace "no manual wiring" with "on a 429 the client waits `Retry-After` seconds before the next attempt".
 7. Prefer the concrete noun over the promised benefit. "Throws `TimeoutError` when no response arrives within `timeout` ms" beats any adjective.
 8. Count a list only when the set is closed. "The four lifecycle phases" is right when there are four. A sample of three out of thirty reads as all thirty unless the sentence says otherwise.
+9. Say what is. Write what the thing does or what is true. A sentence built on no, not, never, or no longer makes the reader picture the opposite first and then flip it.
+
+<!--prettier-ignore-start-->
+
+| Negative | Says what is |
+|---|---|
+| redirects a patch the index no longer lists | sends an old patch to the head of its line |
+| an interface would not fit the index signature | only a type alias fits the index signature |
+| the loader does not keep a load that failed | a failed load leaves the loader empty for the next call |
+
+<!--prettier-ignore-end-->
+
+Keep a negation only when the absence is the fact itself, as in "throws when the file does not exist". There, use "not" over "no". "Does not throw" reads faster than "throws no error".
 
 Rule of thumb: if an adjective cannot be replaced by a measurable fact or a code reference, delete it.
 
@@ -189,7 +202,17 @@ Em-dash `—` and en-dash `–` are banned in prose. Use a comma, parentheses, a
 
 Colon `:` and semicolon `;` are banned as a clause splice, where the mark joins two complete clauses into one sentence. A colon introducing a list, a code block, or a short label is standard. Keep it.
 
-Comma splices are banned. A comma cannot join two complete clauses. Every comma carries a connector after it, separates list items, or becomes a period. Also, prefer to use not-negation over no-negation. "does not throw" is better than "throws no error" for example.
+Markdown prose gets no semicolon at all. Rephrasing the sentence into a simpler structure is a better approach.
+
+A code comment _may_ use one, if appropriate, under one shape: two short clauses that give the two cases of one rule, in matching grammar.
+
+```ts
+// scaffold deletes this directory when writing fails; later failures keep it
+```
+
+Cut the comment at the semicolon and read the right half. Where it opens with `so`, `therefore`, `thus`, `hence`, `meaning`, `this means`, `and`, etc., the second half is explaining the first, which section 4 already covers. Rewrite those.
+
+Comma splices are banned. A comma cannot join two complete clauses. Every comma carries a connector after it, separates list items, or becomes a period.
 
 **The comma gets no carve-out.** The colon exemption above covers the colon and nothing else. A comma joining two clauses in parallel shape (`A is X, B is Y`), a two-item enumeration, a pair of contrasting cases, or a before-and-after is still a splice. Matching structure only makes the error easier to miss. If you catch yourself arguing that a particular splice reads fine, that argument is the tell. Rewrite it.
 
@@ -237,6 +260,16 @@ When a contrast genuinely carries weight, write two plain sentences.
 
 An `instead of` naming a swap the reader is actually making stays, since naming what they replace is the instruction. "Pass an options object instead of the positional arguments" is written for someone still passing positional arguments. The ban covers an alternative nobody raised, as in "the source is one typed interface instead of a raw object", where the reader loads the raw object and then throws it away.
 
+### Exclusivity tails
+
+The same move hides at the end of a sentence. A claim gets a tail that rules out everything it didn't mention: "and nothing else", "and that's it", "nothing more", "on its own", "and no other". The reader pictures the excluded set and then throws it away. That costs the same as a contrast.
+
+- BAD: "markdown gives a link these attributes and nothing else".
+- GOOD: "markdown puts `href`, `title`, and `id` on a link".
+- GOOD, when the reader needs the limit: "markdown puts only `href`, `title`, and `id` on a link".
+
+The test: cut the tail and read the sentence again. A named list already says what is in it. When the limit is the fact the reader needs, put `only` in front of the thing it limits.
+
 ---
 
 ## 7. Ban-list
@@ -271,6 +304,8 @@ Illustrative. When a word is missing from the table, apply section 1 and the tes
 | rich set of / suite of | list them |
 | exercises (a test exercises X) | calls X, runs X, tests X |
 | does more than X | state what it does |
+| names / naming, as a verb | banned. write the verb for what actually happens and rephrase the sentence in simple words if needed |
+| drop / dropped / dropping, standing in for a more exact verb | work out what happens to the thing in that sentence, then write the verb for it |
 | worth noting / surprisingly / you may notice | delete, state the fact |
 | good catch / fair point / great question | delete |
 | to be honest / frankly | delete |
