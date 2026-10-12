@@ -1,5 +1,0 @@
-#!/bin/sh
-
-echo "Pre-push hook triggered."
-
-pnpm prePush

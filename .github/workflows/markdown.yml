@@ -1,0 +1,32 @@
+name: markdown
+
+on:
+    pull_request:
+        types: [opened, reopened, synchronize, ready_for_review]
+        paths:
+            - '**/*.md'
+            - '.markdownlint*'
+    push:
+        branches:
+            - main
+            - next
+        paths:
+            - '**/*.md'
+            - '.markdownlint*'
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+permissions:
+    contents: read
+
+jobs:
+    markdown:
+        if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+        steps:
+            - uses: actions/checkout@v7
+            - uses: ./.github/actions/setup
+            - run: pnpm lint:md

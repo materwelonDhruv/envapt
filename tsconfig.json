@@ -3,8 +3,9 @@
     "extends": "./node_modules/@seedcord/tsconfig/node.json",
     "compilerOptions": {
         "rootDir": ".",
-        "types": ["node"]
+        "types": ["node"],
+        "allowImportingTsExtensions": true
     },
-    "include": ["scripts/**/*", "vitest.config.ts", "doctor.config.ts"],
+    "include": ["scripts/**/*", "vitest.config.ts", "doctor.config.ts", "lint-staged.config.ts"],
     "exclude": ["node_modules", "dist"]
 }

@@ -84,6 +84,9 @@ importers:
       react-doctor:
         specifier: ^0.9.14
         version: 0.9.14(eslint@10.10.0(jiti@2.7.0))(react@19.3.0)
+      string-argv:
+        specifier: ^0.3.2
+        version: 0.3.2
       tsdown:
         specifier: ^0.23.0
         version: 0.23.0(oxc-resolver@11.24.2)(tsx@4.23.13)(typescript@6.0.3)
@@ -477,6 +480,7 @@ packages:
 
   '@cloudflare/vitest-pool-workers@0.22.0':
     resolution: {integrity: sha512-OJv/qikkOgxnKxJ5xrLS7zuOLZhc/6iziU+llqZm4tiQf2CJUYwlMuXN68VaWIQebORd1AUx4w6A0oy8XRbuaQ==}
+    deprecated: '@cloudflare/vitest-pool-workers has been renamed to @cloudflare/vitest-plugin. This package will not receive future updates.'
     peerDependencies:
       '@vitest/runner': ^4.1.0
       '@vitest/snapshot': ^4.1.0

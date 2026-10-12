@@ -95,8 +95,10 @@ pnpm lint:fix      # always lint:fix, never plain lint
 pnpm tc
 pnpm lint:fix:md   # when you touched markdown
 pnpm test          # after lint and tc pass
-pnpm prePush       # what the pre-push hook runs
+pnpm prePush       # every check, before you push
 ```
+
+The pre-commit hook runs `lint-staged`, which formats the staged files and lints them with zero warnings allowed. No hook runs on push, so run `pnpm prePush` yourself.
 
 `pnpm --filter envapt <script>` targets the library. `pnpm --filter envapt build` rebuilds it before checking the guide against new types. The guide's twoslash blocks compile only in `pnpm --filter @envapt/guide build`.
 

@@ -13,7 +13,7 @@ envapt enforces quality through layered checks. Most are tool-enforced, with one
 | --- | --- | --- |
 | **ESLint + TypeScript** (tool) | Type errors, lint violations, import order, formatting, rule violations | `pnpm lint:fix && pnpm tc` from the repo root (turbo runs both workspaces) |
 | **Vitest** (tool) | Behavior regressions | `pnpm test` (only after lint + tc pass) |
-| **Prettier** (tool) | Formatting | `pnpm fmt` / `pnpm fmt:check`. The pre-commit hook runs `fmt:check` |
+| **Prettier** (tool) | Formatting | `pnpm fmt` / `pnpm fmt:check`. The pre-commit hook formats staged files through `lint-staged` |
 | **changesets** (tool) | Missing version bump for `packages/envapt` | `pnpm cs` for any change to `packages/envapt/**`. `pnpm cs:status` to check |
 | **React 19 antipatterns** (tool) | Mutable deps, index keys, deprecated APIs, hydration mismatches, hand-rolled `useContext`, giant components | `pnpm react-doctor` from repo root. Configured via `doctor.config.ts`. Run deliberately, NOT on every `prePush` (it's slow + interactive). |
 | **Dead code / unused deps** (tool) | Unused files, exports, types, deps, devDeps, binaries | `pnpm knip` from repo root. Configured via `knip.json`. Run deliberately, NOT on every `prePush`. Triage false positives into `knip.json` `ignoreDependencies` / `ignoreBinaries` / extra `entry` patterns with a comment explaining why. |
@@ -41,11 +41,11 @@ pnpm test
 pnpm --filter envapt test
 pnpm --filter @envapt/guide tc
 
-# Everything the pre-push hook runs:
+# Every check, before you push:
 pnpm prePush
 ```
 
-Husky runs `fmt:check` and `lint-staged` on commit, commitlint on the message, and `pnpm prePush` on push. Don't bypass the hooks.
+Husky runs `lint-staged` on commit and commitlint on the message. No hook runs on push, so run `pnpm prePush` yourself. Don't bypass the hooks.
 
 ---
 
