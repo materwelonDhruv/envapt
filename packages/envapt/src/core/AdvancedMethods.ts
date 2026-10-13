@@ -1,6 +1,7 @@
 import { resolveKeyInput, templateResolver, valueConverter } from './engine';
 import { hasFallback, isMissing } from './missing';
 import { PrimitiveMethods } from './PrimitiveMethods';
+import { Validator } from '../engine/Validators';
 import { debugWarn } from '../infra/Debug';
 import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
 import { recase } from '../infra/recase';
@@ -21,6 +22,7 @@ import type {
     RecaseKey,
     RequiredSpec,
     SchemaConstraint,
+    SpecSchemaConstraint,
     TimeFallback
 } from '../types';
 
@@ -36,6 +38,17 @@ export function resolveRequired(
     if (resolved.value === undefined) return resolved;
     const value = templateResolver.resolveTemplate(resolved.key, resolved.value);
     return { key: resolved.key, value: isMissing(value) ? undefined : value };
+}
+
+// getRequiredAll has already thrown for every missing key
+function readSpecField(key: string, field: RequiredSpec[string]): StandardSchemaV1.Result<unknown> {
+    if (Validator.isStandardSchema(field)) return valueConverter.validateWithSchema(key, field);
+
+    // the string-only parser is safe to widen because the value is present
+    const converted = valueConverter.convertValue<unknown>(key, undefined, field as EnvaptConverter<unknown>, false);
+    // a built-in returns undefined when it cannot convert, and a custom converter can return null
+    if (converted === undefined || converted === null) return { issues: [{ message: 'could not be converted' }] };
+    return { value: converted };
 }
 
 export class AdvancedMethods extends PrimitiveMethods {
@@ -196,16 +209,23 @@ export class AdvancedMethods extends PrimitiveMethods {
 
     /**
      * Read a group of required environment variables in one call. Each key in `spec` maps to a
-     * converter (a token, an `array()` token, or a custom parser), and the returned record holds
-     * every converted value, all non-undefined. Collects every missing or empty key and throws one
-     * `MissingEnvValue` listing them all. Pass a `casing` (`'camelCase'`, `'PascalCase'`, or
-     * `'kebab-case'`) to rename the record keys. The rename splits each key on underscores, as in
-     * SCREAMING_SNAKE env-var names. With no casing the keys stay as-is.
+     * converter (a token, an `array()` token, or a custom parser) or a synchronous Standard Schema
+     * (zod, valibot, arktype, etc). The returned record holds every value, all non-undefined.
+     *
+     * Collects every missing or empty key first and throws one `MissingEnvValue` listing them all.
+     * A missing key never reaches its schema. A schema default such as zod's `.default()` does not
+     * apply here. Every field runs after that check. Any failures throw one `SchemaValidationFailed`
+     * whose `issues` hold the issues of every failed field, each with its env key first in `path`.
+     * A converter that cannot convert adds one issue with the message `could not be converted`.
+     *
+     * Pass a `casing` (`'camelCase'`, `'PascalCase'`, or `'kebab-case'`) to rename the record keys.
+     * The rename splits each key on underscores, as in SCREAMING_SNAKE env-var names. With no casing
+     * the keys stay as-is.
      * @see {@link https://envapt.materwelon.dev/docs/envapter#fail-fast-on-missing-values}
-     * @see {@link https://envapt.materwelon.dev/docs/converters#require-a-converted-value}
+     * @see {@link https://envapt.materwelon.dev/docs/standard-schema#validate-a-group-of-required-variables}
      */
     static getRequiredAll<Spec extends RequiredSpec, Casing extends KeyCasing | undefined = undefined>(
-        spec: Spec,
+        spec: Spec & SpecSchemaConstraint<Spec>,
         casing?: Casing
     ): { [K in keyof Spec as RecaseKey<K & string, Casing>]: InferSpecField<Spec[K]> } {
         const keys = Object.keys(spec);
@@ -220,21 +240,23 @@ export class AdvancedMethods extends PrimitiveMethods {
         }
 
         const result: Record<string, unknown> = {};
-        for (const key of keys) {
-            // safe to widen because every value is present by now
-            const converted = valueConverter.convertValue<unknown>(
-                key,
-                undefined,
-                spec[key] as EnvaptConverter<unknown>,
-                false
-            );
-            if (converted === undefined || converted === null) {
-                throw new EnvaptError(
-                    EnvaptErrorCodes.MissingEnvValue,
-                    `Required environment variable "${key}" is present but could not be converted.`
-                );
+        const failures: string[] = [];
+        const issues: StandardSchemaV1.Issue[] = [];
+        for (const [key, field] of Object.entries<RequiredSpec[string]>(spec)) {
+            const outcome = readSpecField(key, field);
+            if (outcome.issues === undefined) {
+                result[recase(key, casing)] = outcome.value;
+                continue;
             }
-            result[recase(key, casing)] = converted;
+            failures.push(`${key} (${outcome.issues[0]?.message ?? 'no issue message'})`);
+            issues.push(...outcome.issues.map((issue) => ({ ...issue, path: [key, ...(issue.path ?? [])] })));
+        }
+        if (failures.length > 0) {
+            throw new EnvaptError(
+                EnvaptErrorCodes.SchemaValidationFailed,
+                `Validation failed for ${failures.join(', ')}.`,
+                { issues }
+            );
         }
         return result as { [K in keyof Spec as RecaseKey<K & string, Casing>]: InferSpecField<Spec[K]> };
     }
@@ -243,10 +265,10 @@ export class AdvancedMethods extends PrimitiveMethods {
      * @see {@link AdvancedMethods.getRequiredAll}
      */
     getRequiredAll<Spec extends RequiredSpec, Casing extends KeyCasing | undefined = undefined>(
-        spec: Spec,
+        spec: Spec & SpecSchemaConstraint<Spec>,
         casing?: Casing
     ): { [K in keyof Spec as RecaseKey<K & string, Casing>]: InferSpecField<Spec[K]> } {
-        return AdvancedMethods.getRequiredAll(spec, casing);
+        return AdvancedMethods.getRequiredAll<Spec, Casing>(spec, casing);
     }
 
     /**

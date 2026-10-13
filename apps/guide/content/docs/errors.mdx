@@ -28,7 +28,7 @@ try {
 - `code`: the `EnvaptErrorCodes` member.
 - `name`: set to `` `EnvaptError [<code>]` `` (e.g. `EnvaptError [305]`).
 - `message`: a human-readable description.
-- `issues`: the validator's issue list, populated **only** for `SchemaValidationFailed` (208); `undefined` for every other code.
+- `issues`: the validator's issue list, populated **only** for `SchemaValidationFailed` (208). It is `undefined` for every other code.
 - `cause`: the original error when one is chained, used by `SchemaThrew` (209).
 
 ## Codes
@@ -60,7 +60,7 @@ try {
 | 205 | `PrimitiveCoercionFailed` | Coercing a fallback through a primitive constructor fails. |
 | 206 | `ArrayElementConversionFailed` | An array element fails to convert to the configured element type. |
 | 207 | `EmptyArrayElement` | Strict mode only: an array element is empty or whitespace. |
-| 208 | `SchemaValidationFailed` | A Standard Schema returns issues for a non-empty value. The only code that populates `issues`. |
+| 208 | `SchemaValidationFailed` | A Standard Schema rejects a non-empty value. `getRequiredAll` throws it once for all bad values. The only code that populates `issues`. |
 | 209 | `SchemaThrew` | A schema's `validate` itself throws. The original error is on `cause`. |
 
 {/* prettier-ignore-end */}

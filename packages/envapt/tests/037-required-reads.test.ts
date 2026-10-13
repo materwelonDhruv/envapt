@@ -1,11 +1,15 @@
 import { resolve } from 'node:path';
 
+import { type as ark } from 'arktype';
+import * as v from 'valibot';
 import { afterEach, beforeAll, describe, expect, expectTypeOf, it } from 'vitest';
+import { z } from 'zod/v4';
 
 import { Converters, Envapter, EnvaptErrorCodes } from '../src';
 import { EnvaptError } from '../src/infra/Error';
 import { recase } from '../src/infra/recase';
 
+import type { StandardSchemaV1 } from '../src/infra/StandardSchema';
 import type { RecaseKey } from '../src/types';
 
 describe('Required reads (v8)', () => {
@@ -160,10 +164,148 @@ describe('Required reads (v8)', () => {
             }
         });
 
-        it('throws MissingEnvValue when a present value in the spec cannot be converted', () => {
-            expect(() => Envapter.getRequiredAll({ SET_VALUE: Converters.Number }))
-                .to.throw(EnvaptError)
-                .with.property('code', EnvaptErrorCodes.MissingEnvValue);
+        it('throws one SchemaValidationFailed listing every converter field that cannot convert', () => {
+            try {
+                Envapter.getRequiredAll({
+                    SET_VALUE: Converters.Number,
+                    SET_NUMBER: Converters.Number,
+                    SAMPLE_REPO: Converters.Port
+                });
+                expect.fail('should have thrown');
+            } catch (err) {
+                expect(err).to.be.instanceOf(EnvaptError);
+                const e = err as EnvaptError;
+                expect(e.code).to.equal(EnvaptErrorCodes.SchemaValidationFailed);
+                expect(e.message).to.include('SET_VALUE');
+                expect(e.message).to.include('SAMPLE_REPO');
+                expect(e.message).to.not.include('SET_NUMBER');
+                expect(e.issues?.map((issue) => issue.path)).to.deep.equal([['SET_VALUE'], ['SAMPLE_REPO']]);
+            }
+        });
+    });
+
+    describe('getRequiredAll with Standard Schema fields', () => {
+        it('returns typed values for a spec that mixes converters and schemas', () => {
+            const cfg = Envapter.getRequiredAll({
+                SET_NUMBER: Converters.Number,
+                PORT1: z.coerce.number().int(),
+                DATABASE_URL: v.pipe(v.string(), v.url()),
+                PORT2: ark('string.integer.parse'),
+                SET_VALUE: Converters.String
+            });
+            expect(cfg).to.deep.equal({
+                SET_NUMBER: 42,
+                PORT1: 80,
+                DATABASE_URL: 'postgres://localhost/db',
+                PORT2: 443,
+                SET_VALUE: 'hello'
+            });
+            expectTypeOf(cfg).toEqualTypeOf<{
+                SET_NUMBER: number;
+                PORT1: number;
+                DATABASE_URL: string;
+                PORT2: number;
+                SET_VALUE: string;
+            }>();
+        });
+
+        it('throws one SchemaValidationFailed holding every failed field, keyed by env name in path', () => {
+            const hostSchema: StandardSchemaV1<unknown, string> = {
+                '~standard': {
+                    version: 1,
+                    vendor: 'envapt-test',
+                    validate: () => ({ issues: [{ message: 'unknown host', path: ['host'] }] })
+                }
+            };
+            try {
+                Envapter.getRequiredAll({
+                    SET_VALUE: z.coerce.number(),
+                    PORT1: z.coerce.number(),
+                    SAMPLE_REPO: v.pipe(v.string(), v.email()),
+                    DATABASE_URL: hostSchema
+                });
+                expect.fail('should have thrown');
+            } catch (err) {
+                expect(err).to.be.instanceOf(EnvaptError);
+                const e = err as EnvaptError;
+                expect(e.code).to.equal(EnvaptErrorCodes.SchemaValidationFailed);
+                expect(e.message).to.include('SET_VALUE');
+                expect(e.message).to.include('SAMPLE_REPO');
+                expect(e.message).to.include('DATABASE_URL');
+                expect(e.message).to.not.include('PORT1');
+                expect(e.issues?.map((issue) => issue.path)).to.deep.equal([
+                    ['SET_VALUE'],
+                    ['SAMPLE_REPO'],
+                    ['DATABASE_URL', 'host']
+                ]);
+            }
+        });
+
+        it('throws MissingEnvValue for a missing schema field before any schema runs, ignoring its default', () => {
+            let validated = false;
+            const spySchema: StandardSchemaV1<unknown, string> = {
+                '~standard': {
+                    version: 1,
+                    vendor: 'envapt-test',
+                    validate: (value) => {
+                        validated = true;
+                        return { value: String(value) };
+                    }
+                }
+            };
+            try {
+                Envapter.getRequiredAll({
+                    SET_VALUE: spySchema,
+                    NEVER_SET_KEY: z.coerce.number().default(3000),
+                    EMPTY_VALUE: z.string().default('fallback')
+                });
+                expect.fail('should have thrown');
+            } catch (err) {
+                expect(err).to.be.instanceOf(EnvaptError);
+                const e = err as EnvaptError;
+                expect(e.code).to.equal(EnvaptErrorCodes.MissingEnvValue);
+                expect(e.message).to.include('NEVER_SET_KEY');
+                expect(e.message).to.include('EMPTY_VALUE');
+            }
+            expect(validated).to.equal(false);
+        });
+
+        it('still reports a field whose schema fails with an empty issues array', () => {
+            const emptyIssues: StandardSchemaV1<unknown, string> = {
+                '~standard': { version: 1, vendor: 'envapt-test', validate: () => ({ issues: [] }) }
+            };
+            try {
+                Envapter.getRequiredAll({ SET_VALUE: emptyIssues });
+                expect.fail('should have thrown');
+            } catch (err) {
+                const e = err as EnvaptError;
+                expect(e.code).to.equal(EnvaptErrorCodes.SchemaValidationFailed);
+                expect(e.message).to.include('SET_VALUE (no issue message)');
+                expect(e.issues).to.deep.equal([]);
+            }
+        });
+
+        it('reports a failed schema field and a failed converter field in one error', () => {
+            try {
+                Envapter.getRequiredAll({ SET_VALUE: z.url(), DATABASE_URL: Converters.Port });
+                expect.fail('should have thrown');
+            } catch (err) {
+                expect(err).to.be.instanceOf(EnvaptError);
+                const e = err as EnvaptError;
+                expect(e.code).to.equal(EnvaptErrorCodes.SchemaValidationFailed);
+                expect(e.message).to.include('SET_VALUE');
+                expect(e.message).to.include('DATABASE_URL');
+                expect(e.issues?.map((issue) => issue.path)).to.deep.equal([['SET_VALUE'], ['DATABASE_URL']]);
+            }
+        });
+
+        it('recases schema field keys the same way as converter keys', () => {
+            const cfg = Envapter.getRequiredAll(
+                { DATABASE_URL: z.url(), SET_NUMBER: Converters.Number, PORT1: z.coerce.number() },
+                'camelCase'
+            );
+            expect(cfg).to.deep.equal({ databaseUrl: 'postgres://localhost/db', setNumber: 42, port1: 80 });
+            expectTypeOf(cfg).toEqualTypeOf<{ databaseUrl: string; setNumber: number; port1: number }>();
         });
     });
 

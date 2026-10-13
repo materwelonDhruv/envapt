@@ -34,7 +34,7 @@ export enum EnvaptErrorCodes {
     ArrayElementConversionFailed = 206,
     /** Thrown under strict mode when an array element is empty or whitespace only */
     EmptyArrayElement = 207,
-    /** Thrown when a Standard Schema returns issues for a non-empty env value */
+    /** Thrown when a Standard Schema rejects a non-empty env value. `getRequiredAll` throws it once for all bad values. */
     SchemaValidationFailed = 208,
     /** Thrown when a Standard Schema's `validate` itself throws (e.g. a refinement that crashes) */
     SchemaThrew = 209,

@@ -182,6 +182,31 @@ export class ValueConverter {
             );
         }
 
+        const outcome = this.runSchema(key, schema, raw);
+
+        if (outcome.issues !== undefined) {
+            const first = outcome.issues[0];
+            const firstMessage = first?.message ?? 'no issue message';
+            throw new EnvaptError(
+                EnvaptErrorCodes.SchemaValidationFailed,
+                `Schema validation failed for "${formatKeyForError(key)}": ${firstMessage}`,
+                { issues: outcome.issues }
+            );
+        }
+
+        return outcome.value;
+    }
+
+    // getRequiredAll gathers the issues across every key before it throws
+    validateWithSchema(key: string, schema: StandardSchemaV1): StandardSchemaV1.Result<unknown> {
+        return this.runSchema(key, schema, this.envService.get(key, undefined));
+    }
+
+    private runSchema(
+        key: EnvKeyInput,
+        schema: StandardSchemaV1,
+        raw: string | undefined
+    ): StandardSchemaV1.Result<unknown> {
         let outcome: StandardSchemaV1.Result<unknown> | Promise<StandardSchemaV1.Result<unknown>>;
         try {
             outcome = schema['~standard'].validate(raw);
@@ -200,16 +225,6 @@ export class ValueConverter {
             );
         }
 
-        if (outcome.issues !== undefined) {
-            const first = outcome.issues[0];
-            const firstMessage = first?.message ?? 'no issue message';
-            throw new EnvaptError(
-                EnvaptErrorCodes.SchemaValidationFailed,
-                `Schema validation failed for "${formatKeyForError(key)}": ${firstMessage}`,
-                { issues: outcome.issues }
-            );
-        }
-
-        return outcome.value;
+        return outcome;
     }
 }

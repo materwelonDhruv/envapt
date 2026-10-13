@@ -40,7 +40,8 @@ Envapter.getWith('FLAGS', (raw) => (raw ? raw.split(',') : [])); // string[]
 // Throw when a key is missing:
 Envapter.require('DATABASE_URL', 'JWT_SECRET'); // throws EnvaptError listing every missing key
 Envapter.getRequired('PORT', Converters.Port); // throws if unset
-// throws if any key is unset (aggregates all missing keys so only one error), returns a typed object if all are present
+// throws if any key is unset (aggregates all missing keys so only one error), returns a typed object if all are present.
+// a field can also be a Standard Schema, see "Validation with Standard Schema"
 Envapter.getRequiredAll(
     {
         PORT: Converters.Port,
@@ -179,6 +180,19 @@ Envapter.parse('PORT', z.coerce.number().int().min(1024).max(65535)); // number
 ```
 
 Two constraints: validation is **sync-only** (an async `validate` throws), and a **fallback is returned as-is and is NOT passed through the schema**. Only a present env value is validated.
+
+`getRequiredAll` takes a schema for any field, mixed with converters. Missing keys throw one `MissingEnvValue` first, before any schema runs. A schema `.default()` never applies there. After that every field runs, and all their failures throw one `SchemaValidationFailed`, converter fields included. Each issue's `path` starts with its env key.
+
+```ts
+const db = Envapter.getRequiredAll(
+    {
+        DATABASE_URL: Converters.Url,
+        DATABASE_POOL_SIZE: z.coerce.number().int().min(1).max(100),
+        DATABASE_SSL_MODE: z.enum(['disable', 'require', 'verify-full'])
+    },
+    'camelCase'
+); // { databaseUrl: URL; databasePoolSize: number; databaseSslMode: 'disable' | 'require' | 'verify-full' }
+```
 
 ## Errors
 

@@ -1,4 +1,5 @@
 import type { ArrayOf, ConverterToken, CustomElementConverter } from '../converters/Converters';
+import type { InferSchemaOutput, StandardSchemaV1 } from '../infra/StandardSchema';
 
 // scalar tokens only
 type BuiltInConverter = ConverterToken;
@@ -86,14 +87,20 @@ type InferConverterReturnType<TConverter> =
           : never;
 
 // raw is a string because getRequiredAll throws on a missing value before converting
-type RequiredSpec = Record<string, BuiltInConverter | ArrayOf | ConverterFunction<unknown, string>>;
+type RequiredSpec = Record<
+    string,
+    BuiltInConverter | ArrayOf | ConverterFunction<unknown, string> | StandardSchemaV1<unknown, unknown>
+>;
 
+// arktype schemas are callable and would match the parser branch.
 // a required parser's `raw: string` does not fit ConverterFunction's `raw: string | undefined`
-type InferSpecField<TConverter> = TConverter extends BuiltInConverter | ArrayOf
-    ? InferConverterReturnType<TConverter>
-    : TConverter extends (raw: string) => infer TReturn
-      ? TReturn
-      : never;
+type InferSpecField<TField> = TField extends StandardSchemaV1
+    ? InferSchemaOutput<TField>
+    : TField extends BuiltInConverter | ArrayOf
+      ? InferConverterReturnType<TField>
+      : TField extends (raw: string) => infer TReturn
+        ? TReturn
+        : never;
 
 // add any converter whose fallback type differs from its return type here
 type InferConverterFallbackType<TConverter> = TConverter extends 'time'
