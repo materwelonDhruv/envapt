@@ -20,7 +20,8 @@ export class Validator {
     }
 
     static isStandardSchema(value: unknown): value is StandardSchemaV1 {
-        if (typeof value !== 'object' || value === null) return false;
+        // arktype types are functions
+        if ((typeof value !== 'object' && typeof value !== 'function') || value === null) return false;
         if (!('~standard' in value)) return false;
         const slot = value['~standard'];
         if (typeof slot !== 'object' || slot === null) return false;

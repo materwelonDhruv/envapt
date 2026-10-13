@@ -299,6 +299,15 @@ describe('Standard Schema adapter (v5)', () => {
         it('hand-rolled: validated value reaches the property', () => {
             expect(HandRolledConfig.upper).to.equal('WARN');
         });
+
+        // an arktype type is a callable function carrying `~standard`
+        it('arktype: validated value reaches the property', () => {
+            class ArkConfig {
+                @Envapt('PORT', { schema: ark('string.integer.parse') })
+                static readonly port: number;
+            }
+            expect(ArkConfig.port).to.equal(8080);
+        });
     });
 
     describe('@Envapt({ schema }) decorator: missing + fallback', () => {

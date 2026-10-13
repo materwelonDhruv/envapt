@@ -1,5 +1,6 @@
 import process from 'node:process';
 
+import { type as ark } from 'arktype';
 import { Converters, Envapt, EnvBool, EnvNum, EnvStr, EnvTime, EnvUrl } from 'envapt';
 
 import type { StandardSchemaV1 } from 'envapt';
@@ -49,6 +50,10 @@ class Config {
 
     @Envapt('S3_PORT', { schema: numberSchema })
     static accessor schemaPort: number;
+
+    // an arktype type is a callable function carrying `~standard`
+    @Envapt('S3_PORT', { schema: ark('string.integer.parse') })
+    static accessor arkPort: number;
 
     @EnvNum('S3_ABSENT')
     static accessor noFallback: number | undefined;
@@ -112,6 +117,7 @@ process.stdout.write(
         multiKey: Config.multiKey,
         greeting: Config.greeting,
         schemaPort: Config.schemaPort,
+        arkPort: Config.arkPort,
         noFallback: Config.noFallback,
         inheritedRegion,
         collisionA,
