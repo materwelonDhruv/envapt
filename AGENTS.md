@@ -10,7 +10,7 @@ envapt is past 1.0. Breaking changes ship only in a major. Pick the cleanest des
 
 ## Load these skills first
 
-Before any work, load the four skills in [`.agents/skills`](.agents/skills): `code-quality` and `tdd` with every file in their folders, plus `code-commenting-guidelines` and `writing-voice`. Load `changeset-guidelines` before writing a changeset, and `release-version` before cutting a release. `skills/envapt` is the skill shipped to envapt's users. Read it when a change touches the public API, since it needs the same update as the docs.
+Before any work, load the four skills in [`.agents/skills`](.agents/skills): `code-quality` and `tdd` with every file in their folders, plus `code-commenting-guidelines` and `writing-voice`. Load `guide-voice` before writing or reviewing a page under `apps/guide/content`, `changeset-guidelines` before writing a changeset, and `release-version` before cutting a release. `skills/envapt` is the skill shipped to envapt's users. Read it when a change touches the public API, since it needs the same update as the docs.
 
 ---
 
