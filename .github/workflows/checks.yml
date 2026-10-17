@@ -38,13 +38,13 @@ jobs:
               uses: ./.github/actions/setup
             - name: Workspace catalog check
               run: pnpm check:catalog
-            - name: Root scripts type-check, lint, and test
-              run: pnpm tc:root && pnpm lint:root && pnpm test:scripts
             - name: Markdown lint
               run: pnpm lint:md
             - name: Build, type-check, lint, format, and build guards
               run: >
                   pnpm exec turbo run build tc lint fmt:check build:verify test:exports-dedup test:resolution-matrix test:cjs-validity test:tsc-emit test:stage3-emit test:babel-emit test:tsc-emit:ts7 test:stage3-emit:ts7 test:tree-shaking
+            - name: Root scripts type-check, lint, and test
+              run: pnpm tc:root && pnpm lint:root && pnpm test:scripts
             - name: Test
               run: pnpm exec turbo run test
             - name: Run audit
