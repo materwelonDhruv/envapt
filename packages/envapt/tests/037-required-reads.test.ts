@@ -123,6 +123,7 @@ describe('Required reads (v8)', () => {
             const e = thrownBy(() => Envapter.getRequired('PORTS_BAD', Converters.array({ of: Converters.Port })));
             expect(e.code).to.equal(EnvaptErrorCodes.SchemaValidationFailed);
             expect(e.issues?.map((issue) => issue.path)).to.deep.equal([['PORTS_BAD']]);
+            expect(e.issues?.[0]?.message).to.include('index 1');
         });
 
         it('reports an empty array element under strict as SchemaValidationFailed', () => {
@@ -130,6 +131,7 @@ describe('Required reads (v8)', () => {
             const e = thrownBy(() => Envapter.getRequired('PORTS_GAP', Converters.array({ of: Converters.Port })));
             expect(e.code).to.equal(EnvaptErrorCodes.SchemaValidationFailed);
             expect(e.issues?.map((issue) => issue.path)).to.deep.equal([['PORTS_GAP']]);
+            expect(e.issues?.[0]?.message).to.include('index 1');
         });
     });
 

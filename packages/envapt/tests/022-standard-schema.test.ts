@@ -214,7 +214,24 @@ describe('Standard Schema adapter (v5)', () => {
                 expect(err).to.be.instanceOf(EnvaptError);
                 const e = err as EnvaptError;
                 expect(e.code).to.equal(EnvaptErrorCodes.SchemaValidationFailed);
-                expect(e.issues).to.deep.equal([]);
+                expect(e.issues).to.deep.equal([{ message: 'no issue message', path: ['PORT'] }]);
+            }
+        });
+
+        it('starts every issue path with the ordered key that held the value', () => {
+            const hostSchema: StandardSchemaV1<unknown, string> = {
+                '~standard': {
+                    version: 1,
+                    vendor: 'envapt-test',
+                    validate: () => ({ issues: [{ message: 'unknown host', path: ['host'] }] })
+                }
+            };
+            try {
+                Envapter.parse(['NEVER_SET', 'URL_VALUE'], hostSchema);
+                expect.fail('should have thrown');
+            } catch (err) {
+                const e = err as EnvaptError;
+                expect(e.issues).to.deep.equal([{ message: 'unknown host', path: ['URL_VALUE', 'host'] }]);
             }
         });
 
@@ -358,9 +375,12 @@ describe('Standard Schema adapter (v5)', () => {
             }
             expect(thrown).to.be.instanceOf(EnvaptError);
             const e = thrown as EnvaptError;
+            const issueMessage = e.issues?.[0]?.message ?? '';
+            expect(issueMessage).to.not.equal('');
             expect(e.code).to.equal(EnvaptErrorCodes.SchemaValidationFailed);
+            expect(e.issues?.[0]?.path).to.deep.equal(['INVALID_PORT']);
             expect(e.message).to.include('INVALID_PORT');
-            expect(e.message).to.not.include(e.issues?.[0]?.message ?? 'missing issue');
+            expect(e.message).to.not.include(issueMessage);
         });
 
         // an arktype type is a callable function carrying `~standard`

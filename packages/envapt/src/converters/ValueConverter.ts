@@ -3,7 +3,7 @@ import { state } from '../core/state';
 import { Validator } from '../engine/Validators';
 import { debugVerbose, debugWarn } from '../infra/Debug';
 import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
-import { formatKeyForError, missingValue, validationFailed } from '../infra/failures';
+import { formatKeyForError } from '../infra/failures';
 
 import type { ArrayOf } from './Converters';
 import type { StandardSchemaV1 } from '../infra/StandardSchema';
@@ -178,20 +178,6 @@ export class ValueConverter {
         return 'string';
     }
 
-    // the decorators and `Envapter.parse()` both run schema reads through here
-    convertWithSchema(key: EnvKeyInput, schema: StandardSchemaV1, fallback: unknown, hasFallback: boolean): unknown {
-        const raw = this.envService.get(key, undefined);
-
-        if (raw === undefined) {
-            if (hasFallback) return fallback;
-            throw missingValue(key);
-        }
-
-        const outcome = this.runSchema(key, schema, raw);
-        if (outcome.issues !== undefined) throw validationFailed([key], outcome.issues);
-        return outcome.value;
-    }
-
     readPresent({ key, value }: PresentValue, field: RequiredField): StandardSchemaV1.Result<unknown> {
         const outcome = Validator.isStandardSchema(field)
             ? this.runSchema(key, field, value)
@@ -209,12 +195,11 @@ export class ValueConverter {
         } catch (error) {
             return { issues: [{ message: errorMessage(error) }] };
         }
-        // custom parsers can return null
         if (converted === undefined || converted === null) return { issues: [{ message: 'could not be converted' }] };
         return { value: converted };
     }
 
-    // throws for a bad spec entry before any parser runs
+    // a bad spec entry has to throw outside runParser's try
     private requiredParser(field: Exclude<RequiredField, StandardSchemaV1>): (raw: string) => unknown {
         // safe to widen a `raw: string` parser because it only gets a present value
         const converter = (
@@ -243,13 +228,13 @@ export class ValueConverter {
         } catch (cause) {
             throw new EnvaptError(
                 EnvaptErrorCodes.SchemaThrew,
-                `Schema for "${formatKeyForError(key)}" threw during validation: ${(cause as Error).message}`,
+                `Schema for "${formatKeyForError(key)}" threw during validation: ${errorMessage(cause)}`,
                 { cause }
             );
         }
 
         if (outcome instanceof Promise) {
-            // nothing awaits this promise once we throw. node crashes on an unhandled rejection
+            // node crashes on an unhandled rejection
             outcome.catch((reason: unknown) => {
                 debugWarn(`schema for ${formatKeyForError(key)} rejected: ${errorMessage(reason)}`);
             });

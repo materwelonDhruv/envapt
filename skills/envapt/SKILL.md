@@ -197,7 +197,7 @@ const db = Envapter.getRequiredAll(
 
 ## Errors
 
-Reader and decorator failures throw `EnvaptError` with a numeric `code` (`EnvaptErrorCodes`). The common error codes are `MissingEnvValue` (a required value is absent), `SchemaValidationFailed` (a schema rejects a value, or a required read gets a value it can't convert, a bad array element, or a custom parser error. It carries an `issues` array, and its message lists only the keys), `InvalidUserDefinedConfig` (bad options, e.g. `required` + `fallback`), `MalformedTimeFallback`, `FileApiUnsupported` (a file-only API called with `fileApiMode = 'throw'`, or on the node build with a non-filesystem source), `NoSourceBound` (a read before `useSource` on the portable build).
+Reader and decorator failures throw `EnvaptError` with a numeric `code` (`EnvaptErrorCodes`). The common error codes are `MissingEnvValue` (a required value is absent), `SchemaValidationFailed` (a schema rejects a value, or a required read gets a value it can't convert, a bad array element, or a custom parser error, with each issue `path` starting at the env key and a message that lists only the keys), `InvalidUserDefinedConfig` (bad options, e.g. `required` + `fallback`), `MalformedTimeFallback`, `FileApiUnsupported` (a file-only API called with `fileApiMode = 'throw'`, or on the node build with a non-filesystem source), `NoSourceBound` (a read before `useSource` on the portable build).
 
 ```ts
 import { EnvaptError, EnvaptErrorCodes } from 'envapt';

@@ -92,7 +92,6 @@ type RequiredSpec = Record<
     BuiltInConverter | ArrayOf | ConverterFunction<unknown, string> | StandardSchemaV1<unknown, unknown>
 >;
 
-// a required decorator also takes a primitive constructor
 type RequiredField = RequiredSpec[string] | PrimitiveConstructor;
 
 // arktype schemas are callable and would match the parser branch.

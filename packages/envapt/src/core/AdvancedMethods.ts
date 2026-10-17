@@ -1,4 +1,4 @@
-import { findPresent, readRequired, resolveKeyInput, valueConverter } from './engine';
+import { findPresent, readRequired, readSchema, resolveKeyInput, valueConverter } from './engine';
 import { hasFallback, isMissing } from './missing';
 import { PrimitiveMethods } from './PrimitiveMethods';
 import { debugWarn } from '../infra/Debug';
@@ -232,13 +232,7 @@ export class AdvancedMethods extends PrimitiveMethods {
         fallback?: InferSchemaOutput<Schema>
     ): InferSchemaOutput<Schema> {
         // SchemaConstraint rejects async schemas at compile time
-        const result = valueConverter.convertWithSchema(
-            key,
-            schema as unknown as StandardSchemaV1,
-            fallback,
-            hasFallback(fallback)
-        );
-        return result;
+        return readSchema(key, schema as unknown as StandardSchemaV1, fallback, hasFallback(fallback));
     }
 
     /**
@@ -249,12 +243,6 @@ export class AdvancedMethods extends PrimitiveMethods {
         schema: SchemaConstraint<Schema>,
         fallback?: InferSchemaOutput<Schema>
     ): InferSchemaOutput<Schema> {
-        const result = valueConverter.convertWithSchema(
-            key,
-            schema as unknown as StandardSchemaV1,
-            fallback,
-            hasFallback(fallback)
-        );
-        return result;
+        return AdvancedMethods.parse(key, schema, fallback);
     }
 }

@@ -162,10 +162,10 @@ const upstreams = Envapter.getUsing('UPSTREAMS', Converters.array({ of: toUpstre
 Normal mode skips empty elements. Under [strict mode](/docs/strict-mode) an empty element (a trailing comma, say) throws `EnvaptError` with code `EmptyArrayElement`.
 
 <Callout type="danger">
-    Under strict mode, bad env data causes these throws. A trailing comma in a deployed `.env` throws
-    `EmptyArrayElement` at read time, and an element your converter maps to `undefined` throws
-    `ArrayElementConversionFailed`. A stray comma can stop startup. `getRequired` and `getRequiredAll` report
-    both as an issue on `SchemaValidationFailed`.
+    Bad env data causes these throws. Under strict mode, a trailing comma in a deployed `.env` throws
+    `EmptyArrayElement` at read time, so a stray comma can stop startup. In any mode, an element your converter
+    maps to `undefined` throws `ArrayElementConversionFailed`. `getRequired` and `getRequiredAll` report both as an
+    issue on `SchemaValidationFailed`.
 </Callout>
 
 ## Custom converters

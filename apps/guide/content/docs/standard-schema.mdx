@@ -107,7 +107,7 @@ Missing keys are checked first and throw one `MissingEnvValue` before any schema
 `parse` throws `EnvaptError` in three cases:
 
 - The value is missing and you gave no fallback: code `MissingEnvValue`.
-- The schema reports validation issues: code `SchemaValidationFailed`. The error carries the validator's full `issues` array on its `.issues` property, and its message lists only the key.
+- The schema reports validation issues: code `SchemaValidationFailed`. The error carries every issue on its `.issues` property with the env key first in each `path`, and its message lists only the key.
 - The schema's `validate` itself throws: code `SchemaThrew`, with the original error on `.cause`.
 
 A `${VAR}` template is expanded before validation, so the schema sees the resolved value.

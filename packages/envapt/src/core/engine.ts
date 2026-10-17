@@ -9,6 +9,7 @@ import { loadDotenv } from '../infra/Dotenv';
 import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
 import { missingValue, validationFailed } from '../infra/failures';
 
+import type { StandardSchemaV1 } from '../infra/StandardSchema';
 import type { ConditionalReturn, EnvKeyInput, PresentValue, RequiredField } from '../types';
 import type { EnvapterService } from '../types/Env';
 
@@ -54,6 +55,25 @@ export function findPresent(keyInput: EnvKeyInput): PresentValue | undefined {
 export function readRequired(keyInput: EnvKeyInput, field: RequiredField): unknown {
     const present = findPresent(keyInput);
     if (present === undefined) throw missingValue(keyInput);
+    return convertPresent(present, field);
+}
+
+export function readSchema(
+    keyInput: EnvKeyInput,
+    schema: StandardSchemaV1,
+    fallback: unknown,
+    hasFallback: boolean
+): unknown {
+    // readPrimitive logs the missing-value warning
+    const value = readPrimitive<string, undefined>(keyInput, Primitive.String);
+    if (value === undefined) {
+        if (hasFallback) return fallback;
+        throw missingValue(keyInput);
+    }
+    return convertPresent({ key: resolveKeyInput(keyInput).key, value }, schema);
+}
+
+function convertPresent(present: PresentValue, field: RequiredField): unknown {
     const outcome = valueConverter.readPresent(present, field);
     if (outcome.issues !== undefined) throw validationFailed([present.key], outcome.issues);
     return outcome.value;

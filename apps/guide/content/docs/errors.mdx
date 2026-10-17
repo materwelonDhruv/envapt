@@ -28,7 +28,7 @@ try {
 - `code`: the `EnvaptErrorCodes` member.
 - `name`: set to `` `EnvaptError [<code>]` `` (e.g. `EnvaptError [305]`).
 - `message`: a human-readable description.
-- `issues`: the validator's issue list, populated **only** for `SchemaValidationFailed` (208). It is `undefined` for every other code.
+- `issues`: one entry per problem, each with a `message` and a `path` that starts with the env key. Populated **only** for `SchemaValidationFailed` (208). It is `undefined` for every other code.
 - `cause`: the original error when one is chained, used by `SchemaThrew` (209).
 
 ## Codes

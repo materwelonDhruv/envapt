@@ -169,7 +169,7 @@ A required read always throws on a missing value. For a value with a default, pa
 
     A present value that can't be converted or validated throws `SchemaValidationFailed`. A bad array element and an error your custom parser throws become issues on that error. `getRequiredAll` throws one for all its bad values.
 
-    Best to call `require` and `getRequiredAll` at startup. A missing or bad value then stops the app at boot.
+    Best to call `require` and `getRequiredAll` at startup. A missing value then stops the app at boot, and so does a bad one in `getRequiredAll`.
 
 </Callout>
 
