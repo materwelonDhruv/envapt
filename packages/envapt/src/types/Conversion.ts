@@ -4,7 +4,7 @@ import type { InferSchemaOutput, StandardSchemaV1 } from '../infra/StandardSchem
 // scalar tokens only
 type BuiltInConverter = ConverterToken;
 
-type PrimitiveConstructor = typeof String | typeof Number | typeof Boolean | typeof BigInt | typeof Symbol;
+type PrimitiveConstructor = typeof String | typeof Number | typeof Boolean | typeof BigInt;
 
 type BaseInput = string | undefined;
 
@@ -42,7 +42,6 @@ interface ConverterMap {
     number: number;
     boolean: boolean;
     bigint: bigint;
-    symbol: symbol;
     integer: number;
     float: number;
     json: JsonValue;
@@ -126,9 +125,7 @@ type InferPrimitiveReturnType<TConstructor extends PrimitiveConstructor> = TCons
         ? boolean
         : TConstructor extends typeof BigInt
           ? bigint
-          : TConstructor extends typeof Symbol
-            ? symbol
-            : never;
+          : never;
 
 export type {
     BuiltInConverter,

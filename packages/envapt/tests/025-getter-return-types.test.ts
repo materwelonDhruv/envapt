@@ -49,15 +49,4 @@ describe('getter return-type narrowing (compile-time)', () => {
             expectTypeOf(env.getBigInt('KEY', 0n)).toEqualTypeOf<bigint>();
         });
     });
-
-    describe('getSymbol', () => {
-        it('no fallback => symbol | undefined', () => {
-            expectTypeOf(Envapter.getSymbol('KEY')).toEqualTypeOf<symbol | undefined>();
-            expectTypeOf(env.getSymbol('KEY')).toEqualTypeOf<symbol | undefined>();
-        });
-        it('with fallback => symbol', () => {
-            expectTypeOf(Envapter.getSymbol('KEY', Symbol('fallback'))).toEqualTypeOf<symbol>();
-            expectTypeOf(env.getSymbol('KEY', Symbol('fallback'))).toEqualTypeOf<symbol>();
-        });
-    });
 });

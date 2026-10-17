@@ -37,7 +37,6 @@ const CONVERTERS: readonly Converter[] = [
         out: '9007199254740993n',
         type: 'bigint'
     },
-    { name: 'Symbol', expr: 'Converters.Symbol', key: 'CACHE_NS', raw: 'app', out: 'Symbol(app)', type: 'symbol' },
     {
         name: 'Json',
         expr: 'Converters.Json',

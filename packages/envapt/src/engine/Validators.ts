@@ -6,7 +6,7 @@ import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
 import type { ArrayOf, ConverterToken } from '../converters/Converters';
 import type { EnvFileOptions } from '../infra/Dotenv';
 import type { StandardSchemaV1 } from '../infra/StandardSchema';
-import type { BuiltInConverter, ConverterFunction, EnvaptConverter, FileApiMode } from '../types';
+import type { BuiltInConverter, ConverterFunction, EnvaptConverter, FileApiMode, PrimitiveConstructor } from '../types';
 
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class -- cohesive dispatch of stateless type guards, same shape as BuiltInConverters
 export class Validator {
@@ -29,12 +29,19 @@ export class Validator {
         return props.version === 1 && typeof props.validate === 'function';
     }
 
-    // an arktype type is callable and returns ArkErrors for a bad value
-    static notSchemaConverter(converter: unknown): void {
+    static rejectNonConverter(converter: unknown): void {
+        // an arktype type is callable and returns ArkErrors for a bad value
         if (Validator.isStandardSchema(converter)) {
             throw new EnvaptError(
                 EnvaptErrorCodes.InvalidUserDefinedConfig,
                 'A Standard Schema cannot be a converter. Pass it as `schema` on @Envapt, or read it with `Envapter.parse()`.'
+            );
+        }
+        // Symbol(raw) returns a new symbol on every read
+        if (converter === Symbol) {
+            throw new EnvaptError(
+                EnvaptErrorCodes.InvalidUserDefinedConfig,
+                'Symbol is no longer a converter. Read the string and pass it to `Symbol.for()` yourself, like `Symbol.for(Envapter.get(key, fallback))`.'
             );
         }
     }
@@ -42,7 +49,7 @@ export class Validator {
     static customConvertor<TFallback>(
         converter: EnvaptConverter<TFallback>
     ): asserts converter is ConverterFunction<TFallback> {
-        Validator.notSchemaConverter(converter);
+        Validator.rejectNonConverter(converter);
         if (typeof converter !== 'function') {
             throw new EnvaptError(
                 EnvaptErrorCodes.InvalidCustomConverter,
@@ -149,34 +156,25 @@ export class Validator {
         }
     }
 
-    static isPrimitiveConstructor(
-        value: unknown
-    ): value is typeof String | typeof Number | typeof Boolean | typeof BigInt | typeof Symbol {
-        return value === String || value === Number || value === Boolean || value === BigInt || value === Symbol;
+    static isPrimitiveConstructor(value: unknown): value is PrimitiveConstructor {
+        return value === String || value === Number || value === Boolean || value === BigInt;
     }
 
-    static coercePrimitiveFallback<CoercedType>(
-        converter: typeof String | typeof Number | typeof Boolean | typeof BigInt | typeof Symbol,
-        fallback: unknown
-    ): CoercedType {
+    static coercePrimitiveFallback<CoercedType>(converter: PrimitiveConstructor, fallback: unknown): CoercedType {
         if (this.isCorrectPrimitiveType(converter, fallback)) return fallback as CoercedType;
         return this.performPrimitiveCoercion<CoercedType>(converter, fallback);
     }
 
-    private static isCorrectPrimitiveType(
-        converter: typeof String | typeof Number | typeof Boolean | typeof BigInt | typeof Symbol,
-        fallback: unknown
-    ): boolean {
+    private static isCorrectPrimitiveType(converter: PrimitiveConstructor, fallback: unknown): boolean {
         if (converter === String && typeof fallback === 'string') return true;
         if (converter === Number && typeof fallback === 'number') return true;
         if (converter === Boolean && typeof fallback === 'boolean') return true;
         if (converter === BigInt && typeof fallback === 'bigint') return true;
-        if (converter === Symbol && typeof fallback === 'symbol') return true;
         return false;
     }
 
     private static performPrimitiveCoercion<CoercedType>(
-        converter: typeof String | typeof Number | typeof Boolean | typeof BigInt | typeof Symbol,
+        converter: PrimitiveConstructor,
         fallback: unknown
     ): CoercedType {
         try {
@@ -184,8 +182,6 @@ export class Validator {
             if (converter === Number) return Number(fallback) as CoercedType;
             if (converter === Boolean) return Boolean(fallback) as CoercedType;
             if (converter === BigInt) return BigInt(fallback as string | number | bigint) as CoercedType;
-            /* v8 ignore next -- @preserve */
-            if (converter === Symbol) return Symbol.for(String(fallback)) as CoercedType;
         } catch (error) {
             throw new EnvaptError(
                 EnvaptErrorCodes.PrimitiveCoercionFailed,

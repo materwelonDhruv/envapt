@@ -3,7 +3,6 @@ const SCALAR = {
     Number: 'number',
     Boolean: 'boolean',
     Bigint: 'bigint',
-    Symbol: 'symbol',
     Integer: 'integer',
     Float: 'float',
     Json: 'json',

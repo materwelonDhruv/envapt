@@ -71,8 +71,6 @@ export class ValueConverter {
         if (primitiveConstructor === Number) return 'number';
         if (primitiveConstructor === Boolean) return 'boolean';
         if (primitiveConstructor === BigInt) return 'bigint';
-        /* v8 ignore next -- @preserve */
-        if (primitiveConstructor === Symbol) return 'symbol';
 
         /* v8 ignore next -- @preserve */
         throw new EnvaptError(EnvaptErrorCodes.InvalidConverterType, `Unknown primitive constructor`);
@@ -181,7 +179,6 @@ export class ValueConverter {
         if (fallbackType === 'number') return 'number';
         if (fallbackType === 'boolean') return 'boolean';
         if (fallbackType === 'bigint') return 'bigint';
-        if (fallbackType === 'symbol') return 'symbol';
         return 'string';
     }
 

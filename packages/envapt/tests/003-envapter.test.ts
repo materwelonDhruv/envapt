@@ -73,7 +73,6 @@ describe('Envapter', () => {
             expect(TestEnvapter.getNumber('GETTER_NUMBER')).to.equal(12345);
             expect(TestEnvapter.getBoolean('GETTER_BOOLEAN')).to.equal(true);
             expect(TestEnvapter.getBigInt('GETTER_BIGINT')).to.equal(123456789012345678901234567890n);
-            expect(TestEnvapter.getSymbol('GETTER_SYMBOL')).to.be.a('symbol');
         });
 
         it('should find envs for primitive getters using instance method', () => {
@@ -81,7 +80,6 @@ describe('Envapter', () => {
             expect(instance.getNumber('GETTER_NUMBER')).to.equal(12345);
             expect(instance.getBoolean('GETTER_BOOLEAN')).to.equal(true);
             expect(instance.getBigInt('GETTER_BIGINT')).to.equal(123456789012345678901234567890n);
-            expect(instance.getSymbol('GETTER_SYMBOL')).to.be.a('symbol');
         });
     });
 

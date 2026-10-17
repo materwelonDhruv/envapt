@@ -99,7 +99,7 @@ class Config {
 
 ## Converters
 
-`Converters` carries the scalar tokens `String`, `Number`, `Integer`, `Float`, `Boolean`, `Bigint`, `Symbol`, `Json`, `Url`, `Regexp`, `Date`, `Time`, `Port`, `Email`. Four carry semantics the token name alone does not give.
+`Converters` carries the scalar tokens `String`, `Number`, `Integer`, `Float`, `Boolean`, `Bigint`, `Json`, `Url`, `Regexp`, `Date`, `Time`, `Port`, `Email`. Four carry semantics the token name alone does not give.
 
 - `Time` resolves to **milliseconds**. Its fallback is a ms number or a time string like `'10s'`/`'15m'`.
 - `Url` resolves to a **`URL` instance**. Its fallback must be a `URL`, and a string fails to compile.

@@ -76,12 +76,6 @@ describe('Advanced Converter Methods', () => {
             expect(typeof result).to.equal('bigint');
         });
 
-        it('should convert using Converters enum - Symbol', () => {
-            const result = Envapter.getUsing('TEST_SYMBOL', Converters.Symbol);
-            expect(result).to.be.a('symbol');
-            expect(result?.description).to.equal('mysymbol');
-        });
-
         it('should use fallback for nonexistent variable', () => {
             const result = Envapter.getUsing('NONEXISTENT_VAR', Converters.Number, 42);
             expect(result).to.equal(42);

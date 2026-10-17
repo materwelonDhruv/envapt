@@ -41,7 +41,7 @@ Call that at startup and a missing or bad value stops the boot. One error lists 
 
 ## What you get
 
-- **Typed values.** A fallback removes `undefined` from the return type. Built-in converters cover numbers, integers, floats, booleans, bigint, symbols, JSON, URLs, regular expressions, dates, durations, ports, emails, and arrays, or pass your own function or a Standard Schema validator (zod, valibot, arktype).
+- **Typed values.** A fallback removes `undefined` from the return type. Built-in converters cover numbers, integers, floats, booleans, bigint, JSON, URLs, regular expressions, dates, durations, ports, emails, and arrays, or pass your own function or a Standard Schema validator (zod, valibot, arktype).
 - **Any source.** A source is any object with a `readVars()` method, so you can bind `process.env`, a Cloudflare Workers binding, a browser bundle, or a secrets payload you fetched from a store at boot. On Node, Bun, and Deno one binds on import.
 - **Zero runtime dependencies.** The reader, converters, and built-in `.env` parser are self-contained, so nothing is added to your dependency tree.
 - **Runs on Node, Bun, Deno, Cloudflare Workers, and the browser.** Node `>=22`, Bun `>=1.3.11`, Deno `>=2.5` (ESM and CJS). The portable build resolves through the package `exports` conditions.

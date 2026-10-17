@@ -95,27 +95,4 @@ export class PrimitiveMethods extends EnvironmentMethods {
     ): ConditionalReturn<bigint, Default> {
         return readPrimitive(key, Primitive.BigInt, def);
     }
-
-    /**
-     * Get a symbol environment variable with optional fallback.
-     * Creates a symbol from the string value.
-     * Accepts a single key or an ordered array of keys (first match wins).
-     * @see {@link https://envapt.materwelon.dev/docs/envapter#primitives}
-     */
-    static getSymbol<Default extends symbol | undefined = undefined>(
-        key: EnvKeyInput,
-        def?: Default
-    ): ConditionalReturn<symbol, Default> {
-        return readPrimitive(key, Primitive.Symbol, def);
-    }
-
-    /**
-     * @see {@link PrimitiveMethods.getSymbol}
-     */
-    getSymbol<Default extends symbol | undefined = undefined>(
-        key: EnvKeyInput,
-        def?: Default
-    ): ConditionalReturn<symbol, Default> {
-        return readPrimitive(key, Primitive.Symbol, def);
-    }
 }

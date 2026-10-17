@@ -189,16 +189,14 @@ export enum Primitive {
     String,
     Number,
     Boolean,
-    BigInt,
-    Symbol
+    BigInt
 }
 
 const PRIMITIVE_NAMES: Record<Primitive, string> = {
     [Primitive.String]: 'string',
     [Primitive.Number]: 'number',
     [Primitive.Boolean]: 'boolean',
-    [Primitive.BigInt]: 'bigint',
-    [Primitive.Symbol]: 'symbol'
+    [Primitive.BigInt]: 'bigint'
 };
 
 // arrows because readPrimitive reads templateResolver, which is assigned below
@@ -228,7 +226,6 @@ export function readPrimitive<EnvVarReturnType, DefaultType extends EnvVarReturn
     if (type === Primitive.Number) converted = BuiltInConverters.number(parsed) as EnvVarReturnType | undefined;
     else if (type === Primitive.Boolean) converted = BuiltInConverters.boolean(parsed) as EnvVarReturnType | undefined;
     else if (type === Primitive.BigInt) converted = BuiltInConverters.bigint(parsed) as EnvVarReturnType | undefined;
-    else if (type === Primitive.Symbol) converted = BuiltInConverters.symbol(parsed) as EnvVarReturnType | undefined;
     else converted = BuiltInConverters.string(parsed) as EnvVarReturnType | undefined;
 
     if (converted === undefined) {

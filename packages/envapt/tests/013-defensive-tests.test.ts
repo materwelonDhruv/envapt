@@ -1,12 +1,10 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import { BuiltInConverters, Converters, ValueConverter } from '../src/converters';
 import { Envapter } from '../src/engine/Envapter';
 import { TemplateResolver } from '../src/engine/TemplateResolver';
-import { Validator } from '../src/engine/Validators';
 import { EnvaptError, EnvaptErrorCodes } from '../src/infra/Error';
 
-import type { BuiltInConverter, PrimitiveConstructor } from '../src/types';
 import type { EnvapterService } from '../src/types/Env';
 
 class StubEnvService implements EnvapterService {
@@ -45,27 +43,6 @@ describe('Defensive tests', () => {
         it('returns fallback when bigint conversion fails', () => {
             const fallback = 42n;
             expect(BuiltInConverters.bigint('not-a-bigint', fallback)).to.equal(fallback);
-        });
-
-        it('returns fallback when symbol creation throws', () => {
-            const fallback = Symbol('safe');
-            const symbolConstructor = Symbol as SymbolConstructor & { for: typeof Symbol.for };
-            const originalSymbolFor = symbolConstructor.for;
-
-            symbolConstructor.for = () => {
-                throw new Error('nope');
-            };
-
-            try {
-                expect(BuiltInConverters.symbol('anything', fallback)).to.equal(fallback);
-            } finally {
-                symbolConstructor.for = originalSymbolFor;
-            }
-        });
-
-        it('returns fallback when symbol input is empty', () => {
-            const fallback = Symbol('empty');
-            expect(BuiltInConverters.symbol('', fallback)).to.equal(fallback);
         });
 
         it('returns fallback when integer parsing fails', () => {
@@ -137,62 +114,10 @@ describe('Defensive tests', () => {
             expect(resolved).to.equal('${TEMPLATE_TWO}');
         });
 
-        it('converts primitive Symbol constructors to built-in converters', () => {
-            const converter = new ValueConverter(new StubEnvService({ SYMBOLIC_VALUE: 'envapt' }));
-            const converterInternals = converter as unknown as {
-                convertPrimitiveToString: (primitiveConstructor: PrimitiveConstructor) => BuiltInConverter;
-            };
-            const spy = vi.spyOn(converterInternals, 'convertPrimitiveToString');
-            const result = converter.convertValue('SYMBOLIC_VALUE', undefined, Symbol, false);
-
-            expect(typeof result).to.equal('symbol');
-            expect(Symbol.keyFor(result as symbol)).to.equal('envapt');
-            expect(spy.mock.calls[0]?.[0]).to.equal(Symbol);
-            spy.mockRestore();
-        });
-
         it('returns [] when array converter yields no items after filtering empty entries', () => {
             const converter = new ValueConverter(new StubEnvService({ EMPTY_LIST: ' , , ' }));
             const result = converter.convertValue('EMPTY_LIST', undefined, Converters.array({ delimiter: ',' }), false);
             expect(result).to.deep.equal([]);
-        });
-
-        it('maps primitive Symbol constructors directly via internal converter', () => {
-            const converter = new ValueConverter(new StubEnvService({}));
-            const unsafeConverter = converter as unknown as {
-                convertPrimitiveToString: (primitiveConstructor: PrimitiveConstructor) => BuiltInConverter;
-            };
-            expect(unsafeConverter.convertPrimitiveToString(Symbol)).to.equal('symbol');
-        });
-    });
-
-    describe('Validator primitive coercion', () => {
-        it('coerces mismatched values into symbols', () => {
-            const validatorInternals = Validator as unknown as {
-                performPrimitiveCoercion: <CoercedType>(
-                    converter: PrimitiveConstructor,
-                    fallback: unknown
-                ) => CoercedType;
-            };
-            const spy = vi.spyOn(validatorInternals, 'performPrimitiveCoercion');
-
-            const result = Validator.coercePrimitiveFallback<symbol>(Symbol, 'runtime-value');
-            expect(typeof result).to.equal('symbol');
-            expect(Symbol.keyFor(result)).to.equal('runtime-value');
-            expect(spy.mock.calls[0]).to.deep.equal([Symbol, 'runtime-value']);
-            spy.mockRestore();
-        });
-
-        it('performs low-level symbol coercion through the private helper', () => {
-            const unsafeValidator = Validator as unknown as {
-                performPrimitiveCoercion: <CoercedType>(
-                    converter: PrimitiveConstructor,
-                    fallback: unknown
-                ) => CoercedType;
-            };
-
-            const coerced = unsafeValidator.performPrimitiveCoercion<symbol>(Symbol, 'another-runtime-value');
-            expect(Symbol.keyFor(coerced)).to.equal('another-runtime-value');
         });
     });
 

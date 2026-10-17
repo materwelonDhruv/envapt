@@ -9,7 +9,6 @@ export const ListOfBuiltInConverters: ConverterToken[] = [
     'number',
     'boolean',
     'bigint',
-    'symbol',
     'integer',
     'float',
     'json',
@@ -26,7 +25,6 @@ export const BuiltInConverterTypeCheckers: Record<ConverterToken, (value: unknow
     number: (value: unknown): value is number => typeof value === 'number' && !Number.isNaN(value),
     boolean: (value: unknown): value is boolean => typeof value === 'boolean',
     bigint: (value: unknown): value is bigint => typeof value === 'bigint',
-    symbol: (value: unknown): value is symbol => typeof value === 'symbol',
     integer: (value: unknown): value is number => typeof value === 'number' && Number.isSafeInteger(value),
     float: (value: unknown): value is number => typeof value === 'number' && !Number.isNaN(value),
     json: (value: unknown): value is JsonValue => {

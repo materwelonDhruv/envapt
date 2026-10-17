@@ -33,7 +33,7 @@ export function parseEnvaptOptions<TFallback>(options: unknown): DecoratorConfig
         fallback = opts.fallback;
         converter = opts.converter;
         required = opts.required === true;
-        Validator.notSchemaConverter(converter);
+        Validator.rejectNonConverter(converter);
 
         if (required && hasFallback(fallback)) {
             throw new EnvaptError(

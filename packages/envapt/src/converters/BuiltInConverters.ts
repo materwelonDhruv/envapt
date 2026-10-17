@@ -94,14 +94,6 @@ export class BuiltInConverters {
         }
     }
 
-    static symbol(raw: string, fallback?: symbol): symbol | undefined {
-        try {
-            return raw ? Symbol.for(raw) : fallback;
-        } catch {
-            return fallback;
-        }
-    }
-
     static integer(raw: string, fallback?: number): number | undefined {
         const parsed = parseTrimmedNumber(raw);
         // integers past 2^53 lose precision as JS numbers
@@ -243,7 +235,6 @@ export class BuiltInConverters {
             boolean: BuiltInConverters.boolean,
             integer: BuiltInConverters.integer,
             bigint: BuiltInConverters.bigint,
-            symbol: BuiltInConverters.symbol,
             float: BuiltInConverters.float,
             json: BuiltInConverters.json,
             url: BuiltInConverters.url,

@@ -20,7 +20,7 @@ const apiUrl = env.get('API_URL', 'http://localhost');
 
 ## Primitives
 
-Five readers cover the primitive types. Each parses the raw string and returns the matching type.
+Four readers cover the primitive types. Each parses the raw string and returns the matching type.
 
 ```ts twoslash
 import { Envapter } from 'envapt';
@@ -29,7 +29,6 @@ const name = Envapter.get('APP_NAME', 'envapt'); // string
 const maxRetries = Envapter.getNumber('MAX_RETRIES', 3); // number
 const debug = Envapter.getBoolean('DEBUG', false); // boolean
 const maxBytes = Envapter.getBigInt('MAX_UPLOAD_BYTES', 0n); // bigint
-const key = Envapter.getSymbol('KEY', Symbol.for('envapt:key')); // symbol
 ```
 
 `getBoolean` reads `1`, `yes`, `true`, `on` as **true** and `0`, `no`, `false`, `off` as **false**, case-insensitively. Anything else uses the fallback.

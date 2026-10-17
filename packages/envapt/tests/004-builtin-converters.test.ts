@@ -27,9 +27,6 @@ describe('Built-in Converters', () => {
 
             @Envapt('TEST_BIGINT', { converter: Converters.Bigint, fallback: 0n })
             static readonly testBigint: bigint;
-
-            @Envapt('TEST_SYMBOL', { converter: Converters.Symbol, fallback: Symbol('default') })
-            static readonly testSymbol: symbol;
         }
 
         it('should handle string converter', () => {
@@ -54,11 +51,6 @@ describe('Built-in Converters', () => {
 
         it('should handle bigint converter', () => {
             expect(BasicTypeTest.testBigint).to.equal(123456789012345678901234567890n);
-        });
-
-        it('should handle symbol converter', () => {
-            expect(BasicTypeTest.testSymbol).to.be.a('symbol');
-            expect(BasicTypeTest.testSymbol.description).to.equal('mysymbol');
         });
     });
 

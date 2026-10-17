@@ -31,9 +31,6 @@ describe('Envapt', () => {
 
             @Envapt('BIGINT_VAR', { fallback: 23478n })
             public static readonly bigintVar: bigint;
-
-            @Envapt('SYMBOL_VAR', { fallback: Symbol('test') })
-            public static readonly symbolVar: symbol;
         }
 
         it('should detect undefined type for non-existent variables', () => {
@@ -68,11 +65,6 @@ describe('Envapt', () => {
             expect(typeof TestTypeDetection.bigintVar).to.equal('bigint');
             expect(TestTypeDetection.bigintVar).to.equal(99999n);
         });
-
-        it('should detect symbol type from fallback', () => {
-            expect(typeof TestTypeDetection.symbolVar).to.equal('symbol');
-            expect(TestTypeDetection.symbolVar.toString()).to.equal('Symbol(lmao)');
-        });
     });
 
     describe('explicit overrides and other tests', () => {
@@ -96,10 +88,6 @@ describe('Envapt', () => {
             // @ts-expect-error Inconsistent fallback type
             @Envapt('TEST_STRING_AS_BIGINT', { fallback: '987654321', converter: BigInt })
             public static readonly testStringAsBigInt: bigint;
-
-            // @ts-expect-error Inconsistent fallback type
-            @Envapt('TEST_STRING_AS_SYMBOL', { fallback: 'test-symbol', converter: Symbol })
-            public static readonly testStringAsSymbol: symbol;
 
             @Envapt('TEST_VAR', { fallback: undefined })
             public static readonly testVar: string | undefined;
@@ -149,11 +137,6 @@ describe('Envapt', () => {
         it('should use BigInt converter override with string fallback', () => {
             expect(typeof TestEnv.testStringAsBigInt).to.equal('bigint');
             expect(TestEnv.testStringAsBigInt).to.equal(987654321n);
-        });
-
-        it('should use Symbol converter override with string fallback', () => {
-            expect(typeof TestEnv.testStringAsSymbol).to.equal('symbol');
-            expect(TestEnv.testStringAsSymbol.toString()).to.equal('Symbol(test-symbol)');
         });
 
         it('should resolve template variables in environment values', () => {

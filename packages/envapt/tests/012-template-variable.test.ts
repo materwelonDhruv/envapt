@@ -30,9 +30,6 @@ describe('template variable resolution', () => {
         @Envapt('TEST_BIGINT_TEMPLATE', { converter: Converters.Bigint, fallback: 0n })
         static readonly bigintTemplate: bigint;
 
-        @Envapt('TEST_SYMBOL_TEMPLATE', { converter: Converters.Symbol, fallback: Symbol('default') })
-        static readonly symbolTemplate: symbol;
-
         @Envapt('TEST_ARRAY_COMMA_TEMPLATE', { converter: Converters.array(), fallback: [] })
         static readonly arrayCommaTemplate: string[];
 
@@ -90,11 +87,6 @@ describe('template variable resolution', () => {
 
     it('should resolve templates in bigint converter', () => {
         expect(TemplateTest.bigintTemplate).to.equal(42n);
-    });
-
-    it('should resolve templates in symbol converter', () => {
-        expect(TemplateTest.symbolTemplate).to.be.a('symbol');
-        expect(TemplateTest.symbolTemplate.description).to.equal('hello');
     });
 
     it('should resolve templates in comma array converter', () => {

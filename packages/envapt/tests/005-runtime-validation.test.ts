@@ -17,7 +17,7 @@ describe('Runtime Validation', () => {
 
     describe('Built-in converter validation', () => {
         it('should validate correct built-in converter types', () => {
-            const validTypes = ['string', 'number', 'boolean', 'bigint', 'symbol', 'json', 'url', 'regexp', 'date'];
+            const validTypes = ['string', 'number', 'boolean', 'bigint', 'json', 'url', 'regexp', 'date'];
 
             for (const type of validTypes) {
                 const testFunction = (): void => Validator.builtInConverter(type);
@@ -168,10 +168,6 @@ describe('Runtime Validation', () => {
             static readonly bigintWithNumberFallback: bigint;
 
             // @ts-expect-error Inconsistent fallback type
-            @Envapt('NONEXISTENT_SYMBOL_VAR', { converter: Converters.Symbol, fallback: 'not-a-symbol' })
-            static readonly symbolWithStringFallback: symbol;
-
-            // @ts-expect-error Inconsistent fallback type
             @Envapt('NONEXISTENT_URL_VAR', { converter: Converters.Url, fallback: 'not-a-url-object' })
             static readonly urlWithStringFallback: URL;
 
@@ -218,12 +214,6 @@ describe('Runtime Validation', () => {
 
         it('should throw when bigint converter has non-bigint fallback', () => {
             expect(() => FallbackTypeValidationTests.bigintWithNumberFallback)
-                .to.throw(EnvaptError)
-                .with.property('code', EnvaptErrorCodes.FallbackConverterTypeMismatch);
-        });
-
-        it('should throw when symbol converter has non-symbol fallback', () => {
-            expect(() => FallbackTypeValidationTests.symbolWithStringFallback)
                 .to.throw(EnvaptError)
                 .with.property('code', EnvaptErrorCodes.FallbackConverterTypeMismatch);
         });
@@ -375,7 +365,6 @@ describe('Runtime Validation', () => {
             expect(Validator.isPrimitiveConstructor(Number)).to.be.true;
             expect(Validator.isPrimitiveConstructor(Boolean)).to.be.true;
             expect(Validator.isPrimitiveConstructor(BigInt)).to.be.true;
-            expect(Validator.isPrimitiveConstructor(Symbol)).to.be.true;
         });
 
         it('should correctly reject non-primitive constructors', () => {
@@ -391,9 +380,6 @@ describe('Runtime Validation', () => {
             expect(Validator.coercePrimitiveFallback(Number, 42)).to.equal(42);
             expect(Validator.coercePrimitiveFallback(Boolean, true)).to.equal(true);
             expect(Validator.coercePrimitiveFallback(BigInt, 123n)).to.equal(123n);
-
-            const sym = Symbol('test');
-            expect(Validator.coercePrimitiveFallback(Symbol, sym)).to.equal(sym);
         });
 
         it('should coerce values to correct primitive types', () => {
@@ -403,25 +389,10 @@ describe('Runtime Validation', () => {
             expect(Validator.coercePrimitiveFallback(Boolean, 0)).to.equal(false);
             expect(Validator.coercePrimitiveFallback(BigInt, '123')).to.equal(123n);
             expect(Validator.coercePrimitiveFallback(BigInt, 456)).to.equal(456n);
-
-            const coercedSymbol = Validator.coercePrimitiveFallback<symbol>(Symbol, 'test-symbol');
-            expect(typeof coercedSymbol).to.equal('symbol');
-            expect(coercedSymbol.toString()).to.equal('Symbol(test-symbol)');
         });
 
         it('should throw PrimitiveCoercionFailed when BigInt coercion fails', () => {
             expect(() => Validator.coercePrimitiveFallback(BigInt, {}))
-                .to.throw(EnvaptError)
-                .with.property('code', EnvaptErrorCodes.PrimitiveCoercionFailed);
-        });
-
-        it('should throw PrimitiveCoercionFailed when Symbol coercion fails', () => {
-            const problematicObject = {
-                toString() {
-                    throw new Error('Cannot convert to string');
-                }
-            };
-            expect(() => Validator.coercePrimitiveFallback(Symbol, problematicObject))
                 .to.throw(EnvaptError)
                 .with.property('code', EnvaptErrorCodes.PrimitiveCoercionFailed);
         });
