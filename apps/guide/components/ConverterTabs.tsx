@@ -30,8 +30,8 @@ const CONVERTERS: readonly Converter[] = [
     { name: 'Integer', expr: 'Converters.Integer', key: 'MAX_CONN', raw: '100', out: '100', type: 'number' },
     { name: 'Float', expr: 'Converters.Float', key: 'RATIO', raw: '0.25', out: '0.25', type: 'number' },
     {
-        name: 'Bigint',
-        expr: 'Converters.Bigint',
+        name: 'BigInt',
+        expr: 'Converters.BigInt',
         key: 'ID',
         raw: '9007199254740993',
         out: '9007199254740993n',

@@ -10,13 +10,13 @@ describe('BigInt Support', () => {
 
     describe('BigInt support', () => {
         class BigIntTest {
-            @Envapt('TEST_BIGINT', { converter: Converters.Bigint, fallback: 0n })
+            @Envapt('TEST_BIGINT', { converter: Converters.BigInt, fallback: 0n })
             static readonly testBigint: bigint;
 
             @Envapt('TEST_BIGINT_LARGE', { converter: BigInt, fallback: 0n })
             static readonly testBigintLarge: bigint;
 
-            @Envapt('NONEXISTENT_BIGINT', { converter: Converters.Bigint, fallback: 999n })
+            @Envapt('NONEXISTENT_BIGINT', { converter: Converters.BigInt, fallback: 999n })
             static readonly nonexistentBigint: bigint;
         }
 

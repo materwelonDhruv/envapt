@@ -28,7 +28,7 @@ const retries = Envapter.getWith('RETRIES', (raw, fallback) => (raw ? Number(raw
 | `Converters.Integer` | `number` | `Number(raw)`, must be a safe integer |
 | `Converters.Float` | `number` | `Number(raw)`, `NaN` uses the fallback |
 | `Converters.Boolean` | `boolean` | `1`/`yes`/`true`/`on` and `0`/`no`/`false`/`off` |
-| `Converters.Bigint` | `bigint` | `BigInt(raw)` |
+| `Converters.BigInt` | `bigint` | `BigInt(raw)` |
 | `Converters.Json` | `JsonValue` | `JSON.parse(raw)` |
 | `Converters.Url` | `URL` | `new URL(raw)` |
 | `Converters.Regexp` | `RegExp` | `/pattern/flags` form, or the whole string as the pattern |

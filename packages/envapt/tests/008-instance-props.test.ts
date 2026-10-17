@@ -64,7 +64,7 @@ describe('Instance Properties with @Envapt', () => {
             @Envapt('INSTANCE_BOOLEAN_FALSE', { converter: Converters.Boolean, fallback: true })
             declare readonly booleanFalseProp: boolean;
 
-            @Envapt('INSTANCE_BIGINT', { converter: Converters.Bigint, fallback: 0n })
+            @Envapt('INSTANCE_BIGINT', { converter: Converters.BigInt, fallback: 0n })
             declare readonly bigintProp: bigint;
         }
 

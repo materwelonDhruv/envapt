@@ -71,7 +71,7 @@ describe('Advanced Converter Methods', () => {
         });
 
         it('should convert using Converters enum - BigInt', () => {
-            const result = Envapter.getUsing('TEST_BIGINT', Converters.Bigint);
+            const result = Envapter.getUsing('TEST_BIGINT', Converters.BigInt);
             expect(result).to.equal(123456789012345678901234567890n);
             expect(typeof result).to.equal('bigint');
         });
