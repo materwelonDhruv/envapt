@@ -93,19 +93,14 @@ export function ensureLoaded(): Map<string, unknown> {
         let added = new Set<string>();
         if (source.supportsFiles) {
             debugVerbose(`base dir: ${state.baseDir ?? 'working directory'}`);
-            // outside the try because a missing profile path has to throw
             const effectivePaths = resolveEffectivePaths();
             debugVerbose(`effective .env paths: ${effectivePaths.length === 0 ? '(none)' : effectivePaths.join(', ')}`);
-            try {
-                added = loadDotenv({
-                    ...state.userDefinedEnvFileOptions,
-                    path: effectivePaths,
-                    processEnv: isolatedEnv,
-                    readFile: source.readFile.bind(source)
-                });
-            } catch (error) {
-                debugWarn(`failed to load .env: ${error instanceof Error ? error.message : String(error)}`);
-            }
+            added = loadDotenv({
+                ...state.userDefinedEnvFileOptions,
+                path: effectivePaths,
+                processEnv: isolatedEnv,
+                readFile: source.readFile.bind(source)
+            });
         }
         state.dotenvAddedKeys = added;
         for (const [key, value] of Object.entries(isolatedEnv)) cache.set(key, value);
