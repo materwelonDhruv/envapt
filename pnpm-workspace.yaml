@@ -23,5 +23,10 @@ catalogs:
     vitest: 4.1.11
 
 overrides:
-  sharp@<0.35.4: ^0.35.4
+  brace-expansion@<1.1.20: ^1.1.20
+  brace-expansion@>=2.0.0 <2.1.6: ^2.1.6
+  brace-expansion@>=5.0.0 <5.0.11: ^5.0.11
+  sharp@<0.35.5: ^0.35.5
   smol-toml@<1.7.1: ^1.7.1
+  source-map-js@<1.2.2: ^1.2.2
+  undici@>=7.0.0 <7.29.1: ^7.29.1
