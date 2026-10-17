@@ -1,6 +1,6 @@
 import { AdvancedMethods } from '../core';
-import { resolveRequired } from '../core/AdvancedMethods';
-import { resolveKeyInput, templateResolver } from '../core/engine';
+import { findPresent } from '../core/engine';
+import { formatKeyForError } from '../core/missing';
 import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
 
 import type { EnvKeyInput } from '../types';
@@ -73,7 +73,8 @@ export class Envapter extends AdvancedMethods {
     /**
      * Assert that one or more environment variables are present and non-empty after template
      * resolution. Throws `MissingEnvValue` listing every missing key. A whitespace-only value
-     * counts as missing only under strict mode.
+     * counts as missing only under strict mode. Each argument can be an ordered key list, which
+     * passes when any of its keys has a value.
      *
      * For a typed required read in functional code, use `Envapter.getRequired(key, converter)`.
      *
@@ -81,15 +82,16 @@ export class Envapter extends AdvancedMethods {
      * ```ts
      * Envapter.require('DATABASE_URL');
      * Envapter.require('DATABASE_URL', 'API_KEY', 'SENTRY_DSN');
+     * Envapter.require(['READONLY_URL', 'DATABASE_URL'], 'API_KEY');
      * ```
      */
-    static require(...keys: [string, ...string[]]): void {
-        const missing = keys.filter((k) => resolveRequired(resolveKeyInput(k), templateResolver).value === undefined);
+    static require(...keys: [EnvKeyInput, ...EnvKeyInput[]]): void {
+        const missing = keys.filter((key) => findPresent(key) === undefined);
 
         if (missing.length > 0) {
             throw new EnvaptError(
                 EnvaptErrorCodes.MissingEnvValue,
-                `Missing required environment variables: ${missing.join(', ')}.`
+                `Missing required environment variables: ${missing.map(formatKeyForError).join(', ')}.`
             );
         }
     }
@@ -97,7 +99,7 @@ export class Envapter extends AdvancedMethods {
     /**
      * @see {@link Envapter.require}
      */
-    require(...keys: [string, ...string[]]): void {
+    require(...keys: [EnvKeyInput, ...EnvKeyInput[]]): void {
         Envapter.require(...keys);
     }
 
@@ -115,7 +117,7 @@ export class Envapter extends AdvancedMethods {
      */
     static has(key: EnvKeyInput): boolean {
         try {
-            return resolveRequired(resolveKeyInput(key), templateResolver).value !== undefined;
+            return findPresent(key) !== undefined;
         } catch (error) {
             // strict mode throws MissingEnvValue for an unresolvable template
             if (error instanceof EnvaptError && error.code === EnvaptErrorCodes.MissingEnvValue) return false;

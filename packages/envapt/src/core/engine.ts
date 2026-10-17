@@ -11,21 +11,26 @@ import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
 import type { ConditionalReturn, EnvKeyInput } from '../types';
 import type { EnvapterService } from '../types/Env';
 
-export function resolveKeyInput(keyInput: EnvKeyInput): { key: string; value: string | undefined } {
-    const keys = Array.isArray(keyInput) ? keyInput : [keyInput];
-    const normalizedKeys = keys as readonly string[];
+function toKeyList(keyInput: EnvKeyInput): readonly string[] {
+    const keys = (Array.isArray(keyInput) ? keyInput : [keyInput]) as readonly string[];
 
-    if (normalizedKeys.length === 0) {
+    if (keys.length === 0) {
         throw new EnvaptError(EnvaptErrorCodes.InvalidKeyInput, 'At least one environment key must be provided.');
     }
 
-    if (normalizedKeys.some((k) => typeof k !== 'string')) {
+    if (keys.some((k) => typeof k !== 'string')) {
         throw new EnvaptError(EnvaptErrorCodes.InvalidKeyInput, 'Environment keys must be strings.');
     }
 
-    if (normalizedKeys.some((k) => k.trim() === '')) {
+    if (keys.some((k) => k.trim() === '')) {
         throw new EnvaptError(EnvaptErrorCodes.InvalidKeyInput, 'Environment keys cannot be empty strings.');
     }
+
+    return keys;
+}
+
+export function resolveKeyInput(keyInput: EnvKeyInput): { key: string; value: string | undefined } {
+    const normalizedKeys = toKeyList(keyInput);
 
     // an empty value falls through to the next key and only comes back when every key is empty
     let firstPresent: { key: string; value: string } | undefined;
@@ -37,6 +42,17 @@ export function resolveKeyInput(keyInput: EnvKeyInput): { key: string; value: st
     }
 
     return firstPresent ?? { key: normalizedKeys[0] as string, value: undefined };
+}
+
+export function findPresent(keyInput: EnvKeyInput): { key: string; value: string } | undefined {
+    for (const candidate of toKeyList(keyInput)) {
+        const raw = readCached(candidate);
+        if (raw === undefined || isMissing(raw)) continue;
+        // a template can resolve to an empty string
+        const value = templateResolver.resolveTemplate(candidate, raw);
+        if (!isMissing(value)) return { key: candidate, value };
+    }
+    return undefined;
 }
 
 export function ensureLoaded(): Map<string, unknown> {

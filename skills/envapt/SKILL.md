@@ -39,7 +39,8 @@ Envapter.getWith('FLAGS', (raw) => (raw ? raw.split(',') : [])); // string[]
 
 // Throw when a key is missing:
 Envapter.require('DATABASE_URL', 'JWT_SECRET'); // throws EnvaptError listing every missing key
-Envapter.getRequired('PORT', Converters.Port); // throws if unset
+Envapter.require(['READONLY_URL', 'DATABASE_URL']); // an ordered key list passes when any key has a value
+Envapter.getRequired('PORT', Converters.Port); // MissingEnvValue if unset, SchemaValidationFailed if it can't convert
 // throws if any key is unset (aggregates all missing keys so only one error), returns a typed object if all are present.
 // a field can also be a Standard Schema, see "Validation with Standard Schema"
 Envapter.getRequiredAll(
@@ -181,7 +182,7 @@ Envapter.parse('PORT', z.coerce.number().int().min(1024).max(65535)); // number
 
 Two constraints: validation is **sync-only** (an async `validate` throws), and a **fallback is returned as-is and is NOT passed through the schema**. Only a present env value is validated.
 
-`getRequiredAll` takes a schema for any field, mixed with converters. Missing keys throw one `MissingEnvValue` first, before any schema runs. A schema `.default()` never applies there. After that every field runs, and all their failures throw one `SchemaValidationFailed`, converter fields included. Each issue's `path` starts with its env key.
+`getRequiredAll` takes a schema for any field, mixed with converters. Missing keys throw one `MissingEnvValue` first, before any schema runs. A schema `.default()` never applies there. After that envapt reads every field and throws one `SchemaValidationFailed` for all the bad values, from schemas, converters, and custom parsers that throw. Each issue's `path` starts with its env key. The error message lists only the keys, since an issue message can quote a secret value.
 
 ```ts
 const db = Envapter.getRequiredAll(
@@ -196,7 +197,7 @@ const db = Envapter.getRequiredAll(
 
 ## Errors
 
-Reader and decorator failures throw `EnvaptError` with a numeric `code` (`EnvaptErrorCodes`). The common error codes are `MissingEnvValue` (a `required` value is absent), `InvalidUserDefinedConfig` (bad options, e.g. `required` + `fallback`), `SchemaValidationFailed` (carries an `issues` array), `MalformedTimeFallback`, `FileApiUnsupported` (a file-only API called with `fileApiMode = 'throw'`, or on the node build with a non-filesystem source), `NoSourceBound` (a read before `useSource` on the portable build).
+Reader and decorator failures throw `EnvaptError` with a numeric `code` (`EnvaptErrorCodes`). The common error codes are `MissingEnvValue` (a required value is absent), `SchemaValidationFailed` from `getRequired` / `getRequiredAll` for a present value that can't be converted or validated, `InvalidUserDefinedConfig` (bad options, e.g. `required` + `fallback`), `SchemaValidationFailed` (carries an `issues` array), `MalformedTimeFallback`, `FileApiUnsupported` (a file-only API called with `fileApiMode = 'throw'`, or on the node build with a non-filesystem source), `NoSourceBound` (a read before `useSource` on the portable build).
 
 ```ts
 import { EnvaptError, EnvaptErrorCodes } from 'envapt';

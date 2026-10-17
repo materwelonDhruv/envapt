@@ -1,4 +1,5 @@
 import { BuiltInConverters } from './BuiltInConverters';
+import { formatKeyForError } from '../core/missing';
 import { state } from '../core/state';
 import { Validator } from '../engine/Validators';
 import { debugVerbose } from '../infra/Debug';
@@ -6,11 +7,18 @@ import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
 
 import type { ArrayOf } from './Converters';
 import type { StandardSchemaV1 } from '../infra/StandardSchema';
-import type { BuiltInConverter, EnvKeyInput, EnvaptConverter, PrimitiveConstructor } from '../types';
+import type { BuiltInConverter, EnvKeyInput, EnvaptConverter, PrimitiveConstructor, RequiredSpec } from '../types';
 import type { EnvapterService } from '../types/Env';
 
-function formatKeyForError(key: EnvKeyInput): string {
-    return Array.isArray(key) ? `[${key.join(', ')}]` : String(key);
+type RequiredField = RequiredSpec[string];
+
+// a bad array element is a bad value. any other EnvaptError is a mistake in the spec itself
+function isConfigError(error: unknown): error is EnvaptError {
+    return (
+        error instanceof EnvaptError &&
+        error.code !== EnvaptErrorCodes.ArrayElementConversionFailed &&
+        error.code !== EnvaptErrorCodes.EmptyArrayElement
+    );
 }
 
 export class ValueConverter {
@@ -197,9 +205,20 @@ export class ValueConverter {
         return outcome.value;
     }
 
-    // getRequiredAll gathers the issues across every key before it throws
-    validateWithSchema(key: string, schema: StandardSchemaV1): StandardSchemaV1.Result<unknown> {
-        return this.runSchema(key, schema, this.envService.get(key, undefined));
+    // callers check that the value is present first
+    readPresent(key: string, field: RequiredField): StandardSchemaV1.Result<unknown> {
+        if (Validator.isStandardSchema(field)) return this.runSchema(key, field, this.envService.get(key, undefined));
+
+        let converted: unknown;
+        try {
+            converted = this.convertValue<unknown>(key, undefined, field as EnvaptConverter<unknown>, false);
+        } catch (error) {
+            if (isConfigError(error)) throw error;
+            return { issues: [{ message: error instanceof Error ? error.message : String(error) }] };
+        }
+        // custom parsers can return null
+        if (converted === undefined || converted === null) return { issues: [{ message: 'could not be converted' }] };
+        return { value: converted };
     }
 
     private runSchema(
@@ -219,6 +238,8 @@ export class ValueConverter {
         }
 
         if (outcome instanceof Promise) {
+            // nothing awaits this promise once we throw. node crashes on an unhandled rejection
+            outcome.catch(() => undefined);
             throw new EnvaptError(
                 EnvaptErrorCodes.InvalidUserDefinedConfig,
                 `Schema for "${formatKeyForError(key)}" returned a Promise. envapt requires synchronous schemas; use a sync validator or perform async checks outside the env layer.`

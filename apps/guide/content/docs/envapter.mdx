@@ -118,6 +118,9 @@ import { Envapter } from 'envapt';
 // ---cut---
 // Assuring all three keys are present at the start of the program, for example
 Envapter.require('DATABASE_URL', 'API_KEY', 'SENTRY_DSN');
+
+// An ordered key list passes when any of its keys has a value
+Envapter.require(['READONLY_URL', 'DATABASE_URL'], 'API_KEY');
 ```
 
 `has` returns `boolean` with the same missing semantics as `getRequired`. An ordered key list falls through to the first present key. It returns `true` exactly when a required read of the same key would find a value.
@@ -164,7 +167,9 @@ They throw on a missing value and take no fallback. See [Strict mode](/docs/stri
 <Callout type="danger">
     `require`, `getRequired`, and `getRequiredAll` throw `EnvaptError` for a missing or empty key (or, under strict mode, a whitespace-only one). `require` and `getRequiredAll` collect every missing key into one error. A missing key in `getRequiredAll` never reaches its schema. A schema default such as zod's `.default()` does not apply there.
 
-    Best to call `require` and `getRequiredAll` at startup. A missing value then fails the boot rather than a live request.
+    A present value that can't be converted or validated throws `SchemaValidationFailed`. `getRequiredAll` throws one for all its bad values.
+
+    Best to call `require` and `getRequiredAll` at startup. A missing or bad value then stops the app at boot.
 
 </Callout>
 

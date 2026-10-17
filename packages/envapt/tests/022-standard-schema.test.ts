@@ -255,6 +255,27 @@ describe('Standard Schema adapter (v5)', () => {
                 expect(e.message).to.include('synchronous');
             }
         });
+
+        // zod's validate retries asynchronously when a transform throws
+        it('leaves no unhandled rejection behind when the schema returns a rejecting Promise', async () => {
+            const unhandled: unknown[] = [];
+            const record = (reason: unknown): void => {
+                unhandled.push(reason);
+            };
+            process.on('unhandledRejection', record);
+            try {
+                const throwing = z.string().transform(() => {
+                    throw new Error('transform crashed');
+                });
+                expect(() => Envapter.parse('PORT', throwing))
+                    .to.throw(EnvaptError)
+                    .with.property('code', EnvaptErrorCodes.InvalidUserDefinedConfig);
+                await new Promise((resolve) => setTimeout(resolve, 20));
+            } finally {
+                process.off('unhandledRejection', record);
+            }
+            expect(unhandled).to.deep.equal([]);
+        });
     });
 
     describe('Envapter.parse: template expansion before validation', () => {

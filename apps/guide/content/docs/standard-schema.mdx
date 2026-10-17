@@ -74,25 +74,29 @@ const port = Envapter.parse('PORT', positiveInt, 3000);
 
 ## Validate a group of required variables
 
-[`getRequiredAll`](/docs/envapter#fail-fast-on-missing-values) takes a schema for any field, next to converters. It checks every field before it throws one `SchemaValidationFailed`. The error holds the issues of every failed field in `.issues`, and each issue's `path` starts with the env key. A converter that cannot convert adds one issue with the message `could not be converted`.
+[`getRequiredAll`](/docs/envapter#fail-fast-on-missing-values) takes a schema for any field, next to converters. It checks every field before it throws one `SchemaValidationFailed`. The error holds the issues of every failed field in `.issues`, and each issue's `path` starts with the env key. A converter that cannot convert adds the issue `could not be converted`. A custom parser that throws adds its error message as the issue.
 
 ```ts twoslash
 import { z } from 'zod/v4';
 import { Envapter, EnvaptError, EnvaptErrorCodes, Converters } from 'envapt';
 // ---cut---
-try {
-    const db = Envapter.getRequiredAll({
-        DATABASE_URL: Converters.Url,
-        DATABASE_POOL_SIZE: z.coerce.number().int().min(1).max(100),
-        DATABASE_SSL_MODE: z.enum(['disable', 'require', 'verify-full'])
-    });
-} catch (error) {
-    if (error instanceof EnvaptError && error.code === EnvaptErrorCodes.SchemaValidationFailed) {
-        for (const issue of error.issues ?? []) console.error(issue.path?.join('.'), issue.message);
+function loadDatabaseConfig() {
+    try {
+        return Envapter.getRequiredAll({
+            DATABASE_URL: Converters.Url,
+            DATABASE_POOL_SIZE: z.coerce.number().int().min(1).max(100),
+            DATABASE_SSL_MODE: z.enum(['disable', 'require', 'verify-full'])
+        });
+    } catch (error) {
+        if (error instanceof EnvaptError && error.code === EnvaptErrorCodes.SchemaValidationFailed) {
+            for (const issue of error.issues ?? []) console.error(issue.path?.join('.'), issue.message);
+        }
+        throw error;
     }
-    throw error;
 }
 ```
+
+The error message lists only the failed keys. An issue message can quote the raw value, which may be a secret. Print `issues` with care.
 
 Missing keys are checked first and throw one `MissingEnvValue` before any schema runs. A schema default such as zod's `.default()` never applies here. Use `parse` with a fallback for an optional value.
 

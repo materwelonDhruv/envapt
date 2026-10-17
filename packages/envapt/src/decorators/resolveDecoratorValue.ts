@@ -1,5 +1,5 @@
 import { ValueConverter } from '../converters';
-import { isMissing } from '../core/missing';
+import { formatKeyForError, isMissing } from '../core/missing';
 import { cache } from '../core/state';
 import { Envapter } from '../engine/Envapter';
 import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
@@ -13,10 +13,6 @@ export interface DecoratorConfig<TFallback> {
     hasFallback: boolean;
     required: boolean;
     schema: StandardSchemaV1 | undefined;
-}
-
-function formatKeyForError(key: EnvKeyInput): string {
-    return Array.isArray(key) ? `[${key.join(', ')}]` : String(key);
 }
 
 const classIds = new WeakMap<object, number>();

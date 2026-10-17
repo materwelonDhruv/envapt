@@ -12,6 +12,16 @@ import { recase } from '../src/infra/recase';
 import type { StandardSchemaV1 } from '../src/infra/StandardSchema';
 import type { RecaseKey } from '../src/types';
 
+function thrownBy(read: () => unknown): EnvaptError {
+    try {
+        read();
+    } catch (err) {
+        expect(err).to.be.instanceOf(EnvaptError);
+        return err as EnvaptError;
+    }
+    return expect.fail('should have thrown');
+}
+
 describe('Required reads (v8)', () => {
     beforeAll(() => {
         Envapter.envPaths = resolve(import.meta.dirname, '.env.037-required-reads');
@@ -94,10 +104,15 @@ describe('Required reads (v8)', () => {
             expectTypeOf(value).toEqualTypeOf<string>();
         });
 
-        it('throws MissingEnvValue when a present value cannot be converted', () => {
-            expect(() => Envapter.getRequired('SET_VALUE', Converters.Number))
-                .to.throw(EnvaptError)
-                .with.property('code', EnvaptErrorCodes.MissingEnvValue);
+        it('throws SchemaValidationFailed with an issue when a present value cannot be converted', () => {
+            const e = thrownBy(() => Envapter.getRequired('SET_VALUE', Converters.Number));
+            expect(e.code).to.equal(EnvaptErrorCodes.SchemaValidationFailed);
+            expect(e.issues).to.deep.equal([{ message: 'could not be converted', path: ['SET_VALUE'] }]);
+        });
+
+        it('keys the issue by the ordered key that held the value', () => {
+            const e = thrownBy(() => Envapter.getRequired(['NEVER_SET_KEY', 'SET_VALUE'], Converters.Number));
+            expect(e.issues?.[0]?.path).to.deep.equal(['SET_VALUE']);
         });
     });
 
@@ -274,15 +289,9 @@ describe('Required reads (v8)', () => {
             const emptyIssues: StandardSchemaV1<unknown, string> = {
                 '~standard': { version: 1, vendor: 'envapt-test', validate: () => ({ issues: [] }) }
             };
-            try {
-                Envapter.getRequiredAll({ SET_VALUE: emptyIssues });
-                expect.fail('should have thrown');
-            } catch (err) {
-                const e = err as EnvaptError;
-                expect(e.code).to.equal(EnvaptErrorCodes.SchemaValidationFailed);
-                expect(e.message).to.include('SET_VALUE (no issue message)');
-                expect(e.issues).to.deep.equal([]);
-            }
+            const e = thrownBy(() => Envapter.getRequiredAll({ SET_VALUE: emptyIssues }));
+            expect(e.code).to.equal(EnvaptErrorCodes.SchemaValidationFailed);
+            expect(e.issues).to.deep.equal([{ message: 'no issue message', path: ['SET_VALUE'] }]);
         });
 
         it('reports a failed schema field and a failed converter field in one error', () => {
@@ -299,6 +308,58 @@ describe('Required reads (v8)', () => {
             }
         });
 
+        it('reports an array field with a bad element next to another bad field in one error', () => {
+            const e = thrownBy(() =>
+                Envapter.getRequiredAll({
+                    PORTS_BAD: Converters.array({ of: Converters.Port }),
+                    SET_VALUE: Converters.Number
+                })
+            );
+            expect(e.code).to.equal(EnvaptErrorCodes.SchemaValidationFailed);
+            expect(e.issues?.map((issue) => issue.path)).to.deep.equal([['PORTS_BAD'], ['SET_VALUE']]);
+        });
+
+        it('reports a custom parser that throws as an issue carrying its message', () => {
+            const e = thrownBy(() =>
+                Envapter.getRequiredAll({
+                    // eslint-disable-next-line @typescript-eslint/naming-convention -- a function-valued env-name key reads as an object method to the naming rule
+                    SET_VALUE: (raw) => {
+                        if (raw !== 'expected') throw new Error('must be "expected"');
+                        return raw;
+                    },
+                    SAMPLE_REPO: Converters.Number
+                })
+            );
+            expect(e.code).to.equal(EnvaptErrorCodes.SchemaValidationFailed);
+            expect(e.issues).to.deep.equal([
+                { message: 'must be "expected"', path: ['SET_VALUE'] },
+                { message: 'could not be converted', path: ['SAMPLE_REPO'] }
+            ]);
+        });
+
+        it('reports a parser that throws a non-Error value with that value as the message', () => {
+            const parseSemver = (): string => {
+                // eslint-disable-next-line no-throw-literal, @typescript-eslint/only-throw-error -- third-party parsers can throw plain strings
+                throw 'not a semver';
+            };
+            const e = thrownBy(() => Envapter.getRequiredAll({ SET_VALUE: parseSemver }));
+            expect(e.issues).to.deep.equal([{ message: 'not a semver', path: ['SET_VALUE'] }]);
+        });
+
+        it('still throws a spec mistake on its own, outside the aggregated error', () => {
+            // cast past the type to reach the runtime check on an unknown token
+            const e = thrownBy(() => Envapter.getRequiredAll({ SET_VALUE: 'not-a-token' as never }));
+            expect(e.code).to.equal(EnvaptErrorCodes.InvalidCustomConverter);
+        });
+
+        it('lists only the failed keys in the message, since a validator can echo a secret value', () => {
+            const e = thrownBy(() =>
+                Envapter.getRequiredAll({ SAMPLE_REPO: v.pipe(v.string(), v.email()), SET_VALUE: Converters.Number })
+            );
+            expect(e.message).to.equal('Validation failed for SAMPLE_REPO, SET_VALUE.');
+            expect(e.issues?.[0]?.message).to.include('owner/repo');
+        });
+
         it('recases schema field keys the same way as converter keys', () => {
             const cfg = Envapter.getRequiredAll(
                 { DATABASE_URL: z.url(), SET_NUMBER: Converters.Number, PORT1: z.coerce.number() },
@@ -306,6 +367,18 @@ describe('Required reads (v8)', () => {
             );
             expect(cfg).to.deep.equal({ databaseUrl: 'postgres://localhost/db', setNumber: 42, port1: 80 });
             expectTypeOf(cfg).toEqualTypeOf<{ databaseUrl: string; setNumber: number; port1: number }>();
+        });
+    });
+
+    describe('require with ordered key lists', () => {
+        it('passes when any key in a list has a value', () => {
+            expect(() => Envapter.require(['NEVER_SET_KEY', 'SET_VALUE'], 'SET_NUMBER')).to.not.throw();
+        });
+
+        it('lists a whole key list as one missing entry', () => {
+            const e = thrownBy(() => Envapter.require(['NEVER_SET_KEY', 'EMPTY_VALUE'], 'SET_NUMBER'));
+            expect(e.code).to.equal(EnvaptErrorCodes.MissingEnvValue);
+            expect(e.message).to.equal('Missing required environment variables: [NEVER_SET_KEY, EMPTY_VALUE].');
         });
     });
 
