@@ -9,7 +9,7 @@ describe('profile loading', () => {
     const envDirectory = resolve(import.meta.dirname, 'environment');
 
     const profiles: Record<
-        Exclude<Environment, Environment.Test>,
+        Exclude<Environment, 'test'>,
         { path: string; name: string; port: number; apiUrl: string; flag: boolean }
     > = {
         [Environment.Development]: {

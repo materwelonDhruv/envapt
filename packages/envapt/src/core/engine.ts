@@ -163,8 +163,8 @@ function resolveForMirror(key: string, value: string): string {
     return templateResolver.resolveTemplate(key, value);
 }
 
-export function setEnvironment(env: string | Environment): void {
-    state.environment = typeof env === 'number' ? env : (parseEnvironment(env) ?? Environment.Development);
+export function setEnvironment(env: string): void {
+    state.environment = parseEnvironment(env) ?? Environment.Development;
     state.environmentExplicitlySet = true;
     refreshCache();
 }

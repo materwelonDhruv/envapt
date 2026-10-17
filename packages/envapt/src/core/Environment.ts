@@ -12,33 +12,35 @@ import { isMissing } from './missing';
  * @public
  * @see {@link https://envapt.materwelon.dev/docs/environment#detecting-the-environment}
  */
-export enum Environment {
-    /** The default when no environment variable names a known environment. */
-    Development,
+export const Environment = {
+    /** The default when no environment variable holds a known environment. */
+    Development: 'development',
     /** Selected when an environment variable reads `staging`. */
-    Staging,
+    Staging: 'staging',
     /** Selected when an environment variable reads `production`. */
-    Production,
+    Production: 'production',
     /** Selected when an environment variable reads `test`. */
-    Test
-}
+    Test: 'test'
+} as const;
+
+/**
+ * One of the {@link Environment} values: `'development'`, `'staging'`, `'production'`, or `'test'`.
+ * @public
+ */
+export type Environment = (typeof Environment)[keyof typeof Environment];
+
+const ENVIRONMENTS: readonly string[] = Object.values(Environment);
 
 // highest precedence first
 export const ENV_KEYS = ['ENVIRONMENT', 'ENV', 'NODE_ENV', 'MODE'] as const;
 
+function isEnvironment(name: string): name is Environment {
+    return ENVIRONMENTS.includes(name);
+}
+
 export function parseEnvironment(raw: string): Environment | undefined {
-    switch (raw.toLowerCase()) {
-        case 'production':
-            return Environment.Production;
-        case 'staging':
-            return Environment.Staging;
-        case 'test':
-            return Environment.Test;
-        case 'development':
-            return Environment.Development;
-        default:
-            return undefined;
-    }
+    const name = raw.toLowerCase();
+    return isEnvironment(name) ? name : undefined;
 }
 
 export function firstEnvKeyValue(read: (key: string) => string | undefined): string | undefined {

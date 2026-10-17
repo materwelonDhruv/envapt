@@ -16,11 +16,12 @@ export class EnvironmentMethods extends EnvapterBase {
     }
 
     /**
-     * Set the application environment. Accepts either Environment enum or string value.
-     * Setting it reloads the `.env` files for that environment.
+     * Set the application environment to an {@link Environment} value such as `'production'`, matched
+     * case-insensitively. An unknown name selects `'development'`. Setting it reloads the `.env` files
+     * for that environment.
      * @see {@link https://envapt.materwelon.dev/docs/environment#detecting-the-environment}
      */
-    static set environment(env: string | Environment) {
+    static set environment(env: string) {
         setEnvironment(env);
     }
 
@@ -34,7 +35,7 @@ export class EnvironmentMethods extends EnvapterBase {
     /**
      * @see {@link EnvironmentMethods.environment}
      */
-    set environment(env: string | Environment) {
+    set environment(env: string) {
         setEnvironment(env);
     }
 

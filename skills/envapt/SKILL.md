@@ -156,7 +156,7 @@ Envapter.baseDir = import.meta.dirname; // anchor relative .env resolution to th
 Envapter.envPaths = ['.env', '.env.local']; // explicit paths, which disables the auto-cascade. Set baseDir first.
 Envapter.strict = true; // whitespace-only values count as missing
 Envapter.syncProcessEnv = true; // mirror loaded keys into process.env
-Envapter.environment; // Environment.Development | Staging | Production | Test. also isProduction / isStaging / isDevelopment / isTest
+Envapter.environment; // 'development' | 'staging' | 'production' | 'test'. also isProduction / isStaging / isDevelopment / isTest
 ```
 
 The environment is detected from the first set of `ENVIRONMENT` -> `ENV` -> `NODE_ENV` -> `MODE` (case-insensitive, and `MODE` covers Vite browser builds), defaulting to development. `Envapter.configureProfiles({ ... })` sets per-environment path lists (node build only, like `baseDir` / `envPaths`). `Envapter.debug` (or the `ENVAPT_DEBUG` env var) turns on logging.
