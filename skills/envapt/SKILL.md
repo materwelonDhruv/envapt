@@ -5,7 +5,7 @@ description: Reads typed, validated config from process.env, .env files, or any 
 
 # envapt
 
-envapt reads environment variables, or any config, as typed, validated values, with an optional `.env` cascade layered on top of `process.env`, and nothing in `dependencies` or `peerDependencies`. Available as `envapt` on npm and `@materwelon/envapt` on JSR. Minimum versions are Node >=20, Bun >=1.3.11, Deno >=2.5. Ships ESM and CJS. It also runs on Cloudflare Workers and in the browser, where you bind a source yourself and read with the same typed API (see the Runtimes and sources section below). Import from `envapt` everywhere, because the package export conditions select the right build automatically.
+envapt reads environment variables, or any config, as typed, validated values, with an optional `.env` cascade layered on top of `process.env`, and nothing in `dependencies` or `peerDependencies`. Available as `envapt` on npm and `@materwelon/envapt` on JSR. Minimum versions are Node >=22, Bun >=1.3.11, Deno >=2.5. Ships ESM and CJS. It also runs on Cloudflare Workers and in the browser, where you bind a source yourself and read with the same typed API (see the Runtimes and sources section below). Import from `envapt` everywhere, because the package export conditions select the right build automatically.
 
 ## Choosing the API: functional vs decorators
 
