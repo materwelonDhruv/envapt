@@ -156,7 +156,7 @@ class Config {
 }
 ```
 
-The throw happens on first access to the property. An unset or empty value throws in any mode. A whitespace-only value throws only under strict mode. See [Strict mode](/docs/strict-mode) for the global switch and how `required` relates to it.
+The throw happens on first access to the property. An unset or empty value throws in any mode. A whitespace-only value throws only under strict mode. A present value the converter can't convert throws `InvalidEnvValue`, the same as [`getRequired`](/docs/converters#require-a-converted-value). See [Strict mode](/docs/strict-mode) for the global switch and how `required` relates to it.
 
 <Callout type="warn">
     First access can happen deep inside a request, so a missing required value surfaces as a runtime error

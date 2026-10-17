@@ -96,6 +96,20 @@ describe('TS error message verification (compiler API)', () => {
         );
     });
 
+    describe('an async schema field in a getRequiredAll spec produces the SchemaMustBeSync compile error', () => {
+        it('carries the SchemaMustBeSync literal', { timeout: FIXTURE_TIMEOUT_MS }, () => {
+            const diagnostics = compileFixture('required-all-schema-must-be-sync.ts');
+            expect(diagnostics).to.have.lengthOf(1);
+            expect(joinedMessages(diagnostics)).to.include('Schema must be synchronous');
+        });
+
+        it('carries it for a field typed as an async schema or a converter', { timeout: FIXTURE_TIMEOUT_MS }, () => {
+            const diagnostics = compileFixture('required-all-schema-union-must-be-sync.ts');
+            expect(diagnostics).to.have.lengthOf(1);
+            expect(joinedMessages(diagnostics)).to.include('Schema must be synchronous');
+        });
+    });
+
     describe('removed positional @Envapt form produces a no-overload compile error', () => {
         it('produces a TS2769 diagnostic for a primitive second argument', { timeout: FIXTURE_TIMEOUT_MS }, () => {
             const diagnostics = compileFixture('positional-removed.ts');

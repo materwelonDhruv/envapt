@@ -2,10 +2,11 @@ import { resolve } from 'node:path';
 
 import { type as ark } from 'arktype';
 import * as v from 'valibot';
-import { afterEach, beforeAll, describe, expect, expectTypeOf, it } from 'vitest';
+import { afterEach, beforeAll, describe, expect, expectTypeOf, it, vi } from 'vitest';
 import { z } from 'zod/v4';
 
 import { Envapter, EnvaptErrorCodes } from '../src';
+import { resetDebugForTesting } from '../src/infra/Debug';
 import { EnvaptError } from '../src/infra/Error';
 import { Envapt } from '../src/legacy';
 
@@ -95,7 +96,7 @@ describe('Standard Schema adapter (v5)', () => {
             expect(port).to.equal(8080);
         });
 
-        it('formats the array-key error message via formatKeyForError when all keys are missing', () => {
+        it('lists every key of an ordered key list in the missing-value message', () => {
             try {
                 Envapter.parse(['NEVER_SET_A', 'NEVER_SET_B'], z.coerce.number());
                 expect.fail('should have thrown');
@@ -192,17 +193,20 @@ describe('Standard Schema adapter (v5)', () => {
             }
         });
 
-        it('message includes the env key and the first issue text', () => {
+        it('lists the env key in the message and keeps the issue text in issues only', () => {
             try {
                 Envapter.parse('INVALID_PORT', z.coerce.number().int());
                 expect.fail('should have thrown');
             } catch (err) {
                 const e = err as EnvaptError;
-                expect(e.message).to.match(/Schema validation failed for "INVALID_PORT"/);
+                const issueMessage = e.issues?.[0]?.message ?? '';
+                expect(issueMessage).to.not.equal('');
+                expect(e.message).to.include('INVALID_PORT');
+                expect(e.message).to.not.include(issueMessage);
             }
         });
 
-        it('falls back to a placeholder message when the issues array is empty', () => {
+        it('throws SchemaValidationFailed when the schema fails with an empty issues array', () => {
             try {
                 Envapter.parse('PORT', handRolledEmptyIssues);
                 expect.fail('should have thrown');
@@ -210,7 +214,24 @@ describe('Standard Schema adapter (v5)', () => {
                 expect(err).to.be.instanceOf(EnvaptError);
                 const e = err as EnvaptError;
                 expect(e.code).to.equal(EnvaptErrorCodes.SchemaValidationFailed);
-                expect(e.message).to.include('no issue message');
+                expect(e.issues).to.deep.equal([{ message: 'no issue message', path: ['PORT'] }]);
+            }
+        });
+
+        it('starts every issue path with the ordered key that held the value', () => {
+            const hostSchema: StandardSchemaV1<unknown, string> = {
+                '~standard': {
+                    version: 1,
+                    vendor: 'envapt-test',
+                    validate: () => ({ issues: [{ message: 'unknown host', path: ['host'] }] })
+                }
+            };
+            try {
+                Envapter.parse(['NEVER_SET', 'URL_VALUE'], hostSchema);
+                expect.fail('should have thrown');
+            } catch (err) {
+                const e = err as EnvaptError;
+                expect(e.issues).to.deep.equal([{ message: 'unknown host', path: ['URL_VALUE', 'host'] }]);
             }
         });
 
@@ -255,6 +276,47 @@ describe('Standard Schema adapter (v5)', () => {
                 expect(e.message).to.include('synchronous');
             }
         });
+
+        // zod's validate returns a rejecting Promise when a transform throws
+        it('leaves no unhandled rejection behind when the schema returns a rejecting Promise', async () => {
+            const unhandled: unknown[] = [];
+            const record = (reason: unknown): void => {
+                unhandled.push(reason);
+            };
+            process.on('unhandledRejection', record);
+            try {
+                const throwing = z.string().transform(() => {
+                    throw new Error('transform crashed');
+                });
+                expect(() => Envapter.parse('PORT', throwing))
+                    .to.throw(EnvaptError)
+                    .with.property('code', EnvaptErrorCodes.InvalidUserDefinedConfig);
+                await new Promise((resolve) => setTimeout(resolve, 20));
+            } finally {
+                process.off('unhandledRejection', record);
+            }
+            expect(unhandled).to.deep.equal([]);
+        });
+
+        it('logs the reason of a rejecting Promise under debug warn', async () => {
+            const lines: string[] = [];
+            const spy = vi.spyOn(process.stderr, 'write').mockImplementation((chunk: unknown) => {
+                lines.push(String(chunk));
+                return true;
+            });
+            Envapter.debug = 'warn';
+            try {
+                const throwing = z.string().refine(() => {
+                    throw new Error('refine crashed');
+                });
+                expect(() => Envapter.parse('PORT', throwing)).to.throw(EnvaptError);
+                await new Promise((resolve) => setTimeout(resolve, 20));
+            } finally {
+                spy.mockRestore();
+                resetDebugForTesting();
+            }
+            expect(lines.some((line) => line.includes('PORT') && line.includes('refine crashed'))).to.equal(true);
+        });
     });
 
     describe('Envapter.parse: template expansion before validation', () => {
@@ -298,6 +360,36 @@ describe('Standard Schema adapter (v5)', () => {
 
         it('hand-rolled: validated value reaches the property', () => {
             expect(HandRolledConfig.upper).to.equal('WARN');
+        });
+
+        it('lists only the env key in the message when the schema rejects the value', () => {
+            class InvalidPortConfig {
+                @Envapt('INVALID_PORT', { schema: z.coerce.number().int() })
+                static readonly port: number;
+            }
+            let thrown: unknown;
+            try {
+                void InvalidPortConfig.port;
+            } catch (err) {
+                thrown = err;
+            }
+            expect(thrown).to.be.instanceOf(EnvaptError);
+            const e = thrown as EnvaptError;
+            const issueMessage = e.issues?.[0]?.message ?? '';
+            expect(issueMessage).to.not.equal('');
+            expect(e.code).to.equal(EnvaptErrorCodes.SchemaValidationFailed);
+            expect(e.issues?.[0]?.path).to.deep.equal(['INVALID_PORT']);
+            expect(e.message).to.include('INVALID_PORT');
+            expect(e.message).to.not.include(issueMessage);
+        });
+
+        // an arktype type is a callable function carrying `~standard`
+        it('arktype: validated value reaches the property', () => {
+            class ArkConfig {
+                @Envapt('PORT', { schema: ark('string.integer.parse') })
+                static readonly port: number;
+            }
+            expect(ArkConfig.port).to.equal(8080);
         });
     });
 
@@ -361,6 +453,25 @@ describe('Standard Schema adapter (v5)', () => {
                 void Bad;
             };
             expect(buildBadDecorator)
+                .to.throw(EnvaptError)
+                .with.property('code', EnvaptErrorCodes.InvalidUserDefinedConfig);
+        });
+
+        it('throws InvalidUserDefinedConfig when a callable schema is passed as converter', () => {
+            const buildBadDecorator = (): void => {
+                class Bad {
+                    @Envapt('PORT', { converter: ark('string.integer.parse') })
+                    static readonly port: unknown;
+                }
+                void Bad;
+            };
+            expect(buildBadDecorator)
+                .to.throw(EnvaptError)
+                .with.property('code', EnvaptErrorCodes.InvalidUserDefinedConfig);
+        });
+
+        it('throws InvalidUserDefinedConfig when getWith gets a callable schema', () => {
+            expect(() => Envapter.getWith('PORT', ark('string.integer.parse')))
                 .to.throw(EnvaptError)
                 .with.property('code', EnvaptErrorCodes.InvalidUserDefinedConfig);
         });

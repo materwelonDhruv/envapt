@@ -16,6 +16,8 @@ export default defineConfig({
             enabled: true,
             provider: 'v8',
             reporter: [['lcovonly', { file: 'lcov.info' }], ['html'], ['text']],
+            // the codecov workflow uploads coverage/lcov.info from the repo root
+            reportsDirectory: resolve(configDir, 'coverage'),
             include: ['src']
         }
     }

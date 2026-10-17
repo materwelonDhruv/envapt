@@ -6,20 +6,22 @@ description: Every EnvaptError code, what throws it, and how to catch and narrow
 When envapt rejects a value or a configuration, it throws an `EnvaptError`. The error carries a numeric `code` from the `EnvaptErrorCodes` enum, so you can branch on the exact cause.
 
 ```ts twoslash
-import { Envapter, EnvaptError, EnvaptErrorCodes } from 'envapt';
+import { Envapter, EnvaptError, EnvaptErrorCodes, Converters } from 'envapt';
 // ---cut---
 try {
-    Envapter.require('DATABASE_URL');
+    Envapter.getRequiredAll({ DATABASE_URL: Converters.Url, PORT: Converters.Port });
 } catch (error) {
     if (error instanceof EnvaptError) {
         error.code;
         //    ^?
-        if (error.code === EnvaptErrorCodes.SchemaValidationFailed) {
-            error.issues?.forEach((issue) => console.error(issue.message));
+        if (error.code === EnvaptErrorCodes.InvalidEnvValue) {
+            error.issues?.forEach((issue) => console.error('invalid:', issue.path?.join('.')));
         }
     }
 }
 ```
+
+An unset `PORT` throws `MissingEnvValue`. A `PORT` of `99999` throws `InvalidEnvValue`, and its issue `path` holds `PORT`. The sample logs only the path, since an issue message can quote the value.
 
 ## The error shape
 
@@ -28,7 +30,7 @@ try {
 - `code`: the `EnvaptErrorCodes` member.
 - `name`: set to `` `EnvaptError [<code>]` `` (e.g. `EnvaptError [305]`).
 - `message`: a human-readable description.
-- `issues`: the validator's issue list, populated **only** for `SchemaValidationFailed` (208); `undefined` for every other code.
+- `issues`: one entry per problem, each with a `message` and a `path` that starts with the env key. Populated **only** for `SchemaValidationFailed` (208) and `InvalidEnvValue` (210). It is `undefined` for every other code.
 - `cause`: the original error when one is chained, used by `SchemaThrew` (209).
 
 ## Codes
@@ -47,7 +49,7 @@ try {
 
 {/* prettier-ignore-end */}
 
-### Converter (201-209)
+### Converter (201-210)
 
 {/* prettier-ignore-start */}
 
@@ -58,10 +60,11 @@ try {
 | 203 | `InvalidCustomConverter` | A custom converter is not a function. |
 | 204 | `InvalidConverterType` | The converter type is not recognized. |
 | 205 | `PrimitiveCoercionFailed` | Coercing a fallback through a primitive constructor fails. |
-| 206 | `ArrayElementConversionFailed` | An array element fails to convert to the configured element type. |
-| 207 | `EmptyArrayElement` | Strict mode only: an array element is empty or whitespace. |
-| 208 | `SchemaValidationFailed` | A Standard Schema returns issues for a non-empty value. The only code that populates `issues`. |
-| 209 | `SchemaThrew` | A schema's `validate` itself throws. The original error is on `cause`. |
+| 206 | `ArrayElementConversionFailed` | An array element fails to convert to the configured element type. A required read reports it as a 210 issue. |
+| 207 | `EmptyArrayElement` | Strict mode only: an array element is empty or whitespace. A required read reports it as a 210 issue. |
+| 208 | `SchemaValidationFailed` | `parse` or `@Envapt({ schema })` gets a value its Standard Schema rejects. The message lists only the key. |
+| 209 | `SchemaThrew` | A schema's `validate` itself throws in `parse` or `@Envapt({ schema })`. The original error is on `cause`. `getRequiredAll` reports it as a 210 issue. |
+| 210 | `InvalidEnvValue` | A required read gets a value it can't convert, a bad array element, or an error from your custom parser or schema. `getRequiredAll` throws it once for all bad values, schema fields included. The message lists only the keys. |
 
 {/* prettier-ignore-end */}
 
@@ -72,10 +75,10 @@ try {
 | Code | Name | Thrown when |
 | --- | --- | --- |
 | 301 | `MissingDelimiter` | An array converter is missing its delimiter. |
-| 302 | `InvalidUserDefinedConfig` | A bad decorator/options combination: `required` with `fallback`, `schema` with `converter`, a non-`StandardSchemaV1` `schema`, an async schema, or an invalid debug level. |
+| 302 | `InvalidUserDefinedConfig` | A bad decorator/options combination: `required` with `fallback`, `schema` with `converter`, a Standard Schema passed as a `converter` (to `@Envapt` or `getWith`), a non-`StandardSchemaV1` `schema`, an async schema (zod also returns a Promise when a `.transform` or `.refine` throws), or an invalid debug level. `getRequiredAll` reports an async schema field as a 210 issue. |
 | 303 | `EnvFilesNotFound` | A configured `.env` path (via `envPaths` or `configureProfiles`) doesn't exist. |
 | 304 | `InvalidKeyInput` | No key, a non-string key, or an empty-string key was passed. |
-| 305 | `MissingEnvValue` | A required value is missing or empty, or whitespace-only under strict: `require`, `{ required: true }`, a schema with no fallback, or an unresolved template under strict mode. |
+| 305 | `MissingEnvValue` | A required value is missing or empty, or whitespace-only under strict: `require`, `getRequired`, `getRequiredAll`, `{ required: true }`, a schema with no fallback, or an unresolved template under strict mode. |
 | 306 | `FileApiUnsupported` | On the portable build: a file-only API (`envPaths`, `baseDir`, `envFileOptions`, `configureProfiles`, `resetProfiles`) is called and `Envapter.fileApiMode = 'throw'` (the default warns once and no-ops). On the node build: a non-filesystem source is bound and a file API is called. See [Sources](/docs/sources). |
 | 307 | `NoSourceBound` | A value is read before a source is bound with `Envapter.useSource`. Cannot occur on Node, where the source is bound on import. |
 | 308 | `InvalidMergedSource` | `merge` is called with no members, or with more than one filesystem-backed source. |
@@ -83,7 +86,7 @@ try {
 {/* prettier-ignore-end */}
 
 <Callout type="info">
-    `issues` is set only for `SchemaValidationFailed` (208), so you can read `error.issues` after checking `error.code
-    === EnvaptErrorCodes.SchemaValidationFailed` without a cast. See [Standard Schema](/docs/standard-schema) for where
+    `issues` is set only for `SchemaValidationFailed` (208) and `InvalidEnvValue` (210), so you can read
+    `error.issues` after checking either code without a cast. See [Standard Schema](/docs/standard-schema) for where
     208 and 209 come from.
 </Callout>

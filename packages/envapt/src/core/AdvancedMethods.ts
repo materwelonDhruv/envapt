@@ -1,42 +1,30 @@
-import { resolveKeyInput, templateResolver, valueConverter } from './engine';
+import { findPresent, readRequired, readSchema, resolveKeyInput, valueConverter } from './engine';
 import { hasFallback, isMissing } from './missing';
 import { PrimitiveMethods } from './PrimitiveMethods';
 import { debugWarn } from '../infra/Debug';
-import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
+import { EnvaptErrorCodes } from '../infra/Error';
+import { missingValues, validationFailed } from '../infra/failures';
 import { recase } from '../infra/recase';
 
 import type { ArrayOf } from '../converters';
-import type { TemplateResolver } from '../engine/TemplateResolver';
 import type { InferSchemaOutput, StandardSchemaV1 } from '../infra/StandardSchema';
 import type {
     AdvancedConverterReturn,
     BuiltInConverter,
     ConditionalReturn,
     ConverterFunction,
-    EnvaptConverter,
     EnvKeyInput,
     InferConverterReturnType,
     InferSpecField,
     KeyCasing,
+    PresentValue,
     RecaseKey,
+    RequiredConverter,
     RequiredSpec,
     SchemaConstraint,
+    SpecSchemaConstraint,
     TimeFallback
 } from '../types';
-
-function formatKeyForError(key: EnvKeyInput): string {
-    return Array.isArray(key) ? `[${key.join(', ')}]` : String(key);
-}
-
-// check after template resolution because a template can resolve to an empty string
-export function resolveRequired(
-    resolved: { key: string; value: string | undefined },
-    templateResolver: TemplateResolver
-): { key: string; value: string | undefined } {
-    if (resolved.value === undefined) return resolved;
-    const value = templateResolver.resolveTemplate(resolved.key, resolved.value);
-    return { key: resolved.key, value: isMissing(value) ? undefined : value };
-}
 
 export class AdvancedMethods extends PrimitiveMethods {
     /**
@@ -130,8 +118,11 @@ export class AdvancedMethods extends PrimitiveMethods {
 
     /**
      * Read a required environment variable and convert it, throwing `MissingEnvValue` when the value
-     * is missing or empty. Returns the non-undefined converter output. Accepts a built-in or `ArrayOf`
-     * token, or a custom parser function. The key can be a single name or an ordered list.
+     * is missing or empty. A value the converter cannot convert throws `InvalidEnvValue` with
+     * one issue keyed by the env name. A bad array element and an error a custom parser throws both
+     * become that issue, carrying their message. Returns the non-undefined converter output.
+     * Accepts a built-in or `ArrayOf` token, or a custom parser function. The key can be a single
+     * name or an ordered list.
      * @see {@link https://envapt.materwelon.dev/docs/envapter#fail-fast-on-missing-values}
      * @see {@link https://envapt.materwelon.dev/docs/converters#require-a-converted-value}
      */
@@ -144,39 +135,7 @@ export class AdvancedMethods extends PrimitiveMethods {
         key: EnvKeyInput,
         converter: TConverter | ConverterFunction<TReturnType, string>
     ): InferConverterReturnType<TConverter> | TReturnType {
-        // an empty value falls through to the next key
-        const candidates: readonly string[] = typeof key === 'string' ? [key] : key;
-        let resolvedKey = '';
-        let value: string | undefined;
-        for (const candidate of candidates) {
-            const resolved = resolveRequired(resolveKeyInput(candidate), templateResolver);
-            resolvedKey = resolved.key;
-            if (resolved.value !== undefined) {
-                value = resolved.value;
-                break;
-            }
-        }
-        if (value === undefined) {
-            throw new EnvaptError(
-                EnvaptErrorCodes.MissingEnvValue,
-                `Required environment variable "${formatKeyForError(key)}" is missing or empty.`
-            );
-        }
-        // the string-only parser is safe to widen because the value is present
-        const result = valueConverter.convertValue<TReturnType>(
-            resolvedKey,
-            undefined,
-            converter as EnvaptConverter<TReturnType>,
-            false
-        );
-        // a built-in returns undefined when it cannot convert, and a custom converter can return null
-        if (result === undefined || result === null) {
-            throw new EnvaptError(
-                EnvaptErrorCodes.MissingEnvValue,
-                `Required environment variable "${formatKeyForError(key)}" is present but could not be converted.`
-            );
-        }
-        return result;
+        return readRequired(key, converter as RequiredConverter) as InferConverterReturnType<TConverter> | TReturnType;
     }
 
     /**
@@ -196,46 +155,51 @@ export class AdvancedMethods extends PrimitiveMethods {
 
     /**
      * Read a group of required environment variables in one call. Each key in `spec` maps to a
-     * converter (a token, an `array()` token, or a custom parser), and the returned record holds
-     * every converted value, all non-undefined. Collects every missing or empty key and throws one
-     * `MissingEnvValue` listing them all. Pass a `casing` (`'camelCase'`, `'PascalCase'`, or
-     * `'kebab-case'`) to rename the record keys. The rename splits each key on underscores, as in
-     * SCREAMING_SNAKE env-var names. With no casing the keys stay as-is.
+     * converter (a token, an `array()` token, or a custom parser) or a synchronous Standard Schema
+     * (zod, valibot, arktype, etc). The returned record holds every value. A converter field is
+     * never undefined. A schema field holds whatever its schema returns.
+     *
+     * Collects every missing or empty key first and throws one `MissingEnvValue` listing them all.
+     * envapt never runs the schema for a missing key. A schema default such as zod's `.default()`
+     * does not apply here. envapt then reads every field and throws one `InvalidEnvValue` for all
+     * the bad values, schema fields included. Its `issues` hold every failed field's issues, each
+     * with its env key first in `path`. A converter that cannot convert adds the issue
+     * `could not be converted`. A bad array element and an error a custom parser or schema throws
+     * each become an issue carrying their message.
+     * The error message lists only the keys, since an issue message can quote the value.
+     *
+     * Pass a `casing` (`'camelCase'`, `'PascalCase'`, or `'kebab-case'`) to rename the record keys.
+     * The rename splits each key on underscores, as in SCREAMING_SNAKE env-var names. With no casing
+     * the keys stay as-is.
      * @see {@link https://envapt.materwelon.dev/docs/envapter#fail-fast-on-missing-values}
-     * @see {@link https://envapt.materwelon.dev/docs/converters#require-a-converted-value}
+     * @see {@link https://envapt.materwelon.dev/docs/standard-schema#validate-a-group-of-required-variables}
      */
     static getRequiredAll<Spec extends RequiredSpec, Casing extends KeyCasing | undefined = undefined>(
-        spec: Spec,
+        spec: Spec & SpecSchemaConstraint<Spec>,
         casing?: Casing
     ): { [K in keyof Spec as RecaseKey<K & string, Casing>]: InferSpecField<Spec[K]> } {
-        const keys = Object.keys(spec);
-        const missing = keys.filter(
-            (key) => resolveRequired(resolveKeyInput(key), templateResolver).value === undefined
-        );
-        if (missing.length > 0) {
-            throw new EnvaptError(
-                EnvaptErrorCodes.MissingEnvValue,
-                `Missing required environment variables: ${missing.join(', ')}.`
-            );
+        const missing: string[] = [];
+        const fields: { present: PresentValue; field: RequiredSpec[string] }[] = [];
+        for (const [key, field] of Object.entries<RequiredSpec[string]>(spec)) {
+            const present = findPresent(key);
+            if (present === undefined) missing.push(key);
+            else fields.push({ present, field });
         }
+        if (missing.length > 0) throw missingValues(missing);
 
         const result: Record<string, unknown> = {};
-        for (const key of keys) {
-            // safe to widen because every value is present by now
-            const converted = valueConverter.convertValue<unknown>(
-                key,
-                undefined,
-                spec[key] as EnvaptConverter<unknown>,
-                false
-            );
-            if (converted === undefined || converted === null) {
-                throw new EnvaptError(
-                    EnvaptErrorCodes.MissingEnvValue,
-                    `Required environment variable "${key}" is present but could not be converted.`
-                );
+        const failedKeys: string[] = [];
+        const issues: StandardSchemaV1.Issue[] = [];
+        for (const { present, field } of fields) {
+            const outcome = valueConverter.readSpecField(present, field);
+            if (outcome.issues === undefined) {
+                result[recase(present.key, casing)] = outcome.value;
+            } else {
+                failedKeys.push(present.key);
+                issues.push(...outcome.issues);
             }
-            result[recase(key, casing)] = converted;
         }
+        if (failedKeys.length > 0) throw validationFailed(EnvaptErrorCodes.InvalidEnvValue, failedKeys, issues);
         return result as { [K in keyof Spec as RecaseKey<K & string, Casing>]: InferSpecField<Spec[K]> };
     }
 
@@ -243,10 +207,10 @@ export class AdvancedMethods extends PrimitiveMethods {
      * @see {@link AdvancedMethods.getRequiredAll}
      */
     getRequiredAll<Spec extends RequiredSpec, Casing extends KeyCasing | undefined = undefined>(
-        spec: Spec,
+        spec: Spec & SpecSchemaConstraint<Spec>,
         casing?: Casing
     ): { [K in keyof Spec as RecaseKey<K & string, Casing>]: InferSpecField<Spec[K]> } {
-        return AdvancedMethods.getRequiredAll(spec, casing);
+        return AdvancedMethods.getRequiredAll<Spec, Casing>(spec, casing);
     }
 
     /**
@@ -270,13 +234,7 @@ export class AdvancedMethods extends PrimitiveMethods {
         fallback?: InferSchemaOutput<Schema>
     ): InferSchemaOutput<Schema> {
         // SchemaConstraint rejects async schemas at compile time
-        const result = valueConverter.convertWithSchema(
-            key,
-            schema as unknown as StandardSchemaV1,
-            fallback,
-            hasFallback(fallback)
-        );
-        return result;
+        return readSchema(key, schema as unknown as StandardSchemaV1, fallback, hasFallback(fallback));
     }
 
     /**
@@ -287,12 +245,6 @@ export class AdvancedMethods extends PrimitiveMethods {
         schema: SchemaConstraint<Schema>,
         fallback?: InferSchemaOutput<Schema>
     ): InferSchemaOutput<Schema> {
-        const result = valueConverter.convertWithSchema(
-            key,
-            schema as unknown as StandardSchemaV1,
-            fallback,
-            hasFallback(fallback)
-        );
-        return result;
+        return AdvancedMethods.parse(key, schema, fallback);
     }
 }

@@ -162,6 +162,29 @@ describe('merge composes sources with last-wins precedence', () => {
         expect(Envapter.get('FROM_CUSTOM_FILE')).to.equal('filecontent');
     });
 
+    it("passes on an error the source's readFile throws while loading a .env file", () => {
+        let reads = 0;
+        const flakyFile: FileCapableSource = {
+            supportsFiles: true,
+            readVars: () => ({}),
+            // the first read is the existence check in the envPaths setter
+            readFile: (path) => {
+                if (path !== 'production.env') return undefined;
+                reads += 1;
+                if (reads > 1) throw new Error('EACCES: permission denied');
+                return 'DATABASE_URL=postgres://localhost/db\n';
+            },
+            resolvePath: (_baseDir, candidate) => candidate,
+            normalizeBaseDir: (value) => String(value),
+            writeVars: () => {}
+        };
+        Envapter.useSource(flakyFile);
+
+        expect(() => {
+            Envapter.envPaths = ['production.env'];
+        }).to.throw('EACCES');
+    });
+
     it('loads the .env cascade through a nested single-file merge', () => {
         Envapter.useSource(merge(merge(new FileSource()), new PortableSource({ X: '1' })));
         Envapter.envPaths = resolve(import.meta.dirname, '.env.041-merge');

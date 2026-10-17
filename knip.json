@@ -4,7 +4,8 @@
         ".": {
             "entry": ["scripts/**/*.ts"],
             "project": ["scripts/**/*.ts"],
-            "ignoreBinaries": ["run.mjs"]
+            "ignoreBinaries": ["run.mjs"],
+            "ignoreDependencies": ["@typescript-eslint/parser"]
         },
         "packages/envapt": {
             "entry": [

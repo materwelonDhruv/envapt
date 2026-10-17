@@ -14,11 +14,12 @@ export type {
     AdvancedConverterReturn,
     InferPrimitiveReturnType,
     RequiredSpec,
+    RequiredConverter,
     InferSpecField
 } from './Conversion';
 export type { KeyCasing, RecaseKey } from './Casing';
-export type { SchemaConstraint } from './Schema';
+export type { SchemaConstraint, SpecSchemaConstraint } from './Schema';
 export type { EnvaptOptions, EnvProfile, ProfilesConfig, FileApiMode } from './Options';
-export type { EnvKeyInput } from './Env';
+export type { EnvKeyInput, PresentValue } from './Env';
 export type { Source, BareSource, FileCapableSource } from './Source';
 export type { EnvaptFieldDecorator, EnvaptAccessorDecorator } from './Decorator';
