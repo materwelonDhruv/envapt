@@ -102,6 +102,12 @@ describe('TS error message verification (compiler API)', () => {
             expect(diagnostics).to.have.lengthOf(1);
             expect(joinedMessages(diagnostics)).to.include('Schema must be synchronous');
         });
+
+        it('carries it for a field typed as an async schema or a converter', { timeout: FIXTURE_TIMEOUT_MS }, () => {
+            const diagnostics = compileFixture('required-all-schema-union-must-be-sync.ts');
+            expect(diagnostics).to.have.lengthOf(1);
+            expect(joinedMessages(diagnostics)).to.include('Schema must be synchronous');
+        });
     });
 
     describe('removed positional @Envapt form produces a no-overload compile error', () => {

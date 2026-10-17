@@ -74,8 +74,15 @@
             "persistent": true
         },
         "coverage": {
-            "inputs": ["$TURBO_DEFAULT$", "jest.config.*", "vitest.config.*", "src/**", "tests/**"],
-            "outputs": ["coverage/**"]
+            "inputs": [
+                "$TURBO_DEFAULT$",
+                "jest.config.*",
+                "vitest.config.*",
+                "$TURBO_ROOT$/vitest.config.ts",
+                "src/**",
+                "tests/**"
+            ],
+            "outputs": ["$TURBO_ROOT$/coverage/**"]
         },
         "fmt": {
             "inputs": ["$TURBO_DEFAULT$", ".prettierrc*", "prettier.config.*"],

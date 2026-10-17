@@ -457,6 +457,25 @@ describe('Standard Schema adapter (v5)', () => {
                 .with.property('code', EnvaptErrorCodes.InvalidUserDefinedConfig);
         });
 
+        it('throws InvalidUserDefinedConfig when a callable schema is passed as converter', () => {
+            const buildBadDecorator = (): void => {
+                class Bad {
+                    @Envapt('PORT', { converter: ark('string.integer.parse') })
+                    static readonly port: unknown;
+                }
+                void Bad;
+            };
+            expect(buildBadDecorator)
+                .to.throw(EnvaptError)
+                .with.property('code', EnvaptErrorCodes.InvalidUserDefinedConfig);
+        });
+
+        it('throws InvalidUserDefinedConfig when getWith gets a callable schema', () => {
+            expect(() => Envapter.getWith('PORT', ark('string.integer.parse')))
+                .to.throw(EnvaptError)
+                .with.property('code', EnvaptErrorCodes.InvalidUserDefinedConfig);
+        });
+
         it('throws InvalidUserDefinedConfig when schema is not a valid Standard Schema object', () => {
             const buildBadDecorator = (): void => {
                 class Bad {

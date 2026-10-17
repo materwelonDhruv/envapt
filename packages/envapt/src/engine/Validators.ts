@@ -29,9 +29,20 @@ export class Validator {
         return props.version === 1 && typeof props.validate === 'function';
     }
 
+    // an arktype type is callable and returns ArkErrors for a bad value
+    static notSchemaConverter(converter: unknown): void {
+        if (Validator.isStandardSchema(converter)) {
+            throw new EnvaptError(
+                EnvaptErrorCodes.InvalidUserDefinedConfig,
+                'A Standard Schema cannot be a converter. Pass it as `schema` on @Envapt, or read it with `Envapter.parse()`.'
+            );
+        }
+    }
+
     static customConvertor<TFallback>(
         converter: EnvaptConverter<TFallback>
     ): asserts converter is ConverterFunction<TFallback> {
+        Validator.notSchemaConverter(converter);
         if (typeof converter !== 'function') {
             throw new EnvaptError(
                 EnvaptErrorCodes.InvalidCustomConverter,

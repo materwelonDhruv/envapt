@@ -80,7 +80,7 @@ The legacy form (`envapt/legacy`) differs. Static fields use a plain `static rea
 
 ### Options object
 
-`@Envapt(key, options)` accepts: `{ fallback }`, `{ converter, fallback }`, `{ converter }`, `{ converter, required: true }`, `{ required: true }` (raw string, throws on missing), and `{ schema }` / `{ schema, fallback }`. `required` and `fallback` are mutually exclusive, and so are `schema` and `converter`. With `required: true`, a present value the converter can't convert throws `InvalidEnvValue`. A bad combination throws `EnvaptError` when the decorator is applied, before any access.
+`@Envapt(key, options)` accepts: `{ fallback }`, `{ converter, fallback }`, `{ converter }`, `{ converter, required: true }`, `{ required: true }` (raw string, throws on missing), and `{ schema }` / `{ schema, fallback }`. `required` and `fallback` are mutually exclusive, and so are `schema` and `converter`. Passing a Standard Schema as `converter` throws `InvalidUserDefinedConfig`, so give it to `schema`. With `required: true`, a present value the converter can't convert throws `InvalidEnvValue`. A bad combination throws `EnvaptError` when the decorator is applied, before any access.
 
 ### Shorthand decorators
 

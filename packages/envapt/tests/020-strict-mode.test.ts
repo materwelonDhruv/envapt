@@ -226,13 +226,17 @@ describe('Strict mode + required (v5)', () => {
                 .with.property('code', EnvaptErrorCodes.InvalidEnvValue);
         });
 
-        it('calls a callable schema passed as converter as a plain function', () => {
-            const integer = ark('string.integer.parse');
-            class RequiredInteger {
-                @Envapt('API_KEY', { converter: integer, required: true })
-                static readonly value: unknown;
-            }
-            expect(String(RequiredInteger.value)).to.equal(String(Envapter.getWith('API_KEY', integer)));
+        it('rejects a callable schema passed as converter when the decorator is applied', () => {
+            const applyDecorator = (): void => {
+                class RequiredInteger {
+                    @Envapt('API_KEY', { converter: ark('string.integer.parse'), required: true })
+                    static readonly value: unknown;
+                }
+                void RequiredInteger;
+            };
+            expect(applyDecorator)
+                .to.throw(EnvaptError)
+                .with.property('code', EnvaptErrorCodes.InvalidUserDefinedConfig);
         });
 
         it('returns the typed value when required is paired with a converter', () => {

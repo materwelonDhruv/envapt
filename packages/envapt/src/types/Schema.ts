@@ -12,8 +12,9 @@ type SchemaMustBeSync =
 type SchemaConstraint<Schema extends StandardSchemaV1> =
     ReturnType<Schema['~standard']['validate']> extends Promise<unknown> ? SchemaMustBeSync : Schema;
 
-type SpecSchemaConstraint<Spec> = {
-    [K in keyof Spec]: Spec[K] extends StandardSchemaV1 ? SchemaConstraint<Spec[K]> : Spec[K];
-};
+// a naked type parameter checks each member of a union field on its own
+type FieldConstraint<Field> = Field extends StandardSchemaV1 ? SchemaConstraint<Field> : Field;
+
+type SpecSchemaConstraint<Spec> = { [K in keyof Spec]: FieldConstraint<Spec[K]> };
 
 export type { SchemaConstraint, SpecSchemaConstraint };
