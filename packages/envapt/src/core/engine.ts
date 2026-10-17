@@ -188,7 +188,7 @@ export function determineEnvironment(): void {
 // arrows because readPrimitive reads templateResolver, which is assigned below
 const envService: EnvapterService = {
     getRaw: (key) => resolveKeyInput(key).value,
-    get: (key, def) => readPrimitive<string, string | undefined>(key, 'string', def)
+    get: (key, fallback) => readPrimitive<string, string | undefined>(key, 'string', fallback)
 };
 
 const templateResolver: TemplateResolver = new TemplateResolver(envService);
@@ -197,13 +197,13 @@ export const valueConverter: ValueConverter = new ValueConverter(envService);
 export function readPrimitive<EnvVarReturnType, DefaultType extends EnvVarReturnType | undefined = undefined>(
     key: EnvKeyInput,
     type: 'string' | 'number' | 'boolean' | 'bigint',
-    def?: DefaultType
+    fallback?: DefaultType
 ): ConditionalReturn<EnvVarReturnType, DefaultType> {
     const { key: resolvedKey, value } = resolveKeyInput(key);
     if (isMissing(value)) {
-        if (def !== undefined) debugWarn(`${resolvedKey} is missing or empty, using fallback ${String(def)}`);
+        if (fallback !== undefined) debugWarn(`${resolvedKey} is missing or empty, using fallback ${String(fallback)}`);
         else debugWarn(`${resolvedKey} is missing or empty`);
-        return def as ConditionalReturn<EnvVarReturnType, DefaultType>;
+        return fallback as ConditionalReturn<EnvVarReturnType, DefaultType>;
     }
 
     const parsed = templateResolver.resolveTemplate(resolvedKey, String(value));
@@ -212,8 +212,10 @@ export function readPrimitive<EnvVarReturnType, DefaultType extends EnvVarReturn
 
     if (converted === undefined) {
         // leave the value out because env values can be secrets
-        debugVerbose(`could not convert ${resolvedKey} as ${type}${def !== undefined ? ', using the fallback' : ''}`);
-        return def as ConditionalReturn<EnvVarReturnType, DefaultType>;
+        debugVerbose(
+            `could not convert ${resolvedKey} as ${type}${fallback !== undefined ? ', using the fallback' : ''}`
+        );
+        return fallback as ConditionalReturn<EnvVarReturnType, DefaultType>;
     }
 
     return converted;
