@@ -55,9 +55,9 @@ export class NodeEnvapter extends Envapter {
     }
 
     /**
-     * Set a base directory that relative `.env` paths resolve against instead of
-     * `process.cwd()`: the auto-cascade, `Envapter.configureProfiles` paths, and relative
-     * `envPaths`. Absolute paths always bypass it. Pass a directory path (`import.meta.dirname`,
+     * Set the base directory that relative `.env` paths resolve against. Without one they resolve against
+     * `process.cwd()`. It covers the auto-cascade, `Envapter.configureProfiles` paths, and relative `envPaths`.
+     * Absolute paths always bypass it. Pass a directory path (`import.meta.dirname`,
      * or `__dirname` in CJS) or a module URL (`import.meta.url`) to resolve paths next to the
      * calling file regardless of launch directory.
      *
@@ -123,12 +123,12 @@ export class NodeEnvapter extends Envapter {
     }
 
     /**
-     * Reset all path-resolution configuration to defaults: clears any prior
-     * `Envapter.configureProfiles` call AND any explicit `Envapter.envPaths` assignment.
-     * Returns the resolver to the pure dotenv-flow cascade.
+     * Reset path resolution to defaults. Clears any `Envapter.configureProfiles` call, any explicit
+     * `Envapter.envPaths` assignment, and any environment set through `Envapter.environment`. The next read
+     * detects the environment from the env vars again and loads the pure dotenv-flow cascade.
      * @see {@link https://envapt.materwelon.dev/docs/environment#custom-profiles}
      */
-    static resetProfiles(): void {
+    static resetPaths(): void {
         state.profiles = undefined;
         state.envPaths = ['.env'];
         state.envPathsExplicitlySet = false;

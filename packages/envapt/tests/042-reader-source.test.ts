@@ -7,7 +7,7 @@ describe('a reader source reads one key at a time', () => {
     afterEach(() => {
         Envapter.useSource(new FileSource());
         Envapter.baseDir = undefined;
-        Envapter.resetProfiles();
+        Envapter.resetPaths();
     });
 
     // reads the debug level first so its ENVAPT_DEBUG lookup does not count as a tracked read

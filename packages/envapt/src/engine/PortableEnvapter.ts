@@ -37,7 +37,7 @@ export class PortableEnvapter extends Envapter {
         portableFileApiWrite('configureProfiles');
     }
 
-    static resetProfiles(): void {
-        portableFileApiWrite('resetProfiles');
+    static resetPaths(): void {
+        portableFileApiWrite('resetPaths');
     }
 }

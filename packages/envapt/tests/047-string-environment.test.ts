@@ -5,7 +5,7 @@ import { Envapter, FileSource, PortableSource } from '../src';
 describe('string Environment (v9)', () => {
     afterEach(() => {
         Envapter.useSource(new FileSource());
-        Envapter.resetProfiles();
+        Envapter.resetPaths();
     });
 
     it('reads the environment as its lowercase name', () => {

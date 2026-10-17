@@ -145,7 +145,7 @@ For a source that reads one key at a time and cannot list its keys, pass a `(key
 
 `merge(...members)` composes several sources, last-wins across their `readVars()` snapshots. A member may be a `(key) => string | undefined` reader, which fills a key missing from every snapshot. At most one member is filesystem-backed, and the `.env` cascade and file APIs route to it. `merge` throws `EnvaptError` `InvalidMergedSource` with no members or more than one file-backed member.
 
-The portable build (Workers, the browser, edge runtimes) has no filesystem. The file-only config APIs (`envPaths`, `baseDir`, `envFileOptions`, `configureProfiles`, `resetProfiles`) warn once and no-op by default. Set `Envapter.fileApiMode = 'throw'` to make them throw `EnvaptError` `FileApiUnsupported`. A read before `useSource` throws `NoSourceBound` regardless of `fileApiMode`.
+The portable build (Workers, the browser, edge runtimes) has no filesystem. The file-only config APIs (`envPaths`, `baseDir`, `envFileOptions`, `configureProfiles`, `resetPaths`) warn once and no-op by default. Set `Envapter.fileApiMode = 'throw'` to make them throw `EnvaptError` `FileApiUnsupported`. A read before `useSource` throws `NoSourceBound` regardless of `fileApiMode`.
 
 ## Loading .env files
 

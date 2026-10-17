@@ -16,7 +16,7 @@ describe('profiles: dotenv-flow auto-cascade', () => {
     };
 
     beforeEach(() => {
-        Envapter.resetProfiles();
+        Envapter.resetPaths();
         Envapter.environment = Environment.Development;
     });
 
@@ -27,14 +27,14 @@ describe('profiles: dotenv-flow auto-cascade', () => {
             if (value === undefined) Reflect.deleteProperty(process.env, key);
             else process.env[key] = value;
         }
-        Envapter.resetProfiles();
+        Envapter.resetPaths();
     });
 
     it('loads only `.env` when no other cascade files exist', () => {
         process.chdir(resolve(import.meta.dirname, 'cascade-fixtures', 'default'));
         process.env.NODE_ENV = 'development';
         Envapter.environment = Environment.Development;
-        Envapter.resetProfiles(); // chdir alone doesn't invalidate the data cache
+        Envapter.resetPaths(); // chdir alone doesn't invalidate the data cache
 
         expect(Envapter.get('CASCADE_KEY')).to.equal('base');
         expect(Envapter.get('BASE_ONLY')).to.equal('set-by-dot-env');
@@ -44,7 +44,7 @@ describe('profiles: dotenv-flow auto-cascade', () => {
         process.chdir(resolve(import.meta.dirname, 'cascade-fixtures', 'all-layers'));
         process.env.NODE_ENV = 'development';
         Envapter.environment = Environment.Development;
-        Envapter.resetProfiles();
+        Envapter.resetPaths();
 
         // .env.development.local wins where it sets a key
         expect(Envapter.get('CASCADE_KEY')).to.equal('dev-local');
@@ -71,11 +71,11 @@ describe('profiles: dotenv-flow auto-cascade', () => {
         process.chdir(resolve(import.meta.dirname, 'cascade-fixtures', 'all-layers'));
 
         process.env.NODE_ENV = 'development';
-        Envapter.resetProfiles();
+        Envapter.resetPaths();
         expect(Envapter.get('CASCADE_KEY')).to.equal('dev-local'); // hits .env.development.local
 
         process.env.NODE_ENV = 'production';
-        Envapter.resetProfiles();
+        Envapter.resetPaths();
         expect(Envapter.get('CASCADE_KEY')).to.equal('prod'); // hits .env.production (no .local for prod)
         expect(Envapter.get('ONLY_PROD')).to.equal('prod');
         expect(Envapter.get('ONLY_DEV')).to.be.undefined; // dev file not in cascade for prod
@@ -83,7 +83,7 @@ describe('profiles: dotenv-flow auto-cascade', () => {
 
     it('loads the new environment files when Envapter.environment is set after the cache is built', () => {
         process.chdir(resolve(import.meta.dirname, 'cascade-fixtures', 'all-layers'));
-        Envapter.resetProfiles();
+        Envapter.resetPaths();
         expect(Envapter.get('CASCADE_KEY')).to.equal('dev-local');
 
         Envapter.environment = Environment.Production;
@@ -97,7 +97,7 @@ describe('profiles: dotenv-flow auto-cascade', () => {
         // the default fixture has only .env
         process.chdir(resolve(import.meta.dirname, 'cascade-fixtures', 'default'));
         Envapter.environment = Environment.Development;
-        Envapter.resetProfiles();
+        Envapter.resetPaths();
 
         expect(() => Envapter.get('CASCADE_KEY')).to.not.throw();
         expect(Envapter.get('CASCADE_KEY')).to.equal('base');
@@ -106,7 +106,7 @@ describe('profiles: dotenv-flow auto-cascade', () => {
     it('reads process.env.NODE_ENV when Envapter.environment was never explicitly set', () => {
         process.chdir(resolve(import.meta.dirname, 'cascade-fixtures', 'all-layers'));
         process.env.NODE_ENV = 'production';
-        Envapter.resetProfiles(); // also clears the environment
+        Envapter.resetPaths(); // also clears the environment
 
         expect(Envapter.get('CASCADE_KEY')).to.equal('prod');
         expect(Envapter.get('ONLY_PROD')).to.equal('prod');
@@ -115,7 +115,7 @@ describe('profiles: dotenv-flow auto-cascade', () => {
     it('maps process.env.NODE_ENV=staging to Environment.Staging', () => {
         process.chdir(resolve(import.meta.dirname, 'cascade-fixtures', 'all-layers'));
         process.env.NODE_ENV = 'staging';
-        Envapter.resetProfiles();
+        Envapter.resetPaths();
 
         expect(Envapter.get('CASCADE_KEY')).to.equal('staging');
         expect(Envapter.get('ONLY_STAGING')).to.equal('staging');
@@ -126,7 +126,7 @@ describe('profiles: dotenv-flow auto-cascade', () => {
         process.env.ENVIRONMENT = 'production';
         process.env.ENV = 'staging';
         process.env.NODE_ENV = 'development';
-        Envapter.resetProfiles();
+        Envapter.resetPaths();
 
         try {
             expect(Envapter.get('CASCADE_KEY')).to.equal('prod');
@@ -141,7 +141,7 @@ describe('profiles: dotenv-flow auto-cascade', () => {
         delete process.env.ENVIRONMENT;
         process.env.ENV = 'staging';
         process.env.NODE_ENV = 'development';
-        Envapter.resetProfiles();
+        Envapter.resetPaths();
 
         try {
             expect(Envapter.get('CASCADE_KEY')).to.equal('staging');
@@ -156,7 +156,7 @@ describe('profiles: dotenv-flow auto-cascade', () => {
         delete process.env.ENV;
         delete process.env.NODE_ENV;
         delete process.env.MODE;
-        Envapter.resetProfiles();
+        Envapter.resetPaths();
 
         expect(Envapter.get('CASCADE_KEY')).to.equal('dev-local');
     });
@@ -164,7 +164,7 @@ describe('profiles: dotenv-flow auto-cascade', () => {
     it('falls back to development for an unrecognized environment value', () => {
         process.chdir(resolve(import.meta.dirname, 'cascade-fixtures', 'all-layers'));
         process.env.ENVIRONMENT = 'qa';
-        Envapter.resetProfiles();
+        Envapter.resetPaths();
 
         expect(Envapter.get('CASCADE_KEY')).to.equal('dev-local');
     });

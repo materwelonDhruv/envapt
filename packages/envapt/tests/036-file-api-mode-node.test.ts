@@ -13,7 +13,7 @@ describe('Envapter.fileApiMode (node build)', () => {
     afterEach(() => {
         Envapter.fileApiMode = 'warn';
         Envapter.useSource(new FileSource());
-        Envapter.resetProfiles();
+        Envapter.resetPaths();
     });
 
     it('defaults to warn', () => {

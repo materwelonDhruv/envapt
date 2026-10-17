@@ -13,7 +13,7 @@ describe('portable file-API behavior', () => {
         expect(Envapter.baseDir).toBeUndefined();
         expect(Envapter.envFileOptions).toEqual({});
         expect(() => Envapter.configureProfiles({ useDefaults: false })).not.toThrow();
-        expect(() => Envapter.resetProfiles()).not.toThrow();
+        expect(() => Envapter.resetPaths()).not.toThrow();
     });
 
     it('restores FileApiUnsupported on every file API under throw mode', () => {
@@ -34,7 +34,7 @@ describe('portable file-API behavior', () => {
             Envapter.envFileOptions = {};
         });
         throws306(() => Envapter.configureProfiles({ useDefaults: false }));
-        throws306(() => Envapter.resetProfiles());
+        throws306(() => Envapter.resetPaths());
     });
 
     // a fresh module graph starts with an empty warned set and no NodeEnvapter sink

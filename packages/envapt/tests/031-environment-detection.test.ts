@@ -5,7 +5,7 @@ import { Environment, Envapter, FileSource, PortableSource } from '../src';
 describe('Environment detection (v5.2)', () => {
     afterEach(() => {
         Envapter.useSource(new FileSource());
-        Envapter.resetProfiles();
+        Envapter.resetPaths();
         Envapter.strict = false;
     });
 

@@ -241,12 +241,12 @@ describe('Debug mode (v5)', () => {
             Envapter.debug = 'verbose';
             const capture = captureStderr();
             try {
-                Envapter.resetProfiles();
+                Envapter.resetPaths();
                 Envapter.configureProfiles({ useDefaults: false });
                 expect(capture.lines.some((l) => l.includes('effective .env paths: (none)'))).to.equal(true);
             } finally {
                 capture.restore();
-                Envapter.resetProfiles();
+                Envapter.resetPaths();
                 Envapter.envPaths = resolve(import.meta.dirname, '.env.debug-mode');
             }
         });

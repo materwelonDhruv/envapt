@@ -15,7 +15,7 @@ const WARN_READS: Record<(typeof ACCESSOR_APIS)[number], unknown> = {
     baseDir: undefined,
     envFileOptions: {}
 };
-const METHOD_APIS = ['configureProfiles', 'resetProfiles'] as const;
+const METHOD_APIS = ['configureProfiles', 'resetPaths'] as const;
 const FILE_APIS = [...ACCESSOR_APIS, ...METHOD_APIS] as const;
 
 // the quotes keep a prose mention of node:fs from matching
