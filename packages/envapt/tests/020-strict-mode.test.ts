@@ -1,5 +1,6 @@
 import { resolve } from 'node:path';
 
+import { type as ark } from 'arktype';
 import { afterEach, beforeAll, describe, expect, expectTypeOf, it } from 'vitest';
 
 import { Converters, Envapter, EnvaptErrorCodes } from '../src';
@@ -127,7 +128,7 @@ describe('Strict mode + required (v5)', () => {
             static readonly url: URL;
         }
 
-        // both keys absent so the required throw runs the `Array.isArray(key)` arm of formatKeyForError
+        // both keys absent so the error message lists the whole key list
         class RequiredArrayKeyAllMissing {
             @Envapt(['NEVER_SET_KEY', 'ALSO_NEVER_SET'], { required: true })
             static readonly key: string;
@@ -161,6 +162,77 @@ describe('Strict mode + required (v5)', () => {
             expect(() => RequiredWhitespaceStrict.key)
                 .to.throw(EnvaptError)
                 .with.property('code', EnvaptErrorCodes.MissingEnvValue);
+        });
+
+        it('throws InvalidEnvValue when the converter cannot convert a present value', () => {
+            class RequiredUnconvertible {
+                @Envapt('API_KEY', { converter: Converters.Number, required: true })
+                static readonly key: number;
+            }
+            expect(() => RequiredUnconvertible.key)
+                .to.throw(EnvaptError)
+                .with.property('code', EnvaptErrorCodes.InvalidEnvValue);
+        });
+
+        it('converts through a primitive constructor and throws InvalidEnvValue when it cannot', () => {
+            class RequiredNumber {
+                @Envapt('SET_NUMBER', { converter: Number, required: true })
+                static readonly count: number;
+
+                @Envapt('API_KEY', { converter: Number, required: true })
+                static readonly notANumber: number;
+            }
+            expect(RequiredNumber.count).to.equal(42);
+            expect(() => RequiredNumber.notANumber)
+                .to.throw(EnvaptError)
+                .with.property('code', EnvaptErrorCodes.InvalidEnvValue);
+        });
+
+        it('throws InvalidEnvValue when a custom converter returns null', () => {
+            class RequiredLookup {
+                @Envapt('API_KEY', { converter: (): URL | null => null, required: true })
+                static readonly endpoint: URL | null;
+            }
+            expect(() => RequiredLookup.endpoint)
+                .to.throw(EnvaptError)
+                .with.property('code', EnvaptErrorCodes.InvalidEnvValue);
+        });
+
+        it('reports an error thrown by a custom converter as an issue', () => {
+            const parseRegion = (): string => {
+                throw new RangeError('unknown region');
+            };
+            class RequiredRegion {
+                @Envapt('API_KEY', { converter: parseRegion, required: true })
+                static readonly region: string;
+            }
+            let thrown: unknown;
+            try {
+                void RequiredRegion.region;
+            } catch (err) {
+                thrown = err;
+            }
+            expect(thrown).to.be.instanceOf(EnvaptError);
+            expect((thrown as EnvaptError).issues).to.deep.equal([{ message: 'unknown region', path: ['API_KEY'] }]);
+        });
+
+        it('throws InvalidEnvValue for a bad array element', () => {
+            class RequiredPorts {
+                @Envapt('API_KEY', { converter: Converters.array({ of: Converters.Port }), required: true })
+                static readonly ports: number[];
+            }
+            expect(() => RequiredPorts.ports)
+                .to.throw(EnvaptError)
+                .with.property('code', EnvaptErrorCodes.InvalidEnvValue);
+        });
+
+        it('calls a callable schema passed as converter as a plain function', () => {
+            const integer = ark('string.integer.parse');
+            class RequiredInteger {
+                @Envapt('API_KEY', { converter: integer, required: true })
+                static readonly value: unknown;
+            }
+            expect(String(RequiredInteger.value)).to.equal(String(Envapter.getWith('API_KEY', integer)));
         });
 
         it('returns the typed value when required is paired with a converter', () => {

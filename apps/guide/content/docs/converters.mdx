@@ -24,7 +24,7 @@ const retries = Envapter.getWith('RETRIES', (raw, fallback) => (raw ? Number(raw
 | Token | Returns | Parsed from |
 | --- | --- | --- |
 | `Converters.String` | `string` | the raw value, unchanged |
-| `Converters.Number` | `number` | `Number(raw)`; `NaN` uses the fallback |
+| `Converters.Number` | `number` | `Number(raw)`. `NaN` uses the fallback |
 | `Converters.Integer` | `number` | `Number(raw)`, must be a safe integer |
 | `Converters.Float` | `number` | `Number(raw)`, `NaN` uses the fallback |
 | `Converters.Boolean` | `boolean` | `1`/`yes`/`true`/`on` and `0`/`no`/`false`/`off` |
@@ -87,7 +87,7 @@ const flags = Envapter.getUsing('FEATURE_FLAGS', Converters.Json, {});
 
 ## URL, RegExp, Date
 
-`Url` builds a `URL`, so the value must be absolute; a relative path throws inside the constructor and returns the fallback.
+`Url` builds a `URL`, which needs an absolute value. A relative path makes the constructor throw, and the read returns the fallback.
 
 `Regexp` reads a `/pattern/flags` literal (flags limited to `g i m s u v y`). A value without the surrounding slashes is treated as the whole pattern with no flags.
 
@@ -109,7 +109,7 @@ const released = Envapter.getUsing('RELEASED_AT', Converters.Date);
 
 ## Time and durations
 
-`Time` reads a duration and returns it in **milliseconds**. The raw value takes a number with an optional unit; a bare number is milliseconds.
+`Time` reads a duration and returns it in **milliseconds**. The raw value takes a number with an optional unit. A bare number is milliseconds.
 
 ```ts twoslash
 import { Envapter, Converters } from 'envapt';
@@ -159,12 +159,13 @@ const upstreams = Envapter.getUsing('UPSTREAMS', Converters.array({ of: toUpstre
 //    ^?
 ```
 
-Empty elements are dropped in normal mode. Under [strict mode](/docs/strict-mode) an empty element (a trailing comma, say) throws `EnvaptError` with code `EmptyArrayElement` instead of being filtered out.
+Normal mode skips empty elements. Under [strict mode](/docs/strict-mode) an empty element (a trailing comma, say) throws `EnvaptError` with code `EmptyArrayElement`.
 
 <Callout type="danger">
-    Under strict mode these throws come from env data, not your code. A trailing comma in a deployed `.env` throws
-    `EmptyArrayElement` at read time, and an element your converter maps to `undefined` throws
-    `ArrayElementConversionFailed`. A stray comma can stop startup.
+    Bad env data causes these throws. Under strict mode, a trailing comma in a deployed `.env` throws
+    `EmptyArrayElement` at read time, so a stray comma can stop startup. In any mode, an element your converter
+    maps to `undefined` throws `ArrayElementConversionFailed`. `getRequired` and `getRequiredAll` report both as an
+    issue on `InvalidEnvValue`.
 </Callout>
 
 ## Custom converters
@@ -188,7 +189,7 @@ For a single array element you supply a `(raw: string) => T` function to `array(
 
 ## Require a converted value
 
-Both readers take an options form that throws on a missing value instead of returning a fallback.
+`getRequired` throws `MissingEnvValue` on a missing value and `InvalidEnvValue` on a value the converter can't convert.
 
 ```ts twoslash
 import { Envapter, Converters } from 'envapt';

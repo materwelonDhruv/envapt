@@ -1,11 +1,9 @@
-import { ValueConverter } from '../converters';
-import { isMissing } from '../core/missing';
+import { Converters } from '../converters';
+import { readRequired, readSchema, valueConverter } from '../core/engine';
 import { cache } from '../core/state';
-import { Envapter } from '../engine/Envapter';
-import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
 
 import type { StandardSchemaV1 } from '../infra/StandardSchema';
-import type { EnvaptConverter, EnvKeyInput } from '../types';
+import type { EnvaptConverter, EnvKeyInput, RequiredConverter } from '../types';
 
 export interface DecoratorConfig<TFallback> {
     fallback: TFallback | undefined;
@@ -13,10 +11,6 @@ export interface DecoratorConfig<TFallback> {
     hasFallback: boolean;
     required: boolean;
     schema: StandardSchemaV1 | undefined;
-}
-
-function formatKeyForError(key: EnvKeyInput): string {
-    return Array.isArray(key) ? `[${key.join(', ')}]` : String(key);
 }
 
 const classIds = new WeakMap<object, number>();
@@ -42,23 +36,14 @@ export function resolveDecoratorValue<TFallback>(
     // has() because a resolved value can be undefined
     if (cache.has(cacheKey)) return cache.get(cacheKey) as TFallback | undefined;
 
-    const envapter = new Envapter();
-
-    if (required && schema === undefined) {
-        const rawValue = envapter.getRaw(key);
-        if (isMissing(rawValue)) {
-            throw new EnvaptError(
-                EnvaptErrorCodes.MissingEnvValue,
-                `Required environment variable "${formatKeyForError(key)}" is missing or empty.`
-            );
-        }
+    let value: TFallback | undefined;
+    if (schema !== undefined) {
+        value = readSchema(key, schema, fallback, hasFallback) as TFallback;
+    } else if (required) {
+        value = readRequired(key, (converter ?? Converters.String) as RequiredConverter) as TFallback;
+    } else {
+        value = valueConverter.convertValue(key, fallback, converter, hasFallback);
     }
-
-    const valueConverter = new ValueConverter(envapter);
-    const value =
-        schema !== undefined
-            ? (valueConverter.convertWithSchema(key, schema, fallback, hasFallback) as TFallback)
-            : valueConverter.convertValue(key, fallback, converter, hasFallback);
 
     cache.set(cacheKey, value);
     return value;

@@ -7,25 +7,33 @@ import { TemplateResolver } from '../engine/TemplateResolver';
 import { debugVerbose, debugWarn } from '../infra/Debug';
 import { loadDotenv } from '../infra/Dotenv';
 import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
+import { missingValue, validationFailed } from '../infra/failures';
 
-import type { ConditionalReturn, EnvKeyInput } from '../types';
+import type { ValidationCode } from '../infra/failures';
+import type { StandardSchemaV1 } from '../infra/StandardSchema';
+import type { ConditionalReturn, EnvKeyInput, PresentValue, RequiredConverter } from '../types';
 import type { EnvapterService } from '../types/Env';
 
-export function resolveKeyInput(keyInput: EnvKeyInput): { key: string; value: string | undefined } {
-    const keys = Array.isArray(keyInput) ? keyInput : [keyInput];
-    const normalizedKeys = keys as readonly string[];
+function toKeyList(keyInput: EnvKeyInput): readonly string[] {
+    const keys = (Array.isArray(keyInput) ? keyInput : [keyInput]) as readonly string[];
 
-    if (normalizedKeys.length === 0) {
+    if (keys.length === 0) {
         throw new EnvaptError(EnvaptErrorCodes.InvalidKeyInput, 'At least one environment key must be provided.');
     }
 
-    if (normalizedKeys.some((k) => typeof k !== 'string')) {
+    if (keys.some((k) => typeof k !== 'string')) {
         throw new EnvaptError(EnvaptErrorCodes.InvalidKeyInput, 'Environment keys must be strings.');
     }
 
-    if (normalizedKeys.some((k) => k.trim() === '')) {
+    if (keys.some((k) => k.trim() === '')) {
         throw new EnvaptError(EnvaptErrorCodes.InvalidKeyInput, 'Environment keys cannot be empty strings.');
     }
+
+    return keys;
+}
+
+export function resolveKeyInput(keyInput: EnvKeyInput): { key: string; value: string | undefined } {
+    const normalizedKeys = toKeyList(keyInput);
 
     // an empty value falls through to the next key and only comes back when every key is empty
     let firstPresent: { key: string; value: string } | undefined;
@@ -39,6 +47,47 @@ export function resolveKeyInput(keyInput: EnvKeyInput): { key: string; value: st
     return firstPresent ?? { key: normalizedKeys[0] as string, value: undefined };
 }
 
+export function findPresent(keyInput: EnvKeyInput): PresentValue | undefined {
+    const { key, value } = resolveKeyInput(keyInput);
+    if (value === undefined || isMissing(value)) return undefined;
+    return { key, value: templateResolver.resolveTemplate(key, value) };
+}
+
+export function readRequired(keyInput: EnvKeyInput, converter: RequiredConverter): unknown {
+    const present = findPresent(keyInput);
+    if (present === undefined) throw missingValue(keyInput);
+    return valueOrThrow(
+        EnvaptErrorCodes.InvalidEnvValue,
+        present.key,
+        valueConverter.readConverted(present, converter)
+    );
+}
+
+export function readSchema(
+    keyInput: EnvKeyInput,
+    schema: StandardSchemaV1,
+    fallback: unknown,
+    hasFallback: boolean
+): unknown {
+    // readPrimitive logs the missing-value warning
+    const value = readPrimitive<string, undefined>(keyInput, Primitive.String);
+    if (value === undefined) {
+        if (hasFallback) return fallback;
+        throw missingValue(keyInput);
+    }
+    const { key } = resolveKeyInput(keyInput);
+    return valueOrThrow(
+        EnvaptErrorCodes.SchemaValidationFailed,
+        key,
+        valueConverter.readValidated({ key, value }, schema)
+    );
+}
+
+function valueOrThrow(code: ValidationCode, key: string, outcome: StandardSchemaV1.Result<unknown>): unknown {
+    if (outcome.issues !== undefined) throw validationFailed(code, [key], outcome.issues);
+    return outcome.value;
+}
+
 export function ensureLoaded(): Map<string, unknown> {
     if (!state.cacheBuilt) {
         const source = state.source;
@@ -48,19 +97,14 @@ export function ensureLoaded(): Map<string, unknown> {
         let added = new Set<string>();
         if (source.supportsFiles) {
             debugVerbose(`base dir: ${state.baseDir ?? 'working directory'}`);
-            // outside the try because a missing profile path has to throw
             const effectivePaths = resolveEffectivePaths();
             debugVerbose(`effective .env paths: ${effectivePaths.length === 0 ? '(none)' : effectivePaths.join(', ')}`);
-            try {
-                added = loadDotenv({
-                    ...state.userDefinedEnvFileOptions,
-                    path: effectivePaths,
-                    processEnv: isolatedEnv,
-                    readFile: source.readFile.bind(source)
-                });
-            } catch (error) {
-                debugWarn(`failed to load .env: ${error instanceof Error ? error.message : String(error)}`);
-            }
+            added = loadDotenv({
+                ...state.userDefinedEnvFileOptions,
+                path: effectivePaths,
+                processEnv: isolatedEnv,
+                readFile: source.readFile.bind(source)
+            });
         }
         state.dotenvAddedKeys = added;
         for (const [key, value] of Object.entries(isolatedEnv)) cache.set(key, value);
@@ -163,7 +207,7 @@ const envService: EnvapterService = {
     get: (key, def) => readPrimitive<string, string | undefined>(key, Primitive.String, def)
 };
 
-export const templateResolver: TemplateResolver = new TemplateResolver(envService);
+const templateResolver: TemplateResolver = new TemplateResolver(envService);
 export const valueConverter: ValueConverter = new ValueConverter(envService);
 
 export function readPrimitive<EnvVarReturnType, DefaultType extends EnvVarReturnType | undefined = undefined>(

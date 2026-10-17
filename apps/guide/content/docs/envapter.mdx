@@ -36,7 +36,7 @@ const key = Envapter.getSymbol('KEY', Symbol.for('envapt:key')); // symbol
 
 ## Fallbacks shape the return type
 
-A fallback supplies the default value and removes `undefined` from the return type. With a fallback the return is `T`; without one it's `T | undefined`, so the type makes you handle the missing case.
+A fallback supplies the default value and removes `undefined` from the return type. With a fallback the return is `T`. Without one it's `T | undefined`, which makes you handle the missing case.
 
 ```ts twoslash
 import { Envapter } from 'envapt';
@@ -50,7 +50,7 @@ const noFallback = Envapter.get('API_URL');
 
 ## Ordered keys
 
-Any reader accepts an ordered list of keys instead of a single name. The first key with a present value wins, so an aliased or renamed variable falls back to its old name in one read. An empty value, or a whitespace-only value under strict, is skipped like an unset key.
+Any reader also accepts an ordered list of keys. The first key with a present value wins, so an aliased or renamed variable falls back to its old name in one read. An empty value, or a whitespace-only value under strict, is skipped like an unset key.
 
 ```ts twoslash
 import { Envapter } from 'envapt';
@@ -111,13 +111,16 @@ See [Templates](/docs/templates) for `${VAR}` interpolation and cycle protection
 
 ## Fail-fast on missing values
 
-`require` asserts that one or more keys are present and non-empty after template resolution, throwing an `EnvaptError` that names every missing key. A whitespace-only value counts as missing only under strict mode.
+`require` asserts that one or more keys are present and non-empty after template resolution, throwing an `EnvaptError` that lists every missing key. A whitespace-only value counts as missing only under strict mode.
 
 ```ts twoslash
 import { Envapter } from 'envapt';
 // ---cut---
 // Assuring all three keys are present at the start of the program, for example
 Envapter.require('DATABASE_URL', 'API_KEY', 'SENTRY_DSN');
+
+// An ordered key list passes when any of its keys has a value
+Envapter.require(['READONLY_URL', 'DATABASE_URL'], 'API_KEY');
 ```
 
 `has` returns `boolean` with the same missing semantics as `getRequired`. An ordered key list falls through to the first present key. It returns `true` exactly when a required read of the same key would find a value.
@@ -139,15 +142,17 @@ const url = Envapter.getRequired('DATABASE_URL', Converters.Url);
 //    ^?
 ```
 
-`getRequiredAll` reads a whole group in one call and returns a typed record, throwing once with every missing key. A spec value is a token, an `array()` token, or a custom parser, and an optional casing (`'camelCase'`, `'PascalCase'`, or `'kebab-case'`) renames the keys. Casing splits on underscores, so it expects the conventional `SCREAMING_SNAKE` env-var names:
+`getRequiredAll` reads a whole group in one call and returns a typed record, throwing once with every missing key. A spec value is a token, an `array()` token, a custom parser, or a synchronous [Standard Schema](/docs/standard-schema#validate-a-group-of-required-variables). An optional casing (`'camelCase'`, `'PascalCase'`, or `'kebab-case'`) renames the keys. Casing splits on underscores, so it expects the conventional `SCREAMING_SNAKE` env-var names:
 
 ```ts twoslash
+import { z } from 'zod/v4';
 import { Envapter, Converters } from 'envapt';
 // ---cut---
 const config = Envapter.getRequiredAll(
     {
         DATABASE_URL: Converters.Url,
         PORT: Converters.Port,
+        LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']),
         FEATURE_FLAGS: (raw) => new Set(raw.split(','))
     },
     'camelCase'
@@ -157,12 +162,14 @@ config;
 // ^?
 ```
 
-They throw on a missing value instead of returning a fallback. See [Strict mode](/docs/strict-mode) for the global switch and how required reads relate to it.
+A required read always throws on a missing value. For a value with a default, pass a fallback to `get` or `getUsing`. See [Strict mode](/docs/strict-mode) for the global switch and how required reads relate to it.
 
 <Callout type="danger">
-    `require`, `getRequired`, and `getRequiredAll` throw `EnvaptError` for a missing or empty key (or, under strict mode, a whitespace-only one). `require` and `getRequiredAll` collect every missing key into one error.
+    `require`, `getRequired`, and `getRequiredAll` throw `EnvaptError` for a missing or empty key (or, under strict mode, a whitespace-only one). `require` and `getRequiredAll` collect every missing key into one error. envapt never runs a schema for a missing key in `getRequiredAll`, so a schema default such as zod's `.default()` does not apply there.
 
-    Best to call `require` and `getRequiredAll` at startup, not lazily inside a request path, so a missing value fails the boot rather than a live request.
+    A present value that can't be converted or validated throws `InvalidEnvValue`. A bad array element and an error your custom parser or schema throws become issues on that error. `getRequiredAll` throws one for all its bad values.
+
+    Best to call `require` and `getRequiredAll` at startup. A missing value then stops the app at boot, and so does a bad one in `getRequiredAll`.
 
 </Callout>
 

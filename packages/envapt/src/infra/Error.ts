@@ -34,10 +34,15 @@ export enum EnvaptErrorCodes {
     ArrayElementConversionFailed = 206,
     /** Thrown under strict mode when an array element is empty or whitespace only */
     EmptyArrayElement = 207,
-    /** Thrown when a Standard Schema returns issues for a non-empty env value */
+    /** Thrown when `Envapter.parse` or `@Envapt({ schema })` gets a value its Standard Schema rejects */
     SchemaValidationFailed = 208,
     /** Thrown when a Standard Schema's `validate` itself throws (e.g. a refinement that crashes) */
     SchemaThrew = 209,
+    /**
+     * Thrown when a required read gets a value it can't convert, a bad array element, or an error from a custom
+     * parser or schema. `getRequiredAll` throws it once for all bad values, schema fields included.
+     */
+    InvalidEnvValue = 210,
 
     // Other errors
     /** Thrown when delimiter is missing in array converter configuration */
@@ -76,8 +81,9 @@ export class EnvaptError extends Error {
     /** The {@link EnvaptErrorCodes} value identifying what failed. */
     public readonly code: EnvaptErrorCodes;
     /**
-     * Populated only for {@link EnvaptErrorCodes.SchemaValidationFailed} (208). For every other
-     * code this is `undefined`. Lets callers do `if (err.code === 208) err.issues?.forEach(...)`
+     * Populated only for {@link EnvaptErrorCodes.SchemaValidationFailed} (208) and
+     * {@link EnvaptErrorCodes.InvalidEnvValue} (210). For every other code this is `undefined`.
+     * Lets callers do `if (err.code === 210) err.issues?.forEach(...)`
      * without a type cast.
      */
     public readonly issues: readonly StandardSchemaV1.Issue[] | undefined;

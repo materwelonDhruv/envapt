@@ -19,7 +19,7 @@ Three behaviors tighten when strict mode is on:
 
 1. **Whitespace counts as missing.** Normally only an unset variable or an empty string is missing. Under strict mode a value that is only whitespace is missing too, so it falls back the same way an unset variable would.
 2. **Unresolved templates throw.** A `${VAR}` reference that can't be resolved is left as literal text by default. Under strict mode it throws `EnvaptError` with code `MissingEnvValue`. The same applies to a missing key in the [`resolve`](/docs/templates#the-resolve-tagged-template) tagged template.
-3. **Empty array elements throw.** `Converters.array` drops empty elements by default. Under strict mode an empty element (a trailing comma, say) throws `EnvaptError` with code `EmptyArrayElement`.
+3. **Empty array elements throw.** `Converters.array` drops empty elements by default. Under strict mode an empty element (a trailing comma, say) throws `EnvaptError` with code `EmptyArrayElement`. A required read reports it as an issue on `InvalidEnvValue`.
 
 <Callout type="info">
     Strict mode is global and retroactive: the setter clears the cache, so the next read of any value re-runs under the
@@ -28,7 +28,7 @@ Three behaviors tighten when strict mode is on:
 
 ## Strict mode does not make every read throw
 
-A plain reader still returns the fallback (or `undefined`) for a missing value, even under strict mode. Strict mode changes how whitespace, templates, and array elements are treated; it does not turn every missing variable into a throw.
+A plain reader still returns the fallback (or `undefined`) for a missing value, even under strict mode. Strict mode changes how envapt treats whitespace, templates, and array elements.
 
 To fail fast on a specific value, use `require` or `getRequired`. These throw on an unset or empty value in any mode, and on a whitespace-only value under strict mode.
 

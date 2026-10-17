@@ -12,15 +12,13 @@
   <a href="https://www.npmjs.com/package/envapt"><img alt="downloads" src="https://img.shields.io/npm/dm/envapt?style=flat&color=f7f6e8&labelColor=103544&label=downloads"></a>
   <a href="https://jsr.io/@materwelon/envapt"><img alt="jsr" src="https://jsr.io/badges/@materwelon/envapt"></a>
   <img alt="CI" src="https://img.shields.io/github/actions/workflow/status/materwelonDhruv/envapt/checks.yml?branch=main&label=tests&style=flat&logo=github&color=3fb950&labelColor=103544">
+  <a href="https://codecov.io/github/materwelonDhruv/envapt"><img alt="codecov" src="https://img.shields.io/codecov/c/github/materwelonDhruv/envapt/main?token=IQ4GC645LO&logo=codecov&color=f01f7a&labelColor=103544"></a>
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/npm/l/envapt?style=flat&color=e97826&logo=apache&label="></a>
 </p>
 
 <br clear="left"/>
 
-envapt returns config as the type you asked for, with a fallback that removes `undefined` from the
-return type. It reads from whatever source you bind. On Node, Bun, and Deno that is `process.env`
-and your `.env` files, bound on import. On Cloudflare Workers, in the browser, or for a secrets
-object you fetched at boot, you bind the source with `Envapter.useSource(...)`.
+envapt returns config as the type you asked for, with a fallback that removes `undefined` from the return type. It reads from whatever source you bind. On Node, Bun, and Deno that is `process.env` and your `.env` files, bound on import. On Cloudflare Workers, in the browser, or for a secrets object you fetched at boot, you bind the source with `Envapter.useSource(...)`.
 
 ```ts
 import { Converters, Envapter } from 'envapt';
@@ -37,28 +35,17 @@ const { port, databaseUrl, cacheTtl, allowedOrigins } = Envapter.getRequiredAll(
 );
 ```
 
-Call that at startup and a missing value fails the boot, with one error naming every key that was
-missing. Reads with a fallback (`Envapter.getNumber('WORKERS', 4)`) never throw.
+Call that at startup and a missing or bad value stops the boot. One error lists every missing key, or every bad one. A read with a fallback, like `Envapter.getNumber('WORKERS', 4)`, returns the fallback for a missing value.
 
 **[Read the docs →](https://envapt.materwelon.dev)**
 
 ## What you get
 
-- **Typed values.** A fallback removes `undefined` from the return type. Built-in converters cover
-  numbers, integers, floats, booleans, bigint, symbols, JSON, URLs, regular expressions, dates,
-  durations, ports, emails, and arrays, or pass your own function or a Standard Schema validator
-  (zod, valibot, arktype).
-- **Any source.** A source is any object with a `readVars()` method, so you can bind `process.env`, a
-  Cloudflare Workers binding, a browser bundle, or a secrets payload you fetched from a store at boot.
-  On Node, Bun, and Deno one binds on import.
-- **Zero runtime dependencies.** The reader, converters, and built-in `.env` parser are self-contained,
-  so nothing is added to your dependency tree.
-- **Runs on Node, Bun, Deno, Cloudflare Workers, and the browser.** Node `>=20`, Bun `>=1.3.11`, Deno
-  `>=2.5` (ESM and CJS). The portable build resolves through the package `exports`
-  conditions.
-- **`.env` loading built in on Node.** The default Node source adds a per-environment file cascade,
-  `${VAR}` templates, and strict / required checks. Off Node there is no filesystem, so you bind
-  another source with `Envapter.useSource(...)` and read with the same typed API.
+- **Typed values.** A fallback removes `undefined` from the return type. Built-in converters cover numbers, integers, floats, booleans, bigint, symbols, JSON, URLs, regular expressions, dates, durations, ports, emails, and arrays, or pass your own function or a Standard Schema validator (zod, valibot, arktype).
+- **Any source.** A source is any object with a `readVars()` method, so you can bind `process.env`, a Cloudflare Workers binding, a browser bundle, or a secrets payload you fetched from a store at boot. On Node, Bun, and Deno one binds on import.
+- **Zero runtime dependencies.** The reader, converters, and built-in `.env` parser are self-contained, so nothing is added to your dependency tree.
+- **Runs on Node, Bun, Deno, Cloudflare Workers, and the browser.** Node `>=20`, Bun `>=1.3.11`, Deno `>=2.5` (ESM and CJS). The portable build resolves through the package `exports` conditions.
+- **`.env` loading built in on Node.** The default Node source adds a per-environment file cascade, `${VAR}` templates, and strict / required checks. Off Node there is no filesystem, so you bind another source with `Envapter.useSource(...)` and read with the same typed API.
 
 ## Install
 
@@ -72,13 +59,11 @@ deno add jsr:@materwelon/envapt
 
 ## Quick start
 
-Read values functionally with `Envapter`, or bind them to class fields with the `@Envapt` decorator.
-Both share the same parsing, converters, and cache.
+Read values functionally with `Envapter`, or bind them to class fields with the `@Envapt` decorator. Both share the same parsing, converters, and cache.
 
 ### Functional
 
-Read a value from any call site, in JavaScript or TypeScript. No build step. On Node the source is
-bound for you. On Workers and in the browser, call `Envapter.useSource(...)` first.
+Read a value from any call site, in JavaScript or TypeScript. No build step. On Node the source is bound for you. On Workers and in the browser, call `Envapter.useSource(...)` first.
 
 ```ts
 import { Converters, Envapter } from 'envapt';
@@ -88,8 +73,7 @@ const maxRetries = Envapter.getNumber('MAX_RETRIES', 3);
 const debug = Envapter.getBoolean('DEBUG', false);
 ```
 
-On Cloudflare Workers, `env` is importable at module scope, so bind it once in a config module, and in
-the browser seed a `PortableSource` from the object your bundler injects.
+On Cloudflare Workers, `env` is importable at module scope, so bind it once in a config module, and in the browser seed a `PortableSource` from the object your bundler injects.
 
 ```ts
 import { env } from 'cloudflare:workers';

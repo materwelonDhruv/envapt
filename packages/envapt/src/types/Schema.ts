@@ -12,4 +12,8 @@ type SchemaMustBeSync =
 type SchemaConstraint<Schema extends StandardSchemaV1> =
     ReturnType<Schema['~standard']['validate']> extends Promise<unknown> ? SchemaMustBeSync : Schema;
 
-export type { SchemaConstraint };
+type SpecSchemaConstraint<Spec> = {
+    [K in keyof Spec]: Spec[K] extends StandardSchemaV1 ? SchemaConstraint<Spec[K]> : Spec[K];
+};
+
+export type { SchemaConstraint, SpecSchemaConstraint };
