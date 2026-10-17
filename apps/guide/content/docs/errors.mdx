@@ -3,7 +3,7 @@ title: Errors
 description: Every EnvaptError code, what throws it, and how to catch and narrow on it.
 ---
 
-When envapt rejects a value or a configuration, it throws an `EnvaptError`. The error carries a numeric `code` from the `EnvaptErrorCodes` enum, so you can branch on the exact cause.
+When envapt rejects a value or a configuration, it throws an `EnvaptError`. The error carries a numeric `code` from the `EnvaptErrorCodes` object, so you can branch on the exact cause.
 
 ```ts twoslash
 import { Envapter, EnvaptError, EnvaptErrorCodes, Converters } from 'envapt';
@@ -27,7 +27,7 @@ An unset `PORT` throws `MissingEnvValue`. A `PORT` of `99999` throws `InvalidEnv
 
 `EnvaptError` extends `Error` with:
 
-- `code`: the `EnvaptErrorCodes` member.
+- `code`: one of the `EnvaptErrorCodes` values.
 - `name`: set to `` `EnvaptError [<code>]` `` (e.g. `EnvaptError [305]`).
 - `message`: a human-readable description.
 - `issues`: one entry per problem, each with a `message` and a `path` that starts with the env key. Populated **only** for `SchemaValidationFailed` (208) and `InvalidEnvValue` (210). It is `undefined` for every other code.
@@ -86,7 +86,7 @@ An unset `PORT` throws `MissingEnvValue`. A `PORT` of `99999` throws `InvalidEnv
 {/* prettier-ignore-end */}
 
 <Callout type="info">
-    `issues` is set only for `SchemaValidationFailed` (208) and `InvalidEnvValue` (210), so you can read
-    `error.issues` after checking either code without a cast. See [Standard Schema](/docs/standard-schema) for where
-    208 and 209 come from.
+    `issues` is set only for `SchemaValidationFailed` (208) and `InvalidEnvValue` (210), so you can read `error.issues`
+    after checking either code without a cast. See [Standard Schema](/docs/standard-schema) for where 208 and 209 come
+    from.
 </Callout>

@@ -21,7 +21,7 @@ export function missingValues(keys: readonly EnvKeyInput[]): EnvaptError {
     );
 }
 
-export type ValidationCode = EnvaptErrorCodes.SchemaValidationFailed | EnvaptErrorCodes.InvalidEnvValue;
+export type ValidationCode = typeof EnvaptErrorCodes.SchemaValidationFailed | typeof EnvaptErrorCodes.InvalidEnvValue;
 
 // issue messages can quote a secret value
 export function validationFailed(

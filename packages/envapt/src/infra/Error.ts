@@ -1,4 +1,3 @@
-/* eslint-disable no-magic-numbers */
 import type { StandardSchemaV1 } from './StandardSchema';
 
 /**
@@ -6,62 +5,68 @@ import type { StandardSchemaV1 } from './StandardSchema';
  * and configuration (3xx) failures.
  * @see {@link https://envapt.materwelon.dev/docs/errors#codes}
  */
-export enum EnvaptErrorCodes {
+export const EnvaptErrorCodes = {
     // Fallback related errors
     /** Thrown when an invalid fallback value is provided */
-    InvalidFallback = 101,
+    InvalidFallback: 101,
     /** Thrown when fallback value type doesn't match expected converter type */
-    InvalidFallbackType = 102,
+    InvalidFallbackType: 102,
     /** Thrown when array fallback contains elements of wrong type */
-    ArrayFallbackElementTypeMismatch = 103,
+    ArrayFallbackElementTypeMismatch: 103,
     /** Thrown when fallback type doesn't match the specified converter */
-    FallbackConverterTypeMismatch = 104,
+    FallbackConverterTypeMismatch: 104,
     /** Thrown when a time-string fallback is malformed (does not match the required `<number><unit>` format) */
-    MalformedTimeFallback = 105,
+    MalformedTimeFallback: 105,
 
     // Converter related errors
     /** Thrown when invalid array converter configuration is provided */
-    InvalidArrayConverterType = 201,
+    InvalidArrayConverterType: 201,
     /** Thrown when an invalid built-in converter is specified */
-    InvalidBuiltInConverter = 202,
+    InvalidBuiltInConverter: 202,
     /** Thrown when a custom converter is not a function */
-    InvalidCustomConverter = 203,
+    InvalidCustomConverter: 203,
     /** Thrown when converter type is not recognized */
-    InvalidConverterType = 204,
+    InvalidConverterType: 204,
     /** Thrown when primitive type coercion on fallback value fails */
-    PrimitiveCoercionFailed = 205,
+    PrimitiveCoercionFailed: 205,
     /** Thrown when an array element fails to convert to the configured element type */
-    ArrayElementConversionFailed = 206,
+    ArrayElementConversionFailed: 206,
     /** Thrown under strict mode when an array element is empty or whitespace only */
-    EmptyArrayElement = 207,
+    EmptyArrayElement: 207,
     /** Thrown when `Envapter.parse` or `@Envapt({ schema })` gets a value its Standard Schema rejects */
-    SchemaValidationFailed = 208,
+    SchemaValidationFailed: 208,
     /** Thrown when a Standard Schema's `validate` itself throws (e.g. a refinement that crashes) */
-    SchemaThrew = 209,
+    SchemaThrew: 209,
     /**
      * Thrown when a required read gets a value it can't convert, a bad array element, or an error from a custom
      * parser or schema. `getRequiredAll` throws it once for all bad values, schema fields included.
      */
-    InvalidEnvValue = 210,
+    InvalidEnvValue: 210,
 
     // Other errors
     /** Thrown when delimiter is missing in array converter configuration */
-    MissingDelimiter = 301,
+    MissingDelimiter: 301,
     /** Thrown when invalid user-defined configuration is provided */
-    InvalidUserDefinedConfig = 302,
+    InvalidUserDefinedConfig: 302,
     /** Thrown when specified environment files don't exist */
-    EnvFilesNotFound = 303,
+    EnvFilesNotFound: 303,
     /** Thrown when no valid environment key is provided */
-    InvalidKeyInput = 304,
+    InvalidKeyInput: 304,
     /** Thrown when a required environment value is missing or empty */
-    MissingEnvValue = 305,
+    MissingEnvValue: 305,
     /** Thrown when a file-based API (envPaths, baseDir, configureProfiles) is used on a source without filesystem support */
-    FileApiUnsupported = 306,
+    FileApiUnsupported: 306,
     /** Thrown when an environment value is read before a source is bound via Envapter.useSource */
-    NoSourceBound = 307,
+    NoSourceBound: 307,
     /** Thrown when `merge` is called with no members, or with more than one filesystem-backed source */
-    InvalidMergedSource = 308
-}
+    InvalidMergedSource: 308
+} as const;
+
+/**
+ * One of the numeric {@link EnvaptErrorCodes} values, such as `210`.
+ * @public
+ */
+export type EnvaptErrorCodes = (typeof EnvaptErrorCodes)[keyof typeof EnvaptErrorCodes];
 
 interface EnvaptErrorOptions {
     issues?: readonly StandardSchemaV1.Issue[];
