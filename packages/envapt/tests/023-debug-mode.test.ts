@@ -270,7 +270,7 @@ describe('Debug mode (v5)', () => {
                 expect(Envapter.getNumber('PORT', 8080)).to.equal(8080);
                 expect(Envapter.getUsing('RETRIES', Converters.Integer, 3)).to.equal(3);
 
-                expect(capture.lines.some((l) => l.includes('could not convert') && l.includes('PORT'))).to.equal(true);
+                expect(capture.lines.some((l) => l.includes('could not convert PORT as number'))).to.equal(true);
                 expect(capture.lines.some((l) => l.includes('could not convert') && l.includes('RETRIES'))).to.equal(
                     true
                 );

@@ -1,4 +1,4 @@
-import { Primitive, readPrimitive } from './engine';
+import { readPrimitive } from './engine';
 import { EnvironmentMethods } from './EnvironmentMethods';
 
 import type { ConditionalReturn, EnvKeyInput } from '../types';
@@ -14,7 +14,7 @@ export class PrimitiveMethods extends EnvironmentMethods {
         key: EnvKeyInput,
         def?: Default
     ): ConditionalReturn<string, Default> {
-        return readPrimitive(key, Primitive.String, def);
+        return readPrimitive(key, 'string', def);
     }
 
     /**
@@ -24,7 +24,7 @@ export class PrimitiveMethods extends EnvironmentMethods {
         key: EnvKeyInput,
         def?: Default
     ): ConditionalReturn<string, Default> {
-        return readPrimitive(key, Primitive.String, def);
+        return readPrimitive(key, 'string', def);
     }
 
     /**
@@ -37,7 +37,7 @@ export class PrimitiveMethods extends EnvironmentMethods {
         key: EnvKeyInput,
         def?: Default
     ): ConditionalReturn<number, Default> {
-        return readPrimitive(key, Primitive.Number, def);
+        return readPrimitive(key, 'number', def);
     }
 
     /**
@@ -47,7 +47,7 @@ export class PrimitiveMethods extends EnvironmentMethods {
         key: EnvKeyInput,
         def?: Default
     ): ConditionalReturn<number, Default> {
-        return readPrimitive(key, Primitive.Number, def);
+        return readPrimitive(key, 'number', def);
     }
 
     /**
@@ -60,7 +60,7 @@ export class PrimitiveMethods extends EnvironmentMethods {
         key: EnvKeyInput,
         def?: Default
     ): ConditionalReturn<boolean, Default> {
-        return readPrimitive(key, Primitive.Boolean, def);
+        return readPrimitive(key, 'boolean', def);
     }
 
     /**
@@ -70,7 +70,7 @@ export class PrimitiveMethods extends EnvironmentMethods {
         key: EnvKeyInput,
         def?: Default
     ): ConditionalReturn<boolean, Default> {
-        return readPrimitive(key, Primitive.Boolean, def);
+        return readPrimitive(key, 'boolean', def);
     }
 
     /**
@@ -83,7 +83,7 @@ export class PrimitiveMethods extends EnvironmentMethods {
         key: EnvKeyInput,
         def?: Default
     ): ConditionalReturn<bigint, Default> {
-        return readPrimitive(key, Primitive.BigInt, def);
+        return readPrimitive(key, 'bigint', def);
     }
 
     /**
@@ -93,6 +93,6 @@ export class PrimitiveMethods extends EnvironmentMethods {
         key: EnvKeyInput,
         def?: Default
     ): ConditionalReturn<bigint, Default> {
-        return readPrimitive(key, Primitive.BigInt, def);
+        return readPrimitive(key, 'bigint', def);
     }
 }

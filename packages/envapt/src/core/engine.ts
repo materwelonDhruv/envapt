@@ -70,7 +70,7 @@ export function readSchema(
     hasFallback: boolean
 ): unknown {
     // readPrimitive logs the missing-value warning
-    const value = readPrimitive<string, undefined>(keyInput, Primitive.String);
+    const value = readPrimitive<string, undefined>(keyInput, 'string');
     if (value === undefined) {
         if (hasFallback) return fallback;
         throw missingValue(keyInput);
@@ -185,24 +185,10 @@ export function determineEnvironment(): void {
     state.environment = parsed;
 }
 
-export enum Primitive {
-    String,
-    Number,
-    Boolean,
-    BigInt
-}
-
-const PRIMITIVE_NAMES: Record<Primitive, string> = {
-    [Primitive.String]: 'string',
-    [Primitive.Number]: 'number',
-    [Primitive.Boolean]: 'boolean',
-    [Primitive.BigInt]: 'bigint'
-};
-
 // arrows because readPrimitive reads templateResolver, which is assigned below
 const envService: EnvapterService = {
     getRaw: (key) => resolveKeyInput(key).value,
-    get: (key, def) => readPrimitive<string, string | undefined>(key, Primitive.String, def)
+    get: (key, def) => readPrimitive<string, string | undefined>(key, 'string', def)
 };
 
 const templateResolver: TemplateResolver = new TemplateResolver(envService);
@@ -210,7 +196,7 @@ export const valueConverter: ValueConverter = new ValueConverter(envService);
 
 export function readPrimitive<EnvVarReturnType, DefaultType extends EnvVarReturnType | undefined = undefined>(
     key: EnvKeyInput,
-    type: Primitive,
+    type: 'string' | 'number' | 'boolean' | 'bigint',
     def?: DefaultType
 ): ConditionalReturn<EnvVarReturnType, DefaultType> {
     const { key: resolvedKey, value } = resolveKeyInput(key);
@@ -222,17 +208,11 @@ export function readPrimitive<EnvVarReturnType, DefaultType extends EnvVarReturn
 
     const parsed = templateResolver.resolveTemplate(resolvedKey, String(value));
 
-    let converted: EnvVarReturnType | undefined;
-    if (type === Primitive.Number) converted = BuiltInConverters.number(parsed) as EnvVarReturnType | undefined;
-    else if (type === Primitive.Boolean) converted = BuiltInConverters.boolean(parsed) as EnvVarReturnType | undefined;
-    else if (type === Primitive.BigInt) converted = BuiltInConverters.bigint(parsed) as EnvVarReturnType | undefined;
-    else converted = BuiltInConverters.string(parsed) as EnvVarReturnType | undefined;
+    const converted = BuiltInConverters.getConverter(type)(parsed) as EnvVarReturnType | undefined;
 
     if (converted === undefined) {
         // leave the value out because env values can be secrets
-        debugVerbose(
-            `could not convert ${resolvedKey} as ${PRIMITIVE_NAMES[type]}${def !== undefined ? ', using the fallback' : ''}`
-        );
+        debugVerbose(`could not convert ${resolvedKey} as ${type}${def !== undefined ? ', using the fallback' : ''}`);
         return def as ConditionalReturn<EnvVarReturnType, DefaultType>;
     }
 
