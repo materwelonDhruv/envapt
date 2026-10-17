@@ -119,18 +119,13 @@ function resolveForMirror(key: string, value: string): string {
     return templateResolver.resolveTemplate(key, value);
 }
 
-export function determineEnvironment(env?: string | Environment): void {
-    if (typeof env === 'number') {
-        state.environment = env;
-        state.environmentExplicitlySet = true;
-        return;
-    }
-    if (typeof env === 'string') {
-        state.environment = parseEnvironment(env) ?? Environment.Development;
-        state.environmentExplicitlySet = true;
-        return;
-    }
+export function setEnvironment(env: string | Environment): void {
+    state.environment = typeof env === 'number' ? env : (parseEnvironment(env) ?? Environment.Development);
+    state.environmentExplicitlySet = true;
+    refreshCache();
+}
 
+export function determineEnvironment(): void {
     const raw = firstEnvKeyValue((key) => readCached(key));
     if (raw === undefined) {
         debugWarn(`no environment set (looked for ${ENV_KEYS.join(', ')}); defaulting to development`);

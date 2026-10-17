@@ -1,4 +1,4 @@
-import { determineEnvironment } from './engine';
+import { determineEnvironment, setEnvironment } from './engine';
 import { EnvapterBase } from './EnvapterBase';
 import { Environment } from './Environment';
 import { state } from './state';
@@ -17,10 +17,11 @@ export class EnvironmentMethods extends EnvapterBase {
 
     /**
      * Set the application environment. Accepts either Environment enum or string value.
+     * Setting it reloads the `.env` files for that environment.
      * @see {@link https://envapt.materwelon.dev/docs/environment#detecting-the-environment}
      */
     static set environment(env: string | Environment) {
-        determineEnvironment(env);
+        setEnvironment(env);
     }
 
     /**
@@ -34,7 +35,7 @@ export class EnvironmentMethods extends EnvapterBase {
      * @see {@link EnvironmentMethods.environment}
      */
     set environment(env: string | Environment) {
-        determineEnvironment(env);
+        setEnvironment(env);
     }
 
     /**
