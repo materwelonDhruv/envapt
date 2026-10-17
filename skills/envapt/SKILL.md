@@ -182,7 +182,7 @@ Envapter.parse('PORT', z.coerce.number().int().min(1024).max(65535)); // number
 
 Two constraints: validation is **sync-only** (an async `validate` throws), and a **fallback is returned as-is and is NOT passed through the schema**. Only a present env value is validated.
 
-`getRequiredAll` takes a schema for any field, mixed with converters. Missing keys throw one `MissingEnvValue` first, before any schema runs. A schema `.default()` never applies there. After that envapt reads every field and throws one `InvalidEnvValue` for all the bad values, from schemas, converters, bad array elements, and custom parsers that throw. Each issue's `path` starts with its env key. The error message lists only the keys, since an issue message can quote a secret value.
+`getRequiredAll` takes a schema for any field, mixed with converters. Missing keys throw one `MissingEnvValue` first, before any schema runs. A schema `.default()` never applies there. After that envapt reads every field and throws one `InvalidEnvValue` for all the bad values: a schema or converter that rejects its value, a bad array element, or a custom parser or schema that throws. Each issue's `path` starts with its env key. The error message lists only the keys, since an issue message can quote a secret value.
 
 ```ts
 const db = Envapter.getRequiredAll(
@@ -197,7 +197,7 @@ const db = Envapter.getRequiredAll(
 
 ## Errors
 
-Reader and decorator failures throw `EnvaptError` with a numeric `code` (`EnvaptErrorCodes`). The common error codes are `MissingEnvValue` (a required value is absent), `SchemaValidationFailed` (`parse` or a `schema` decorator gets a value its schema rejects), `InvalidEnvValue` (a required read gets a value it can't convert, a bad array element, or a custom parser error). Both carry an `issues` array whose paths start with the env key, and both messages list only the keys. Other common codes are `InvalidUserDefinedConfig` (bad options, e.g. `required` + `fallback`), `MalformedTimeFallback`, `FileApiUnsupported` (a file-only API called with `fileApiMode = 'throw'`, or on the node build with a non-filesystem source), `NoSourceBound` (a read before `useSource` on the portable build).
+Reader and decorator failures throw `EnvaptError` with a numeric `code` (`EnvaptErrorCodes`). The common error codes are `MissingEnvValue` (a required value is absent), `SchemaValidationFailed` (`parse` or a `schema` decorator gets a value its schema rejects), `InvalidEnvValue` (a required read gets a value it can't convert, a bad array element, or an error from a custom parser or schema). Both carry an `issues` array whose paths start with the env key, and both messages list only the keys. Other common codes are `InvalidUserDefinedConfig` (bad options, e.g. `required` + `fallback`), `MalformedTimeFallback`, `FileApiUnsupported` (a file-only API called with `fileApiMode = 'throw'`, or on the node build with a non-filesystem source), `NoSourceBound` (a read before `useSource` on the portable build).
 
 ```ts
 import { EnvaptError, EnvaptErrorCodes } from 'envapt';

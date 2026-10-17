@@ -40,7 +40,7 @@ export enum EnvaptErrorCodes {
     SchemaThrew = 209,
     /**
      * Thrown when a required read gets a value it can't convert, a bad array element, or an error from a custom
-     * parser. `getRequiredAll` throws it once for all bad values, schema fields included.
+     * parser or schema. `getRequiredAll` throws it once for all bad values, schema fields included.
      */
     InvalidEnvValue = 210,
 

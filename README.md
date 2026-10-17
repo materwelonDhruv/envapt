@@ -35,7 +35,7 @@ const { port, databaseUrl, cacheTtl, allowedOrigins } = Envapter.getRequiredAll(
 );
 ```
 
-Call that at startup and a missing value fails the boot, with one error naming every key that was missing. Reads with a fallback (`Envapter.getNumber('WORKERS', 4)`) never throw.
+Call that at startup and a missing or bad value stops the boot. One error lists every missing key, or every bad one. A read with a fallback, like `Envapter.getNumber('WORKERS', 4)`, returns the fallback for a missing value.
 
 **[Read the docs →](https://envapt.materwelon.dev)**
 

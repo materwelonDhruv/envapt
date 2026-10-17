@@ -13,12 +13,19 @@ import type {
     EnvaptConverter,
     PresentValue,
     PrimitiveConstructor,
-    RequiredField
+    RequiredConverter,
+    RequiredSpec
 } from '../types';
 import type { EnvapterService } from '../types/Env';
 
 function errorMessage(error: unknown): string {
     return error instanceof Error ? error.message : String(error);
+}
+
+function keyIssues(key: string, outcome: StandardSchemaV1.Result<unknown>): StandardSchemaV1.Result<unknown> {
+    if (outcome.issues === undefined) return outcome;
+    const issues = outcome.issues.length > 0 ? outcome.issues : [{ message: 'no issue message' }];
+    return { issues: issues.map((issue) => ({ message: issue.message, path: [key, ...(issue.path ?? [])] })) };
 }
 
 export class ValueConverter {
@@ -178,14 +185,22 @@ export class ValueConverter {
         return 'string';
     }
 
-    readPresent({ key, value }: PresentValue, field: RequiredField): StandardSchemaV1.Result<unknown> {
-        const outcome = Validator.isStandardSchema(field)
-            ? this.runSchema(key, field, value)
-            : this.runParser(value, this.requiredParser(field));
-        if (outcome.issues === undefined) return outcome;
+    readConverted({ key, value }: PresentValue, converter: RequiredConverter): StandardSchemaV1.Result<unknown> {
+        return keyIssues(key, this.runParser(value, this.requiredParser(converter)));
+    }
 
-        const issues = outcome.issues.length > 0 ? outcome.issues : [{ message: 'no issue message' }];
-        return { issues: issues.map((issue) => ({ message: issue.message, path: [key, ...(issue.path ?? [])] })) };
+    readValidated({ key, value }: PresentValue, schema: StandardSchemaV1): StandardSchemaV1.Result<unknown> {
+        return keyIssues(key, this.runSchema(key, schema, value));
+    }
+
+    // getRequiredAll lists a throwing schema with the other bad fields
+    readSpecField(present: PresentValue, field: RequiredSpec[string]): StandardSchemaV1.Result<unknown> {
+        if (!Validator.isStandardSchema(field)) return this.readConverted(present, field);
+        try {
+            return this.readValidated(present, field);
+        } catch (error) {
+            return keyIssues(present.key, { issues: [{ message: errorMessage(error) }] });
+        }
     }
 
     private runParser(value: string, parse: (raw: string) => unknown): StandardSchemaV1.Result<unknown> {
@@ -200,7 +215,7 @@ export class ValueConverter {
     }
 
     // a bad spec entry has to throw outside runParser's try
-    private requiredParser(field: Exclude<RequiredField, StandardSchemaV1>): (raw: string) => unknown {
+    private requiredParser(field: RequiredConverter): (raw: string) => unknown {
         // safe to widen a `raw: string` parser because it only gets a present value
         const converter = (
             Validator.isPrimitiveConstructor(field) ? this.convertPrimitiveToString(field) : field

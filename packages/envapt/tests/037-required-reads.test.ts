@@ -360,6 +360,31 @@ describe('Required reads (v8)', () => {
             ]);
         });
 
+        it('reports a schema that throws as an issue next to the other bad fields', () => {
+            const crashing: StandardSchemaV1<unknown, string> = {
+                '~standard': {
+                    version: 1,
+                    vendor: 'envapt-test',
+                    validate: () => {
+                        throw new Error('lookup table not loaded');
+                    }
+                }
+            };
+            const e = thrownBy(() => Envapter.getRequiredAll({ SET_VALUE: crashing, SAMPLE_REPO: Converters.Number }));
+            expect(e.code).to.equal(EnvaptErrorCodes.InvalidEnvValue);
+            expect(e.issues?.map((issue) => issue.path)).to.deep.equal([['SET_VALUE'], ['SAMPLE_REPO']]);
+            expect(e.issues?.[0]?.message).to.include('lookup table not loaded');
+        });
+
+        it('reports a zod refine that throws as an issue next to the other bad fields', () => {
+            const crashing = z.string().refine(() => {
+                throw new Error('refine crashed');
+            });
+            const e = thrownBy(() => Envapter.getRequiredAll({ SET_VALUE: crashing, SAMPLE_REPO: Converters.Number }));
+            expect(e.code).to.equal(EnvaptErrorCodes.InvalidEnvValue);
+            expect(e.issues?.map((issue) => issue.path)).to.deep.equal([['SET_VALUE'], ['SAMPLE_REPO']]);
+        });
+
         it('copies only the message and path of an arktype issue', () => {
             const integer = ark('string.integer.parse');
             const own = integer['~standard'].validate('hello');
@@ -379,9 +404,11 @@ describe('Required reads (v8)', () => {
             const e = thrownBy(() =>
                 Envapter.getRequiredAll({ SAMPLE_REPO: v.pipe(v.string(), v.email()), SET_VALUE: Converters.Number })
             );
+            const issueMessage = e.issues?.[0]?.message ?? '';
+            expect(issueMessage).to.not.equal('');
             expect(e.message).to.include('SAMPLE_REPO');
             expect(e.message).to.include('SET_VALUE');
-            expect(e.message).to.not.include('owner/repo');
+            expect(e.message).to.not.include(issueMessage);
         });
 
         it('keeps a schema field whose schema returns undefined', () => {

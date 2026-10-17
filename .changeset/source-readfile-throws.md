@@ -1,5 +1,5 @@
 ---
-'envapt': patch
+'envapt': major
 ---
 
-An error that a custom `FileCapableSource`'s `readFile` throws while loading a `.env` file now reaches the caller. envapt used to skip that file and log a warning only under `Envapter.debug = 'warn'`.
+**BREAKING:** Fixed an error from a custom `FileCapableSource`'s `readFile` being swallowed while loading `.env` files. The error now reaches the caller, where envapt used to skip that file and every file after it in the cascade.

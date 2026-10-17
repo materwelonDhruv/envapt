@@ -11,7 +11,7 @@ import { missingValue, validationFailed } from '../infra/failures';
 
 import type { ValidationCode } from '../infra/failures';
 import type { StandardSchemaV1 } from '../infra/StandardSchema';
-import type { ConditionalReturn, EnvKeyInput, PresentValue, RequiredField } from '../types';
+import type { ConditionalReturn, EnvKeyInput, PresentValue, RequiredConverter } from '../types';
 import type { EnvapterService } from '../types/Env';
 
 function toKeyList(keyInput: EnvKeyInput): readonly string[] {
@@ -53,10 +53,14 @@ export function findPresent(keyInput: EnvKeyInput): PresentValue | undefined {
     return { key, value: templateResolver.resolveTemplate(key, value) };
 }
 
-export function readRequired(keyInput: EnvKeyInput, field: RequiredField): unknown {
+export function readRequired(keyInput: EnvKeyInput, converter: RequiredConverter): unknown {
     const present = findPresent(keyInput);
     if (present === undefined) throw missingValue(keyInput);
-    return convertPresent(EnvaptErrorCodes.InvalidEnvValue, present, field);
+    return valueOrThrow(
+        EnvaptErrorCodes.InvalidEnvValue,
+        present.key,
+        valueConverter.readConverted(present, converter)
+    );
 }
 
 export function readSchema(
@@ -71,16 +75,16 @@ export function readSchema(
         if (hasFallback) return fallback;
         throw missingValue(keyInput);
     }
-    return convertPresent(
+    const { key } = resolveKeyInput(keyInput);
+    return valueOrThrow(
         EnvaptErrorCodes.SchemaValidationFailed,
-        { key: resolveKeyInput(keyInput).key, value },
-        schema
+        key,
+        valueConverter.readValidated({ key, value }, schema)
     );
 }
 
-function convertPresent(code: ValidationCode, present: PresentValue, field: RequiredField): unknown {
-    const outcome = valueConverter.readPresent(present, field);
-    if (outcome.issues !== undefined) throw validationFailed(code, [present.key], outcome.issues);
+function valueOrThrow(code: ValidationCode, key: string, outcome: StandardSchemaV1.Result<unknown>): unknown {
+    if (outcome.issues !== undefined) throw validationFailed(code, [key], outcome.issues);
     return outcome.value;
 }
 

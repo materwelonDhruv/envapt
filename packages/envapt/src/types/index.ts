@@ -14,7 +14,7 @@ export type {
     AdvancedConverterReturn,
     InferPrimitiveReturnType,
     RequiredSpec,
-    RequiredField,
+    RequiredConverter,
     InferSpecField
 } from './Conversion';
 export type { KeyCasing, RecaseKey } from './Casing';

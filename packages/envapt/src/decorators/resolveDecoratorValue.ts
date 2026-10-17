@@ -3,7 +3,7 @@ import { readRequired, readSchema, valueConverter } from '../core/engine';
 import { cache } from '../core/state';
 
 import type { StandardSchemaV1 } from '../infra/StandardSchema';
-import type { EnvaptConverter, EnvKeyInput, RequiredField } from '../types';
+import type { EnvaptConverter, EnvKeyInput, RequiredConverter } from '../types';
 
 export interface DecoratorConfig<TFallback> {
     fallback: TFallback | undefined;
@@ -40,7 +40,7 @@ export function resolveDecoratorValue<TFallback>(
     if (schema !== undefined) {
         value = readSchema(key, schema, fallback, hasFallback) as TFallback;
     } else if (required) {
-        value = readRequired(key, (converter ?? Converters.String) as RequiredField) as TFallback;
+        value = readRequired(key, (converter ?? Converters.String) as RequiredConverter) as TFallback;
     } else {
         value = valueConverter.convertValue(key, fallback, converter, hasFallback);
     }

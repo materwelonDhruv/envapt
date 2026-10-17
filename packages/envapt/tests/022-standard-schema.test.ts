@@ -96,7 +96,7 @@ describe('Standard Schema adapter (v5)', () => {
             expect(port).to.equal(8080);
         });
 
-        it('formats the array-key error message via formatKeyForError when all keys are missing', () => {
+        it('lists every key of an ordered key list in the missing-value message', () => {
             try {
                 Envapter.parse(['NEVER_SET_A', 'NEVER_SET_B'], z.coerce.number());
                 expect.fail('should have thrown');
@@ -277,7 +277,7 @@ describe('Standard Schema adapter (v5)', () => {
             }
         });
 
-        // zod's validate retries asynchronously when a transform throws
+        // zod's validate returns a rejecting Promise when a transform throws
         it('leaves no unhandled rejection behind when the schema returns a rejecting Promise', async () => {
             const unhandled: unknown[] = [];
             const record = (reason: unknown): void => {

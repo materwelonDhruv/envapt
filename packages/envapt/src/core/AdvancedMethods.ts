@@ -19,7 +19,7 @@ import type {
     KeyCasing,
     PresentValue,
     RecaseKey,
-    RequiredField,
+    RequiredConverter,
     RequiredSpec,
     SchemaConstraint,
     SpecSchemaConstraint,
@@ -135,7 +135,7 @@ export class AdvancedMethods extends PrimitiveMethods {
         key: EnvKeyInput,
         converter: TConverter | ConverterFunction<TReturnType, string>
     ): InferConverterReturnType<TConverter> | TReturnType {
-        return readRequired(key, converter as RequiredField) as InferConverterReturnType<TConverter> | TReturnType;
+        return readRequired(key, converter as RequiredConverter) as InferConverterReturnType<TConverter> | TReturnType;
     }
 
     /**
@@ -164,8 +164,8 @@ export class AdvancedMethods extends PrimitiveMethods {
      * does not apply here. envapt then reads every field and throws one `InvalidEnvValue` for all
      * the bad values, schema fields included. Its `issues` hold every failed field's issues, each
      * with its env key first in `path`. A converter that cannot convert adds the issue
-     * `could not be converted`. A bad array element and an error a custom parser throws each become
-     * an issue carrying their message.
+     * `could not be converted`. A bad array element and an error a custom parser or schema throws
+     * each become an issue carrying their message.
      * The error message lists only the keys, since an issue message can quote the value.
      *
      * Pass a `casing` (`'camelCase'`, `'PascalCase'`, or `'kebab-case'`) to rename the record keys.
@@ -179,7 +179,7 @@ export class AdvancedMethods extends PrimitiveMethods {
         casing?: Casing
     ): { [K in keyof Spec as RecaseKey<K & string, Casing>]: InferSpecField<Spec[K]> } {
         const missing: string[] = [];
-        const fields: { present: PresentValue; field: RequiredField }[] = [];
+        const fields: { present: PresentValue; field: RequiredSpec[string] }[] = [];
         for (const [key, field] of Object.entries<RequiredSpec[string]>(spec)) {
             const present = findPresent(key);
             if (present === undefined) missing.push(key);
@@ -191,7 +191,7 @@ export class AdvancedMethods extends PrimitiveMethods {
         const failedKeys: string[] = [];
         const issues: StandardSchemaV1.Issue[] = [];
         for (const { present, field } of fields) {
-            const outcome = valueConverter.readPresent(present, field);
+            const outcome = valueConverter.readSpecField(present, field);
             if (outcome.issues === undefined) {
                 result[recase(present.key, casing)] = outcome.value;
             } else {
