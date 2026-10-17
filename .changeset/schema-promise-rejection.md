@@ -2,4 +2,4 @@
 'envapt': patch
 ---
 
-Fixed a zod schema whose `.transform` throws crashing Node with an unhandled rejection after envapt threw `InvalidUserDefinedConfig`.
+Fixed Node crashing with an unhandled rejection when a zod `.transform` or `.refine` threw during a read.

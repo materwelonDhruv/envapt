@@ -58,9 +58,9 @@ try {
 | 203 | `InvalidCustomConverter` | A custom converter is not a function. |
 | 204 | `InvalidConverterType` | The converter type is not recognized. |
 | 205 | `PrimitiveCoercionFailed` | Coercing a fallback through a primitive constructor fails. |
-| 206 | `ArrayElementConversionFailed` | An array element fails to convert to the configured element type. |
-| 207 | `EmptyArrayElement` | Strict mode only: an array element is empty or whitespace. |
-| 208 | `SchemaValidationFailed` | A Standard Schema rejects a non-empty value, or `getRequired` gets a value it can't convert. `getRequiredAll` throws it once for all bad values. The only code that populates `issues`. |
+| 206 | `ArrayElementConversionFailed` | An array element fails to convert to the configured element type. A required read reports it as a 208 issue. |
+| 207 | `EmptyArrayElement` | Strict mode only: an array element is empty or whitespace. A required read reports it as a 208 issue. |
+| 208 | `SchemaValidationFailed` | A Standard Schema rejects a non-empty value, or a required read gets a value it can't convert, a bad array element, or an error from your custom parser. `getRequiredAll` throws it once for all bad values. The message lists only the keys. The only code that populates `issues`. |
 | 209 | `SchemaThrew` | A schema's `validate` itself throws. The original error is on `cause`. |
 
 {/* prettier-ignore-end */}

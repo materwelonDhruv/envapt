@@ -164,7 +164,8 @@ Normal mode skips empty elements. Under [strict mode](/docs/strict-mode) an empt
 <Callout type="danger">
     Under strict mode, bad env data causes these throws. A trailing comma in a deployed `.env` throws
     `EmptyArrayElement` at read time, and an element your converter maps to `undefined` throws
-    `ArrayElementConversionFailed`. A stray comma can stop startup.
+    `ArrayElementConversionFailed`. A stray comma can stop startup. `getRequired` and `getRequiredAll` report
+    both as an issue on `SchemaValidationFailed`.
 </Callout>
 
 ## Custom converters

@@ -1,7 +1,7 @@
 import { AdvancedMethods } from '../core';
 import { findPresent } from '../core/engine';
-import { formatKeyForError } from '../core/missing';
 import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
+import { missingValues } from '../infra/failures';
 
 import type { EnvKeyInput } from '../types';
 
@@ -87,13 +87,7 @@ export class Envapter extends AdvancedMethods {
      */
     static require(...keys: [EnvKeyInput, ...EnvKeyInput[]]): void {
         const missing = keys.filter((key) => findPresent(key) === undefined);
-
-        if (missing.length > 0) {
-            throw new EnvaptError(
-                EnvaptErrorCodes.MissingEnvValue,
-                `Missing required environment variables: ${missing.map(formatKeyForError).join(', ')}.`
-            );
-        }
+        if (missing.length > 0) throw missingValues(missing);
     }
 
     /**

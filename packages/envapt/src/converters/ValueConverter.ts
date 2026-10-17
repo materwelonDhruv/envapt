@@ -1,24 +1,24 @@
 import { BuiltInConverters } from './BuiltInConverters';
-import { formatKeyForError } from '../core/missing';
 import { state } from '../core/state';
 import { Validator } from '../engine/Validators';
-import { debugVerbose } from '../infra/Debug';
+import { debugVerbose, debugWarn } from '../infra/Debug';
 import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
+import { formatKeyForError, missingValue, validationFailed } from '../infra/failures';
 
 import type { ArrayOf } from './Converters';
 import type { StandardSchemaV1 } from '../infra/StandardSchema';
-import type { BuiltInConverter, EnvKeyInput, EnvaptConverter, PrimitiveConstructor, RequiredSpec } from '../types';
+import type {
+    BuiltInConverter,
+    EnvKeyInput,
+    EnvaptConverter,
+    PresentValue,
+    PrimitiveConstructor,
+    RequiredField
+} from '../types';
 import type { EnvapterService } from '../types/Env';
 
-type RequiredField = RequiredSpec[string];
-
-// a bad array element is a bad value. any other EnvaptError is a mistake in the spec itself
-function isConfigError(error: unknown): error is EnvaptError {
-    return (
-        error instanceof EnvaptError &&
-        error.code !== EnvaptErrorCodes.ArrayElementConversionFailed &&
-        error.code !== EnvaptErrorCodes.EmptyArrayElement
-    );
+function errorMessage(error: unknown): string {
+    return error instanceof Error ? error.message : String(error);
 }
 
 export class ValueConverter {
@@ -184,41 +184,52 @@ export class ValueConverter {
 
         if (raw === undefined) {
             if (hasFallback) return fallback;
-            throw new EnvaptError(
-                EnvaptErrorCodes.MissingEnvValue,
-                `Required environment variable "${formatKeyForError(key)}" is missing or empty.`
-            );
+            throw missingValue(key);
         }
 
         const outcome = this.runSchema(key, schema, raw);
-
-        if (outcome.issues !== undefined) {
-            const first = outcome.issues[0];
-            const firstMessage = first?.message ?? 'no issue message';
-            throw new EnvaptError(
-                EnvaptErrorCodes.SchemaValidationFailed,
-                `Schema validation failed for "${formatKeyForError(key)}": ${firstMessage}`,
-                { issues: outcome.issues }
-            );
-        }
-
+        if (outcome.issues !== undefined) throw validationFailed([key], outcome.issues);
         return outcome.value;
     }
 
-    // callers check that the value is present first
-    readPresent(key: string, field: RequiredField): StandardSchemaV1.Result<unknown> {
-        if (Validator.isStandardSchema(field)) return this.runSchema(key, field, this.envService.get(key, undefined));
+    readPresent({ key, value }: PresentValue, field: RequiredField): StandardSchemaV1.Result<unknown> {
+        const outcome = Validator.isStandardSchema(field)
+            ? this.runSchema(key, field, value)
+            : this.runParser(value, this.requiredParser(field));
+        if (outcome.issues === undefined) return outcome;
 
+        const issues = outcome.issues.length > 0 ? outcome.issues : [{ message: 'no issue message' }];
+        return { issues: issues.map((issue) => ({ message: issue.message, path: [key, ...(issue.path ?? [])] })) };
+    }
+
+    private runParser(value: string, parse: (raw: string) => unknown): StandardSchemaV1.Result<unknown> {
         let converted: unknown;
         try {
-            converted = this.convertValue<unknown>(key, undefined, field as EnvaptConverter<unknown>, false);
+            converted = parse(value);
         } catch (error) {
-            if (isConfigError(error)) throw error;
-            return { issues: [{ message: error instanceof Error ? error.message : String(error) }] };
+            return { issues: [{ message: errorMessage(error) }] };
         }
         // custom parsers can return null
         if (converted === undefined || converted === null) return { issues: [{ message: 'could not be converted' }] };
         return { value: converted };
+    }
+
+    // throws for a bad spec entry before any parser runs
+    private requiredParser(field: Exclude<RequiredField, StandardSchemaV1>): (raw: string) => unknown {
+        // safe to widen a `raw: string` parser because it only gets a present value
+        const converter = (
+            Validator.isPrimitiveConstructor(field) ? this.convertPrimitiveToString(field) : field
+        ) as EnvaptConverter<unknown>;
+        if (Validator.isArrayConverter(converter)) {
+            Validator.arrayConverter(converter);
+            return (raw) => BuiltInConverters.processArrayConverter(raw, converter, state.strict);
+        }
+        if (Validator.isBuiltInConverter(converter)) {
+            const convert = BuiltInConverters.getConverter(converter);
+            return (raw) => convert(raw, undefined);
+        }
+        Validator.customConvertor(converter);
+        return converter;
     }
 
     private runSchema(
@@ -239,10 +250,12 @@ export class ValueConverter {
 
         if (outcome instanceof Promise) {
             // nothing awaits this promise once we throw. node crashes on an unhandled rejection
-            outcome.catch(() => undefined);
+            outcome.catch((reason: unknown) => {
+                debugWarn(`schema for ${formatKeyForError(key)} rejected: ${errorMessage(reason)}`);
+            });
             throw new EnvaptError(
                 EnvaptErrorCodes.InvalidUserDefinedConfig,
-                `Schema for "${formatKeyForError(key)}" returned a Promise. envapt requires synchronous schemas; use a sync validator or perform async checks outside the env layer.`
+                `Schema for "${formatKeyForError(key)}" returned a Promise. envapt requires a synchronous schema. zod also returns a Promise when a transform or refine throws. Set Envapter.debug to 'warn' to log that error.`
             );
         }
 

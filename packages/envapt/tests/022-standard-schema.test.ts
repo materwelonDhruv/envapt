@@ -2,10 +2,11 @@ import { resolve } from 'node:path';
 
 import { type as ark } from 'arktype';
 import * as v from 'valibot';
-import { afterEach, beforeAll, describe, expect, expectTypeOf, it } from 'vitest';
+import { afterEach, beforeAll, describe, expect, expectTypeOf, it, vi } from 'vitest';
 import { z } from 'zod/v4';
 
 import { Envapter, EnvaptErrorCodes } from '../src';
+import { resetDebugForTesting } from '../src/infra/Debug';
 import { EnvaptError } from '../src/infra/Error';
 import { Envapt } from '../src/legacy';
 
@@ -192,17 +193,20 @@ describe('Standard Schema adapter (v5)', () => {
             }
         });
 
-        it('message includes the env key and the first issue text', () => {
+        it('lists the env key in the message and keeps the issue text in issues only', () => {
             try {
                 Envapter.parse('INVALID_PORT', z.coerce.number().int());
                 expect.fail('should have thrown');
             } catch (err) {
                 const e = err as EnvaptError;
-                expect(e.message).to.match(/Schema validation failed for "INVALID_PORT"/);
+                const issueMessage = e.issues?.[0]?.message ?? '';
+                expect(issueMessage).to.not.equal('');
+                expect(e.message).to.include('INVALID_PORT');
+                expect(e.message).to.not.include(issueMessage);
             }
         });
 
-        it('falls back to a placeholder message when the issues array is empty', () => {
+        it('throws SchemaValidationFailed when the schema fails with an empty issues array', () => {
             try {
                 Envapter.parse('PORT', handRolledEmptyIssues);
                 expect.fail('should have thrown');
@@ -210,7 +214,7 @@ describe('Standard Schema adapter (v5)', () => {
                 expect(err).to.be.instanceOf(EnvaptError);
                 const e = err as EnvaptError;
                 expect(e.code).to.equal(EnvaptErrorCodes.SchemaValidationFailed);
-                expect(e.message).to.include('no issue message');
+                expect(e.issues).to.deep.equal([]);
             }
         });
 
@@ -276,6 +280,26 @@ describe('Standard Schema adapter (v5)', () => {
             }
             expect(unhandled).to.deep.equal([]);
         });
+
+        it('logs the reason of a rejecting Promise under debug warn', async () => {
+            const lines: string[] = [];
+            const spy = vi.spyOn(process.stderr, 'write').mockImplementation((chunk: unknown) => {
+                lines.push(String(chunk));
+                return true;
+            });
+            Envapter.debug = 'warn';
+            try {
+                const throwing = z.string().refine(() => {
+                    throw new Error('refine crashed');
+                });
+                expect(() => Envapter.parse('PORT', throwing)).to.throw(EnvaptError);
+                await new Promise((resolve) => setTimeout(resolve, 20));
+            } finally {
+                spy.mockRestore();
+                resetDebugForTesting();
+            }
+            expect(lines.some((line) => line.includes('PORT') && line.includes('refine crashed'))).to.equal(true);
+        });
     });
 
     describe('Envapter.parse: template expansion before validation', () => {
@@ -319,6 +343,24 @@ describe('Standard Schema adapter (v5)', () => {
 
         it('hand-rolled: validated value reaches the property', () => {
             expect(HandRolledConfig.upper).to.equal('WARN');
+        });
+
+        it('lists only the env key in the message when the schema rejects the value', () => {
+            class InvalidPortConfig {
+                @Envapt('INVALID_PORT', { schema: z.coerce.number().int() })
+                static readonly port: number;
+            }
+            let thrown: unknown;
+            try {
+                void InvalidPortConfig.port;
+            } catch (err) {
+                thrown = err;
+            }
+            expect(thrown).to.be.instanceOf(EnvaptError);
+            const e = thrown as EnvaptError;
+            expect(e.code).to.equal(EnvaptErrorCodes.SchemaValidationFailed);
+            expect(e.message).to.include('INVALID_PORT');
+            expect(e.message).to.not.include(e.issues?.[0]?.message ?? 'missing issue');
         });
 
         // an arktype type is a callable function carrying `~standard`

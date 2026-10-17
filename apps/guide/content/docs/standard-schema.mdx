@@ -74,7 +74,9 @@ const port = Envapter.parse('PORT', positiveInt, 3000);
 
 ## Validate a group of required variables
 
-[`getRequiredAll`](/docs/envapter#fail-fast-on-missing-values) takes a schema for any field, next to converters. It checks every field before it throws one `SchemaValidationFailed`. The error holds the issues of every failed field in `.issues`, and each issue's `path` starts with the env key. A converter that cannot convert adds the issue `could not be converted`. A custom parser that throws adds its error message as the issue.
+With one `parse` call per variable, only the first bad value threw. You fixed it, deployed again, and met the next one.
+
+[`getRequiredAll`](/docs/envapter#fail-fast-on-missing-values) checks the whole group in one call. It takes a schema for any field, next to converters, and reads every field before it throws one `SchemaValidationFailed`. The error holds the issues of every failed field in `.issues`, and each issue's `path` starts with the env key. A converter that cannot convert adds the issue `could not be converted`. A bad array element or a custom parser that throws adds its error message as the issue.
 
 ```ts twoslash
 import { z } from 'zod/v4';
@@ -89,14 +91,14 @@ function loadDatabaseConfig() {
         });
     } catch (error) {
         if (error instanceof EnvaptError && error.code === EnvaptErrorCodes.SchemaValidationFailed) {
-            for (const issue of error.issues ?? []) console.error(issue.path?.join('.'), issue.message);
+            for (const issue of error.issues ?? []) console.error('invalid:', issue.path?.join('.'));
         }
         throw error;
     }
 }
 ```
 
-The error message lists only the failed keys. An issue message can quote the raw value, which may be a secret. Print `issues` with care.
+An issue message can quote the raw value, and that value may be a secret like the password inside `DATABASE_URL`. That's why the error message lists only the failed keys, and why the sample logs each issue's `path` and leaves `issue.message` out.
 
 Missing keys are checked first and throw one `MissingEnvValue` before any schema runs. A schema default such as zod's `.default()` never applies here. Use `parse` with a fallback for an optional value.
 
@@ -105,7 +107,7 @@ Missing keys are checked first and throw one `MissingEnvValue` before any schema
 `parse` throws `EnvaptError` in three cases:
 
 - The value is missing and you gave no fallback: code `MissingEnvValue`.
-- The schema reports validation issues: code `SchemaValidationFailed`. The error carries the validator's full `issues` array on its `.issues` property.
+- The schema reports validation issues: code `SchemaValidationFailed`. The error carries the validator's full `issues` array on its `.issues` property, and its message lists only the key.
 - The schema's `validate` itself throws: code `SchemaThrew`, with the original error on `.cause`.
 
 A `${VAR}` template is expanded before validation, so the schema sees the resolved value.
@@ -113,6 +115,7 @@ A `${VAR}` template is expanded before validation, so the schema sees the resolv
 <Callout type="danger">
     envapt validates at config-load time and accepts synchronous schemas only. A schema whose `validate` returns a
     `Promise` is a type error, and throws `EnvaptError` with code `InvalidUserDefinedConfig` if you force it past the
-    types. `schema` and `converter` are mutually exclusive, since each one already turns the raw string into a typed
-    value.
+    types. zod also returns a `Promise` when a `.transform` or `.refine` throws, so that throws
+    `InvalidUserDefinedConfig` too. Set `Envapter.debug = 'warn'` to log the error it threw. `schema` and `converter`
+    are mutually exclusive, since each one already turns the raw string into a typed value.
 </Callout>

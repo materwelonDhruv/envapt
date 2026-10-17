@@ -7,8 +7,9 @@ import { TemplateResolver } from '../engine/TemplateResolver';
 import { debugVerbose, debugWarn } from '../infra/Debug';
 import { loadDotenv } from '../infra/Dotenv';
 import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
+import { missingValue, validationFailed } from '../infra/failures';
 
-import type { ConditionalReturn, EnvKeyInput } from '../types';
+import type { ConditionalReturn, EnvKeyInput, PresentValue, RequiredField } from '../types';
 import type { EnvapterService } from '../types/Env';
 
 function toKeyList(keyInput: EnvKeyInput): readonly string[] {
@@ -44,15 +45,18 @@ export function resolveKeyInput(keyInput: EnvKeyInput): { key: string; value: st
     return firstPresent ?? { key: normalizedKeys[0] as string, value: undefined };
 }
 
-export function findPresent(keyInput: EnvKeyInput): { key: string; value: string } | undefined {
-    for (const candidate of toKeyList(keyInput)) {
-        const raw = readCached(candidate);
-        if (raw === undefined || isMissing(raw)) continue;
-        // a template can resolve to an empty string
-        const value = templateResolver.resolveTemplate(candidate, raw);
-        if (!isMissing(value)) return { key: candidate, value };
-    }
-    return undefined;
+export function findPresent(keyInput: EnvKeyInput): PresentValue | undefined {
+    const { key, value } = resolveKeyInput(keyInput);
+    if (value === undefined || isMissing(value)) return undefined;
+    return { key, value: templateResolver.resolveTemplate(key, value) };
+}
+
+export function readRequired(keyInput: EnvKeyInput, field: RequiredField): unknown {
+    const present = findPresent(keyInput);
+    if (present === undefined) throw missingValue(keyInput);
+    const outcome = valueConverter.readPresent(present, field);
+    if (outcome.issues !== undefined) throw validationFailed([present.key], outcome.issues);
+    return outcome.value;
 }
 
 export function ensureLoaded(): Map<string, unknown> {
@@ -179,7 +183,7 @@ const envService: EnvapterService = {
     get: (key, def) => readPrimitive<string, string | undefined>(key, Primitive.String, def)
 };
 
-export const templateResolver: TemplateResolver = new TemplateResolver(envService);
+const templateResolver: TemplateResolver = new TemplateResolver(envService);
 export const valueConverter: ValueConverter = new ValueConverter(envService);
 
 export function readPrimitive<EnvVarReturnType, DefaultType extends EnvVarReturnType | undefined = undefined>(

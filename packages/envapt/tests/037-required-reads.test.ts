@@ -75,16 +75,10 @@ describe('Required reads (v8)', () => {
                 .with.property('code', EnvaptErrorCodes.MissingEnvValue);
         });
 
-        it('formats the array-key error message via formatKeyForError', () => {
-            try {
-                Envapter.getRequired(['NEVER_SET_KEY', 'ALSO_NEVER_SET'], Converters.Number);
-                expect.fail('should have thrown');
-            } catch (err) {
-                expect(err).to.be.instanceOf(EnvaptError);
-                const e = err as EnvaptError;
-                expect(e.code).to.equal(EnvaptErrorCodes.MissingEnvValue);
-                expect(e.message).to.include('[NEVER_SET_KEY, ALSO_NEVER_SET]');
-            }
+        it('lists every key of an ordered key list in the missing-value message', () => {
+            const e = thrownBy(() => Envapter.getRequired(['NEVER_SET_KEY', 'ALSO_NEVER_SET'], Converters.Number));
+            expect(e.code).to.equal(EnvaptErrorCodes.MissingEnvValue);
+            expect(e.message).to.include('[NEVER_SET_KEY, ALSO_NEVER_SET]');
         });
 
         it('takes no fallback argument', () => {
@@ -113,6 +107,29 @@ describe('Required reads (v8)', () => {
         it('keys the issue by the ordered key that held the value', () => {
             const e = thrownBy(() => Envapter.getRequired(['NEVER_SET_KEY', 'SET_VALUE'], Converters.Number));
             expect(e.issues?.[0]?.path).to.deep.equal(['SET_VALUE']);
+        });
+
+        it('reports an error thrown by a custom parser as an issue carrying its message', () => {
+            const e = thrownBy(() =>
+                Envapter.getRequired('SET_VALUE', () => {
+                    throw new RangeError('out of range');
+                })
+            );
+            expect(e.code).to.equal(EnvaptErrorCodes.SchemaValidationFailed);
+            expect(e.issues).to.deep.equal([{ message: 'out of range', path: ['SET_VALUE'] }]);
+        });
+
+        it('reports a bad array element as SchemaValidationFailed', () => {
+            const e = thrownBy(() => Envapter.getRequired('PORTS_BAD', Converters.array({ of: Converters.Port })));
+            expect(e.code).to.equal(EnvaptErrorCodes.SchemaValidationFailed);
+            expect(e.issues?.map((issue) => issue.path)).to.deep.equal([['PORTS_BAD']]);
+        });
+
+        it('reports an empty array element under strict as SchemaValidationFailed', () => {
+            Envapter.strict = true;
+            const e = thrownBy(() => Envapter.getRequired('PORTS_GAP', Converters.array({ of: Converters.Port })));
+            expect(e.code).to.equal(EnvaptErrorCodes.SchemaValidationFailed);
+            expect(e.issues?.map((issue) => issue.path)).to.deep.equal([['PORTS_GAP']]);
         });
     });
 
@@ -162,40 +179,32 @@ describe('Required reads (v8)', () => {
         });
 
         it('throws one MissingEnvValue listing every missing key', () => {
-            try {
+            const e = thrownBy(() =>
                 Envapter.getRequiredAll({
                     SET_NUMBER: Converters.Number,
                     NEVER_SET_KEY: Converters.String,
                     EMPTY_VALUE: Converters.String
-                });
-                expect.fail('should have thrown');
-            } catch (err) {
-                expect(err).to.be.instanceOf(EnvaptError);
-                const e = err as EnvaptError;
-                expect(e.code).to.equal(EnvaptErrorCodes.MissingEnvValue);
-                expect(e.message).to.include('NEVER_SET_KEY');
-                expect(e.message).to.include('EMPTY_VALUE');
-                expect(e.message).to.not.include('SET_NUMBER');
-            }
+                })
+            );
+            expect(e.code).to.equal(EnvaptErrorCodes.MissingEnvValue);
+            expect(e.message).to.include('NEVER_SET_KEY');
+            expect(e.message).to.include('EMPTY_VALUE');
+            expect(e.message).to.not.include('SET_NUMBER');
         });
 
         it('throws one SchemaValidationFailed listing every converter field that cannot convert', () => {
-            try {
+            const e = thrownBy(() =>
                 Envapter.getRequiredAll({
                     SET_VALUE: Converters.Number,
                     SET_NUMBER: Converters.Number,
                     SAMPLE_REPO: Converters.Port
-                });
-                expect.fail('should have thrown');
-            } catch (err) {
-                expect(err).to.be.instanceOf(EnvaptError);
-                const e = err as EnvaptError;
-                expect(e.code).to.equal(EnvaptErrorCodes.SchemaValidationFailed);
-                expect(e.message).to.include('SET_VALUE');
-                expect(e.message).to.include('SAMPLE_REPO');
-                expect(e.message).to.not.include('SET_NUMBER');
-                expect(e.issues?.map((issue) => issue.path)).to.deep.equal([['SET_VALUE'], ['SAMPLE_REPO']]);
-            }
+                })
+            );
+            expect(e.code).to.equal(EnvaptErrorCodes.SchemaValidationFailed);
+            expect(e.message).to.include('SET_VALUE');
+            expect(e.message).to.include('SAMPLE_REPO');
+            expect(e.message).to.not.include('SET_NUMBER');
+            expect(e.issues?.map((issue) => issue.path)).to.deep.equal([['SET_VALUE'], ['SAMPLE_REPO']]);
         });
     });
 
@@ -232,28 +241,24 @@ describe('Required reads (v8)', () => {
                     validate: () => ({ issues: [{ message: 'unknown host', path: ['host'] }] })
                 }
             };
-            try {
+            const e = thrownBy(() =>
                 Envapter.getRequiredAll({
                     SET_VALUE: z.coerce.number(),
                     PORT1: z.coerce.number(),
                     SAMPLE_REPO: v.pipe(v.string(), v.email()),
                     DATABASE_URL: hostSchema
-                });
-                expect.fail('should have thrown');
-            } catch (err) {
-                expect(err).to.be.instanceOf(EnvaptError);
-                const e = err as EnvaptError;
-                expect(e.code).to.equal(EnvaptErrorCodes.SchemaValidationFailed);
-                expect(e.message).to.include('SET_VALUE');
-                expect(e.message).to.include('SAMPLE_REPO');
-                expect(e.message).to.include('DATABASE_URL');
-                expect(e.message).to.not.include('PORT1');
-                expect(e.issues?.map((issue) => issue.path)).to.deep.equal([
-                    ['SET_VALUE'],
-                    ['SAMPLE_REPO'],
-                    ['DATABASE_URL', 'host']
-                ]);
-            }
+                })
+            );
+            expect(e.code).to.equal(EnvaptErrorCodes.SchemaValidationFailed);
+            expect(e.message).to.include('SET_VALUE');
+            expect(e.message).to.include('SAMPLE_REPO');
+            expect(e.message).to.include('DATABASE_URL');
+            expect(e.message).to.not.include('PORT1');
+            expect(e.issues?.map((issue) => issue.path)).to.deep.equal([
+                ['SET_VALUE'],
+                ['SAMPLE_REPO'],
+                ['DATABASE_URL', 'host']
+            ]);
         });
 
         it('throws MissingEnvValue for a missing schema field before any schema runs, ignoring its default', () => {
@@ -268,20 +273,16 @@ describe('Required reads (v8)', () => {
                     }
                 }
             };
-            try {
+            const e = thrownBy(() =>
                 Envapter.getRequiredAll({
                     SET_VALUE: spySchema,
                     NEVER_SET_KEY: z.coerce.number().default(3000),
                     EMPTY_VALUE: z.string().default('fallback')
-                });
-                expect.fail('should have thrown');
-            } catch (err) {
-                expect(err).to.be.instanceOf(EnvaptError);
-                const e = err as EnvaptError;
-                expect(e.code).to.equal(EnvaptErrorCodes.MissingEnvValue);
-                expect(e.message).to.include('NEVER_SET_KEY');
-                expect(e.message).to.include('EMPTY_VALUE');
-            }
+                })
+            );
+            expect(e.code).to.equal(EnvaptErrorCodes.MissingEnvValue);
+            expect(e.message).to.include('NEVER_SET_KEY');
+            expect(e.message).to.include('EMPTY_VALUE');
             expect(validated).to.equal(false);
         });
 
@@ -295,17 +296,11 @@ describe('Required reads (v8)', () => {
         });
 
         it('reports a failed schema field and a failed converter field in one error', () => {
-            try {
-                Envapter.getRequiredAll({ SET_VALUE: z.url(), DATABASE_URL: Converters.Port });
-                expect.fail('should have thrown');
-            } catch (err) {
-                expect(err).to.be.instanceOf(EnvaptError);
-                const e = err as EnvaptError;
-                expect(e.code).to.equal(EnvaptErrorCodes.SchemaValidationFailed);
-                expect(e.message).to.include('SET_VALUE');
-                expect(e.message).to.include('DATABASE_URL');
-                expect(e.issues?.map((issue) => issue.path)).to.deep.equal([['SET_VALUE'], ['DATABASE_URL']]);
-            }
+            const e = thrownBy(() => Envapter.getRequiredAll({ SET_VALUE: z.url(), DATABASE_URL: Converters.Port }));
+            expect(e.code).to.equal(EnvaptErrorCodes.SchemaValidationFailed);
+            expect(e.message).to.include('SET_VALUE');
+            expect(e.message).to.include('DATABASE_URL');
+            expect(e.issues?.map((issue) => issue.path)).to.deep.equal([['SET_VALUE'], ['DATABASE_URL']]);
         });
 
         it('reports an array field with a bad element next to another bad field in one error', () => {
@@ -346,6 +341,32 @@ describe('Required reads (v8)', () => {
             expect(e.issues).to.deep.equal([{ message: 'not a semver', path: ['SET_VALUE'] }]);
         });
 
+        it('reports an EnvaptError thrown by a custom parser as an issue', () => {
+            const e = thrownBy(() =>
+                Envapter.getRequiredAll({
+                    // eslint-disable-next-line @typescript-eslint/naming-convention -- a function-valued env-name key reads as an object method to the naming rule
+                    SET_VALUE: () => {
+                        throw new EnvaptError(EnvaptErrorCodes.InvalidFallback, 'unknown flag');
+                    },
+                    SAMPLE_REPO: Converters.Number
+                })
+            );
+            expect(e.code).to.equal(EnvaptErrorCodes.SchemaValidationFailed);
+            expect(e.issues).to.deep.equal([
+                { message: 'unknown flag', path: ['SET_VALUE'] },
+                { message: 'could not be converted', path: ['SAMPLE_REPO'] }
+            ]);
+        });
+
+        it('copies only the message and path of an arktype issue', () => {
+            const integer = ark('string.integer.parse');
+            const own = integer['~standard'].validate('hello');
+            if (own instanceof Promise || own.issues === undefined) return expect.fail('arktype should reject "hello"');
+
+            const e = thrownBy(() => Envapter.getRequiredAll({ SET_VALUE: integer }));
+            expect(e.issues).to.deep.equal([{ message: own.issues[0]?.message, path: ['SET_VALUE'] }]);
+        });
+
         it('still throws a spec mistake on its own, outside the aggregated error', () => {
             // cast past the type to reach the runtime check on an unknown token
             const e = thrownBy(() => Envapter.getRequiredAll({ SET_VALUE: 'not-a-token' as never }));
@@ -356,8 +377,15 @@ describe('Required reads (v8)', () => {
             const e = thrownBy(() =>
                 Envapter.getRequiredAll({ SAMPLE_REPO: v.pipe(v.string(), v.email()), SET_VALUE: Converters.Number })
             );
-            expect(e.message).to.equal('Validation failed for SAMPLE_REPO, SET_VALUE.');
-            expect(e.issues?.[0]?.message).to.include('owner/repo');
+            expect(e.message).to.include('SAMPLE_REPO');
+            expect(e.message).to.include('SET_VALUE');
+            expect(e.message).to.not.include('owner/repo');
+        });
+
+        it('keeps a schema field whose schema returns undefined', () => {
+            const cfg = Envapter.getRequiredAll({ SET_VALUE: z.string().transform(() => undefined) });
+            expect(cfg).to.have.property('SET_VALUE', undefined);
+            expectTypeOf(cfg).toEqualTypeOf<{ SET_VALUE: undefined }>();
         });
 
         it('recases schema field keys the same way as converter keys', () => {
@@ -454,25 +482,17 @@ describe('Required reads (v8)', () => {
         });
 
         it('counts a whitespace-only value as missing only under strict in the aggregated throw', () => {
+            const spec = { WHITESPACE_ONLY: Converters.String, NEVER_SET_KEY: Converters.String };
+
             // non-strict keeps whitespace as a real value, so only the truly-missing key is listed
-            try {
-                Envapter.getRequiredAll({ WHITESPACE_ONLY: Converters.String, NEVER_SET_KEY: Converters.String });
-                expect.fail('should have thrown');
-            } catch (err) {
-                const e = err as EnvaptError;
-                expect(e.message).to.include('NEVER_SET_KEY');
-                expect(e.message).to.not.include('WHITESPACE_ONLY');
-            }
+            const lenient = thrownBy(() => Envapter.getRequiredAll(spec));
+            expect(lenient.message).to.include('NEVER_SET_KEY');
+            expect(lenient.message).to.not.include('WHITESPACE_ONLY');
 
             Envapter.strict = true;
-            try {
-                Envapter.getRequiredAll({ WHITESPACE_ONLY: Converters.String, NEVER_SET_KEY: Converters.String });
-                expect.fail('should have thrown');
-            } catch (err) {
-                const e = err as EnvaptError;
-                expect(e.message).to.include('WHITESPACE_ONLY');
-                expect(e.message).to.include('NEVER_SET_KEY');
-            }
+            const strict = thrownBy(() => Envapter.getRequiredAll(spec));
+            expect(strict.message).to.include('WHITESPACE_ONLY');
+            expect(strict.message).to.include('NEVER_SET_KEY');
         });
 
         it('returns the preserved literal when a template cannot resolve under non-strict', () => {
@@ -490,14 +510,11 @@ describe('Required reads (v8)', () => {
         // under strict the template throws before getRequiredAll builds its list of missing keys
         it('surfaces the template error, not the aggregated list, when a spec value is unresolvable under strict', () => {
             Envapter.strict = true;
-            try {
-                Envapter.getRequiredAll({ TEMPLATE_MISSING: Converters.String, NEVER_SET_KEY: Converters.String });
-                expect.fail('should have thrown');
-            } catch (err) {
-                const e = err as EnvaptError;
-                expect(e.code).to.equal(EnvaptErrorCodes.MissingEnvValue);
-                expect(e.message).to.include('NOT_DEFINED_ANYWHERE');
-            }
+            const e = thrownBy(() =>
+                Envapter.getRequiredAll({ TEMPLATE_MISSING: Converters.String, NEVER_SET_KEY: Converters.String })
+            );
+            expect(e.code).to.equal(EnvaptErrorCodes.MissingEnvValue);
+            expect(e.message).to.include('NOT_DEFINED_ANYWHERE');
         });
     });
 });
