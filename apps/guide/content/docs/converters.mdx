@@ -165,7 +165,7 @@ Normal mode skips empty elements. Under [strict mode](/docs/strict-mode) an empt
     Bad env data causes these throws. Under strict mode, a trailing comma in a deployed `.env` throws
     `EmptyArrayElement` at read time, so a stray comma can stop startup. In any mode, an element your converter
     maps to `undefined` throws `ArrayElementConversionFailed`. `getRequired` and `getRequiredAll` report both as an
-    issue on `SchemaValidationFailed`.
+    issue on `InvalidEnvValue`.
 </Callout>
 
 ## Custom converters
@@ -189,7 +189,7 @@ For a single array element you supply a `(raw: string) => T` function to `array(
 
 ## Require a converted value
 
-`getRequired` throws `MissingEnvValue` on a missing value and `SchemaValidationFailed` on a value the converter can't convert.
+`getRequired` throws `MissingEnvValue` on a missing value and `InvalidEnvValue` on a value the converter can't convert.
 
 ```ts twoslash
 import { Envapter, Converters } from 'envapt';

@@ -9,6 +9,7 @@ import { loadDotenv } from '../infra/Dotenv';
 import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
 import { missingValue, validationFailed } from '../infra/failures';
 
+import type { ValidationCode } from '../infra/failures';
 import type { StandardSchemaV1 } from '../infra/StandardSchema';
 import type { ConditionalReturn, EnvKeyInput, PresentValue, RequiredField } from '../types';
 import type { EnvapterService } from '../types/Env';
@@ -55,7 +56,7 @@ export function findPresent(keyInput: EnvKeyInput): PresentValue | undefined {
 export function readRequired(keyInput: EnvKeyInput, field: RequiredField): unknown {
     const present = findPresent(keyInput);
     if (present === undefined) throw missingValue(keyInput);
-    return convertPresent(present, field);
+    return convertPresent(EnvaptErrorCodes.InvalidEnvValue, present, field);
 }
 
 export function readSchema(
@@ -70,12 +71,16 @@ export function readSchema(
         if (hasFallback) return fallback;
         throw missingValue(keyInput);
     }
-    return convertPresent({ key: resolveKeyInput(keyInput).key, value }, schema);
+    return convertPresent(
+        EnvaptErrorCodes.SchemaValidationFailed,
+        { key: resolveKeyInput(keyInput).key, value },
+        schema
+    );
 }
 
-function convertPresent(present: PresentValue, field: RequiredField): unknown {
+function convertPresent(code: ValidationCode, present: PresentValue, field: RequiredField): unknown {
     const outcome = valueConverter.readPresent(present, field);
-    if (outcome.issues !== undefined) throw validationFailed([present.key], outcome.issues);
+    if (outcome.issues !== undefined) throw validationFailed(code, [present.key], outcome.issues);
     return outcome.value;
 }
 

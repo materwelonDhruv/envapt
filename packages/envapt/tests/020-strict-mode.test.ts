@@ -163,17 +163,17 @@ describe('Strict mode + required (v5)', () => {
                 .with.property('code', EnvaptErrorCodes.MissingEnvValue);
         });
 
-        it('throws SchemaValidationFailed when the converter cannot convert a present value', () => {
+        it('throws InvalidEnvValue when the converter cannot convert a present value', () => {
             class RequiredUnconvertible {
                 @Envapt('API_KEY', { converter: Converters.Number, required: true })
                 static readonly key: number;
             }
             expect(() => RequiredUnconvertible.key)
                 .to.throw(EnvaptError)
-                .with.property('code', EnvaptErrorCodes.SchemaValidationFailed);
+                .with.property('code', EnvaptErrorCodes.InvalidEnvValue);
         });
 
-        it('converts through a primitive constructor and throws SchemaValidationFailed when it cannot', () => {
+        it('converts through a primitive constructor and throws InvalidEnvValue when it cannot', () => {
             class RequiredNumber {
                 @Envapt('SET_NUMBER', { converter: Number, required: true })
                 static readonly count: number;
@@ -184,7 +184,7 @@ describe('Strict mode + required (v5)', () => {
             expect(RequiredNumber.count).to.equal(42);
             expect(() => RequiredNumber.notANumber)
                 .to.throw(EnvaptError)
-                .with.property('code', EnvaptErrorCodes.SchemaValidationFailed);
+                .with.property('code', EnvaptErrorCodes.InvalidEnvValue);
         });
 
         it('returns the typed value when required is paired with a converter', () => {

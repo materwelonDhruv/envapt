@@ -103,13 +103,13 @@ describe('Numeric converter strictness (v8)', () => {
         it('throws on a malformed integer', () => {
             expect(() => Envapter.getRequired('INT_GARBAGE', Converters.Integer))
                 .to.throw(EnvaptError)
-                .with.property('code', EnvaptErrorCodes.SchemaValidationFailed);
+                .with.property('code', EnvaptErrorCodes.InvalidEnvValue);
         });
 
         it('throws on a malformed float', () => {
             expect(() => Envapter.getRequired('FLOAT_GARBAGE', Converters.Float))
                 .to.throw(EnvaptError)
-                .with.property('code', EnvaptErrorCodes.SchemaValidationFailed);
+                .with.property('code', EnvaptErrorCodes.InvalidEnvValue);
         });
     });
 });

@@ -21,11 +21,13 @@ export function missingValues(keys: readonly EnvKeyInput[]): EnvaptError {
     );
 }
 
+export type ValidationCode = EnvaptErrorCodes.SchemaValidationFailed | EnvaptErrorCodes.InvalidEnvValue;
+
 // issue messages can quote a secret value
-export function validationFailed(keys: readonly EnvKeyInput[], issues: readonly StandardSchemaV1.Issue[]): EnvaptError {
-    return new EnvaptError(
-        EnvaptErrorCodes.SchemaValidationFailed,
-        `Validation failed for ${keys.map(formatKeyForError).join(', ')}.`,
-        { issues }
-    );
+export function validationFailed(
+    code: ValidationCode,
+    keys: readonly EnvKeyInput[],
+    issues: readonly StandardSchemaV1.Issue[]
+): EnvaptError {
+    return new EnvaptError(code, `Validation failed for ${keys.map(formatKeyForError).join(', ')}.`, { issues });
 }

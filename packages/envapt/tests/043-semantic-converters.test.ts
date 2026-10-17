@@ -57,7 +57,7 @@ describe('Semantic converters (v8): port and email', () => {
         it('getRequired throws on an out-of-range port', () => {
             expect(() => Envapter.getRequired('PORT_HIGH', Converters.Port))
                 .to.throw(EnvaptError)
-                .with.property('code', EnvaptErrorCodes.SchemaValidationFailed);
+                .with.property('code', EnvaptErrorCodes.InvalidEnvValue);
         });
 
         it('rejects an out-of-range port fallback', () => {
@@ -140,7 +140,7 @@ describe('Semantic converters (v8): port and email', () => {
         it('getRequired throws on an invalid email', () => {
             expect(() => Envapter.getRequired('EMAIL_NOAT', Converters.Email))
                 .to.throw(EnvaptError)
-                .with.property('code', EnvaptErrorCodes.SchemaValidationFailed);
+                .with.property('code', EnvaptErrorCodes.InvalidEnvValue);
         });
 
         it('rejects a non-email fallback', () => {

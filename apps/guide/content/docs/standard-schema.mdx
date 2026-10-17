@@ -76,7 +76,7 @@ const port = Envapter.parse('PORT', positiveInt, 3000);
 
 With one `parse` call per variable, only the first bad value threw. You fixed it, deployed again, and met the next one.
 
-[`getRequiredAll`](/docs/envapter#fail-fast-on-missing-values) checks the whole group in one call. It takes a schema for any field, next to converters, and reads every field before it throws one `SchemaValidationFailed`. The error holds the issues of every failed field in `.issues`, and each issue's `path` starts with the env key. A converter that cannot convert adds the issue `could not be converted`. A bad array element or a custom parser that throws adds its error message as the issue.
+[`getRequiredAll`](/docs/envapter#fail-fast-on-missing-values) checks the whole group in one call. It takes a schema for any field, next to converters, and reads every field before it throws one `InvalidEnvValue`. The error holds the issues of every failed field in `.issues`, and each issue's `path` starts with the env key. A converter that cannot convert adds the issue `could not be converted`. A bad array element or a custom parser that throws adds its error message as the issue.
 
 ```ts twoslash
 import { z } from 'zod/v4';
@@ -90,7 +90,7 @@ function loadDatabaseConfig() {
             DATABASE_SSL_MODE: z.enum(['disable', 'require', 'verify-full'])
         });
     } catch (error) {
-        if (error instanceof EnvaptError && error.code === EnvaptErrorCodes.SchemaValidationFailed) {
+        if (error instanceof EnvaptError && error.code === EnvaptErrorCodes.InvalidEnvValue) {
             for (const issue of error.issues ?? []) console.error('invalid:', issue.path?.join('.'));
         }
         throw error;

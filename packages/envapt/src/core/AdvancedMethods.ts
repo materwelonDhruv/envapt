@@ -2,6 +2,7 @@ import { findPresent, readRequired, readSchema, resolveKeyInput, valueConverter 
 import { hasFallback, isMissing } from './missing';
 import { PrimitiveMethods } from './PrimitiveMethods';
 import { debugWarn } from '../infra/Debug';
+import { EnvaptErrorCodes } from '../infra/Error';
 import { missingValues, validationFailed } from '../infra/failures';
 import { recase } from '../infra/recase';
 
@@ -117,7 +118,7 @@ export class AdvancedMethods extends PrimitiveMethods {
 
     /**
      * Read a required environment variable and convert it, throwing `MissingEnvValue` when the value
-     * is missing or empty. A value the converter cannot convert throws `SchemaValidationFailed` with
+     * is missing or empty. A value the converter cannot convert throws `InvalidEnvValue` with
      * one issue keyed by the env name. A bad array element and an error a custom parser throws both
      * become that issue, carrying their message. Returns the non-undefined converter output.
      * Accepts a built-in or `ArrayOf` token, or a custom parser function. The key can be a single
@@ -160,10 +161,11 @@ export class AdvancedMethods extends PrimitiveMethods {
      *
      * Collects every missing or empty key first and throws one `MissingEnvValue` listing them all.
      * envapt never runs the schema for a missing key. A schema default such as zod's `.default()`
-     * does not apply here. envapt then reads every field and throws one `SchemaValidationFailed`
-     * for all the bad values. Its `issues` hold every failed field's issues, each with its env key
-     * first in `path`. A converter that cannot convert adds the issue `could not be converted`. A bad
-     * array element and an error a custom parser throws each become an issue carrying their message.
+     * does not apply here. envapt then reads every field and throws one `InvalidEnvValue` for all
+     * the bad values, schema fields included. Its `issues` hold every failed field's issues, each
+     * with its env key first in `path`. A converter that cannot convert adds the issue
+     * `could not be converted`. A bad array element and an error a custom parser throws each become
+     * an issue carrying their message.
      * The error message lists only the keys, since an issue message can quote the value.
      *
      * Pass a `casing` (`'camelCase'`, `'PascalCase'`, or `'kebab-case'`) to rename the record keys.
@@ -197,7 +199,7 @@ export class AdvancedMethods extends PrimitiveMethods {
                 issues.push(...outcome.issues);
             }
         }
-        if (failedKeys.length > 0) throw validationFailed(failedKeys, issues);
+        if (failedKeys.length > 0) throw validationFailed(EnvaptErrorCodes.InvalidEnvValue, failedKeys, issues);
         return result as { [K in keyof Spec as RecaseKey<K & string, Casing>]: InferSpecField<Spec[K]> };
     }
 

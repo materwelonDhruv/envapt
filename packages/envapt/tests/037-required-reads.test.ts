@@ -98,9 +98,9 @@ describe('Required reads (v8)', () => {
             expectTypeOf(value).toEqualTypeOf<string>();
         });
 
-        it('throws SchemaValidationFailed with an issue when a present value cannot be converted', () => {
+        it('throws InvalidEnvValue with an issue when a present value cannot be converted', () => {
             const e = thrownBy(() => Envapter.getRequired('SET_VALUE', Converters.Number));
-            expect(e.code).to.equal(EnvaptErrorCodes.SchemaValidationFailed);
+            expect(e.code).to.equal(EnvaptErrorCodes.InvalidEnvValue);
             expect(e.issues).to.deep.equal([{ message: 'could not be converted', path: ['SET_VALUE'] }]);
         });
 
@@ -115,21 +115,21 @@ describe('Required reads (v8)', () => {
                     throw new RangeError('out of range');
                 })
             );
-            expect(e.code).to.equal(EnvaptErrorCodes.SchemaValidationFailed);
+            expect(e.code).to.equal(EnvaptErrorCodes.InvalidEnvValue);
             expect(e.issues).to.deep.equal([{ message: 'out of range', path: ['SET_VALUE'] }]);
         });
 
-        it('reports a bad array element as SchemaValidationFailed', () => {
+        it('reports a bad array element as InvalidEnvValue', () => {
             const e = thrownBy(() => Envapter.getRequired('PORTS_BAD', Converters.array({ of: Converters.Port })));
-            expect(e.code).to.equal(EnvaptErrorCodes.SchemaValidationFailed);
+            expect(e.code).to.equal(EnvaptErrorCodes.InvalidEnvValue);
             expect(e.issues?.map((issue) => issue.path)).to.deep.equal([['PORTS_BAD']]);
             expect(e.issues?.[0]?.message).to.include('index 1');
         });
 
-        it('reports an empty array element under strict as SchemaValidationFailed', () => {
+        it('reports an empty array element under strict as InvalidEnvValue', () => {
             Envapter.strict = true;
             const e = thrownBy(() => Envapter.getRequired('PORTS_GAP', Converters.array({ of: Converters.Port })));
-            expect(e.code).to.equal(EnvaptErrorCodes.SchemaValidationFailed);
+            expect(e.code).to.equal(EnvaptErrorCodes.InvalidEnvValue);
             expect(e.issues?.map((issue) => issue.path)).to.deep.equal([['PORTS_GAP']]);
             expect(e.issues?.[0]?.message).to.include('index 1');
         });
@@ -194,7 +194,7 @@ describe('Required reads (v8)', () => {
             expect(e.message).to.not.include('SET_NUMBER');
         });
 
-        it('throws one SchemaValidationFailed listing every converter field that cannot convert', () => {
+        it('throws one InvalidEnvValue listing every converter field that cannot convert', () => {
             const e = thrownBy(() =>
                 Envapter.getRequiredAll({
                     SET_VALUE: Converters.Number,
@@ -202,7 +202,7 @@ describe('Required reads (v8)', () => {
                     SAMPLE_REPO: Converters.Port
                 })
             );
-            expect(e.code).to.equal(EnvaptErrorCodes.SchemaValidationFailed);
+            expect(e.code).to.equal(EnvaptErrorCodes.InvalidEnvValue);
             expect(e.message).to.include('SET_VALUE');
             expect(e.message).to.include('SAMPLE_REPO');
             expect(e.message).to.not.include('SET_NUMBER');
@@ -235,7 +235,7 @@ describe('Required reads (v8)', () => {
             }>();
         });
 
-        it('throws one SchemaValidationFailed holding every failed field, keyed by env name in path', () => {
+        it('throws one InvalidEnvValue holding every failed field, keyed by env name in path', () => {
             const hostSchema: StandardSchemaV1<unknown, string> = {
                 '~standard': {
                     version: 1,
@@ -251,7 +251,7 @@ describe('Required reads (v8)', () => {
                     DATABASE_URL: hostSchema
                 })
             );
-            expect(e.code).to.equal(EnvaptErrorCodes.SchemaValidationFailed);
+            expect(e.code).to.equal(EnvaptErrorCodes.InvalidEnvValue);
             expect(e.message).to.include('SET_VALUE');
             expect(e.message).to.include('SAMPLE_REPO');
             expect(e.message).to.include('DATABASE_URL');
@@ -293,13 +293,13 @@ describe('Required reads (v8)', () => {
                 '~standard': { version: 1, vendor: 'envapt-test', validate: () => ({ issues: [] }) }
             };
             const e = thrownBy(() => Envapter.getRequiredAll({ SET_VALUE: emptyIssues }));
-            expect(e.code).to.equal(EnvaptErrorCodes.SchemaValidationFailed);
+            expect(e.code).to.equal(EnvaptErrorCodes.InvalidEnvValue);
             expect(e.issues).to.deep.equal([{ message: 'no issue message', path: ['SET_VALUE'] }]);
         });
 
         it('reports a failed schema field and a failed converter field in one error', () => {
             const e = thrownBy(() => Envapter.getRequiredAll({ SET_VALUE: z.url(), DATABASE_URL: Converters.Port }));
-            expect(e.code).to.equal(EnvaptErrorCodes.SchemaValidationFailed);
+            expect(e.code).to.equal(EnvaptErrorCodes.InvalidEnvValue);
             expect(e.message).to.include('SET_VALUE');
             expect(e.message).to.include('DATABASE_URL');
             expect(e.issues?.map((issue) => issue.path)).to.deep.equal([['SET_VALUE'], ['DATABASE_URL']]);
@@ -312,7 +312,7 @@ describe('Required reads (v8)', () => {
                     SET_VALUE: Converters.Number
                 })
             );
-            expect(e.code).to.equal(EnvaptErrorCodes.SchemaValidationFailed);
+            expect(e.code).to.equal(EnvaptErrorCodes.InvalidEnvValue);
             expect(e.issues?.map((issue) => issue.path)).to.deep.equal([['PORTS_BAD'], ['SET_VALUE']]);
         });
 
@@ -327,7 +327,7 @@ describe('Required reads (v8)', () => {
                     SAMPLE_REPO: Converters.Number
                 })
             );
-            expect(e.code).to.equal(EnvaptErrorCodes.SchemaValidationFailed);
+            expect(e.code).to.equal(EnvaptErrorCodes.InvalidEnvValue);
             expect(e.issues).to.deep.equal([
                 { message: 'must be "expected"', path: ['SET_VALUE'] },
                 { message: 'could not be converted', path: ['SAMPLE_REPO'] }
@@ -353,7 +353,7 @@ describe('Required reads (v8)', () => {
                     SAMPLE_REPO: Converters.Number
                 })
             );
-            expect(e.code).to.equal(EnvaptErrorCodes.SchemaValidationFailed);
+            expect(e.code).to.equal(EnvaptErrorCodes.InvalidEnvValue);
             expect(e.issues).to.deep.equal([
                 { message: 'unknown flag', path: ['SET_VALUE'] },
                 { message: 'could not be converted', path: ['SAMPLE_REPO'] }
