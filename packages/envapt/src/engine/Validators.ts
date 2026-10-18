@@ -87,11 +87,12 @@ export class Validator {
 
         const elementOf = value.of;
         const isScalar = typeof elementOf === 'string' && ListOfBuiltInConverters.includes(elementOf);
-        const isCustomFn = typeof elementOf === 'function';
+        const isSchema = Validator.isStandardSchema(elementOf);
+        const isCustomFn = typeof elementOf === 'function' && !isSchema;
         if (!isScalar && !isCustomFn) {
             throw new EnvaptError(
                 EnvaptErrorCodes.InvalidArrayConverterType,
-                `ArrayOf<...> element ("of") must be a built-in scalar token or a function, got ${typeof elementOf}`
+                `ArrayOf<...> element ("of") must be a built-in scalar token or a function, got ${isSchema ? 'a Standard Schema' : typeof elementOf}`
             );
         }
     }

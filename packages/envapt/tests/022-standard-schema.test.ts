@@ -5,7 +5,7 @@ import * as v from 'valibot';
 import { afterEach, beforeAll, describe, expect, expectTypeOf, it, vi } from 'vitest';
 import { z } from 'zod/v4';
 
-import { Envapter, EnvaptErrorCodes } from '../src';
+import { Converters, Envapter, EnvaptErrorCodes } from '../src';
 import { resetDebugForTesting } from '../src/infra/Debug';
 import { EnvaptError } from '../src/infra/Error';
 import { Envapt } from '../src/legacy';
@@ -289,6 +289,14 @@ describe('Standard Schema adapter (v5)', () => {
         });
     });
 
+    describe('a schema as an array element converter', () => {
+        it('throws InvalidArrayConverterType for an arktype type passed as `of`', () => {
+            expect(() => Envapter.getUsing('INVALID_PORT', Converters.array({ of: ark('string.integer.parse') })))
+                .to.throw(EnvaptError, 'Standard Schema')
+                .with.property('code', EnvaptErrorCodes.InvalidArrayConverterType);
+        });
+    });
+
     describe('getUsing with a schema: template expansion before validation', () => {
         it('schema sees the post-`${VAR}` value', () => {
             const port = Envapter.getUsing('TEMPLATED_PORT', z.coerce.number());
@@ -406,6 +414,16 @@ describe('Standard Schema adapter (v5)', () => {
             expect(() => RequiredInvalidPort.port)
                 .to.throw(EnvaptError)
                 .with.property('code', EnvaptErrorCodes.InvalidEnvValue);
+        });
+
+        it('throws InvalidUserDefinedConfig under required: true for an async schema', () => {
+            class RequiredAsync {
+                @Envapt('PORT', { schema: handRolledAsync, required: true })
+                static readonly port: string;
+            }
+            expect(() => RequiredAsync.port)
+                .to.throw(EnvaptError)
+                .with.property('code', EnvaptErrorCodes.InvalidUserDefinedConfig);
         });
     });
 

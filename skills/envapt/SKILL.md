@@ -83,7 +83,7 @@ The legacy form (`envapt/legacy`) differs. Static fields use a plain `static rea
 
 ### Options object
 
-`@Envapt(key, options)` accepts: `{ fallback }`, `{ converter, fallback }`, `{ converter }`, `{ converter, required: true }`, `{ required: true }` (raw string, throws on missing), and `{ schema }` / `{ schema, fallback }`. `required` and `fallback` are mutually exclusive, and so are `schema` and `converter`. Passing a Standard Schema as `converter` throws `InvalidUserDefinedConfig`, so give it to `schema`. With `required: true`, a present value the converter can't convert throws `InvalidEnvValue`. A bad combination throws `EnvaptError` when the decorator is applied, before any access.
+`@Envapt(key, options)` accepts: `{ fallback }`, `{ converter, fallback }`, `{ converter }`, `{ converter, required: true }`, `{ required: true }` (raw string, throws on missing), `{ schema }` (`undefined` on missing), `{ schema, fallback }`, and `{ schema, required: true }`. `required` and `fallback` are mutually exclusive, and so are `schema` and `converter`. Passing a Standard Schema as `converter` throws `InvalidUserDefinedConfig`, so give it to `schema`. With `required: true`, a present value the converter can't convert throws `InvalidEnvValue`. A bad combination throws `EnvaptError` when the decorator is applied, before any access.
 
 ### Shorthand decorators
 
@@ -115,7 +115,7 @@ Arrays use the builder. `of` defaults to `Converters.String` and `delimiter` to 
 Converters.array({ of: Converters.Number, delimiter: ';' }); // "1;2;3" -> number[]
 ```
 
-A custom converter is a `(raw: string) => T` function everywhere: `getUsing`, `@Envapt({ converter })`, `getRequired`, `getRequiredAll`, and `Converters.array({ of })`. envapt calls it only with a present value and applies the fallback itself. Returning `undefined` or `null` means the value can't be converted. A top-level read then uses the fallback, and an array element throws `ArrayElementConversionFailed`. An error the converter throws reaches the caller unchanged.
+A custom converter is a `(raw: string) => T` function everywhere: `getUsing`, `@Envapt({ converter })`, `getRequired`, `getRequiredAll`, and `Converters.array({ of })`. envapt calls it only with a present value and applies the fallback itself. Returning `undefined` or `null` means the value can't be converted. A top-level read then uses the fallback, and an array element throws `ArrayElementConversionFailed`. An error the converter throws reaches the caller unchanged from `getUsing` and an optional `@Envapt`. A required read reports it as an `InvalidEnvValue` issue carrying its message.
 
 ## Runtimes and sources
 

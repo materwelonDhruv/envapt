@@ -165,14 +165,14 @@ The throw happens on first access to the property. An unset or empty value throw
 
 ## Validation with a schema
 
-Pass a `schema` to validate through zod, valibot, arktype, or a hand-rolled `StandardSchemaV1`. The property type is the schema's output.
+Pass a `schema` to validate through zod, valibot, arktype, or a hand-rolled `StandardSchemaV1`. The property type is the schema's output, and it includes `undefined` unless you pass `required: true` or a `fallback`.
 
 ```ts twoslash
 import { z } from 'zod/v4';
 import { Envapt } from 'envapt';
 // ---cut---
 class Config {
-    @Envapt('STRIPE_SECRET_KEY', { schema: z.string().startsWith('sk_') })
+    @Envapt('STRIPE_SECRET_KEY', { schema: z.string().startsWith('sk_'), required: true })
     static accessor stripeKey: string;
 }
 ```

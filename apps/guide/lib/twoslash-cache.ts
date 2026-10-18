@@ -16,7 +16,7 @@ const SALT_LENGTH = 12;
 // Hash the built declarations and fold that into the key instead.
 function envaptTypesSalt(): string {
     try {
-        const files = readdirSync(ENVAPT_DIST)
+        const files = readdirSync(ENVAPT_DIST, { recursive: true, encoding: 'utf8' })
             .filter((f) => f.endsWith('.d.ts') || f.endsWith('.d.mts') || f.endsWith('.d.cts'))
             .sort();
         const hash = createHash('sha256');

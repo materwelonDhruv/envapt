@@ -10,7 +10,6 @@ import { EnvaptError } from '../src/infra/Error';
 
 import type { DebugLevel, StandardSchemaV1 } from '../src';
 
-// inline Standard Schema, so the parse-warn test needs no zod/valibot dep
 const passThroughSchema: StandardSchemaV1<string, string> = {
     '~standard': { version: 1, vendor: 'test', validate: (v) => ({ value: v as string }) }
 };
@@ -164,7 +163,7 @@ describe('Debug mode (v5)', () => {
             try {
                 Envapter.getUsing('NEVER_SET_KEY', passThroughSchema, 'fb');
                 const line = capture.lines.find((l) => l.includes('NEVER_SET_KEY'));
-                expect(line, 'expected a not-found warn from parse').to.exist;
+                expect(line, 'expected a not-found warn from the schema read').to.exist;
                 expect(line).to.include('missing or empty');
             } finally {
                 capture.restore();

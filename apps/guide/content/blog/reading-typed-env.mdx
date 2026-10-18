@@ -57,21 +57,21 @@ const ttl = Envapter.getUsing('CACHE_TTL', Converters.Time, '5m'); // "5m" -> 30
 
 `Converters.Url` runs the value through `new URL`, so a non-absolute URL takes the fallback and never slips through as a string. `Converters.array({ of: Converters.Url })` splits on the delimiter and converts each element, so the type is `URL[]`. A hand-rolled `.split(',')` leaves you at `string[]`. `Converters.Time` reads `5m` and returns `300000`, so a timeout in config reads the way you'd write it in code, with no pile of zeroes to count.
 
-The built-in tokens cover number, integer, float, boolean, bigint, symbol, JSON, URL, RegExp, Date, duration, port, email, and arrays. When none of them fit, `getWith` takes a plain `(raw, fallback) => T`:
+The built-in tokens cover number, integer, float, boolean, bigint, JSON, URL, RegExp, Date, duration, port, email, and arrays. When none of them fit, `getUsing` also takes a plain `(raw: string) => T`, called only when the variable is set:
 
 ```ts twoslash
 import { Envapter } from 'envapt';
 // ---cut---
-const toBytes = (raw: string | undefined) => {
-    const n = Number.parseInt(raw ?? '0', 10);
-    if (/gb$/i.test(raw ?? '')) return n * 1e9;
-    if (/mb$/i.test(raw ?? '')) return n * 1e6;
-    if (/kb$/i.test(raw ?? '')) return n * 1e3;
+const toBytes = (raw: string) => {
+    const n = Number.parseInt(raw, 10);
+    if (/gb$/i.test(raw)) return n * 1e9;
+    if (/mb$/i.test(raw)) return n * 1e6;
+    if (/kb$/i.test(raw)) return n * 1e3;
     return n;
 };
 
 // MAX_BODY=10mb
-const maxBody = Envapter.getWith('MAX_BODY', toBytes);
+const maxBody = Envapter.getUsing('MAX_BODY', toBytes);
 //    ^?
 ```
 
@@ -83,19 +83,19 @@ If your code already validates things with zod (or valibot, or arktype), hand th
 import { z } from 'zod/v4';
 import { Envapter } from 'envapt';
 // ---cut---
-const port = Envapter.parse('PORT', z.coerce.number().int().min(1024));
-//    ^? number
+const port = Envapter.getRequired('PORT', z.coerce.number().int().min(1024));
+//    ^?
 ```
 
 t3-env and znv do this job too, and do it well, but they're built on zod, where the validator is the dependency. envapt uses the Standard Schema interface, so which validator you bring is your call, and envapt itself adds nothing to your lockfile.
 
-`parse` runs the value through the schema and returns whatever the schema outputs, typed. A bad `PORT` throws on the `parse` line with the validator's own message. The hand-written version gives you a `NaN` that some later arithmetic turns into garbage. A third argument is an optional fallback, returned as-is on a missing value, so it has to already satisfy the type because the schema never sees it:
+`getRequired` runs the value through the schema and returns whatever the schema outputs, typed. A bad `PORT` throws on the `getRequired` line, with the validator's issues on the error. The hand-written version gives you a `NaN` that some later arithmetic turns into garbage. For an optional value, `getUsing` takes the same schema plus a fallback, returned as-is on a missing value, so it has to already satisfy the type because the schema never sees it:
 
 ```ts twoslash
 import { z } from 'zod/v4';
 import { Envapter } from 'envapt';
 // ---cut---
-const timeout = Envapter.parse('TIMEOUT_MS', z.coerce.number(), 30000);
+const timeout = Envapter.getUsing('TIMEOUT_MS', z.coerce.number(), 30000);
 //    ^?
 ```
 
@@ -111,7 +111,7 @@ class Config {
     @Envapt('PORT', { converter: Converters.Port, fallback: 3000 })
     static accessor port: number;
 
-    @Envapt('LOG_LEVEL', { schema: z.enum(['debug', 'info', 'warn']) })
+    @Envapt('LOG_LEVEL', { schema: z.enum(['debug', 'info', 'warn']), fallback: 'info' })
     static accessor logLevel: 'debug' | 'info' | 'warn';
 }
 ```
@@ -135,8 +135,7 @@ In my bot framework, seedcord, which already leans on decorators, the Discord to
 ```ts twoslash
 import { Envapt } from 'envapt';
 // ---cut---
-function validateDiscordToken(raw: string | undefined): string {
-    if (!raw?.trim()) throw new Error('DISCORD_BOT_TOKEN is missing');
+function validateDiscordToken(raw: string): string {
     if (!/^[\w-]{24,}\.[\w-]{6,}\.[\w-]{27,}$/.test(raw)) {
         throw new Error('DISCORD_BOT_TOKEN is malformed');
     }
@@ -144,7 +143,7 @@ function validateDiscordToken(raw: string | undefined): string {
 }
 
 class Bot {
-    @Envapt('DISCORD_BOT_TOKEN', { converter: (raw) => validateDiscordToken(raw) })
+    @Envapt('DISCORD_BOT_TOKEN', { converter: validateDiscordToken, required: true })
     public accessor botToken!: string; // a malformed token throws here
 }
 ```

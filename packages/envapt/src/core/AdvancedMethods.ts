@@ -84,9 +84,9 @@ export class AdvancedMethods extends PrimitiveMethods {
 
     /**
      * Read a required environment variable and convert it, throwing `MissingEnvValue` when the value
-     * is missing or empty. A value the converter cannot convert throws `InvalidEnvValue` with
-     * one issue keyed by the env name. A bad array element, an error a custom parser throws, and a
-     * schema's issues all become issues on that error. Accepts a built-in or `ArrayOf` token, a custom
+     * is missing or empty. A value it cannot convert throws `InvalidEnvValue` with issues keyed by
+     * the env name. A bad array element, an error a custom parser or schema throws, and a schema's
+     * own issues all become issues on that error. Accepts a built-in or `ArrayOf` token, a custom
      * parser function, or a synchronous Standard Schema. The key can be a single name or an ordered list.
      * @see {@link https://envapt.materwelon.dev/docs/envapter#fail-fast-on-missing-values}
      * @see {@link https://envapt.materwelon.dev/docs/converters#require-a-converted-value}
@@ -95,7 +95,6 @@ export class AdvancedMethods extends PrimitiveMethods {
         key: EnvKeyInput,
         converter: TConverter
     ): InferConverterReturnType<TConverter>;
-    // arktype types are callable and would match the function overload below
     static getRequired<Schema extends StandardSchemaV1>(
         key: EnvKeyInput,
         schema: SchemaConstraint<Schema>

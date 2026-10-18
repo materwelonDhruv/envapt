@@ -11,6 +11,8 @@ import type { StandardSchemaV1 } from '../infra/StandardSchema';
 import type { BuiltInConverter, EnvKeyInput, EnvaptConverter, PresentValue, RequiredConverter } from '../types';
 import type { EnvapterService } from '../types/Env';
 
+type SchemaOutcome = StandardSchemaV1.Result<unknown> | Promise<StandardSchemaV1.Result<unknown>>;
+
 function errorMessage(error: unknown): string {
     return error instanceof Error ? error.message : String(error);
 }
@@ -182,17 +184,18 @@ export class ValueConverter {
         return keyIssues(key, this.runSchema(key, schema, value));
     }
 
-    // a schema that throws becomes an issue like any other bad value
     readSpecField(
         present: PresentValue,
         field: RequiredConverter | StandardSchemaV1
     ): StandardSchemaV1.Result<unknown> {
         if (!Validator.isStandardSchema(field)) return this.readConverted(present, field);
+        let outcome: SchemaOutcome;
         try {
-            return this.readValidated(present, field);
+            outcome = field['~standard'].validate(present.value);
         } catch (error) {
             return keyIssues(present.key, { issues: [{ message: errorMessage(error) }] });
         }
+        return keyIssues(present.key, this.requireSync(present.key, outcome));
     }
 
     private runParser(value: string, parse: (raw: string) => unknown): StandardSchemaV1.Result<unknown> {
@@ -227,7 +230,7 @@ export class ValueConverter {
         schema: StandardSchemaV1,
         raw: string | undefined
     ): StandardSchemaV1.Result<unknown> {
-        let outcome: StandardSchemaV1.Result<unknown> | Promise<StandardSchemaV1.Result<unknown>>;
+        let outcome: SchemaOutcome;
         try {
             outcome = schema['~standard'].validate(raw);
         } catch (cause) {
@@ -237,7 +240,10 @@ export class ValueConverter {
                 { cause }
             );
         }
+        return this.requireSync(key, outcome);
+    }
 
+    private requireSync(key: EnvKeyInput, outcome: SchemaOutcome): StandardSchemaV1.Result<unknown> {
         if (outcome instanceof Promise) {
             // node crashes on an unhandled rejection
             outcome.catch((reason: unknown) => {

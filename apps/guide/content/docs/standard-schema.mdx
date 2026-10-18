@@ -13,7 +13,7 @@ const port = Envapter.getUsing('PORT', z.coerce.number().int().min(1024).max(655
 //    ^?
 ```
 
-`port` is `number | undefined` because an unset `PORT` returns `undefined`. A fallback removes `undefined` from the type, and `getRequired` throws on a missing value. The sections below cover both.
+`port` is `number | undefined` because an unset `PORT` returns `undefined`. A fallback removes `undefined` from the type. `getRequired` throws on a missing value.
 
 A schema works on the [`@Envapt`](/docs/decorators) decorator too, through the `schema` option:
 

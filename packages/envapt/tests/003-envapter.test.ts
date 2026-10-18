@@ -95,11 +95,7 @@ describe('Envapter', () => {
         });
 
         it('should work with custom converters via getUsing', () => {
-            const value = Envapter.getUsing(
-                ['UNKNOWN_JSON', 'GETTER_STRING'],
-                (raw) => (raw ? raw.toUpperCase() : 'none'),
-                undefined
-            );
+            const value = Envapter.getUsing(['UNKNOWN_JSON', 'GETTER_STRING'], (raw) => raw.toUpperCase());
             expect(value).to.equal('PRIMITIVESTRING');
         });
     });

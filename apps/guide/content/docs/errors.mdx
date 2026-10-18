@@ -63,7 +63,7 @@ An unset `PORT` throws `MissingEnvValue`. A `PORT` of `99999` throws `InvalidEnv
 | 206 | `ArrayElementConversionFailed` | An array element fails to convert to the configured element type. A required read reports it as a 210 issue. |
 | 207 | `EmptyArrayElement` | Strict mode only: an array element is empty or whitespace. A required read reports it as a 210 issue. |
 | 208 | `SchemaValidationFailed` | `getUsing` or `@Envapt({ schema })` without `required` gets a value its Standard Schema rejects. The message lists only the key. |
-| 209 | `SchemaThrew` | A schema's `validate` itself throws in `getUsing` or `@Envapt({ schema })` without `required`. The original error is on `cause`. `getRequiredAll` reports it as a 210 issue. |
+| 209 | `SchemaThrew` | A schema's `validate` itself throws in `getUsing` or `@Envapt({ schema })` without `required`. The original error is on `cause`. A required read reports it as a 210 issue. |
 | 210 | `InvalidEnvValue` | A required read gets a value it can't convert, a bad array element, or an error from your custom parser or schema. `getRequiredAll` throws it once for all bad values, schema fields included. The message lists only the keys. |
 
 {/* prettier-ignore-end */}
@@ -75,7 +75,7 @@ An unset `PORT` throws `MissingEnvValue`. A `PORT` of `99999` throws `InvalidEnv
 | Code | Name | Thrown when |
 | --- | --- | --- |
 | 301 | `MissingDelimiter` | An array converter is missing its delimiter. |
-| 302 | `InvalidUserDefinedConfig` | A bad decorator/options combination: `required` with `fallback`, `schema` with `converter`, a Standard Schema passed as `converter` on `@Envapt`, `Symbol` passed as a `converter`, a non-string `Envapter.environment`, a non-`StandardSchemaV1` `schema`, an async schema (zod also returns a Promise when a `.transform` or `.refine` throws), or an invalid debug level. `getRequiredAll` reports an async schema field as a 210 issue. |
+| 302 | `InvalidUserDefinedConfig` | A bad decorator/options combination: `required` with `fallback`, `schema` with `converter`, a Standard Schema passed as `converter` on `@Envapt`, `Symbol` passed as a `converter`, a non-string `Envapter.environment`, a non-`StandardSchemaV1` `schema`, an async schema (zod also returns a Promise when a `.transform` or `.refine` throws), or an invalid debug level. |
 | 303 | `EnvFilesNotFound` | A configured `.env` path (via `envPaths` or `configureProfiles`) doesn't exist. |
 | 304 | `InvalidKeyInput` | No key, a non-string key, or an empty-string key was passed. |
 | 305 | `MissingEnvValue` | A required value is missing or empty, or whitespace-only under strict: `require`, `getRequired`, `getRequiredAll`, `{ required: true }`, or an unresolved template under strict mode. |

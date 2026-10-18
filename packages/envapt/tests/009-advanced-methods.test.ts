@@ -101,8 +101,12 @@ describe('Advanced Converter Methods', () => {
             const toMap = (raw: string): Map<string, number> =>
                 new Map(splitTrimmed(raw).map((item) => [item, item.length]));
 
-            const result = Envapter.getUsing('TEST_STRING', toMap, new Map([['default', 0]]));
-            expect(result).to.be.instanceOf(Map);
+            const result = Envapter.getUsing('TEST_ARRAY_COMMA', toMap, new Map([['default', 0]]));
+            expect([...result]).to.deep.equal([
+                ['item1', 5],
+                ['item2', 5],
+                ['item3', 5]
+            ]);
         });
 
         it('should work with complex custom converter', () => {
