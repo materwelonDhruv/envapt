@@ -21,7 +21,8 @@ export class EnvironmentMethods extends EnvapterBase {
      * for that environment.
      * @see {@link https://envapt.materwelon.dev/docs/environment#detecting-the-environment}
      */
-    static set environment(env: string) {
+    // string & {} keeps the four names in editor suggestions
+    static set environment(env: Environment | (string & {})) {
         setEnvironment(env);
     }
 
@@ -35,7 +36,7 @@ export class EnvironmentMethods extends EnvapterBase {
     /**
      * @see {@link EnvironmentMethods.environment}
      */
-    set environment(env: string) {
+    set environment(env: Environment | (string & {})) {
         setEnvironment(env);
     }
 
