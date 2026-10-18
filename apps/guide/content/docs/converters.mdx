@@ -31,7 +31,7 @@ const logFormat = Envapter.getUsing('LOG_FORMAT', (raw) => (raw === 'json' || ra
 | `Converters.BigInt` | `bigint` | `BigInt(raw)` |
 | `Converters.Json` | `JsonValue` | `JSON.parse(raw)` |
 | `Converters.Url` | `URL` | `new URL(raw)` |
-| `Converters.Regexp` | `RegExp` | `/pattern/flags` form, or the whole string as the pattern |
+| `Converters.RegExp` | `RegExp` | `/pattern/flags` form, or the whole string as the pattern |
 | `Converters.Date` | `Date` | a millisecond timestamp or a UTC ISO 8601 string |
 | `Converters.Time` | `number` | a duration string like `30s`, returned as milliseconds |
 | `Converters.Port` | `number` | an integer in the `0-65535` range |
@@ -88,7 +88,7 @@ const flags = Envapter.getUsing('FEATURE_FLAGS', Converters.Json, {});
 
 `Url` builds a `URL`, which needs an absolute value. A relative path makes the constructor throw, and the read returns the fallback.
 
-`Regexp` reads a `/pattern/flags` literal (flags limited to `g i m s u v y`). A value without the surrounding slashes is treated as the whole pattern with no flags.
+`RegExp` reads a `/pattern/flags` literal (flags limited to `g i m s u v y`). A value without the surrounding slashes is treated as the whole pattern with no flags.
 
 `Date` accepts exactly two forms:
 
@@ -143,7 +143,7 @@ const ports = Envapter.getUsing('PORTS', Converters.array({ of: Converters.Numbe
 //    ^?
 ```
 
-The element type can be any scalar token except `Json` and `Regexp`, or your own `(raw: string) => T` function that converts a single element. An array fallback must already be an array of the element type.
+The element type can be any scalar token except `Json` and `RegExp`, or your own `(raw: string) => T` function that converts a single element. An array fallback must already be an array of the element type.
 
 ```ts twoslash
 import { Envapter, Converters } from 'envapt';

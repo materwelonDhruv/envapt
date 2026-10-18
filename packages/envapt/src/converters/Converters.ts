@@ -9,7 +9,7 @@ const SCALAR = {
     Float: 'float',
     Json: 'json',
     Url: 'url',
-    Regexp: 'regexp',
+    RegExp: 'regexp',
     Date: 'date',
     Time: 'time',
     Port: 'port',

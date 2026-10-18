@@ -42,8 +42,8 @@ describe('Advanced Converter Methods', () => {
             expect(result?.toString()).to.equal('https://api.example.com/v1');
         });
 
-        it('should convert using Converters enum - Regexp', () => {
-            const result = Envapter.getUsing('TEST_REGEXP_WITH_FLAGS', Converters.Regexp, /[a-z]+/gi);
+        it('should convert using Converters enum - RegExp', () => {
+            const result = Envapter.getUsing('TEST_REGEXP_WITH_FLAGS', Converters.RegExp, /[a-z]+/gi);
             expect(result).to.be.instanceOf(RegExp);
             expect(result.source).to.equal('[a-z]+');
             expect(result.flags).to.equal('gi');

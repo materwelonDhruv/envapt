@@ -137,7 +137,7 @@ describe('Runtime Validation', () => {
             static readonly urlWithStringFallback: URL;
 
             // @ts-expect-error Inconsistent fallback type
-            @Envapt('NONEXISTENT_REGEXP_VAR', { converter: Converters.Regexp, fallback: 'not-a-regexp-object' })
+            @Envapt('NONEXISTENT_REGEXP_VAR', { converter: Converters.RegExp, fallback: 'not-a-regexp-object' })
             static readonly regexpWithStringFallback: RegExp;
 
             // @ts-expect-error Inconsistent fallback type

@@ -24,7 +24,7 @@ describe('converters on workerd', () => {
             })
         );
         expect(Envapter.getUsing('URL', Converters.Url)?.host).toBe('x.test');
-        expect(Envapter.getUsing('RE', Converters.Regexp)?.test('abc')).toBe(true);
+        expect(Envapter.getUsing('RE', Converters.RegExp)?.test('abc')).toBe(true);
         expect(Envapter.getUsing('WHEN', Converters.Date)?.getUTCFullYear()).toBe(2020);
         expect(Envapter.getUsing('TTL', Converters.Time)).toBe(5_400_000);
     });

@@ -132,10 +132,10 @@ describe('Built-in Converters', () => {
 
     describe('regexp converter', () => {
         class RegexpTest {
-            @Envapt('TEST_REGEXP_SIMPLE', { converter: Converters.Regexp })
+            @Envapt('TEST_REGEXP_SIMPLE', { converter: Converters.RegExp })
             static readonly simpleRegexp: RegExp | undefined;
 
-            @Envapt('TEST_REGEXP_INVALID', { converter: Converters.Regexp, fallback: /fallback/i })
+            @Envapt('TEST_REGEXP_INVALID', { converter: Converters.RegExp, fallback: /fallback/i })
             static readonly invalidRegexp: RegExp;
         }
 

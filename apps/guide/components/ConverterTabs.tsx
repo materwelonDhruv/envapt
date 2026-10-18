@@ -46,7 +46,7 @@ const CONVERTERS: readonly Converter[] = [
         type: 'JsonValue'
     },
     { name: 'Url', expr: 'Converters.Url', key: 'API_URL', raw: 'https://api.io', out: 'URL { … }', type: 'URL' },
-    { name: 'Regexp', expr: 'Converters.Regexp', key: 'SLUG', raw: '/^[a-z-]+$/', out: '/^[a-z-]+$/', type: 'RegExp' },
+    { name: 'RegExp', expr: 'Converters.RegExp', key: 'SLUG', raw: '/^[a-z-]+$/', out: '/^[a-z-]+$/', type: 'RegExp' },
     {
         name: 'Date',
         expr: 'Converters.Date',

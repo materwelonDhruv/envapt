@@ -18,7 +18,7 @@ describe('template variable resolution', () => {
         @Envapt('TEST_ARRAY_COMMA_TEMPLATE', { converter: Converters.array(), fallback: [] })
         static readonly arrayCommaTemplate: string[];
 
-        @Envapt('TEST_REGEXP_TEMPLATE', { converter: Converters.Regexp, fallback: /fallback/ })
+        @Envapt('TEST_REGEXP_TEMPLATE', { converter: Converters.RegExp, fallback: /fallback/ })
         static readonly regexpTemplate: RegExp;
     }
 

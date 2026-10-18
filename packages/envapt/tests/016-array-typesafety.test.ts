@@ -124,10 +124,10 @@ describe('ArrayConverter typesafety (v5) — compile-time (expect-type)', () => 
         expectTypeOf(t.of).toEqualTypeOf<typeof fn>();
     });
 
-    it('rejects of: Converters.Json and Converters.Regexp at the type level', () => {
+    it('rejects of: Converters.Json and Converters.RegExp at the type level', () => {
         // @ts-expect-error 'json' is excluded from ArrayElement
         Converters.array({ of: Converters.Json });
         // @ts-expect-error 'regexp' is excluded from ArrayElement
-        Converters.array({ of: Converters.Regexp });
+        Converters.array({ of: Converters.RegExp });
     });
 });
