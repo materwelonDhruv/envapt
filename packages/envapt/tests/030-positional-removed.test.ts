@@ -5,7 +5,6 @@ import { Envapt } from '../src/legacy';
 
 // v6 removed the positional `@Envapt(key, fallback, converter)` form. plain JS can still call it.
 describe('removed positional @Envapt form', () => {
-    // the old positional signature
     const positional = Envapt as unknown as (key: string, fallback: unknown, converter?: unknown) => PropertyDecorator;
 
     it('throws when a non-options second argument is passed', () => {

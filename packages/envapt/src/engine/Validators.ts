@@ -1,4 +1,4 @@
-// the ./converters barrel imports ValueConverter, which imports this file
+// the ./converters barrel cycles back to this file through Field
 import { isArrayOf } from '../converters/Converters';
 import { ListOfBuiltInConverters, BuiltInConverterTypeCheckers } from '../converters/ListOfBuiltInConverters';
 import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
@@ -48,7 +48,7 @@ export class Validator {
     }
 
     static rejectConstructor(converter: unknown): void {
-        // Symbol(raw) returns a new symbol on every read
+        // Symbol(raw) returns a new symbol on every call
         if (converter === Symbol) {
             throw new EnvaptError(
                 EnvaptErrorCodes.InvalidUserDefinedConfig,
@@ -169,7 +169,7 @@ export class Validator {
         }
     }
 
-    // a truthy typo like 'true' or 1 would turn the mirror on
+    // a truthy typo like 'true' or 1 would switch process.env syncing on
     static validateSyncProcessEnv(value: unknown): asserts value is boolean {
         if (typeof value !== 'boolean') {
             throw new EnvaptError(

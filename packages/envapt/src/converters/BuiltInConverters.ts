@@ -170,7 +170,7 @@ export class BuiltInConverters {
 
     static port(raw: string, fallback?: number): number | undefined {
         const parsed = parseTrimmedNumber(raw);
-        // 0 is the ephemeral-bind wildcard
+        // binding port 0 asks the OS for a free port
         return parsed !== undefined && Number.isSafeInteger(parsed) && parsed >= 0 && parsed <= MAX_PORT
             ? parsed
             : fallback;
@@ -185,7 +185,7 @@ export class BuiltInConverters {
 
         const trimmedItems = raw.split(config.delimiter).map((item) => String(item).trim());
 
-        // strict rejects an empty item that the default filter below drops silently
+        // strict throws on an empty item that the filter below would remove
         if (strict) {
             const emptyIdx = trimmedItems.findIndex((item) => item === '');
             if (emptyIdx !== -1) {

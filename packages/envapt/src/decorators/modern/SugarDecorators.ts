@@ -54,7 +54,7 @@ export function EnvStr(key: EnvKeyInput, fallback?: string): EnvaptAccessorDecor
 
 /**
  * Shorthand for `@Envapt(key, { converter: Converters.Time, fallback })`. The fallback is a
- * millisecond number or a time string (`'15m'`), and the resolved value is always milliseconds.
+ * millisecond number or a time string (`'15m'`). The value always resolves to milliseconds.
  * @public
  * @see {@link https://envapt.materwelon.dev/docs/decorators#shorthand-decorators}
  */
@@ -65,8 +65,7 @@ export function EnvTime(key: EnvKeyInput, fallback?: TimeFallback): EnvaptAccess
 }
 
 /**
- * Shorthand for `@Envapt(key, { converter: Converters.Url, fallback })`. The fallback must be a
- * `URL` instance.
+ * Shorthand for `@Envapt(key, { converter: Converters.Url, fallback })`.
  * @public
  * @see {@link https://envapt.materwelon.dev/docs/decorators#shorthand-decorators}
  */

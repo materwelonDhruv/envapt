@@ -3,7 +3,6 @@ import { EMAIL_RE, MAX_PORT } from './BuiltInConverters';
 import type { ConverterToken } from './Converters';
 import type { JsonValue } from '../types';
 
-// arrays go through Converters.array and are not listed here
 export const ListOfBuiltInConverters: ConverterToken[] = [
     'string',
     'number',

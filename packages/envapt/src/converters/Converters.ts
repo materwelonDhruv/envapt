@@ -52,16 +52,16 @@ function buildArrayConverter(opts?: { of?: ArrayElement; delimiter?: string }): 
 }
 
 /**
- * Built-in converters for environment variables. Use the scalar tokens (e.g. `Converters.Number`)
- * for primitive types and the {@link Converters.array} builder for delimited lists.
+ * Built-in converters for environment variables. A scalar token such as `Converters.Number`
+ * converts a single value. The {@link Converters.array} builder converts a delimited list.
  *
  * @example
  * ```ts
- * \@Envapt('PORT', { converter: Converters.Number, fallback: 3000 })
- * static readonly port: number;
+ * \@Envapt('PORT', { converter: Converters.Port, fallback: 3000 })
+ * static accessor port: number;
  *
  * \@Envapt('TAGS', { converter: Converters.array({ of: Converters.String, delimiter: ' ' }) })
- * static readonly tags: string[];
+ * static accessor tags: string[];
  * ```
  *
  * @public

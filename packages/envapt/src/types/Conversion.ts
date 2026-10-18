@@ -7,8 +7,8 @@ type BuiltInConverter = ConverterToken;
 /**
  * Custom converter for an environment variable or an array element. It receives a present value with templates
  * already expanded. envapt applies the fallback itself. A return of `undefined` or `null` means the value could
- * not be converted. From `getAs` and an optional `@Envapt`, an error the converter throws reaches the caller as
- * is. A required read reports it as an `InvalidEnvValue` issue carrying its message.
+ * not be converted. From `getAs` and an optional `@Envapt`, an error the converter throws propagates to the
+ * caller unchanged. A required read reports it as an `InvalidEnvValue` issue carrying its message.
  * @public
  * @see {@link https://envapt.materwelon.dev/docs/converters#custom-converters}
  */
@@ -27,7 +27,7 @@ interface JsonObject {
 }
 
 /**
- * JSON value types for custom converters
+ * The value `Converters.Json` returns.
  * @public
  * @see {@link https://envapt.materwelon.dev/docs/converters#json}
  */
@@ -82,7 +82,8 @@ type MapOfConverterFunctions = Record<BuiltInConverter, BuiltInConverterFunction
 type TimeUnit = 'ms' | 's' | 'm' | 'h' | 'd' | 'w';
 
 /**
- * Fallback type for time duration conversions
+ * A fallback for `Converters.Time`: milliseconds as a number, or a `<number><unit>` string such as
+ * `'15m'`.
  * @public
  * @see {@link https://envapt.materwelon.dev/docs/converters#time-and-durations}
  */

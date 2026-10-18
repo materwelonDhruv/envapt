@@ -10,19 +10,18 @@ import type { BareSource } from '../types';
  * the converters still apply. Those values must be JSON-serializable. Without a filesystem the `.env`
  * cascade and file APIs do not apply.
  * @public
- * @see {@link https://envapt.materwelon.dev/docs/sources#the-providers}
+ * @see {@link https://envapt.materwelon.dev/docs/sources#the-sources-envapt-ships}
  */
 export class PortableSource implements BareSource {
-    /** Always `false`. With no filesystem, the `.env` cascade and file APIs do not apply. */
+    /** Always `false`. */
     readonly supportsFiles = false;
     private readonly vars: Record<string, string>;
 
-    /** Seed the source from `vars`. Non-string values are JSON-stringified so the converters still apply. */
     constructor(vars: object) {
         this.vars = coerceToStringRecord(vars);
     }
 
-    /** Returns a snapshot clone of the provided object as plain strings. */
+    /** Returns a copy of the provided object with every value as a string. */
     readVars(): Record<string, string> {
         return { ...this.vars };
     }

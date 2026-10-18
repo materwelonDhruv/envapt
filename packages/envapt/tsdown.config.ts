@@ -12,7 +12,7 @@ const shared = {
     target: 'es2022'
 } as const satisfies UserConfig;
 
-// the portable build emits a sibling dts that the deep-import tests type-check against. package.json points published types at dist/types.
+// the browser and workers tests type-check against the dts each build writes next to its JS
 export default defineConfig([
     {
         ...shared,
@@ -21,7 +21,7 @@ export default defineConfig([
         platform: 'node',
         outDir: 'dist/node'
     },
-    // fixedExtension forces .mjs so the portable build matches its .mjs export paths.
+    // fixedExtension forces .mjs to match the portable export paths
     {
         ...shared,
         entry: { index: 'src/index.portable.ts', legacy: 'src/legacy.ts' },
@@ -31,7 +31,7 @@ export default defineConfig([
         fixedExtension: true,
         outDir: 'dist/portable'
     },
-    // Published types are emitted once without shims. emitDtsOnly drops JS.
+    // every export in package.json takes its types from this build
     {
         ...shared,
         dts: { emitDtsOnly: true },

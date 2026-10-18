@@ -26,7 +26,7 @@ describe('ArrayConverter typesafety (v5) — runtime', () => {
             @Envapt('LIST_WITH_GAPS', { converter: Converters.array({ of: Converters.Number }), fallback: [] })
             static readonly list: number[];
         }
-        // fixture LIST_WITH_GAPS is `1, , 2, ,,3`, and the permissive default trims empties first
+        // fixture LIST_WITH_GAPS is `1, , 2, ,,3`. outside strict mode the empty items are removed
         expect(F2Tests.list).to.deep.equal([1, 2, 3]);
     });
 

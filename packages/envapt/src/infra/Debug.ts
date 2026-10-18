@@ -2,12 +2,12 @@ import { EnvaptError, EnvaptErrorCodes } from './Error';
 import { readRuntimeVar, writeRuntimeLine } from './runtime';
 
 /**
- * Debug log levels for {@link Envapter.debug}. `silent` (default) emits nothing.
- * `warn` logs failed file reads, unresolved templates (when not strict), and any read of a
- * missing or empty variable, whether it returns a fallback or `undefined`. `verbose` adds every loaded file,
- * per-file key count, per-key load lines, and effective-paths / cache-rebuild notices.
+ * Debug log levels for {@link Envapter.debug}. `silent` (default) logs nothing. `warn` logs failed
+ * file reads, unresolved templates outside strict mode, an environment that falls back to
+ * development, and every read of a missing or empty variable. `verbose` also logs each loaded file
+ * and key, the effective `.env` paths, cache rebuilds, and each key whose value failed to convert.
  * @public
- * @see {@link https://envapt.materwelon.dev/docs/configuration#debug-logging}
+ * @see {@link https://envapt.materwelon.dev/docs/errors#debug-logging}
  */
 export type DebugLevel = 'silent' | 'warn' | 'verbose';
 
@@ -20,7 +20,6 @@ function isDebugLevel(value: string | undefined): value is DebugLevel {
     return value !== undefined && VALID_LEVELS.has(value);
 }
 
-// Reads `ENVAPT_DEBUG` lazily on first access. Setter wins after that.
 function resolveLevel(): DebugLevel {
     if (!initialized) {
         const fromEnv = readRuntimeVar('ENVAPT_DEBUG');

@@ -5,10 +5,11 @@ import type { EnvFileOptions } from '../infra/Dotenv';
 import type { ProfilesConfig } from '../types';
 
 /**
- * The browser/Workers/edge facade. It is {@link Envapter} with the filesystem-only config APIs kept in
- * the type. Under the default `fileApiMode` of `'warn'` they warn once and no-op (getters return an
- * empty default matching their type and setters do nothing). `'throw'` makes them throw
- * {@link EnvaptError} `FileApiUnsupported`. Reads throw `NoSourceBound` until `useSource` binds a source.
+ * Reads typed environment variables on Workers, the browser, and edge runtimes. It declares the same
+ * filesystem-only config APIs as the Node build. Code that calls them type-checks on both builds.
+ * Under the default `fileApiMode` of `'warn'` they warn once and do nothing. A getter returns an empty
+ * value of its type. `'throw'` makes them throw {@link EnvaptError} `FileApiUnsupported`. Reads throw
+ * `NoSourceBound` until `useSource` binds a source.
  * @public
  */
 export class PortableEnvapter extends Envapter {

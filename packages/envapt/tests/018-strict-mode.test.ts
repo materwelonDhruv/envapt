@@ -12,7 +12,7 @@ describe('Strict mode + required (v5)', () => {
     });
 
     afterEach(() => {
-        // reset strict so it doesn't leak into the next file and change get* semantics globally
+        // reset strict so it doesn't carry into the next test file
         Envapter.strict = false;
     });
 

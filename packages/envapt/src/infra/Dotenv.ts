@@ -5,12 +5,16 @@ import { debugVerbose, debugWarn } from './Debug';
  * For debug output, use `Envapter.debug` (or the `ENVAPT_DEBUG` env var).
  *
  * @public
- * @see {@link https://envapt.materwelon.dev/docs/configuration#which-files-load}
+ * @see {@link https://envapt.materwelon.dev/docs/env-files#file-options}
  */
 export interface EnvFileOptions {
     /** Encoding for reading .env files. Defaults to 'utf8'. */
     encoding?: string;
-    /** When true, later files override earlier ones (and existing processEnv values). Default false (first-wins). */
+    /**
+     * When `true`, each file's values replace earlier files' values and values already in `process.env`
+     * for envapt's reads. `process.env` itself changes only with `syncProcessEnv`.
+     * With the default `false`, the first value for each key stays.
+     */
     override?: boolean;
 }
 
@@ -21,11 +25,10 @@ export interface LoadDotenvInput extends EnvFileOptions {
     readFile(path: string, encoding: string): string | undefined;
 }
 
-// the anchors and linear quantifiers rule out catastrophic backtracking
-// eslint-disable-next-line security/detect-unsafe-regex
+// eslint-disable-next-line security/detect-unsafe-regex -- anchored with linear quantifiers, no catastrophic backtracking
 const KEY_LINE_RE = /^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=(.*)$/u;
 
-// does not expand `${VAR}`, TemplateResolver does that on read
+// TemplateResolver expands `${VAR}` on read
 export function parseDotenv(src: string): Map<string, string> {
     const out = new Map<string, string>();
     const lines = src.split(/\r?\n/u);
@@ -111,7 +114,7 @@ function findLastUnescapedQuote(buffer: string, quote: string): number {
                 backslashes++;
                 k--;
             }
-            if (backslashes % 2 === 1) continue; // escaped
+            if (backslashes % 2 === 1) continue;
         }
         return i;
     }

@@ -14,7 +14,7 @@ interface CloudflareLikeEnv {
 
 describe('Source portability (v5.2)', () => {
     afterEach(() => {
-        // setup.ts binds FileSource per file, and tests here swap it
+        // tests here swap the source. setup.ts only binds FileSource once per file
         Envapter.useSource(new FileSource());
         Envapter.resetPaths();
     });

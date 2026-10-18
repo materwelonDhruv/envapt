@@ -9,7 +9,7 @@ export function resolveAgainstBase(candidate: string): string {
     const baseDir = state.baseDir;
     if (baseDir === undefined) return candidate;
     const source = state.source;
-    /* v8 ignore next -- @preserve callers are all file-gated, so the source is never bare here */
+    /* v8 ignore next -- @preserve every caller is file-gated */
     if (!source.supportsFiles) return candidate;
     return source.resolvePath(baseDir, candidate);
 }
@@ -25,7 +25,7 @@ export function assertFileApiSupported(api: string, source: Source): asserts sou
 
 export function sourceFileExists(path: string): boolean {
     const source = state.source;
-    /* v8 ignore next -- @preserve every caller is file-gated, so this never sees a bare source */
+    /* v8 ignore next -- @preserve every caller is file-gated */
     if (!source.supportsFiles) return false;
     return source.readFile(path, 'utf8') !== undefined;
 }

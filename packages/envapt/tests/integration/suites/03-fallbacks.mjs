@@ -10,7 +10,7 @@ export default async function fallbacks() {
     assert.equal(Envapter.getNumber('MISSING_KEY', 7), 7);
     assert.equal(Envapter.getBoolean('MISSING_KEY', false), false);
 
-    // getNumber and the other primitive getters do not validate the fallback type
+    // a fallback that does not match the converter throws even when the key is missing
     assert.throws(
         () => Envapter.getAs('MISSING_KEY', Converters.Number, 'not-a-number'),
         (err) => err instanceof EnvaptError && err.code === EnvaptErrorCodes.FallbackConverterTypeMismatch

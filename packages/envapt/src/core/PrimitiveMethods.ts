@@ -5,10 +5,10 @@ import type { ConditionalReturn, EnvKeyInput } from '../types';
 
 export class PrimitiveMethods extends EnvironmentMethods {
     /**
-     * Get a string environment variable with optional fallback.
-     * Supports template variable resolution using `${VAR}` syntax.
-     * Accepts a single key or an ordered array of keys (first match wins).
-     * @see {@link https://envapt.materwelon.dev/docs/envapter#primitives}
+     * Get a string environment variable, or `fallback` when it is missing or empty. Expands
+     * `${VAR}` templates in the value. Accepts a single key or an ordered array of keys, read until
+     * one has a value.
+     * @see {@link https://envapt.materwelon.dev/docs/envapter#the-primitive-readers}
      */
     static get<Default extends string | undefined = undefined>(
         key: EnvKeyInput,
@@ -18,10 +18,9 @@ export class PrimitiveMethods extends EnvironmentMethods {
     }
 
     /**
-     * Get a number environment variable with optional fallback.
-     * Automatically converts string values to numbers.
-     * Accepts a single key or an ordered array of keys (first match wins).
-     * @see {@link https://envapt.materwelon.dev/docs/envapter#primitives}
+     * Get a number environment variable, or `fallback` when it is missing, empty or not a number.
+     * Accepts a single key or an ordered array of keys, read until one has a value.
+     * @see {@link https://envapt.materwelon.dev/docs/envapter#the-primitive-readers}
      */
     static getNumber<Default extends number | undefined = undefined>(
         key: EnvKeyInput,
@@ -31,10 +30,10 @@ export class PrimitiveMethods extends EnvironmentMethods {
     }
 
     /**
-     * Get a boolean environment variable with optional fallback.
-     * Recognizes: `1`, `yes`, `true`, `on` as **true**; `0`, `no`, `false`, `off` as **false** (case-insensitive).
-     * Accepts a single key or an ordered array of keys (first match wins).
-     * @see {@link https://envapt.materwelon.dev/docs/envapter#primitives}
+     * Get a boolean environment variable, or `fallback` when it is missing, empty or unrecognized.
+     * Reads `1`/`yes`/`true`/`on` as `true` and `0`/`no`/`false`/`off` as `false`, ignoring case.
+     * Accepts a single key or an ordered array of keys, read until one has a value.
+     * @see {@link https://envapt.materwelon.dev/docs/envapter#the-primitive-readers}
      */
     static getBoolean<Default extends boolean | undefined = undefined>(
         key: EnvKeyInput,
@@ -44,10 +43,9 @@ export class PrimitiveMethods extends EnvironmentMethods {
     }
 
     /**
-     * Get a bigint environment variable with optional fallback.
-     * Automatically converts string values to bigint.
-     * Accepts a single key or an ordered array of keys (first match wins).
-     * @see {@link https://envapt.materwelon.dev/docs/envapter#primitives}
+     * Get a bigint environment variable, or `fallback` when it is missing, empty or not an integer.
+     * Accepts a single key or an ordered array of keys, read until one has a value.
+     * @see {@link https://envapt.materwelon.dev/docs/envapter#the-primitive-readers}
      */
     static getBigInt<Default extends bigint | undefined = undefined>(
         key: EnvKeyInput,

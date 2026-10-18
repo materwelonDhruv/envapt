@@ -3,25 +3,27 @@ import type { Environment } from '../core/Environment';
 /**
  * Per-environment profile entry passed to `Envapter.configureProfiles`.
  * @public
- * @see {@link https://envapt.materwelon.dev/docs/environment#custom-profiles}
+ * @see {@link https://envapt.materwelon.dev/docs/env-files#profiles}
  */
 interface EnvProfile {
-    /** One or more `.env` paths to load for this environment. Earlier paths take precedence. */
+    /**
+     * One or more `.env` paths to load for this environment. Earlier paths take precedence unless
+     * `envFileOptions.override` is `true`.
+     */
     paths: string | string[];
 }
 
 /**
  * Configuration object for `Envapter.configureProfiles`. Maps each `Environment` to an optional
- * profile override. Unspecified environments fall through to the default cascade behavior
- * (`.env.${env}.local`, `.env.${env}`, `.env.local`, `.env`).
+ * profile override. Unspecified environments use the default cascade (`.env.${env}.local`,
+ * `.env.${env}`, `.env.local`, `.env`).
  * @public
- * @see {@link https://envapt.materwelon.dev/docs/environment#custom-profiles}
+ * @see {@link https://envapt.materwelon.dev/docs/env-files#profiles}
  */
 type ProfilesConfig = Partial<Record<Environment, EnvProfile>> & {
     /**
-     * When `false`, disables the default dotenv-flow cascade entirely. Only the explicitly
-     * configured paths are loaded. Defaults to `true` (the cascade still runs and configured
-     * paths take higher precedence).
+     * Set `false` to load only the configured paths. Defaults to `true`, where the configured paths
+     * load ahead of the dotenv-flow cascade.
      */
     useDefaults?: boolean;
 };

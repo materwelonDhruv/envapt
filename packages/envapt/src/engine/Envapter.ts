@@ -8,24 +8,24 @@ import type { EnvKeyInput } from '../types';
 export { ENVIRONMENT_KEYS, Environment } from '../core';
 
 /**
- * Main configuration class for environment variable management.
- *
- * Reads typed environment variables through static methods, with template resolution, multiple .env
- * files, and environment detection. A class that extends it inherits every reader as a static, as
- * in `Config.getNumber('PORT')`.
+ * Reads typed environment variables through static methods. It also expands `${VAR}` templates
+ * and detects the environment. A class that extends it inherits every reader as a static, as in
+ * `Config.getBoolean('MAINTENANCE_MODE')`.
  *
  * @example
  * ```ts
- * const port = Envapter.getNumber('PORT', 3000);
- * const url = Envapter.get('API_URL', 'http://localhost');
- * const replica = Envapter.get(['READONLY_URL', 'DATABASE_URL'], 'sqlite://memory');
+ * const port = Envapter.getAs('PORT', Converters.Port, 3000);
+ * const apiUrl = Envapter.getAs('API_URL', Converters.Url, new URL('http://localhost:3000'));
+ * const replicaUrl = Envapter.getAs(['READONLY_URL', 'DATABASE_URL'], Converters.Url);
  * ```
  *
  * @public
  */
 export class Envapter extends AdvancedMethods {
     /**
-     * Tagged template literal for resolving environment variables in template strings.
+     * Tagged template literal for resolving environment variables in template strings. A missing
+     * value resolves to an empty string. In strict mode an empty or whitespace-only value throws
+     * `MissingEnvValue`.
      *
      * @example
      * ```ts
@@ -80,16 +80,15 @@ export class Envapter extends AdvancedMethods {
     }
 
     /**
-     * Check whether `key` has a value, with the same missing semantics as `getRequired`.
-     * Under strict mode an unresolvable template in an ordered key list ends the scan early
-     * and counts as absent. Returns `true` exactly when a required read of the same key
-     * finds a value.
+     * Check whether `key` has a value. An unset or empty value counts as missing, the same as in
+     * `getRequired`. Under strict mode, a value whose `${VAR}` can't resolve counts as missing too,
+     * and an ordered key list returns `false` at that key without checking the later ones.
      *
      * @example
      * ```ts
-     * if (!Envapter.has('DATABASE_URL')) throw new MyStartupError('DATABASE_URL');
+     * const cache = Envapter.has('REDIS_URL') ? createRedisCache() : createMemoryCache();
      * ```
-     * @see {@link https://envapt.materwelon.dev/docs/envapter#fail-fast-on-missing-values}
+     * @see {@link https://envapt.materwelon.dev/docs/required-values#getrequired-require-and-has}
      */
     static has(key: EnvKeyInput): boolean {
         try {
