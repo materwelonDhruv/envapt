@@ -72,7 +72,7 @@ abstract class ConverterField implements Field {
         } catch (error) {
             return keyIssue(key, errorMessage(error));
         }
-        if (isUnconverted(converted)) return keyIssue(key, 'could not be converted');
+        if (this.couldNotConvert(converted)) return keyIssue(key, 'could not be converted');
         return { value: converted };
     }
 }
