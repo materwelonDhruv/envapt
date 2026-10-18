@@ -46,7 +46,7 @@ export class Validator {
         if (Validator.isStandardSchema(converter)) {
             throw new EnvaptError(
                 EnvaptErrorCodes.InvalidUserDefinedConfig,
-                'A Standard Schema cannot be a converter. Pass it as `schema` on @Envapt, or read it with `Envapter.parse()`.'
+                'A Standard Schema cannot be the `converter` on @Envapt. Pass it as `schema`.'
             );
         }
         // Symbol(raw) returns a new symbol on every read

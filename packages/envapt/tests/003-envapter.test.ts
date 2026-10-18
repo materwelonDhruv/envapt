@@ -109,8 +109,8 @@ describe('Envapter', () => {
             expect(Envapter.getUsing(['UNKNOWN_BOOL', 'GETTER_BOOLEAN'], Converters.Boolean)).to.be.true;
         });
 
-        it('should work with custom converters via getWith', () => {
-            const value = Envapter.getWith(
+        it('should work with custom converters via getUsing', () => {
+            const value = Envapter.getUsing(
                 ['UNKNOWN_JSON', 'GETTER_STRING'],
                 (raw) => (raw ? raw.toUpperCase() : 'none'),
                 undefined

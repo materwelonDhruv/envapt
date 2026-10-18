@@ -33,7 +33,7 @@ export const EnvaptErrorCodes = {
     ArrayElementConversionFailed: 206,
     /** Thrown under strict mode when an array element is empty or whitespace only */
     EmptyArrayElement: 207,
-    /** Thrown when `Envapter.parse` or `@Envapt({ schema })` gets a value its Standard Schema rejects */
+    /** Thrown when `getUsing` or `@Envapt({ schema })` without `required` gets a value its Standard Schema rejects */
     SchemaValidationFailed: 208,
     /** Thrown when a Standard Schema's `validate` itself throws (e.g. a refinement that crashes) */
     SchemaThrew: 209,

@@ -77,10 +77,11 @@ const raw = new Envapter().getRaw('DATABASE_URL');
 
 ## Converters
 
-For shapes beyond primitives, two readers take a converter:
+For shapes beyond primitives, `getUsing(key, converter, fallback?)` takes any of these as its converter:
 
-- `getUsing(key, token, fallback?)` for built-in converter tokens (arrays, URLs, dates, durations, and more).
-- `getWith(key, fn, fallback?)` for your own `(raw: string) => T` function, which runs only when the variable is set.
+- a built-in token, for arrays, URLs, dates, durations, and more
+- your own `(raw: string) => T` function, which runs only when the variable is set
+- a [Standard Schema](/docs/standard-schema) validator like zod, valibot, or arktype
 
 ```ts twoslash
 import { Envapter, Converters } from 'envapt';
@@ -88,7 +89,7 @@ import { Envapter, Converters } from 'envapt';
 const origins = Envapter.getUsing('CORS', Converters.array({ of: Converters.String }));
 //    ^?
 
-const allowedHosts = Envapter.getWith('ALLOWED_HOSTS', (raw) => raw.split(' '), ['localhost']);
+const allowedHosts = Envapter.getUsing('ALLOWED_HOSTS', (raw) => raw.split(' '), ['localhost']);
 //    ^?
 ```
 

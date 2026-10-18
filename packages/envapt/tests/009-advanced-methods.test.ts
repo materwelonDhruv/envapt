@@ -93,11 +93,11 @@ describe('Advanced Converter Methods', () => {
         });
     });
 
-    describe('getWith method', () => {
+    describe('getUsing method', () => {
         const splitTrimmed = (raw: string): string[] => raw.split(',').map((item) => item.trim());
 
         it('should convert using custom converter function', () => {
-            const result = Envapter.getWith('TEST_ARRAY_COMMA', (raw) =>
+            const result = Envapter.getUsing('TEST_ARRAY_COMMA', (raw) =>
                 splitTrimmed(raw).map((item) => item.toUpperCase())
             );
             expect(result).to.deep.equal(['ITEM1', 'ITEM2', 'ITEM3']);
@@ -107,12 +107,12 @@ describe('Advanced Converter Methods', () => {
             const toMap = (raw: string): Map<string, number> =>
                 new Map(splitTrimmed(raw).map((item) => [item, item.length]));
 
-            const result = Envapter.getWith('TEST_STRING', toMap, new Map([['default', 0]]));
+            const result = Envapter.getUsing('TEST_STRING', toMap, new Map([['default', 0]]));
             expect(result).to.be.instanceOf(Map);
         });
 
         it('should work with complex custom converter', () => {
-            const result = Envapter.getWith('TEST_ARRAY_COMMA', (raw) => {
+            const result = Envapter.getUsing('TEST_ARRAY_COMMA', (raw) => {
                 const items = splitTrimmed(raw);
                 return { count: items.length, items, reversed: [...items].reverse() };
             });
@@ -124,36 +124,36 @@ describe('Advanced Converter Methods', () => {
         });
 
         it('should convert to Set using custom converter', () => {
-            const result = Envapter.getWith('TEST_ARRAY_COMMA', (raw) => new Set(splitTrimmed(raw)));
+            const result = Envapter.getUsing('TEST_ARRAY_COMMA', (raw) => new Set(splitTrimmed(raw)));
             expect(result).to.be.instanceOf(Set);
             expect(Array.from(result as Set<string>)).to.deep.equal(['item1', 'item2', 'item3']);
         });
 
         it('should work with instance method', () => {
             const instance = new Envapter();
-            expect(instance.getWith('TEST_STRING', (raw) => raw.toUpperCase())).to.equal('HELLO WORLD');
+            expect(instance.getUsing('TEST_STRING', (raw) => raw.toUpperCase())).to.equal('HELLO WORLD');
         });
 
         it('returns the fallback for a missing value without calling the converter', () => {
-            expect(Envapter.getWith('NONEXISTENT_VAR', (raw) => raw.length, 99)).to.equal(99);
+            expect(Envapter.getUsing('NONEXISTENT_VAR', (raw) => raw.length, 99)).to.equal(99);
         });
 
         it('returns undefined for a missing value with no fallback', () => {
-            expect(Envapter.getWith('NONEXISTENT_VAR', (raw) => raw.length)).to.be.undefined;
+            expect(Envapter.getUsing('NONEXISTENT_VAR', (raw) => raw.length)).to.be.undefined;
         });
 
         it('returns the fallback when the converter returns undefined or null', () => {
             const toMode = (raw: string): 'fast' | undefined => (raw === 'fast' ? 'fast' : undefined);
-            expect(Envapter.getWith('TEST_STRING', toMode, 'fast')).to.equal('fast');
+            expect(Envapter.getUsing('TEST_STRING', toMode, 'fast')).to.equal('fast');
             const toName = (raw: string): string | null => (raw === 'x' ? raw : null);
-            expect(Envapter.getWith('TEST_STRING', toName, 'fallback')).to.equal('fallback');
+            expect(Envapter.getUsing('TEST_STRING', toName, 'fallback')).to.equal('fallback');
         });
 
         it("passes the converter's own error through", () => {
             const parsePositive = (raw: string): number => {
                 throw new Error(`${raw} is not positive`);
             };
-            expect(() => Envapter.getWith('TEST_STRING', parsePositive)).to.throw('hello world is not positive');
+            expect(() => Envapter.getUsing('TEST_STRING', parsePositive)).to.throw('hello world is not positive');
         });
     });
 
@@ -183,7 +183,7 @@ describe('Advanced Converter Methods', () => {
         it('should throw error for invalid custom converter', () => {
             expect(() => {
                 //@ts-expect-error We're passing an invalid type here for testing
-                Envapter.getWith('TEST_STRING', 'not-a-function');
+                Envapter.getUsing('TEST_STRING', 'not-a-function');
             }).to.throw();
         });
     });

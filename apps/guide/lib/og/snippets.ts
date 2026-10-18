@@ -14,10 +14,10 @@ export const OG_SNIPPETS: Record<string, OgSnippet | undefined> = {
         code: `// envapt - typed config, zero deps
 import { Envapter, Converters } from 'envapt';
 
-const url = Envapter.getUsing(
+const url = Envapter.getRequired(
   'UPSTREAM_URL', Converters.Url
 );
-// a URL, not string | undefined`
+// typed as URL`
     },
     'quick-start': {
         filename: 'app.ts',
@@ -81,7 +81,7 @@ DATABASE_URL=postgres://\${DB_HOST}:\${DB_PORT}/app`
         code: `// Standard Schema - validate PORT with zod
 import { z } from 'zod';
 
-const port = Envapter.parse(
+const port = Envapter.getUsing(
   'PORT',
   z.coerce.number().int().min(1024)
 );`

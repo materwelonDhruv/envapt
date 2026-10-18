@@ -28,8 +28,8 @@ describe('missing-value return unification (v8)', () => {
     });
 
     describe('an explicit undefined fallback is no fallback', () => {
-        it('parse returns undefined when the key is missing and the fallback is an explicit undefined', () => {
-            expect(Envapter.parse('MISSING_044', echoSchema, undefined)).to.be.undefined;
+        it('a schema read returns undefined when the key is missing and the fallback is an explicit undefined', () => {
+            expect(Envapter.getUsing('MISSING_044', echoSchema, undefined)).to.be.undefined;
         });
     });
 });

@@ -145,24 +145,24 @@ describe('Debug mode (v5)', () => {
             }
         });
 
-        it('logs a missing key read through getWith (with fallback)', () => {
+        it('logs a missing key read through getUsing (with fallback)', () => {
             Envapter.debug = 'warn';
             const capture = captureStderr();
             try {
-                Envapter.getWith('NEVER_SET_KEY', (raw) => raw, 'fb');
+                Envapter.getUsing('NEVER_SET_KEY', (raw) => raw, 'fb');
                 const line = capture.lines.find((l) => l.includes('NEVER_SET_KEY'));
-                expect(line, 'expected a not-found warn from getWith').to.exist;
+                expect(line, 'expected a not-found warn from getUsing').to.exist;
                 expect(line).to.include('missing or empty');
             } finally {
                 capture.restore();
             }
         });
 
-        it('logs a missing key read through parse (with fallback)', () => {
+        it('logs a missing key read through a schema (with fallback)', () => {
             Envapter.debug = 'warn';
             const capture = captureStderr();
             try {
-                Envapter.parse('NEVER_SET_KEY', passThroughSchema, 'fb');
+                Envapter.getUsing('NEVER_SET_KEY', passThroughSchema, 'fb');
                 const line = capture.lines.find((l) => l.includes('NEVER_SET_KEY'));
                 expect(line, 'expected a not-found warn from parse').to.exist;
                 expect(line).to.include('missing or empty');

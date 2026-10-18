@@ -3,15 +3,17 @@ title: Standard Schema
 description: Validate an environment value through a Standard Schema validator like zod, valibot, or arktype, and get the schema's output type back.
 ---
 
-`parse` validates an environment value through any [Standard Schema](https://standardschema.dev) validator, zod, valibot, arktype, or your own, and returns the schema's output type. envapt carries no schema library of its own. It reads the `~standard` interface the validator already exposes, so there is no peer dependency.
+Pass any [Standard Schema](https://standardschema.dev) validator, zod, valibot, arktype, or your own, to `getUsing` and it validates the environment value and returns the schema's output type. envapt carries no schema library of its own. It reads the `~standard` interface the validator already exposes, so there is no peer dependency.
 
 ```ts twoslash
 import { z } from 'zod/v4';
 import { Envapter } from 'envapt';
 // ---cut---
-const port = Envapter.parse('PORT', z.coerce.number().int().min(1024).max(65535));
+const port = Envapter.getUsing('PORT', z.coerce.number().int().min(1024).max(65535));
 //    ^?
 ```
+
+`port` is `number | undefined` because an unset `PORT` returns `undefined`. A fallback removes `undefined` from the type, and `getRequired` throws on a missing value. The sections below cover both.
 
 A schema works on the [`@Envapt`](/docs/decorators) decorator too, through the `schema` option:
 
@@ -20,7 +22,7 @@ import { z } from 'zod/v4';
 import { Envapt, Envapter } from 'envapt';
 // ---cut---
 class Config extends Envapter {
-    @Envapt('LOG_LEVEL', { schema: z.enum(['debug', 'info', 'warn', 'error']) })
+    @Envapt('LOG_LEVEL', { schema: z.enum(['debug', 'info', 'warn', 'error']), fallback: 'info' })
     static accessor logLevel: 'debug' | 'info' | 'warn' | 'error';
 }
 ```
@@ -45,36 +47,35 @@ const positiveInt: StandardSchemaV1<string, number> = {
     }
 };
 
-const port = Envapter.parse('PORT', positiveInt);
+const port = Envapter.getUsing('PORT', positiveInt, 3000);
 //    ^?
 ```
 
-## Fallbacks
+## Fallbacks and required values
 
-`parse` takes an optional third argument. On a missing value it returns the fallback.
-
-```ts twoslash
-import { Envapter } from 'envapt';
-import type { StandardSchemaV1 } from 'envapt';
-declare const positiveInt: StandardSchemaV1<string, number>;
-// ---cut---
-const port = Envapter.parse('PORT', positiveInt, 3000);
-//    ^?
-```
+The third argument is the fallback. A missing value returns it, and without one `getUsing` returns `undefined`.
 
 <Callout type="info">
     The fallback is returned as-is on a missing value. It does not pass through the schema. Make sure the fallback
     already satisfies the type you expect, since the schema never sees it.
 </Callout>
 
-<Callout type="warn">
-    An explicit `undefined` third argument counts as no fallback. `Envapter.parse('PORT', schema, undefined)` throws
-    `MissingEnvValue` on a missing value, the same as omitting the argument.
-</Callout>
+When a value has to be there, read it with `getRequired`. A missing value throws `MissingEnvValue`, and a value the schema rejects throws `InvalidEnvValue` with the schema's issues on `.issues`.
+
+```ts twoslash
+import { Envapter } from 'envapt';
+import type { StandardSchemaV1 } from 'envapt';
+declare const positiveInt: StandardSchemaV1<string, number>;
+// ---cut---
+const port = Envapter.getRequired('PORT', positiveInt);
+//    ^?
+```
+
+`@Envapt({ schema, required: true })` behaves the same way.
 
 ## Validate a group of required variables
 
-With one `parse` call per variable, only the first bad value threw. You fixed it, deployed again, and met the next one.
+With one `getRequired` call per variable, only the first bad value threw. You fixed it, deployed again, and met the next one.
 
 [`getRequiredAll`](/docs/envapter#fail-fast-on-missing-values) checks the whole group in one call. It takes a schema for any field, next to converters, and reads every field before it throws one `InvalidEnvValue`. The error holds the issues of every failed field in `.issues`, and each issue's `path` starts with the env key. A converter that cannot convert adds the issue `could not be converted`. A bad array element, a custom parser that throws, or a schema that throws adds its error message as the issue.
 
@@ -100,15 +101,16 @@ function loadDatabaseConfig() {
 
 An issue message can quote the raw value, and that value may be a secret like the password inside `DATABASE_URL`. That's why the error message lists only the failed keys, and why the sample logs each issue's `path` and leaves `issue.message` out.
 
-Missing keys are checked first and throw one `MissingEnvValue` before any schema runs. A schema default such as zod's `.default()` never applies here. Use `parse` with a fallback for an optional value.
+Missing keys are checked first and throw one `MissingEnvValue` before any schema runs. A schema default such as zod's `.default()` never applies here. Use `getUsing` with a fallback for an optional value.
 
 ## What throws
 
-`parse` throws `EnvaptError` in three cases:
+`getUsing` with a schema throws `EnvaptError` in two cases:
 
-- The value is missing and you gave no fallback: code `MissingEnvValue`.
 - The schema reports validation issues: code `SchemaValidationFailed`. The error carries every issue on its `.issues` property with the env key first in each `path`, and its message lists only the key.
 - The schema's `validate` itself throws: code `SchemaThrew`, with the original error on `.cause`.
+
+`getRequired` reports both as issues on one `InvalidEnvValue`, the same as `getRequiredAll`.
 
 A `${VAR}` template is expanded before validation, so the schema sees the resolved value.
 

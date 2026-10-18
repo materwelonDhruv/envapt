@@ -3,7 +3,7 @@ title: Converters
 description: Turn a raw environment string into a typed value with the built-in converter tokens, the array builder, or your own function.
 ---
 
-A converter turns the raw environment string into a typed value. Pass a built-in token to `getUsing`, a function to `getWith`, or either as the `converter` option on the [`@Envapt`](/docs/decorators) decorator. Without a converter, a value stays a `string`.
+A converter turns the raw environment string into a typed value. Pass a built-in token or your own function to `getUsing`, or either as the `converter` option on the [`@Envapt`](/docs/decorators) decorator. Without a converter, a value stays a `string`.
 
 ```ts twoslash
 import { Envapter, Converters } from 'envapt';
@@ -11,7 +11,7 @@ import { Envapter, Converters } from 'envapt';
 const timeout = Envapter.getUsing('TIMEOUT', Converters.Time, '30s');
 //    ^?
 
-const logFormat = Envapter.getWith('LOG_FORMAT', (raw) => (raw === 'json' || raw === 'text' ? raw : undefined), 'text');
+const logFormat = Envapter.getUsing('LOG_FORMAT', (raw) => (raw === 'json' || raw === 'text' ? raw : undefined), 'text');
 //    ^?
 ```
 
@@ -169,7 +169,7 @@ Normal mode skips empty elements. Under [strict mode](/docs/strict-mode) an empt
 
 ## Custom converters
 
-When no built-in fits, pass a `(raw: string) => T` function to `getWith`. envapt calls it only when the variable is set, so `raw` is always a string. A missing variable returns the fallback, or `undefined` without one.
+When no built-in fits, pass a `(raw: string) => T` function to `getUsing`. envapt calls it only when the variable is set, so `raw` is always a string. A missing variable returns the fallback, or `undefined` without one.
 
 ```ts twoslash
 import { Envapter } from 'envapt';
@@ -181,7 +181,7 @@ const toSemver = (raw: string) => {
 };
 
 // APP_VERSION=2.4.1
-const version = Envapter.getWith('APP_VERSION', toSemver);
+const version = Envapter.getUsing('APP_VERSION', toSemver);
 //    ^?
 ```
 
