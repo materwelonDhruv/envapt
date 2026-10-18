@@ -1,51 +1,33 @@
 import { resolve } from 'node:path';
 import process from 'node:process';
 
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-
-import { Envapter } from '../src';
-import { cache } from '../src/core/state';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const FIXTURE_KEYS = ['CONFIG_KEY_A', 'CONFIG_KEY_B'] as const;
-const FIXTURE_PATH = resolve(import.meta.dirname, '.env.config-entry');
+const FIXTURE_DIR = resolve(import.meta.dirname, 'integration/config-entry');
 
 function cleanFixtureKeys(): void {
     for (const k of FIXTURE_KEYS) Reflect.deleteProperty(process.env, k);
 }
 
-describe('Envapter.load()', () => {
-    it('eagerly populates the cache and is idempotent', () => {
-        Envapter.load();
-        const size = cache.size;
-        expect(size).to.be.greaterThan(0);
-        Envapter.load();
-        expect(cache.size).to.equal(size);
-    });
-});
-
 describe('envapt/config side-effect entry', () => {
-    beforeEach(() => {
-        // clean the keys first because the loader only mirrors keys absent from process.env
-        Envapter.syncProcessEnv = false;
-        Envapter.envFileOptions = {};
-        cleanFixtureKeys();
-        Envapter.envPaths = FIXTURE_PATH;
-    });
+    const originalCwd = process.cwd();
 
     afterEach(() => {
-        Envapter.syncProcessEnv = false;
-        Envapter.envFileOptions = {};
+        process.chdir(originalCwd);
         cleanFixtureKeys();
     });
 
-    it('mirrors the loaded .env cascade into process.env on import', async () => {
-        expect(process.env.CONFIG_KEY_A).to.equal(undefined);
-        expect(Envapter.syncProcessEnv).to.equal(false);
+    it('loads the .env cascade from the working directory and mirrors it into process.env on a fresh import', async () => {
+        cleanFixtureKeys();
+        process.chdir(FIXTURE_DIR);
+        vi.resetModules();
 
         await import('../src/config');
+        const { Envapter } = await import('../src');
 
         expect(process.env.CONFIG_KEY_A).to.equal('alpha');
-        expect(process.env.CONFIG_KEY_B).to.equal('beta');
+        expect(process.env.CONFIG_KEY_B).to.equal('alpha-beta');
         expect(Envapter.syncProcessEnv).to.equal(true);
     });
 });

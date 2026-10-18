@@ -61,7 +61,6 @@ describe('merge composes sources with last-wins precedence', () => {
         Envapter.syncProcessEnv = true;
         Envapter.useSource(merge(new FileSource(), new PortableSource({ X: '1' })));
         Envapter.envPaths = resolve(import.meta.dirname, '.env.041-merge');
-        Envapter.load();
 
         expect(process.env.FROM_FILE).to.equal('file');
     });
@@ -77,7 +76,6 @@ describe('merge composes sources with last-wins precedence', () => {
     it('a file-less merge never writes to process.env even with syncProcessEnv on', () => {
         Envapter.syncProcessEnv = true;
         Envapter.useSource(merge(new PortableSource({ ONLY_A: 'a' }), new PortableSource({ ONLY_B: 'b' })));
-        Envapter.load();
 
         expect(process.env.ONLY_A).to.equal(undefined);
         expect(process.env.ONLY_B).to.equal(undefined);
@@ -87,7 +85,6 @@ describe('merge composes sources with last-wins precedence', () => {
         Envapter.syncProcessEnv = true;
         Envapter.useSource(merge(new FileSource(), new PortableSource({ SECRET: 'shh' })));
         Envapter.envPaths = resolve(import.meta.dirname, '.env.041-merge');
-        Envapter.load();
 
         expect(process.env.FROM_FILE).to.equal('file');
         expect(process.env.SECRET).to.equal(undefined);

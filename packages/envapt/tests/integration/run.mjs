@@ -6,6 +6,7 @@ import fallbacks from './suites/03-fallbacks.mjs';
 import missingFile from './suites/04-missing-file.mjs';
 import decorator from './suites/05-decorator.mjs';
 import v5Features from './suites/06-v5-features.mjs';
+import configEntry from './suites/07-config-entry.mjs';
 
 const suites = [
     ['01-basic-get', basicGet],
@@ -13,7 +14,8 @@ const suites = [
     ['03-fallbacks', fallbacks],
     ['04-missing-file', missingFile],
     ['05-decorator', decorator],
-    ['06-v5-features', v5Features]
+    ['06-v5-features', v5Features],
+    ['07-config-entry', configEntry]
 ];
 
 const runtime = detectRuntime();

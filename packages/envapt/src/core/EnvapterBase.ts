@@ -1,4 +1,4 @@
-import { ensureLoaded, mirrorToProcessEnv, refreshCache, resolveKeyInput } from './engine';
+import { mirrorToProcessEnv, refreshCache, resolveKeyInput } from './engine';
 import { cache, state } from './state';
 import { Validator } from '../engine/Validators';
 import { getDebugLevel, setDebugLevel } from '../infra/Debug';
@@ -75,16 +75,6 @@ export abstract class EnvapterBase {
 
     static get fileApiMode(): FileApiMode {
         return state.fileApiMode;
-    }
-
-    /**
-     * Load the `.env` cascade now. Without this call it loads on the first read. Idempotent: a no-op
-     * once the cache is built. Useful before mirroring to `process.env` (see {@link syncProcessEnv}),
-     * which is what the `envapt/config` side-effect entry does.
-     * @see {@link https://envapt.materwelon.dev/docs/configuration#which-files-load}
-     */
-    static load(): void {
-        ensureLoaded();
     }
 
     /**

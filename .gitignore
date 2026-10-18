@@ -9,6 +9,7 @@ npm-debug.*
 
 # allow committed test fixtures (cascade tests need real .env files to load)
 !packages/envapt/tests/cascade-fixtures/**/.env
+!packages/envapt/tests/integration/config-entry/.env
 
 # typescript
 *.tsbuildinfo

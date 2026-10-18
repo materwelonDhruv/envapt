@@ -84,7 +84,7 @@ function valueOrThrow(code: ValidationCode, key: string, outcome: StandardSchema
     return outcome.value;
 }
 
-export function ensureLoaded(): Map<string, unknown> {
+function ensureLoaded(): Map<string, unknown> {
     if (!state.cacheBuilt) {
         const source = state.source;
         // the loader writes into this object

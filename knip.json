@@ -11,6 +11,7 @@
             "entry": [
                 "scripts/*.ts",
                 "tests/integration/modern-decorator-check.ts",
+                "tests/integration/config-entry/print.{mjs,cjs}",
                 "tests/*-emit/fixture.mts",
                 "tests/*-emit/load.mjs"
             ],

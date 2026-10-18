@@ -10,6 +10,5 @@
 
 import { Envapter } from '.';
 
-// Importing Envapter evaluates NodeEnvapter, whose static block binds the default source before load() runs.
+// the setter mirrors the cache that binding FileSource on import already loaded
 Envapter.syncProcessEnv = true;
-Envapter.load();
