@@ -8,12 +8,12 @@ describe('missing-value return unification (v8)', () => {
     beforeAll(() => (Envapter.envPaths = resolve(import.meta.dirname, '.env.041')));
 
     describe('a read with no fallback resolves to undefined', () => {
-        it('getUsing returns undefined for a present but unconvertible value', () => {
-            expect(Envapter.getUsing('BAD_NUM_044', Converters.Number)).to.be.undefined;
+        it('getAs returns undefined for a present but unconvertible value', () => {
+            expect(Envapter.getAs('BAD_NUM_044', Converters.Number)).to.be.undefined;
         });
 
-        it('getUsing returns undefined for a missing value', () => {
-            expect(Envapter.getUsing('MISSING_044', Converters.Number)).to.be.undefined;
+        it('getAs returns undefined for a missing value', () => {
+            expect(Envapter.getAs('MISSING_044', Converters.Number)).to.be.undefined;
         });
     });
 });

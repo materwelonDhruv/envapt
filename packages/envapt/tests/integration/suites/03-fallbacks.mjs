@@ -12,7 +12,7 @@ export default async function fallbacks() {
 
     // getNumber and the other primitive getters do not validate the fallback type
     assert.throws(
-        () => Envapter.getUsing('MISSING_KEY', Converters.Number, 'not-a-number'),
+        () => Envapter.getAs('MISSING_KEY', Converters.Number, 'not-a-number'),
         (err) => err instanceof EnvaptError && err.code === EnvaptErrorCodes.FallbackConverterTypeMismatch
     );
 }

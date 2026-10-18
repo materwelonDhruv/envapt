@@ -158,7 +158,7 @@ export function ConverterTabs(): ReactNode {
             >
                 <div className="overflow-x-auto whitespace-pre text-fd-muted-foreground">
                     {'Envapter.'}
-                    <span className="text-(--ev-teal)">getUsing</span>
+                    <span className="text-(--ev-teal)">getAs</span>
                     {'('}
                     <span className="hidden max-sm:inline">{'\n  '}</span>
                     <span className="text-(--ev-eyebrow)">&apos;{active.key}&apos;</span>

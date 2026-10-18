@@ -27,10 +27,10 @@ export const EnvaptErrorCodes = {
     ArrayElementConversionFailed: 206,
     /** Thrown under strict mode when an array element is empty or whitespace only */
     EmptyArrayElement: 207,
-    /** Thrown when `getUsing` or `@Envapt({ schema })` without `required` gets a value its Standard Schema rejects */
+    /** Thrown when `getAs` or `@Envapt({ schema })` without `required` gets a value its Standard Schema rejects */
     SchemaValidationFailed: 208,
     /**
-     * Thrown when a Standard Schema's `validate` throws in `getUsing` or `@Envapt({ schema })` without `required`.
+     * Thrown when a Standard Schema's `validate` throws in `getAs` or `@Envapt({ schema })` without `required`.
      * A required read reports it as an `InvalidEnvValue` issue.
      */
     SchemaThrew: 209,

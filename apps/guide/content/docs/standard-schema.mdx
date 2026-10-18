@@ -3,13 +3,13 @@ title: Standard Schema
 description: Validate an environment value through a Standard Schema validator like zod, valibot, or arktype, and get the schema's output type back.
 ---
 
-Pass any [Standard Schema](https://standardschema.dev) validator, zod, valibot, arktype, or your own, to `getUsing` and it validates the environment value and returns the schema's output type. envapt carries no schema library of its own. It reads the `~standard` interface the validator already exposes, so there is no peer dependency.
+Pass any [Standard Schema](https://standardschema.dev) validator, zod, valibot, arktype, or your own, to `getAs` and it validates the environment value and returns the schema's output type. envapt carries no schema library of its own. It reads the `~standard` interface the validator already exposes, so there is no peer dependency.
 
 ```ts twoslash
 import { z } from 'zod/v4';
 import { Envapter } from 'envapt';
 // ---cut---
-const port = Envapter.getUsing('PORT', z.coerce.number().int().min(1024).max(65535));
+const port = Envapter.getAs('PORT', z.coerce.number().int().min(1024).max(65535));
 //    ^?
 ```
 
@@ -47,13 +47,13 @@ const positiveInt: StandardSchemaV1<string, number> = {
     }
 };
 
-const port = Envapter.getUsing('PORT', positiveInt, 3000);
+const port = Envapter.getAs('PORT', positiveInt, 3000);
 //    ^?
 ```
 
 ## Fallbacks and required values
 
-The third argument is the fallback. A missing value returns it, and without one `getUsing` returns `undefined`.
+The third argument is the fallback. A missing value returns it, and without one `getAs` returns `undefined`.
 
 <Callout type="info">
     The fallback is returned as-is on a missing value. It does not pass through the schema. Make sure the fallback
@@ -101,11 +101,11 @@ function loadDatabaseConfig() {
 
 An issue message can quote the raw value, and that value may be a secret like the password inside `DATABASE_URL`. That's why the error message lists only the failed keys, and why the sample logs each issue's `path` and leaves `issue.message` out.
 
-A bad converter in the spec throws first. Missing keys then throw one `MissingEnvValue`, before any schema runs. A schema default such as zod's `.default()` never applies here. Use `getUsing` with a fallback for an optional value.
+A bad converter in the spec throws first. Missing keys then throw one `MissingEnvValue`, before any schema runs. A schema default such as zod's `.default()` never applies here. Use `getAs` with a fallback for an optional value.
 
 ## What throws
 
-`getUsing` with a schema throws `EnvaptError` in two cases:
+`getAs` with a schema throws `EnvaptError` in two cases:
 
 - The schema reports validation issues: code `SchemaValidationFailed`. The error carries every issue on its `.issues` property with the env key first in each `path`, and its message lists only the key.
 - The schema's `validate` itself throws: code `SchemaThrew`, with the original error on `.cause`.

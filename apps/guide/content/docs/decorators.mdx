@@ -72,7 +72,7 @@ A module that imports decorators only from `envapt/legacy` must also `import 'en
 
 ## Converters
 
-The `converter` option takes a built-in token, a custom function, or `Converters.array(...)`, the same [converters](/docs/converters) as `getUsing`. A schema goes in the `schema` option. A `fallback` removes `undefined` from the value and must match the converter's type.
+The `converter` option takes a built-in token, a custom function, or `Converters.array(...)`, the same [converters](/docs/converters) as `getAs`. A schema goes in the `schema` option. A `fallback` removes `undefined` from the value and must match the converter's type.
 
 ```ts twoslash
 import { Envapt, Converters } from 'envapt';

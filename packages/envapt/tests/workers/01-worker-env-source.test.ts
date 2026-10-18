@@ -12,12 +12,12 @@ describe('PortableSource on workerd', () => {
         expect(Envapter.get('APP_NAME')).toBe('envapt');
         expect(Envapter.getNumber('PORT')).toBe(8787);
         expect(Envapter.getBoolean('DEBUG')).toBe(true);
-        expect(Envapter.getUsing('API_URL', Converters.Url)?.href).toBe('https://api.example.com/v1');
+        expect(Envapter.getAs('API_URL', Converters.Url)?.href).toBe('https://api.example.com/v1');
     });
 
     it('applies the array and json converters to bindings', () => {
-        expect(Envapter.getUsing('TAGS', Converters.array())).toEqual(['a', 'b', 'c']);
-        expect(Envapter.getUsing('FEATURES', Converters.Json)).toEqual({ beta: true });
+        expect(Envapter.getAs('TAGS', Converters.array())).toEqual(['a', 'b', 'c']);
+        expect(Envapter.getAs('FEATURES', Converters.Json)).toEqual({ beta: true });
     });
 
     it('expands ${VAR} template references inside a binding value', () => {

@@ -29,11 +29,11 @@ import { Envapter, PortableSource, Converters } from 'envapt';
 
 Envapter.useSource(new PortableSource(import.meta.env));
 
-const apiUrl = Envapter.getUsing('VITE_API_URL', Converters.Url); // URL, not a raw string
+const apiUrl = Envapter.getAs('VITE_API_URL', Converters.Url); // URL, not a raw string
 const beta = Envapter.getBoolean('VITE_ENABLE_BETA', false); // boolean
 ```
 
-`import.meta.env.VITE_API_URL` is a string; `Envapter.getUsing('VITE_API_URL', Converters.Url)` returns a `URL`, and `getBoolean` returns a `boolean`. `PortableSource` snapshots the object and JSON-stringifies non-string values, so you can read Vite's boolean `DEV` and `PROD` flags too.
+`import.meta.env.VITE_API_URL` is a string; `Envapter.getAs('VITE_API_URL', Converters.Url)` returns a `URL`, and `getBoolean` returns a `boolean`. `PortableSource` snapshots the object and JSON-stringifies non-string values, so you can read Vite's boolean `DEV` and `PROD` flags too.
 
 <Callout type="warn">
     Anything you seed into a browser `PortableSource` ships in your client bundle. Pass public configuration only,

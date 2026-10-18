@@ -24,7 +24,7 @@ The field splits into two jobs. Loaders like the dotenv family read a `.env` fil
 
 **A formal pluggable source.** envapt reads through a `Source` interface, so the same API runs over `process.env`, `import.meta.env`, a Workers binding, or a store you fetched at boot. Several others (env-var, t3-env, znv, envin) also accept a custom object you build. What envapt adds is one typed interface for all of them.
 
-**Decorators or a functional API.** The functional API (`get`, `getNumber`, `getUsing`, `getRequired`) is the floor and needs nothing special. The decorators come in two forms, the modern TC39 accessor decorators (the default, `@Envapt`, `@EnvNum`) and a legacy `experimentalDecorators` form at `envapt/legacy`, so you can pick whichever your bundler handles. No other tool here ships a decorator API at all.
+**Decorators or a functional API.** The functional API (`get`, `getNumber`, `getAs`, `getRequired`) is the floor and needs nothing special. The decorators come in two forms, the modern TC39 accessor decorators (the default, `@Envapt`, `@EnvNum`) and a legacy `experimentalDecorators` form at `envapt/legacy`, so you can pick whichever your bundler handles. No other tool here ships a decorator API at all.
 
 **Per-field binding.** Each variable is declared on the field that uses it. Adding or removing one touches one field.
 

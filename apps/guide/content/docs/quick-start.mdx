@@ -22,7 +22,7 @@ Read it as a number, with a fallback for when it is unset:
 ```ts twoslash
 import { Envapter, Converters } from 'envapt';
 // ---cut---
-const port = Envapter.getUsing('PORT', Converters.Port, 3000);
+const port = Envapter.getAs('PORT', Converters.Port, 3000);
 //    ^?
 ```
 

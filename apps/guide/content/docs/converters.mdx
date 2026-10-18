@@ -3,15 +3,15 @@ title: Converters
 description: Turn a raw environment string into a typed value with the built-in converter tokens, the array builder, or your own function.
 ---
 
-A converter turns the raw environment string into a typed value. Pass a built-in token or your own function to `getUsing`, or either as the `converter` option on the [`@Envapt`](/docs/decorators) decorator. Without a converter, a value stays a `string`.
+A converter turns the raw environment string into a typed value. Pass a built-in token or your own function to `getAs`, or either as the `converter` option on the [`@Envapt`](/docs/decorators) decorator. Without a converter, a value stays a `string`.
 
 ```ts twoslash
 import { Envapter, Converters } from 'envapt';
 // ---cut---
-const timeout = Envapter.getUsing('TIMEOUT', Converters.Time, '30s');
+const timeout = Envapter.getAs('TIMEOUT', Converters.Time, '30s');
 //    ^?
 
-const logFormat = Envapter.getUsing('LOG_FORMAT', (raw) => (raw === 'json' || raw === 'text' ? raw : undefined), 'text');
+const logFormat = Envapter.getAs('LOG_FORMAT', (raw) => (raw === 'json' || raw === 'text' ? raw : undefined), 'text');
 //    ^?
 ```
 
@@ -42,9 +42,9 @@ const logFormat = Envapter.getUsing('LOG_FORMAT', (raw) => (raw === 'json' || ra
 ```ts twoslash
 import { Envapter, Converters } from 'envapt';
 // ---cut---
-const port = Envapter.getUsing('PORT', Converters.Number, 3000);
+const port = Envapter.getAs('PORT', Converters.Number, 3000);
 //    ^?
-const apiUrl = Envapter.getUsing('API_URL', Converters.Url);
+const apiUrl = Envapter.getAs('API_URL', Converters.Url);
 //    ^?
 ```
 
@@ -65,11 +65,11 @@ The fallback must itself be valid for the converter (a real email, an in-range p
 import { Envapter, Converters } from 'envapt';
 // ---cut---
 // MAX_CONNECTIONS=100
-const maxConnections = Envapter.getUsing('MAX_CONNECTIONS', Converters.Integer); // 100
+const maxConnections = Envapter.getAs('MAX_CONNECTIONS', Converters.Integer); // 100
 
 // PORT="8080abc" is not a clean integer, so it falls back
-const port = Envapter.getUsing('PORT', Converters.Integer, 3000); // 3000
-const sampleRate = Envapter.getUsing('SAMPLE_RATE', Converters.Float, 1.0);
+const port = Envapter.getAs('PORT', Converters.Integer, 3000); // 3000
+const sampleRate = Envapter.getAs('SAMPLE_RATE', Converters.Float, 1.0);
 ```
 
 ## JSON
@@ -80,7 +80,7 @@ const sampleRate = Envapter.getUsing('SAMPLE_RATE', Converters.Float, 1.0);
 import { Envapter, Converters } from 'envapt';
 // ---cut---
 // FEATURE_FLAGS={"beta":true}
-const flags = Envapter.getUsing('FEATURE_FLAGS', Converters.Json, {});
+const flags = Envapter.getAs('FEATURE_FLAGS', Converters.Json, {});
 //    ^?
 ```
 
@@ -96,7 +96,7 @@ const flags = Envapter.getUsing('FEATURE_FLAGS', Converters.Json, {});
 import { Envapter, Converters } from 'envapt';
 // ---cut---
 // RELEASED_AT=2024-01-15T10:30:00Z
-const released = Envapter.getUsing('RELEASED_AT', Converters.Date);
+const released = Envapter.getAs('RELEASED_AT', Converters.Date);
 //    ^?
 ```
 
@@ -114,8 +114,8 @@ const released = Envapter.getUsing('RELEASED_AT', Converters.Date);
 import { Envapter, Converters } from 'envapt';
 // ---cut---
 // CACHE_TTL=15m
-const ttl = Envapter.getUsing('CACHE_TTL', Converters.Time); // 900000
-const grace = Envapter.getUsing('GRACE', Converters.Time, '1.5h');
+const ttl = Envapter.getAs('CACHE_TTL', Converters.Time); // 900000
+const grace = Envapter.getAs('GRACE', Converters.Time, '1.5h');
 //    ^?
 ```
 
@@ -135,11 +135,11 @@ The units are `ms`, `s`, `m`, `h`, `d`, `w`. The fallback may be a number (alrea
 import { Envapter, Converters } from 'envapt';
 // ---cut---
 // CORS=https://a.com,https://b.com
-const origins = Envapter.getUsing('CORS', Converters.array({ of: Converters.Url }));
+const origins = Envapter.getAs('CORS', Converters.array({ of: Converters.Url }));
 //    ^?
 
 // PORTS=3000 3001 3002
-const ports = Envapter.getUsing('PORTS', Converters.array({ of: Converters.Number, delimiter: ' ' }));
+const ports = Envapter.getAs('PORTS', Converters.array({ of: Converters.Number, delimiter: ' ' }));
 //    ^?
 ```
 
@@ -154,7 +154,7 @@ const toUpstream = (raw: string) => {
 };
 
 // UPSTREAMS=10.0.0.1:8080,10.0.0.2:8080
-const upstreams = Envapter.getUsing('UPSTREAMS', Converters.array({ of: toUpstream }));
+const upstreams = Envapter.getAs('UPSTREAMS', Converters.array({ of: toUpstream }));
 //    ^?
 ```
 
@@ -169,7 +169,7 @@ Normal mode skips empty elements. Under [strict mode](/docs/strict-mode) an empt
 
 ## Custom converters
 
-When no built-in fits, pass a `(raw: string) => T` function to `getUsing`. envapt calls it only when the variable is set, so `raw` is always a string. A missing variable returns the fallback, or `undefined` without one.
+When no built-in fits, pass a `(raw: string) => T` function to `getAs`. envapt calls it only when the variable is set, so `raw` is always a string. A missing variable returns the fallback, or `undefined` without one.
 
 ```ts twoslash
 import { Envapter } from 'envapt';
@@ -181,7 +181,7 @@ const toSemver = (raw: string) => {
 };
 
 // APP_VERSION=2.4.1
-const version = Envapter.getUsing('APP_VERSION', toSemver);
+const version = Envapter.getAs('APP_VERSION', toSemver);
 //    ^?
 ```
 

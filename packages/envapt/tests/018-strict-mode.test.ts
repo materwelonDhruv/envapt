@@ -43,20 +43,20 @@ describe('Strict mode + required (v5)', () => {
     describe('Strict mode + array empty items', () => {
         it('throws EmptyArrayElement on empty/whitespace items', () => {
             Envapter.strict = true;
-            expect(() => Envapter.getUsing('PORTS_WITH_EMPTY', Converters.array({ of: Converters.Number })))
+            expect(() => Envapter.getAs('PORTS_WITH_EMPTY', Converters.array({ of: Converters.Number })))
                 .to.throw(EnvaptError)
                 .with.property('code', EnvaptErrorCodes.EmptyArrayElement);
         });
 
         it('does NOT throw under strict OFF (existing permissive behavior preserved)', () => {
             Envapter.strict = false;
-            const ports = Envapter.getUsing('PORTS_WITH_EMPTY', Converters.array({ of: Converters.Number }));
+            const ports = Envapter.getAs('PORTS_WITH_EMPTY', Converters.array({ of: Converters.Number }));
             expect(ports).to.deep.equal([80, 443]);
         });
 
         it('processes clean arrays normally under strict ON', () => {
             Envapter.strict = true;
-            const ports = Envapter.getUsing('PORTS_CLEAN', Converters.array({ of: Converters.Number }));
+            const ports = Envapter.getAs('PORTS_CLEAN', Converters.array({ of: Converters.Number }));
             expect(ports).to.deep.equal([80, 443, 8080]);
         });
     });
@@ -182,11 +182,11 @@ describe('Strict mode + required (v5)', () => {
         });
     });
 
-    it('getUsing narrows by fallback presence', () => {
-        const noFallback = Envapter.getUsing('SET_NUMBER', Converters.Number);
+    it('getAs narrows by fallback presence', () => {
+        const noFallback = Envapter.getAs('SET_NUMBER', Converters.Number);
         expectTypeOf(noFallback).toEqualTypeOf<number | undefined>();
 
-        const withFallback = Envapter.getUsing('SET_NUMBER', Converters.Number, 3000);
+        const withFallback = Envapter.getAs('SET_NUMBER', Converters.Number, 3000);
         expectTypeOf(withFallback).toEqualTypeOf<number>();
     });
 });

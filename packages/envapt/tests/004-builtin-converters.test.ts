@@ -118,7 +118,7 @@ describe('Built-in Converters', () => {
         });
 
         it('returns the JSON value null over the fallback', () => {
-            expect(Envapter.getUsing('TEST_JSON_NULL', Converters.Json, { error: 'fallback' })).to.equal(null);
+            expect(Envapter.getAs('TEST_JSON_NULL', Converters.Json, { error: 'fallback' })).to.equal(null);
         });
     });
 

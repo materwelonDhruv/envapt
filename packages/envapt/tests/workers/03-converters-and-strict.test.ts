@@ -11,7 +11,7 @@ describe('converters on workerd', () => {
         Envapter.useSource(new PortableSource({ PORT: 8080, ENABLED: true, CFG: { a: 1 } }));
         expect(Envapter.getNumber('PORT')).toBe(8080);
         expect(Envapter.getBoolean('ENABLED')).toBe(true);
-        expect(Envapter.getUsing('CFG', Converters.Json)).toEqual({ a: 1 });
+        expect(Envapter.getAs('CFG', Converters.Json)).toEqual({ a: 1 });
     });
 
     it('applies url, regexp, date, and time converters', () => {
@@ -23,15 +23,15 @@ describe('converters on workerd', () => {
                 TTL: '1.5h'
             })
         );
-        expect(Envapter.getUsing('URL', Converters.Url)?.host).toBe('x.test');
-        expect(Envapter.getUsing('RE', Converters.RegExp)?.test('abc')).toBe(true);
-        expect(Envapter.getUsing('WHEN', Converters.Date)?.getUTCFullYear()).toBe(2020);
-        expect(Envapter.getUsing('TTL', Converters.Time)).toBe(5_400_000);
+        expect(Envapter.getAs('URL', Converters.Url)?.host).toBe('x.test');
+        expect(Envapter.getAs('RE', Converters.RegExp)?.test('abc')).toBe(true);
+        expect(Envapter.getAs('WHEN', Converters.Date)?.getUTCFullYear()).toBe(2020);
+        expect(Envapter.getAs('TTL', Converters.Time)).toBe(5_400_000);
     });
 
     it('reads a delimited array binding', () => {
         Envapter.useSource(new PortableSource({ HOSTS: 'a.test;b.test' }));
-        const hosts = Envapter.getUsing('HOSTS', Converters.array({ of: Converters.String, delimiter: ';' }));
+        const hosts = Envapter.getAs('HOSTS', Converters.array({ of: Converters.String, delimiter: ';' }));
         expect(hosts).toEqual(['a.test', 'b.test']);
     });
 });

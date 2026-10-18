@@ -34,11 +34,11 @@ Envapter.get(['CANARY_URL', 'APP_URL']); // ordered fallback
 Envapter.has('SENTRY_DSN'); // boolean
 
 // Built-in or array converter:
-Envapter.getUsing('ORIGINS', Converters.array({ of: Converters.String }), []); // string[]
+Envapter.getAs('ORIGINS', Converters.array({ of: Converters.String }), []); // string[]
 // Custom function converter, called only when the variable is set:
-Envapter.getUsing('FLAGS', (raw) => raw.split(','), []); // string[]
+Envapter.getAs('FLAGS', (raw) => raw.split(','), []); // string[]
 // Standard Schema (zod, valibot, arktype):
-Envapter.getUsing('LOG_LEVEL', z.enum(['debug', 'info', 'warn']), 'info'); // 'debug' | 'info' | 'warn'
+Envapter.getAs('LOG_LEVEL', z.enum(['debug', 'info', 'warn']), 'info'); // 'debug' | 'info' | 'warn'
 
 // Throw when a key is missing:
 Envapter.require('DATABASE_URL', 'JWT_SECRET'); // throws EnvaptError listing every missing key
@@ -115,7 +115,7 @@ Arrays use the builder. `of` defaults to `Converters.String` and `delimiter` to 
 Converters.array({ of: Converters.Number, delimiter: ';' }); // "1;2;3" -> number[]
 ```
 
-A custom converter is a `(raw: string) => T` function everywhere: `getUsing`, `@Envapt({ converter })`, `getRequired`, `getRequiredAll`, and `Converters.array({ of })`. envapt calls it only with a present value and applies the fallback itself. Returning `undefined` or `null` means the value can't be converted. A top-level read then uses the fallback, and an array element throws `ArrayElementConversionFailed`. An error the converter throws reaches the caller unchanged from `getUsing` and an optional `@Envapt`. A required read reports it as an `InvalidEnvValue` issue carrying its message.
+A custom converter is a `(raw: string) => T` function everywhere: `getAs`, `@Envapt({ converter })`, `getRequired`, `getRequiredAll`, and `Converters.array({ of })`. envapt calls it only with a present value and applies the fallback itself. Returning `undefined` or `null` means the value can't be converted. A top-level read then uses the fallback, and an array element throws `ArrayElementConversionFailed`. An error the converter throws reaches the caller unchanged from `getAs` and an optional `@Envapt`. A required read reports it as an `InvalidEnvValue` issue carrying its message.
 
 ## Runtimes and sources
 
@@ -172,11 +172,11 @@ import 'envapt/config'; // ESM, top of entry
 
 ## Validation with Standard Schema
 
-`Envapter.getUsing`, `Envapter.getRequired`, and `@Envapt({ schema })` validate through any Standard Schema validator: zod, valibot, arktype, or a hand-rolled `StandardSchemaV1`. The result type is the schema's output. A missing value returns the fallback, or `undefined` without one. `getRequired` and `required: true` throw `MissingEnvValue` for it instead.
+`Envapter.getAs`, `Envapter.getRequired`, and `@Envapt({ schema })` validate through any Standard Schema validator: zod, valibot, arktype, or a hand-rolled `StandardSchemaV1`. The result type is the schema's output. A missing value returns the fallback, or `undefined` without one. `getRequired` and `required: true` throw `MissingEnvValue` for it instead.
 
 ```ts
 import { z } from 'zod/v4';
-Envapter.getUsing('PORT', z.coerce.number().int().min(1024).max(65535), 3000); // number
+Envapter.getAs('PORT', z.coerce.number().int().min(1024).max(65535), 3000); // number
 Envapter.getRequired('PORT', z.coerce.number().int().min(1024).max(65535)); // number, throws when unset
 ```
 
@@ -197,7 +197,7 @@ const db = Envapter.getRequiredAll(
 
 ## Errors
 
-Reader and decorator failures throw `EnvaptError` with a numeric `code` (`EnvaptErrorCodes`). The common error codes are `MissingEnvValue` (a required value is absent), `SchemaValidationFailed` (`getUsing` or a `schema` decorator without `required` gets a value its schema rejects), `InvalidEnvValue` (a required read gets a value it can't convert, a bad array element, or an error from a custom parser or schema). Both carry an `issues` array whose paths start with the env key, and both messages list only the keys. Other common codes are `InvalidUserDefinedConfig` (bad options, e.g. `required` + `fallback`), `MalformedTimeFallback`, `FileApiUnsupported` (a file-only API called with `fileApiMode = 'throw'`, or on the node build with a non-filesystem source), `NoSourceBound` (a read before `useSource` on the portable build).
+Reader and decorator failures throw `EnvaptError` with a numeric `code` (`EnvaptErrorCodes`). The common error codes are `MissingEnvValue` (a required value is absent), `SchemaValidationFailed` (`getAs` or a `schema` decorator without `required` gets a value its schema rejects), `InvalidEnvValue` (a required read gets a value it can't convert, a bad array element, or an error from a custom parser or schema). Both carry an `issues` array whose paths start with the env key, and both messages list only the keys. Other common codes are `InvalidUserDefinedConfig` (bad options, e.g. `required` + `fallback`), `MalformedTimeFallback`, `FileApiUnsupported` (a file-only API called with `fileApiMode = 'throw'`, or on the node build with a non-filesystem source), `NoSourceBound` (a read before `useSource` on the portable build).
 
 ```ts
 import { EnvaptError, EnvaptErrorCodes } from 'envapt';
@@ -221,7 +221,7 @@ envapt loads `.env` **and** returns typed, validated values from one API, with n
 | `require('dotenv').config()` | `import 'envapt/config'` |
 | `-r dotenv/config` | `--import envapt/config` |
 | `process.env.API_KEY` | `Envapter.get('API_KEY')` / `Envapter.require('API_KEY')` |
-| `Number(process.env.PORT) \|\| 3000` | `Envapter.getUsing('PORT', Converters.Port, 3000)` |
+| `Number(process.env.PORT) \|\| 3000` | `Envapter.getAs('PORT', Converters.Port, 3000)` |
 | `process.env.DEBUG === 'true'` | `Envapter.getBoolean('DEBUG', false)` |
 
 <!--prettier-ignore-end-->

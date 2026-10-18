@@ -68,7 +68,7 @@ Read a value from any call site, in JavaScript or TypeScript. No build step. On 
 ```ts
 import { Converters, Envapter } from 'envapt';
 
-const requestTimeout = Envapter.getUsing('REQUEST_TIMEOUT', Converters.Time, '30s'); // 30000
+const requestTimeout = Envapter.getAs('REQUEST_TIMEOUT', Converters.Time, '30s'); // 30000
 const maxRetries = Envapter.getNumber('MAX_RETRIES', 3);
 const debug = Envapter.getBoolean('DEBUG', false);
 ```

@@ -18,7 +18,7 @@ describe('Runtime Validation', () => {
     describe('converter validation', () => {
         it('throws InvalidBuiltInConverter with the valid tokens for a mistyped token', () => {
             // @ts-expect-error a mistyped token
-            expect(() => Envapter.getUsing('VAR_IN_EXTRA_FILE', 'nmber'))
+            expect(() => Envapter.getAs('VAR_IN_EXTRA_FILE', 'nmber'))
                 .to.throw(EnvaptError, 'Valid types are: string,number')
                 .with.property('code', EnvaptErrorCodes.InvalidBuiltInConverter);
         });
@@ -27,7 +27,7 @@ describe('Runtime Validation', () => {
             // cast past the type to reach the runtime check
             const typo = 'nmber' as never;
             for (const read of [
-                () => Envapter.getUsing('NEVER_SET_KEY', typo),
+                () => Envapter.getAs('NEVER_SET_KEY', typo),
                 () => Envapter.getRequired('NEVER_SET_KEY', typo),
                 () => Envapter.getRequiredAll({ NEVER_SET_KEY: typo })
             ]) {
@@ -44,7 +44,7 @@ describe('Runtime Validation', () => {
 
         it('throws InvalidCustomConverter for a converter that is neither a token nor a function', () => {
             // cast past the type to reach the runtime check
-            expect(() => Envapter.getUsing('VAR_IN_EXTRA_FILE', 42 as never))
+            expect(() => Envapter.getAs('VAR_IN_EXTRA_FILE', 42 as never))
                 .to.throw(EnvaptError)
                 .with.property('code', EnvaptErrorCodes.InvalidCustomConverter);
         });
@@ -202,26 +202,26 @@ describe('Runtime Validation', () => {
 
     describe('Fallback value validation for built-in converters', () => {
         it('rejects a non-safe-integer integer fallback', () => {
-            expect(() => Envapter.getUsing('NONEXISTENT_INT_FB', Converters.Integer, Number.MAX_SAFE_INTEGER + 1))
+            expect(() => Envapter.getAs('NONEXISTENT_INT_FB', Converters.Integer, Number.MAX_SAFE_INTEGER + 1))
                 .to.throw(EnvaptError)
                 .with.property('code', EnvaptErrorCodes.FallbackConverterTypeMismatch);
         });
 
         it('rejects a NaN number fallback', () => {
-            expect(() => Envapter.getUsing('NONEXISTENT_NUM_FB', Converters.Number, NaN))
+            expect(() => Envapter.getAs('NONEXISTENT_NUM_FB', Converters.Number, NaN))
                 .to.throw(EnvaptError)
                 .with.property('code', EnvaptErrorCodes.FallbackConverterTypeMismatch);
         });
 
         it('rejects a NaN float fallback but keeps Infinity', () => {
-            expect(() => Envapter.getUsing('NONEXISTENT_FLOAT_FB', Converters.Float, NaN))
+            expect(() => Envapter.getAs('NONEXISTENT_FLOAT_FB', Converters.Float, NaN))
                 .to.throw(EnvaptError)
                 .with.property('code', EnvaptErrorCodes.FallbackConverterTypeMismatch);
-            expect(Envapter.getUsing('NONEXISTENT_FLOAT_FB', Converters.Float, Infinity)).to.equal(Infinity);
+            expect(Envapter.getAs('NONEXISTENT_FLOAT_FB', Converters.Float, Infinity)).to.equal(Infinity);
         });
 
         it('rejects an Invalid Date fallback', () => {
-            expect(() => Envapter.getUsing('NONEXISTENT_DATE_FB', Converters.Date, new Date('not-a-date')))
+            expect(() => Envapter.getAs('NONEXISTENT_DATE_FB', Converters.Date, new Date('not-a-date')))
                 .to.throw(EnvaptError)
                 .with.property('code', EnvaptErrorCodes.FallbackConverterTypeMismatch);
         });

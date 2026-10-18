@@ -72,7 +72,7 @@ describe('Source portability (v5.2)', () => {
             Envapter.useSource(
                 new PortableSource({ VITE_API_URL: 'https://api.example.com', DEV: true, MODE: 'production' })
             );
-            expect(Envapter.getUsing('VITE_API_URL', Converters.Url)?.href).to.equal('https://api.example.com/');
+            expect(Envapter.getAs('VITE_API_URL', Converters.Url)?.href).to.equal('https://api.example.com/');
             expect(Envapter.getBoolean('DEV')).to.equal(true);
             expect(Envapter.get('MODE')).to.equal('production');
         });

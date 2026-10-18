@@ -118,13 +118,13 @@ describe('Debug mode (v5)', () => {
             }
         });
 
-        it('logs a missing key read through getUsing (no fallback)', () => {
+        it('logs a missing key read through getAs (no fallback)', () => {
             Envapter.debug = 'warn';
             const capture = captureStderr();
             try {
-                Envapter.getUsing('NEVER_SET_KEY', 'number');
+                Envapter.getAs('NEVER_SET_KEY', 'number');
                 const line = capture.lines.find((l) => l.includes('NEVER_SET_KEY'));
-                expect(line, 'expected a not-found warn from getUsing').to.exist;
+                expect(line, 'expected a not-found warn from getAs').to.exist;
                 expect(line).to.include('missing or empty');
             } finally {
                 capture.restore();
@@ -228,7 +228,7 @@ describe('Debug mode (v5)', () => {
             const capture = captureStderr();
             try {
                 expect(Envapter.getNumber('PORT', 8080)).to.equal(8080);
-                expect(Envapter.getUsing('RETRIES', Converters.Integer, 3)).to.equal(3);
+                expect(Envapter.getAs('RETRIES', Converters.Integer, 3)).to.equal(3);
 
                 expect(capture.lines.some((l) => l.includes('could not convert PORT as number'))).to.equal(true);
                 expect(capture.lines.some((l) => l.includes('could not convert') && l.includes('RETRIES'))).to.equal(

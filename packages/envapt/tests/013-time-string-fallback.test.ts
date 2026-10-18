@@ -44,7 +44,7 @@ describe('Converters.Time — time-string fallbacks', () => {
     describe('present-but-invalid value with a string fallback', () => {
         it('coerces the string fallback when the raw value is malformed', () => {
             // TEST_TIME_INVALID=5x is present but malformed
-            expect(Envapter.getUsing('TEST_TIME_INVALID', 'time', '10s')).to.equal(10000);
+            expect(Envapter.getAs('TEST_TIME_INVALID', 'time', '10s')).to.equal(10000);
         });
     });
 
@@ -66,11 +66,11 @@ describe('Converters.Time — time-string fallbacks', () => {
 
         it('throws MalformedTimeFallback even when the value is set', () => {
             // TEST_TIME_SECONDS=5s in the fixture
-            expect(() => Envapter.getUsing('TEST_TIME_SECONDS', 'time', 'bogus' as unknown as TimeFallback))
+            expect(() => Envapter.getAs('TEST_TIME_SECONDS', 'time', 'bogus' as unknown as TimeFallback))
                 .to.throw(EnvaptError)
                 .with.property('code', EnvaptErrorCodes.MalformedTimeFallback);
             // TEST_ARRAY_TIME=5ms,5s,5m,5h in the fixture
-            expect(() => Envapter.getUsing('TEST_ARRAY_TIME', Converters.array({ of: 'time' }), ['bogus' as never]))
+            expect(() => Envapter.getAs('TEST_ARRAY_TIME', Converters.array({ of: 'time' }), ['bogus' as never]))
                 .to.throw(EnvaptError)
                 .with.property('code', EnvaptErrorCodes.MalformedTimeFallback);
         });

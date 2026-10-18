@@ -11,6 +11,6 @@ describe('envapt in the browser', () => {
         expect(Envapter.get('APP')).toBe('web');
         expect(Envapter.getNumber('PORT')).toBe(443);
         expect(Envapter.getBoolean('FLAG')).toBe(true);
-        expect(Envapter.getUsing('API', Converters.Url)?.href).toBe('https://api.test/v1');
+        expect(Envapter.getAs('API', Converters.Url)?.href).toBe('https://api.test/v1');
     });
 });

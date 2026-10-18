@@ -8,7 +8,7 @@ const FUNCTIONAL = `import { Envapter, Converters } from 'envapt';
 
 const config = {
   port: Envapter.getNumber('PORT', 3000),
-  dbUrl: Envapter.getUsing('DATABASE_URL', Converters.Url)
+  dbUrl: Envapter.getAs('DATABASE_URL', Converters.Url)
 };`;
 
 const DECORATOR = `import { EnvNum } from 'envapt';

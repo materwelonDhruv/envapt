@@ -7,7 +7,7 @@ type BuiltInConverter = ConverterToken;
 /**
  * Custom converter for an environment variable or an array element. It receives a present value with templates
  * already expanded. envapt applies the fallback itself. A return of `undefined` or `null` means the value could
- * not be converted. From `getUsing` and an optional `@Envapt`, an error the converter throws reaches the caller as
+ * not be converted. From `getAs` and an optional `@Envapt`, an error the converter throws reaches the caller as
  * is. A required read reports it as an `InvalidEnvValue` issue carrying its message.
  * @public
  * @see {@link https://envapt.materwelon.dev/docs/converters#custom-converters}

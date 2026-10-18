@@ -63,7 +63,7 @@ class Config {
         lang: 'ts',
         code: `// Converters - read a duration as milliseconds
 // CACHE_TTL=15m in your config
-const ttl = Envapter.getUsing(
+const ttl = Envapter.getAs(
   'CACHE_TTL', Converters.Time
 ); // 900000 (ms)`
     },
@@ -81,7 +81,7 @@ DATABASE_URL=postgres://\${DB_HOST}:\${DB_PORT}/app`
         code: `// Standard Schema - validate PORT with zod
 import { z } from 'zod';
 
-const port = Envapter.getUsing(
+const port = Envapter.getAs(
   'PORT',
   z.coerce.number().int().min(1024)
 );`
@@ -183,7 +183,7 @@ import { PortableSource } from 'envapt';`
         code: `// Sources - any readVars() object is a source
 const source = { readVars: () => secrets };
 Envapter.useSource(source);
-const db = Envapter.getUsing(
+const db = Envapter.getAs(
   'DATABASE_URL', Converters.Url
 );`
     },
@@ -193,7 +193,7 @@ const db = Envapter.getUsing(
         code: `// Secret stores - fetch, bind, read typed
 const secrets = await fetchFromStore();
 Envapter.useSource({ readVars: () => secrets });
-const db = Envapter.getUsing(
+const db = Envapter.getAs(
   'DATABASE_URL', Converters.Url
 );`
     },
@@ -204,7 +204,7 @@ const db = Envapter.getUsing(
 import { env } from 'cloudflare:workers';
 
 Envapter.useSource(new PortableSource(env));
-const origin = Envapter.getUsing(
+const origin = Envapter.getAs(
   'ORIGIN_URL', Converters.Url
 );`
     },
@@ -215,7 +215,7 @@ const origin = Envapter.getUsing(
 Envapter.useSource(
   new PortableSource(import.meta.env)
 );
-const api = Envapter.getUsing(
+const api = Envapter.getAs(
   'VITE_API_URL', Converters.Url
 );`
     },

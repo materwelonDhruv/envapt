@@ -71,7 +71,7 @@ const raw = Envapter.getRaw('DATABASE_URL');
 
 ## Converters
 
-For shapes beyond primitives, `getUsing(key, converter, fallback?)` takes any of these as its converter:
+For shapes beyond primitives, `getAs(key, converter, fallback?)` takes any of these as its converter:
 
 - a built-in token, for arrays, URLs, dates, durations, and more
 - your own `(raw: string) => T` function, which runs only when the variable is set
@@ -80,10 +80,10 @@ For shapes beyond primitives, `getUsing(key, converter, fallback?)` takes any of
 ```ts twoslash
 import { Envapter, Converters } from 'envapt';
 // ---cut---
-const origins = Envapter.getUsing('CORS', Converters.array({ of: Converters.String }));
+const origins = Envapter.getAs('CORS', Converters.array({ of: Converters.String }));
 //    ^?
 
-const allowedHosts = Envapter.getUsing('ALLOWED_HOSTS', (raw) => raw.split(' '), ['localhost']);
+const allowedHosts = Envapter.getAs('ALLOWED_HOSTS', (raw) => raw.split(' '), ['localhost']);
 //    ^?
 ```
 
@@ -156,7 +156,7 @@ config;
 // ^?
 ```
 
-A required read always throws on a missing value. For a value with a default, pass a fallback to `get` or `getUsing`. See [Strict mode](/docs/strict-mode) for the global switch and how required reads relate to it.
+A required read always throws on a missing value. For a value with a default, pass a fallback to `get` or `getAs`. See [Strict mode](/docs/strict-mode) for the global switch and how required reads relate to it.
 
 <Callout type="danger">
     `require`, `getRequired`, and `getRequiredAll` throw `EnvaptError` for a missing or empty key (or, under strict mode, a whitespace-only one). `require` and `getRequiredAll` collect every missing key into one error. envapt never runs a schema for a missing key in `getRequiredAll`, so a schema default such as zod's `.default()` does not apply there.

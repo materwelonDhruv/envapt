@@ -27,8 +27,8 @@ import { Envapter, PortableSource, Converters } from 'envapt';
 declare const env: Record<string, unknown>; // the Cloudflare env binding
 Envapter.useSource(new PortableSource(env));
 
-const upstream = Envapter.getUsing('UPSTREAM_URL', Converters.Url); // URL | undefined
-const cacheTtl = Envapter.getUsing('CACHE_TTL', Converters.Time, '5m'); // number (ms)
+const upstream = Envapter.getAs('UPSTREAM_URL', Converters.Url); // URL | undefined
+const cacheTtl = Envapter.getAs('CACHE_TTL', Converters.Time, '5m'); // number (ms)
 ```
 
 ## Any object can be a source
@@ -44,7 +44,7 @@ declare const secrets: Record<string, string>; // fetched from your secrets mana
 const source: Source = { readVars: () => secrets };
 Envapter.useSource(source);
 
-const apiBase = Envapter.getUsing('API_BASE_URL', Converters.Url);
+const apiBase = Envapter.getAs('API_BASE_URL', Converters.Url);
 const poolSize = Envapter.getNumber('DB_POOL_SIZE', 10);
 ```
 
@@ -75,7 +75,7 @@ import { Envapter, FileSource, PortableSource, merge, Converters } from 'envapt'
 declare const secrets: Record<string, string>; // fetched and awaited
 Envapter.useSource(merge(new FileSource(), new PortableSource(secrets)));
 
-const dbUrl = Envapter.getUsing('DATABASE_URL', Converters.Url);
+const dbUrl = Envapter.getAs('DATABASE_URL', Converters.Url);
 ```
 
 At most one member is filesystem-backed, and the `.env` cascade and file APIs route to it. `merge` throws [`InvalidMergedSource`](/docs/errors) with no members or more than one file-backed member.
@@ -88,7 +88,7 @@ import { Envapter, FileSource, merge, Converters } from 'envapt';
 declare const store: { get(key: string): string | undefined };
 Envapter.useSource(merge(new FileSource(), (key) => store.get(key)));
 
-const dbUrl = Envapter.getUsing('DATABASE_URL', Converters.Url);
+const dbUrl = Envapter.getAs('DATABASE_URL', Converters.Url);
 ```
 
 ## When nothing is bound

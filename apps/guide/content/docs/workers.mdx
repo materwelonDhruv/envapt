@@ -19,7 +19,7 @@ import { env } from 'cloudflare:workers';
 import { Converters, Envapter, PortableSource } from 'envapt';
 
 Envapter.useSource(new PortableSource(env));
-Envapter.getUsing('CACHE_TTL', Converters.Time, '1m'); // readers work once a source is bound
+Envapter.getAs('CACHE_TTL', Converters.Time, '1m'); // readers work once a source is bound
 Envapter.envPaths = ['.env']; // warns once and no-ops on Workers
 ```
 
@@ -47,7 +47,7 @@ const values = Envapter.getRequiredAll(
 
 export const config = {
     ...values,
-    cacheTtl: Envapter.getUsing('CACHE_TTL', Converters.Time, '1m')
+    cacheTtl: Envapter.getAs('CACHE_TTL', Converters.Time, '1m')
 };
 ```
 
@@ -69,7 +69,7 @@ const values = Envapter.getRequiredAll(
 
 export const config = {
     ...values,
-    cacheTtl: Envapter.getUsing('CACHE_TTL', Converters.Time, '1m')
+    cacheTtl: Envapter.getAs('CACHE_TTL', Converters.Time, '1m')
 };
 // @filename: index.ts
 // ---cut---
@@ -121,7 +121,7 @@ import { Envapter, PortableSource, Converters } from 'envapt';
 declare const env: { FEATURE_FLAGS: { beta: boolean } }; // a JSON `vars` binding
 Envapter.useSource(new PortableSource(env));
 
-const flags = Envapter.getUsing('FEATURE_FLAGS', Converters.Json); // parsed back from the stringified binding
+const flags = Envapter.getAs('FEATURE_FLAGS', Converters.Json); // parsed back from the stringified binding
 ```
 
 ## No filesystem

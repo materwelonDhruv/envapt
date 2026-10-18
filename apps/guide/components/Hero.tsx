@@ -13,7 +13,7 @@ const port = Envapter.getNumber('PORT', 3000);
 const url = Envapter.get(['DATABASE_URL', 'DB_URL']);
 
 // typed lists
-const cors = Envapter.getUsing('CORS',
+const cors = Envapter.getAs('CORS',
   Converters.array({ of: Converters.Url })
 );`;
 

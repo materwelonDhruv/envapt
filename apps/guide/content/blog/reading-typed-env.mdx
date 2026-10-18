@@ -21,7 +21,7 @@ Here's the same port, read so the fallback only fires when the value is actually
 ```ts twoslash
 import { Converters, Envapter } from 'envapt';
 // ---cut---
-const port = Envapter.getUsing('PORT', Converters.Port, 3000); // number, 0-65535 checked
+const port = Envapter.getAs('PORT', Converters.Port, 3000); // number, 0-65535 checked
 const debug = Envapter.getBoolean('DEBUG', false); // 1/yes/true/on -> true
 ```
 
@@ -32,9 +32,9 @@ The fallback also does something to the type. Passing one strips `undefined` fro
 ```ts twoslash
 import { Converters, Envapter } from 'envapt';
 // ---cut---
-const withFallback = Envapter.getUsing('PORT', Converters.Port, 3000);
+const withFallback = Envapter.getAs('PORT', Converters.Port, 3000);
 //    ^?
-const noFallback = Envapter.getUsing('PORT', Converters.Port);
+const noFallback = Envapter.getAs('PORT', Converters.Port);
 //    ^?
 ```
 
@@ -42,22 +42,22 @@ Leave the fallback off and you get `number | undefined`. The type makes you hand
 
 ## The shapes that aren't primitives
 
-Most config isn't a bare number. It's a URL, a comma list, a JSON blob, a timeout. `getUsing` takes a converter token and hands back the matching type:
+Most config isn't a bare number. It's a URL, a comma list, a JSON blob, a timeout. `getAs` takes a converter token and hands back the matching type:
 
 ```ts twoslash
 import { Envapter, Converters } from 'envapt';
 // ---cut---
-const apiUrl = Envapter.getUsing('API_URL', Converters.Url);
+const apiUrl = Envapter.getAs('API_URL', Converters.Url);
 //    ^?
-const origins = Envapter.getUsing('ALLOWED_ORIGINS', Converters.array({ of: Converters.Url }));
+const origins = Envapter.getAs('ALLOWED_ORIGINS', Converters.array({ of: Converters.Url }));
 //    ^?
-const ttl = Envapter.getUsing('CACHE_TTL', Converters.Time, '5m'); // "5m" -> 300000 (ms)
+const ttl = Envapter.getAs('CACHE_TTL', Converters.Time, '5m'); // "5m" -> 300000 (ms)
 //    ^?
 ```
 
 `Converters.Url` runs the value through `new URL`, so a non-absolute URL takes the fallback and never slips through as a string. `Converters.array({ of: Converters.Url })` splits on the delimiter and converts each element, so the type is `URL[]`. A hand-rolled `.split(',')` leaves you at `string[]`. `Converters.Time` reads `5m` and returns `300000`, so a timeout in config reads the way you'd write it in code, with no pile of zeroes to count.
 
-The built-in tokens cover number, integer, float, boolean, bigint, JSON, URL, RegExp, Date, duration, port, email, and arrays. When none of them fit, `getUsing` also takes a plain `(raw: string) => T`, called only when the variable is set:
+The built-in tokens cover number, integer, float, boolean, bigint, JSON, URL, RegExp, Date, duration, port, email, and arrays. When none of them fit, `getAs` also takes a plain `(raw: string) => T`, called only when the variable is set:
 
 ```ts twoslash
 import { Envapter } from 'envapt';
@@ -71,7 +71,7 @@ const toBytes = (raw: string) => {
 };
 
 // MAX_BODY=10mb
-const maxBody = Envapter.getUsing('MAX_BODY', toBytes);
+const maxBody = Envapter.getAs('MAX_BODY', toBytes);
 //    ^?
 ```
 
@@ -89,13 +89,13 @@ const port = Envapter.getRequired('PORT', z.coerce.number().int().min(1024));
 
 t3-env and znv do this job too, and do it well, but they're built on zod, where the validator is the dependency. envapt uses the Standard Schema interface, so which validator you bring is your call, and envapt itself adds nothing to your lockfile.
 
-`getRequired` runs the value through the schema and returns whatever the schema outputs, typed. A bad `PORT` throws on the `getRequired` line, with the validator's issues on the error. The hand-written version gives you a `NaN` that some later arithmetic turns into garbage. For an optional value, `getUsing` takes the same schema plus a fallback, returned as-is on a missing value, so it has to already satisfy the type because the schema never sees it:
+`getRequired` runs the value through the schema and returns whatever the schema outputs, typed. A bad `PORT` throws on the `getRequired` line, with the validator's issues on the error. The hand-written version gives you a `NaN` that some later arithmetic turns into garbage. For an optional value, `getAs` takes the same schema plus a fallback, returned as-is on a missing value, so it has to already satisfy the type because the schema never sees it:
 
 ```ts twoslash
 import { z } from 'zod/v4';
 import { Envapter } from 'envapt';
 // ---cut---
-const timeout = Envapter.getUsing('TIMEOUT_MS', z.coerce.number(), 30000);
+const timeout = Envapter.getAs('TIMEOUT_MS', z.coerce.number(), 30000);
 //    ^?
 ```
 

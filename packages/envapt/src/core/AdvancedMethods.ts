@@ -33,32 +33,29 @@ export class AdvancedMethods extends PrimitiveMethods {
      * @see {@link https://envapt.materwelon.dev/docs/converters#custom-converters}
      */
     // TypeScript uses the first overload that matches. Keep 'time' above the generic one.
-    static getUsing<TFallback extends TimeFallback | undefined = undefined>(
+    static getAs<TFallback extends TimeFallback | undefined = undefined>(
         key: EnvKeyInput,
         converter: 'time',
         fallback?: TFallback
     ): ConditionalReturn<number, TFallback>;
-    static getUsing<TConverter extends BuiltInConverter | ArrayOf, TFallback = undefined>(
+    static getAs<TConverter extends BuiltInConverter | ArrayOf, TFallback = undefined>(
         key: EnvKeyInput,
         converter: TConverter,
         fallback?: TFallback
     ): AdvancedConverterReturn<TConverter, TFallback>;
-    static getUsing<TReturn>(key: EnvKeyInput, converter: BuiltInConverter | ArrayOf, fallback?: TReturn): TReturn;
+    static getAs<TReturn>(key: EnvKeyInput, converter: BuiltInConverter | ArrayOf, fallback?: TReturn): TReturn;
     // arktype types are callable and would match the function overload below
-    static getUsing<
-        Schema extends StandardSchemaV1,
-        TFallback extends InferSchemaOutput<Schema> | undefined = undefined
-    >(
+    static getAs<Schema extends StandardSchemaV1, TFallback extends InferSchemaOutput<Schema> | undefined = undefined>(
         key: EnvKeyInput,
         schema: SchemaConstraint<Schema>,
         fallback?: TFallback
     ): ConditionalReturn<InferSchemaOutput<Schema>, TFallback>;
-    static getUsing<TReturn, TFallback extends NonNullable<TReturn> | undefined = undefined>(
+    static getAs<TReturn, TFallback extends NonNullable<TReturn> | undefined = undefined>(
         key: EnvKeyInput,
         converter: ConverterFunction<TReturn>,
         fallback?: TFallback
     ): ConditionalReturn<NonNullable<TReturn>, TFallback>;
-    static getUsing(
+    static getAs(
         key: EnvKeyInput,
         converter: BuiltInConverter | ArrayOf | ConverterFunction | StandardSchemaV1,
         fallback?: unknown

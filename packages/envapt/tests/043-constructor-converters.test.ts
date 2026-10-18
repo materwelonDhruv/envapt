@@ -13,21 +13,21 @@ describe('constructors as converters (v9)', () => {
 
     it('rejects Symbol, pointing at Symbol.for', () => {
         // @ts-expect-error a constructor is not a converter
-        expect(() => Envapter.getUsing('CACHE_NAMESPACE', Symbol))
+        expect(() => Envapter.getAs('CACHE_NAMESPACE', Symbol))
             .to.throw(EnvaptError, 'Symbol.for')
             .with.property('code', EnvaptErrorCodes.InvalidUserDefinedConfig);
     });
 
     it('rejects a primitive constructor, pointing at the matching token', () => {
         // @ts-expect-error a constructor is not a converter
-        expect(() => Envapter.getUsing('MAX_CONNECTIONS', Number, 100))
+        expect(() => Envapter.getAs('MAX_CONNECTIONS', Number, 100))
             .to.throw(EnvaptError, 'Converters.Number')
             .with.property('code', EnvaptErrorCodes.InvalidUserDefinedConfig);
     });
 
     it('rejects a constructor as an array element converter', () => {
         // @ts-expect-error a constructor is not a converter
-        expect(() => Envapter.getUsing('SHARD_IDS', Converters.array({ of: BigInt })))
+        expect(() => Envapter.getAs('SHARD_IDS', Converters.array({ of: BigInt })))
             .to.throw(EnvaptError, 'Converters.BigInt')
             .with.property('code', EnvaptErrorCodes.InvalidUserDefinedConfig);
     });
