@@ -220,9 +220,8 @@ export class AdvancedMethods extends PrimitiveMethods {
 
     /**
      * Validate an environment variable through a {@link StandardSchemaV1}-conformant schema
-     * (zod, valibot, arktype, etc). Throws `MissingEnvValue` if the env value is absent and
-     * no fallback is provided. When the value is missing, the fallback is returned as-is and does
-     * not pass through the schema.
+     * (zod, valibot, arktype, etc). A missing value returns the fallback as-is, without running the
+     * schema, or `undefined` when no fallback is given.
      *
      * Synchronous schemas only. A `validate` that returns a Promise throws `InvalidUserDefinedConfig`.
      *
@@ -233,23 +232,23 @@ export class AdvancedMethods extends PrimitiveMethods {
      * ```
      * @see {@link https://envapt.materwelon.dev/docs/standard-schema#any-conformant-validator-or-none}
      */
-    static parse<Schema extends StandardSchemaV1>(
+    static parse<Schema extends StandardSchemaV1, TFallback extends InferSchemaOutput<Schema> | undefined = undefined>(
         key: EnvKeyInput,
         schema: SchemaConstraint<Schema>,
-        fallback?: InferSchemaOutput<Schema>
-    ): InferSchemaOutput<Schema> {
+        fallback?: TFallback
+    ): ConditionalReturn<InferSchemaOutput<Schema>, TFallback> {
         // SchemaConstraint rejects async schemas at compile time
-        return readSchema(key, schema as unknown as StandardSchemaV1, fallback, hasFallback(fallback));
+        return readSchema(key, schema as unknown as StandardSchemaV1, fallback);
     }
 
     /**
      * @see {@link AdvancedMethods.parse}
      */
-    parse<Schema extends StandardSchemaV1>(
+    parse<Schema extends StandardSchemaV1, TFallback extends InferSchemaOutput<Schema> | undefined = undefined>(
         key: EnvKeyInput,
         schema: SchemaConstraint<Schema>,
-        fallback?: InferSchemaOutput<Schema>
-    ): InferSchemaOutput<Schema> {
+        fallback?: TFallback
+    ): ConditionalReturn<InferSchemaOutput<Schema>, TFallback> {
         return AdvancedMethods.parse(key, schema, fallback);
     }
 }

@@ -3,7 +3,6 @@ import { resolve } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 
 import { Converters, Envapter } from '../src';
-import { EnvaptError } from '../src/infra/Error';
 
 import type { StandardSchemaV1 } from '../src/infra/StandardSchema';
 
@@ -29,8 +28,8 @@ describe('missing-value return unification (v8)', () => {
     });
 
     describe('an explicit undefined fallback is no fallback', () => {
-        it('parse throws when the key is missing and the fallback is an explicit undefined', () => {
-            expect(() => Envapter.parse('MISSING_044', echoSchema, undefined)).to.throw(EnvaptError);
+        it('parse returns undefined when the key is missing and the fallback is an explicit undefined', () => {
+            expect(Envapter.parse('MISSING_044', echoSchema, undefined)).to.be.undefined;
         });
     });
 });

@@ -178,8 +178,12 @@ export function Envapt(key: EnvKeyInput, options: { required: true }): EnvaptFie
  */
 export function Envapt<Schema extends StandardSchemaV1>(
     key: EnvKeyInput,
+    options: { schema: SchemaConstraint<Schema>; fallback?: undefined; required?: false }
+): EnvaptFieldDecorator<InferSchemaOutput<Schema> | undefined>;
+export function Envapt<Schema extends StandardSchemaV1>(
+    key: EnvKeyInput,
     options:
-        | { schema: SchemaConstraint<Schema>; fallback?: InferSchemaOutput<Schema>; required?: false }
+        | { schema: SchemaConstraint<Schema>; fallback: InferSchemaOutput<Schema>; required?: false }
         | { schema: SchemaConstraint<Schema>; required: true }
 ): EnvaptFieldDecorator<InferSchemaOutput<Schema>>;
 

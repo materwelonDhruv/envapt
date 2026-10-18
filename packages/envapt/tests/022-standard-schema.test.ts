@@ -95,25 +95,13 @@ describe('Standard Schema adapter (v5)', () => {
             const port = Envapter.parse(['NEVER_SET', 'PORT'], z.coerce.number());
             expect(port).to.equal(8080);
         });
-
-        it('lists every key of an ordered key list in the missing-value message', () => {
-            try {
-                Envapter.parse(['NEVER_SET_A', 'NEVER_SET_B'], z.coerce.number());
-                expect.fail('should have thrown');
-            } catch (err) {
-                expect(err).to.be.instanceOf(EnvaptError);
-                const e = err as EnvaptError;
-                expect(e.code).to.equal(EnvaptErrorCodes.MissingEnvValue);
-                expect(e.message).to.include('[NEVER_SET_A, NEVER_SET_B]');
-            }
-        });
     });
 
     describe('Envapter.parse: missing handling', () => {
-        it('throws MissingEnvValue when env is absent AND no fallback', () => {
-            expect(() => Envapter.parse('NEVER_SET', z.coerce.number()))
-                .to.throw(EnvaptError)
-                .with.property('code', EnvaptErrorCodes.MissingEnvValue);
+        it('returns undefined when env is absent and there is no fallback', () => {
+            const port = Envapter.parse('NEVER_SET', z.coerce.number());
+            expect(port).to.be.undefined;
+            expectTypeOf(port).toEqualTypeOf<number | undefined>();
         });
 
         it('returns the fallback as-is when env is absent (no schema run)', () => {
@@ -132,24 +120,15 @@ describe('Standard Schema adapter (v5)', () => {
             expect(result).to.equal(fallback);
         });
 
-        it('throws MissingEnvValue on empty value', () => {
-            expect(() => Envapter.parse('EMPTY', z.string().min(1)))
-                .to.throw(EnvaptError)
-                .with.property('code', EnvaptErrorCodes.MissingEnvValue);
-        });
-
-        it('throws MissingEnvValue on empty even when the schema would accept it', () => {
+        it('treats an empty value as missing even when the schema would accept it', () => {
             // z.string() accepts an empty string
-            expect(() => Envapter.parse('EMPTY', z.string()))
-                .to.throw(EnvaptError)
-                .with.property('code', EnvaptErrorCodes.MissingEnvValue);
+            expect(Envapter.parse('EMPTY', z.string())).to.be.undefined;
+            expect(Envapter.parse('EMPTY', z.string(), 'fallback')).to.equal('fallback');
         });
 
         it('strict mode treats whitespace-only as missing', () => {
             Envapter.strict = true;
-            expect(() => Envapter.parse('WHITESPACE_ONLY', z.string().min(1)))
-                .to.throw(EnvaptError)
-                .with.property('code', EnvaptErrorCodes.MissingEnvValue);
+            expect(Envapter.parse('WHITESPACE_ONLY', z.string().min(1))).to.be.undefined;
         });
     });
 
@@ -178,18 +157,6 @@ describe('Standard Schema adapter (v5)', () => {
                 expect(e.code).to.equal(EnvaptErrorCodes.SchemaValidationFailed);
                 expect(e.issues).to.exist;
                 expect(e.issues?.length).to.be.greaterThan(0);
-            }
-        });
-
-        it('hand-rolled: issues array passes through to err.issues unchanged', () => {
-            try {
-                Envapter.parse('EMPTY', handRolledUpper);
-                expect.fail('should have thrown');
-            } catch (err) {
-                expect(err).to.be.instanceOf(EnvaptError);
-                const e = err as EnvaptError;
-                // EMPTY counts as missing before the schema runs
-                expect(e.code).to.equal(EnvaptErrorCodes.MissingEnvValue);
             }
         });
 
@@ -237,7 +204,7 @@ describe('Standard Schema adapter (v5)', () => {
 
         it('non-208 errors have `issues` undefined', () => {
             try {
-                Envapter.parse('NEVER_SET', z.string());
+                Envapter.getRequired('NEVER_SET', z.string());
                 expect.fail('should have thrown');
             } catch (err) {
                 const e = err as EnvaptError;
@@ -337,17 +304,17 @@ describe('Standard Schema adapter (v5)', () => {
     describe('@Envapt({ schema }) decorator: happy path', () => {
         class ZodConfig {
             @Envapt('PORT', { schema: z.coerce.number().int().min(1024).max(65535) })
-            static readonly port: number;
+            static readonly port: number | undefined;
         }
 
         class ValibotConfig {
             @Envapt('LOG_LEVEL', { schema: v.picklist(['debug', 'info', 'warn']) })
-            static readonly logLevel: 'debug' | 'info' | 'warn';
+            static readonly logLevel: 'debug' | 'info' | 'warn' | undefined;
         }
 
         class HandRolledConfig {
             @Envapt('LOG_LEVEL', { schema: handRolledUpper })
-            static readonly upper: string;
+            static readonly upper: string | undefined;
         }
 
         it('zod: validated value reaches the property', () => {
@@ -365,7 +332,7 @@ describe('Standard Schema adapter (v5)', () => {
         it('lists only the env key in the message when the schema rejects the value', () => {
             class InvalidPortConfig {
                 @Envapt('INVALID_PORT', { schema: z.coerce.number().int() })
-                static readonly port: number;
+                static readonly port: number | undefined;
             }
             let thrown: unknown;
             try {
@@ -387,7 +354,7 @@ describe('Standard Schema adapter (v5)', () => {
         it('arktype: validated value reaches the property', () => {
             class ArkConfig {
                 @Envapt('PORT', { schema: ark('string.integer.parse') })
-                static readonly port: number;
+                static readonly port: number | undefined;
             }
             expect(ArkConfig.port).to.equal(8080);
         });
@@ -401,7 +368,7 @@ describe('Standard Schema adapter (v5)', () => {
 
         class WithoutFallback {
             @Envapt('NEVER_SET', { schema: z.coerce.number() })
-            static readonly value: number;
+            static readonly value: number | undefined;
         }
 
         class WithRequired {
@@ -413,10 +380,8 @@ describe('Standard Schema adapter (v5)', () => {
             expect(WithFallback.value).to.equal(9999);
         });
 
-        it('throws MissingEnvValue when env is missing AND no fallback', () => {
-            expect(() => WithoutFallback.value)
-                .to.throw(EnvaptError)
-                .with.property('code', EnvaptErrorCodes.MissingEnvValue);
+        it('returns undefined when env is missing and there is no fallback', () => {
+            expect(WithoutFallback.value).to.be.undefined;
         });
 
         it('throws MissingEnvValue when env is missing under required: true', () => {
@@ -429,13 +394,23 @@ describe('Standard Schema adapter (v5)', () => {
     describe('@Envapt({ schema }) decorator: validation failure', () => {
         class InvalidPort {
             @Envapt('INVALID_PORT', { schema: z.coerce.number().int() })
-            static readonly port: number;
+            static readonly port: number | undefined;
         }
 
         it('throws SchemaValidationFailed at first access', () => {
             expect(() => InvalidPort.port)
                 .to.throw(EnvaptError)
                 .with.property('code', EnvaptErrorCodes.SchemaValidationFailed);
+        });
+
+        it('throws InvalidEnvValue under required: true, like getRequired', () => {
+            class RequiredInvalidPort {
+                @Envapt('INVALID_PORT', { schema: z.coerce.number().int(), required: true })
+                static readonly port: number;
+            }
+            expect(() => RequiredInvalidPort.port)
+                .to.throw(EnvaptError)
+                .with.property('code', EnvaptErrorCodes.InvalidEnvValue);
         });
     });
 
@@ -448,7 +423,7 @@ describe('Standard Schema adapter (v5)', () => {
                         schema: z.coerce.number(),
                         converter: Number
                     } as unknown as { schema: typeof z.coerce.number extends () => infer R ? R : never })
-                    static readonly port: number;
+                    static readonly port: number | undefined;
                 }
                 void Bad;
             };
@@ -534,18 +509,13 @@ describe('Standard Schema adapter (v5)', () => {
     });
 
     describe('Compile-time type narrowing (expect-type)', () => {
-        it('Envapter.parse return type is the schema output, no `| undefined`', () => {
-            const port = Envapter.parse('PORT', z.coerce.number());
-            expectTypeOf(port).toEqualTypeOf<number>();
-        });
-
         it('Envapter.parse with fallback retains the schema output type', () => {
             const port = Envapter.parse('NEVER_SET', z.coerce.number(), 3000);
             expectTypeOf(port).toEqualTypeOf<number>();
         });
 
         it('zod string-enum schema narrows to the union literal', () => {
-            const level = Envapter.parse('LOG_LEVEL', z.enum(['debug', 'info', 'warn']));
+            const level = Envapter.parse('LOG_LEVEL', z.enum(['debug', 'info', 'warn']), 'info');
             expectTypeOf(level).toEqualTypeOf<'debug' | 'info' | 'warn'>();
         });
     });

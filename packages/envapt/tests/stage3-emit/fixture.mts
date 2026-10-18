@@ -49,11 +49,11 @@ class Config {
     static accessor greeting: string | undefined;
 
     @Envapt('S3_PORT', { schema: numberSchema })
-    static accessor schemaPort: number;
+    static accessor schemaPort: number | undefined;
 
     // an arktype type is a callable function carrying `~standard`
     @Envapt('S3_PORT', { schema: ark('string.integer.parse') })
-    static accessor arkPort: number;
+    static accessor arkPort: number | undefined;
 
     @EnvNum('S3_ABSENT')
     static accessor noFallback: number | undefined;
