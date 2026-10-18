@@ -18,7 +18,7 @@ const PRIMITIVES = [
 
 export type PrimitiveToken = (typeof PRIMITIVES)[number][1];
 
-const PRIMITIVE_TOKENS: ReadonlyMap<unknown, PrimitiveToken> = new Map<unknown, PrimitiveToken>(PRIMITIVES);
+const PRIMITIVE_TOKENS = new Map<unknown, PrimitiveToken>(PRIMITIVES);
 
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class -- cohesive dispatch of stateless type guards, same shape as BuiltInConverters
 export class Validator {

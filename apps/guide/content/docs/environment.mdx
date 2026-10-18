@@ -74,7 +74,7 @@ Setting it reloads the `.env` files for that environment.
     no filesystem and no cascade. You bind an environment source instead. See [Sources](/docs/sources).
 </Callout>
 
-For the detected (or overridden) environment (production, staging, development), envapt layers a dotenv-flow cascade, loading the first file that exists at each level, highest precedence first:
+For the detected (or overridden) environment, envapt layers a dotenv-flow cascade, loading the first file that exists at each level, highest precedence first:
 
 1. `.env.${env}.local`
 2. `.env.${env}`
