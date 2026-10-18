@@ -11,7 +11,6 @@ export type {
     ConverterFunction,
     JsonValue,
     TimeFallback,
-    EnvaptOptions,
     EnvProfile,
     ProfilesConfig,
     FileApiMode,

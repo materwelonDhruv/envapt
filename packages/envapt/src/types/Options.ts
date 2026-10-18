@@ -1,20 +1,4 @@
-import type { EnvaptConverter } from './Conversion';
 import type { Environment } from '../core/Environment';
-
-/**
- * Options for the \@Envapt decorator (modern API). `required: true` and `fallback` cannot be
- * used together, and the `@Envapt` overloads reject the pair at compile time.
- * @public
- * @see {@link https://envapt.materwelon.dev/docs/decorators#declaring-decorated-fields}
- */
-interface EnvaptOptions<TFallback = string> {
-    /** Value returned when the variable is missing or empty. Mutually exclusive with `required: true`. */
-    fallback?: TFallback;
-    /** Converter applied to the raw string. A primitive constructor, built-in token, `ArrayOf` token, or custom function. */
-    converter?: EnvaptConverter<TFallback>;
-    /** When `true`, a missing or empty value throws instead of returning a fallback. */
-    required?: boolean;
-}
 
 /**
  * Per-environment profile entry passed to `Envapter.configureProfiles`.
@@ -51,4 +35,4 @@ type ProfilesConfig = Partial<Record<Environment, EnvProfile>> & {
  */
 type FileApiMode = 'warn' | 'throw';
 
-export type { EnvaptOptions, EnvProfile, ProfilesConfig, FileApiMode };
+export type { EnvProfile, ProfilesConfig, FileApiMode };
