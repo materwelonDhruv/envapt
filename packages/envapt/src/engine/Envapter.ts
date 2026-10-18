@@ -5,7 +5,7 @@ import { formatKeyForError, missingValues } from '../infra/failures';
 
 import type { EnvKeyInput } from '../types';
 
-export { Environment } from '../core';
+export { ENVIRONMENT_KEYS, Environment } from '../core';
 
 /**
  * Main configuration class for environment variable management.

@@ -1,5 +1,5 @@
 import { createField } from '../converters';
-import { ENV_KEYS, Environment, firstEnvKeyValue, parseEnvironment } from './Environment';
+import { ENVIRONMENT_KEYS, Environment, firstEnvKeyValue, parseEnvironment } from './Environment';
 import { hasFallback, isMissing } from './missing';
 import { resolveEffectivePaths } from './paths';
 import { cache, state } from './state';
@@ -195,7 +195,7 @@ export function setEnvironment(env: string): void {
 export function determineEnvironment(): void {
     const raw = firstEnvKeyValue((key) => readCached(key));
     if (raw === undefined) {
-        debugWarn(`no environment set (looked for ${ENV_KEYS.join(', ')}); defaulting to development`);
+        debugWarn(`no environment set (looked for ${ENVIRONMENT_KEYS.join(', ')}); defaulting to development`);
         state.environment = Environment.Development;
         return;
     }
