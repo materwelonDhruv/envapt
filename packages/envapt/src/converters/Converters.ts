@@ -34,10 +34,10 @@ export function isArrayOf(value: unknown): value is ArrayOf {
 
 type ArrayScalarElement = Exclude<ConverterToken, 'json' | 'regexp'>;
 
-function buildArrayConverter<TReturn>(opts: {
-    of: ConverterFunction<TReturn>;
+function buildArrayConverter<TConverter extends ConverterFunction>(opts: {
+    of: TConverter;
     delimiter?: string;
-}): ArrayOf<ConverterFunction<TReturn>>;
+}): ArrayOf<TConverter>;
 function buildArrayConverter<TToken extends ArrayScalarElement>(opts: {
     of: TToken;
     delimiter?: string;

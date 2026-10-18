@@ -229,6 +229,7 @@ describe('Strict mode + required (v5)', () => {
         it('rejects a callable schema passed as converter when the decorator is applied', () => {
             const applyDecorator = (): void => {
                 class RequiredInteger {
+                    // @ts-expect-error `converter` rejects a value with a `~standard` slot
                     @Envapt('API_KEY', { converter: ark('string.integer.parse'), required: true })
                     static readonly value: unknown;
                 }

@@ -59,6 +59,15 @@ const handRolledAsync: StandardSchemaV1<string, string> = {
     }
 };
 
+// SchemaMustBeSync only catches a validate typed to return a Promise
+const callableAsync = Object.assign((raw: string) => raw, {
+    '~standard': {
+        version: 1 as const,
+        vendor: 'envapt-test',
+        validate: (value: unknown) => Promise.resolve({ value: String(value) })
+    }
+});
+
 describe('Standard Schema adapter (v5)', () => {
     beforeAll(() => {
         Envapter.envPaths = resolve(import.meta.dirname, '.env.standard-schema');
@@ -289,8 +298,22 @@ describe('Standard Schema adapter (v5)', () => {
         });
     });
 
+    describe('a callable async schema in a converter slot', () => {
+        it('fails to compile in getUsing and getRequired, and throws InvalidUserDefinedConfig past the types', () => {
+            // @ts-expect-error the function overload rejects a value with a `~standard` slot
+            expect(() => Envapter.getUsing('PORT', callableAsync))
+                .to.throw(EnvaptError)
+                .with.property('code', EnvaptErrorCodes.InvalidUserDefinedConfig);
+            // @ts-expect-error the function overload rejects a value with a `~standard` slot
+            expect(() => Envapter.getRequired('PORT', callableAsync))
+                .to.throw(EnvaptError)
+                .with.property('code', EnvaptErrorCodes.InvalidUserDefinedConfig);
+        });
+    });
+
     describe('a schema as an array element converter', () => {
         it('throws InvalidArrayConverterType for an arktype type passed as `of`', () => {
+            // @ts-expect-error `of` rejects a value with a `~standard` slot
             expect(() => Envapter.getUsing('INVALID_PORT', Converters.array({ of: ark('string.integer.parse') })))
                 .to.throw(EnvaptError, 'Standard Schema')
                 .with.property('code', EnvaptErrorCodes.InvalidArrayConverterType);
@@ -448,6 +471,7 @@ describe('Standard Schema adapter (v5)', () => {
         it('throws InvalidUserDefinedConfig when a callable schema is passed as converter', () => {
             const buildBadDecorator = (): void => {
                 class Bad {
+                    // @ts-expect-error `converter` rejects a value with a `~standard` slot
                     @Envapt('PORT', { converter: ark('string.integer.parse') })
                     static readonly port: unknown;
                 }

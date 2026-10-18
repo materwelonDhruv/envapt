@@ -14,7 +14,7 @@ type PrimitiveConstructor = typeof String | typeof Number | typeof Boolean | typ
  * @public
  * @see {@link https://envapt.materwelon.dev/docs/converters#custom-converters}
  */
-type ConverterFunction<TReturn = unknown> = (raw: string) => TReturn;
+type ConverterFunction<TReturn = unknown> = ((raw: string) => TReturn) & { readonly '~standard'?: never };
 
 type EnvaptConverter<TFallback> = PrimitiveConstructor | BuiltInConverter | ArrayOf | ConverterFunction<TFallback>;
 
