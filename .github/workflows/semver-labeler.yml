@@ -1,7 +1,7 @@
 name: semver-labeler
 
 on:
-    pull_request_target:
+    pull_request_target: # zizmor: ignore[dangerous-triggers] checks out the base branch and reads the PR's changesets through the API
         types:
             - opened
             - synchronize
@@ -9,20 +9,23 @@ on:
 
 permissions:
     contents: read
-    pull-requests: write
 
 jobs:
     label-by-changeset:
         name: Label by changeset bump
         runs-on: ubuntu-latest
         timeout-minutes: 10
+        permissions:
+            pull-requests: write
 
         steps:
             - name: Checkout repository
-              uses: actions/checkout@v7
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  persist-credentials: false
 
             - name: Setup workspace
-              uses: ./.github/actions/setup
+              uses: $/.github/actions/setup
 
             - name: Build envapt
               run: pnpm --filter envapt build

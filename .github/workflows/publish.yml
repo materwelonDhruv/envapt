@@ -7,9 +7,7 @@ on:
             - next
 
 permissions:
-    contents: write
-    id-token: write
-    pull-requests: write
+    contents: read
 
 concurrency:
     group: publish-${{ github.ref_name }}
@@ -17,12 +15,12 @@ concurrency:
 
 jobs:
     checks:
-        uses: ./.github/workflows/checks.yml
-        secrets: inherit
+        uses: $/.github/workflows/checks.yml
+        secrets:
+            TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
 
     cross-runtime:
-        uses: ./.github/workflows/cross-runtime.yml
-        secrets: inherit
+        uses: $/.github/workflows/cross-runtime.yml
 
     preflight:
         needs: [checks]
@@ -33,11 +31,12 @@ jobs:
             publish_jsr: ${{ steps.preflight.outputs.publish_jsr }}
         steps:
             - name: Checkout repository
-              uses: actions/checkout@v7
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
               with:
                   fetch-depth: 0
+                  persist-credentials: false
             - name: Setup workspace
-              uses: ./.github/actions/setup
+              uses: $/.github/actions/setup
             - name: Release preflight
               id: preflight
               run: pnpm tsx scripts/release/release-preflight.ts
@@ -51,11 +50,12 @@ jobs:
         timeout-minutes: 20
         steps:
             - name: Checkout repository
-              uses: actions/checkout@v7
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
               with:
                   fetch-depth: 0
+                  persist-credentials: false
             - name: Setup workspace
-              uses: ./.github/actions/setup
+              uses: $/.github/actions/setup
             - name: Publish package (dry run)
               run: pnpm publish --dry-run --no-git-checks
               working-directory: packages/envapt
@@ -67,17 +67,18 @@ jobs:
         timeout-minutes: 20
         steps:
             - name: Checkout repository
-              uses: actions/checkout@v7
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
               with:
                   fetch-depth: 0
+                  persist-credentials: false
             - name: Setup workspace
-              uses: ./.github/actions/setup
+              uses: $/.github/actions/setup
             - name: Setup Deno
               uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
               with:
                   deno-version: 2.9.6
             - name: Deno publish dry run
-              uses: ./.github/actions/deno-publish-all
+              uses: $/.github/actions/deno-publish-all
               with:
                   search-root: packages
                   dry-run: 'true'
@@ -85,11 +86,7 @@ jobs:
     npm-publish:
         needs: [preflight, cross-runtime, dry-run-npm, dry-run-jsr]
         if: >-
-            ${{ !cancelled()
-            && needs.preflight.outputs.run == 'true'
-            && needs.cross-runtime.result == 'success'
-            && needs.dry-run-npm.result == 'success'
-            && needs.dry-run-jsr.result == 'success' }}
+            ${{ !cancelled() && needs.preflight.outputs.run == 'true' && needs.cross-runtime.result == 'success' && needs.dry-run-npm.result == 'success' && needs.dry-run-jsr.result == 'success' }}
         runs-on: ubuntu-latest
         timeout-minutes: 30
         permissions:
@@ -97,19 +94,19 @@ jobs:
             id-token: write
             pull-requests: write
             actions: write
+        env:
+            TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+            TURBO_TEAM: ${{ vars.TURBO_TEAM }}
         steps:
             - name: Checkout repository
-              uses: actions/checkout@v7
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
               with:
                   fetch-depth: 0
+                  persist-credentials: false
             - name: Turbo cache
-              uses: ./.github/actions/turbo-cache
-              with:
-                  turbo_token: ${{ secrets.TURBO_TOKEN }}
-                  turbo_team: ${{ vars.TURBO_TEAM }}
-                  enable_fallback_cache: 'true'
+              uses: $/.github/actions/turbo-cache
             - name: Setup workspace
-              uses: ./.github/actions/setup
+              uses: $/.github/actions/setup
               with:
                   registry-url: https://registry.npmjs.org
             - name: Update npm to latest
@@ -120,7 +117,7 @@ jobs:
               run: npm config get registry && npm ping
             - name: Determine release metadata
               id: release_meta
-              uses: ./.github/actions/release-metadata
+              uses: $/.github/actions/release-metadata
             - name: Run prepublishOnly script
               run: pnpm run prepublishOnly
             - name: Run changesets
@@ -152,11 +149,7 @@ jobs:
     jsr-publish:
         needs: [preflight, cross-runtime, dry-run-npm, dry-run-jsr]
         if: >-
-            ${{ !cancelled()
-            && needs.preflight.outputs.publish_jsr == 'true'
-            && needs.cross-runtime.result == 'success'
-            && needs.dry-run-npm.result == 'success'
-            && needs.dry-run-jsr.result == 'success' }}
+            ${{ !cancelled() && needs.preflight.outputs.publish_jsr == 'true' && needs.cross-runtime.result == 'success' && needs.dry-run-npm.result == 'success' && needs.dry-run-jsr.result == 'success' }}
         runs-on: ubuntu-latest
         timeout-minutes: 30
         permissions:
@@ -164,17 +157,18 @@ jobs:
             id-token: write
         steps:
             - name: Checkout repository
-              uses: actions/checkout@v7
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
               with:
                   fetch-depth: 0
+                  persist-credentials: false
             - name: Setup workspace
-              uses: ./.github/actions/setup
+              uses: $/.github/actions/setup
             - name: Setup Deno
               uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
               with:
                   deno-version: 2.9.6
                   cache: true
             - name: Publish to JSR
-              uses: ./.github/actions/deno-publish-all
+              uses: $/.github/actions/deno-publish-all
               with:
                   search-root: packages

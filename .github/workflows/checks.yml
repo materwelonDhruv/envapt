@@ -2,8 +2,10 @@ name: checks
 
 on:
     workflow_call:
+        secrets:
+            TURBO_TOKEN:
+                required: false
     pull_request:
-        types: [opened, reopened, synchronize, ready_for_review]
         paths-ignore:
             - '**/*.md'
             - '.vscode/**'
@@ -20,22 +22,21 @@ permissions:
 
 jobs:
     run-checks:
-        if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
         runs-on: ubuntu-latest
         timeout-minutes: 25
+        env:
+            TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+            TURBO_TEAM: ${{ vars.TURBO_TEAM }}
         steps:
             - name: Checkout repository
-              uses: actions/checkout@v7
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
               with:
                   fetch-depth: 0
+                  persist-credentials: false
             - name: Turbo cache
-              uses: ./.github/actions/turbo-cache
-              with:
-                  turbo_token: ${{ secrets.TURBO_TOKEN }}
-                  turbo_team: ${{ vars.TURBO_TEAM }}
-                  enable_fallback_cache: 'true'
+              uses: $/.github/actions/turbo-cache
             - name: Setup workspace
-              uses: ./.github/actions/setup
+              uses: $/.github/actions/setup
             - name: Workspace catalog check
               run: pnpm check:catalog
             - name: Markdown lint

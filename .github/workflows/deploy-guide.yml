@@ -24,25 +24,27 @@ concurrency:
 
 permissions:
     contents: read
-    pull-requests: write
 
 jobs:
     deploy:
         runs-on: ubuntu-latest
         timeout-minutes: 20
+        permissions:
+            contents: read
+            pull-requests: write
+        env:
+            TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+            TURBO_TEAM: ${{ vars.TURBO_TEAM }}
         steps:
             - name: Checkout repository
-              uses: actions/checkout@v7
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
               with:
                   fetch-depth: 0
+                  persist-credentials: false
             - name: Turbo cache
-              uses: ./.github/actions/turbo-cache
-              with:
-                  turbo_token: ${{ secrets.TURBO_TOKEN }}
-                  turbo_team: ${{ vars.TURBO_TEAM }}
-                  enable_fallback_cache: 'true'
+              uses: $/.github/actions/turbo-cache
             - name: Setup workspace
-              uses: ./.github/actions/setup
+              uses: $/.github/actions/setup
             - name: Build
               run: pnpm build
               env:
@@ -98,7 +100,7 @@ jobs:
                   command: versions upload --preview-alias ${{ steps.alias.outputs.alias }}
             - name: Comment preview URL
               if: github.event_name == 'pull_request'
-              uses: actions/github-script@v9
+              uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
               env:
                   PREVIEW_URL: ${{ steps.alias.outputs.url }}
                   HEAD_SHA: ${{ github.event.pull_request.head.sha }}

@@ -12,7 +12,6 @@ on:
                 required: false
 
 permissions:
-    actions: write
     contents: read
 
 jobs:
@@ -20,6 +19,8 @@ jobs:
         if: github.event_name == 'pull_request'
         name: Cleanup caches for closed PR
         runs-on: ubuntu-latest
+        permissions:
+            actions: write
         steps:
             - name: Configure GitHub CLI
               run: gh extension install actions/gh-actions-cache
@@ -29,9 +30,9 @@ jobs:
             - name: Remove caches linked to PR
               env:
                   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  REPO: ${{ github.repository }}
+                  PR_NUMBER: ${{ github.event.pull_request.number }}
               run: |
-                  REPO="${{ github.repository }}"
-                  PR_NUMBER="${{ github.event.pull_request.number }}"
                   BRANCH="refs/pull/${PR_NUMBER}/merge"
 
                   echo "Fetching cache entries for ${BRANCH}"
@@ -54,6 +55,8 @@ jobs:
         if: github.event_name != 'pull_request'
         name: Cleanup default branch caches
         runs-on: ubuntu-latest
+        permissions:
+            actions: write
         steps:
             - name: Configure GitHub CLI
               run: gh extension install actions/gh-actions-cache
@@ -63,9 +66,9 @@ jobs:
             - name: Remove caches for tracked refs
               env:
                   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  REPO: ${{ github.repository }}
                   INPUT_REF: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.ref || '' }}
               run: |
-                  REPO="${{ github.repository }}"
                   if [ -n "$INPUT_REF" ]; then
                     REFS="$INPUT_REF"
                   else
