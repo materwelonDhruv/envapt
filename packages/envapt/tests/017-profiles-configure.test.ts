@@ -118,6 +118,16 @@ describe('profiles — Envapter.configureProfiles overrides', () => {
         expect(() => Envapter.get('CASCADE_KEY')).to.not.throw();
     });
 
+    it('throws EnvFilesNotFound when switching to an env whose profile path is missing', () => {
+        Envapter.configureProfiles({
+            [Environment.Production]: { paths: '/does/not/exist/anywhere.env' }
+        });
+
+        expect(() => (Envapter.environment = Environment.Production))
+            .to.throw(EnvaptError)
+            .with.property('code', EnvaptErrorCodes.EnvFilesNotFound);
+    });
+
     it('is overridden by an explicit Envapter.envPaths assignment', () => {
         Envapter.configureProfiles({
             [Environment.Development]: { paths: resolve(fixtureDir, '.env.development') }

@@ -103,8 +103,21 @@ Envapter.configureProfiles({
 ```
 
 <Callout type="danger">
-    A path you name in `configureProfiles` must exist. A missing configured path throws `EnvaptError` with code
-    `EnvFilesNotFound` on the next read. The auto-cascade files are skipped when missing, but configured paths are not.
+
+A configured path must exist, and a missing one throws `EnvFilesNotFound`. envapt checks only the active environment's paths. The auto-cascade skips a missing file.
+
+```ts twoslash
+import { Envapter } from 'envapt';
+// ---cut---
+Envapter.environment = 'development';
+Envapter.configureProfiles({
+    development: { paths: 'config/dev.env' }, // throws here if this file is missing
+    production: { paths: 'config/prod.env' } // not checked yet
+});
+
+Envapter.environment = 'production'; // throws here if config/prod.env is missing
+```
+
 </Callout>
 
 Set `useDefaults: false` to load **only** the configured paths and skip the auto-cascade entirely.
