@@ -33,7 +33,7 @@ async function nextConfig(): Promise<NextConfig> {
         reactStrictMode: true,
         env: { NEXT_PUBLIC_ENVAPT_VERSION: await badgeVersion() },
         // only transformerTwoslash loads typescript, during the build
-        serverExternalPackages: ['typescript']
+        serverExternalPackages: ['typescript', '@takumi-rs/core']
     };
     return withMDX(config);
 }

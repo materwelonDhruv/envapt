@@ -6,8 +6,8 @@ export interface OgSnippet {
     code: string;
 }
 
-// Per docs-page OG snippet, keyed by the page slug ('index' for /docs).
-export const OG_SNIPPETS: Record<string, OgSnippet | undefined> = {
+// keyed by docs page slug, with 'index' for /docs
+const OG_SNIPPETS: Record<string, OgSnippet | undefined> = {
     index: {
         filename: 'config.ts',
         lang: 'ts',
@@ -23,15 +23,17 @@ const url = Envapter.getRequired(
         filename: 'app.ts',
         lang: 'ts',
         code: `// Quick Start - your first typed value
-import { Envapter } from 'envapt';
+import { Envapter, Converters } from 'envapt';
 
-const port = Envapter.getNumber('PORT', 3000);
-// number, never string | undefined`
+const port = Envapter.getAs(
+  'PORT', Converters.Port, 3000
+);
+// typed as number`
     },
     envapter: {
         filename: 'db.ts',
         lang: 'ts',
-        code: `// Envapter - typed reads, ordered fallback
+        code: `// Reading values - typed reads, ordered keys
 const db = Envapter.get(
   ['READONLY_URL', 'DATABASE_URL'],
   'sqlite://memory'
@@ -86,12 +88,14 @@ const port = Envapter.getAs(
   z.coerce.number().int().min(1024)
 );`
     },
-    'strict-mode': {
-        filename: 'bootstrap.ts',
+    'required-values': {
+        filename: 'config.ts',
         lang: 'ts',
-        code: `// Strict Mode - whitespace becomes missing
-Envapter.strict = true;
-Envapter.require('DATABASE_URL', 'API_KEY');`
+        code: `// Required values - fail at boot, every bad key at once
+export const config = Envapter.getRequiredAll({
+  DATABASE_URL: Converters.Url,
+  PORT: Converters.Port
+});`
     },
     errors: {
         filename: 'bootstrap.ts',
@@ -103,28 +107,37 @@ try {
   if (e instanceof EnvaptError) e.code;
 }`
     },
-    configuration: {
-        filename: 'config.ts',
-        lang: 'ts',
-        code: `// Configuration - pick which files load
-Envapter.envPaths = ['.env.local', '.env'];
-Envapter.envFileOptions = { override: true };
-Envapter.debug = 'verbose';`
+    'env-files': {
+        filename: '.env.production',
+        lang: 'dotenv',
+        code: `# .env files on Node - picked by environment
+# this file overrides .env.local and .env
+DATABASE_URL=postgres://prod-db:5432/app
+CACHE_TTL=15m`
     },
     'env-file-syntax': {
         filename: '.env',
         lang: 'dotenv',
-        code: `# .env File Syntax - quoting and comments
+        code: `# .env file syntax - quoting and comments
 HOST=localhost # inline comment, stripped
-COLOR=#ff0000 # kept: no space before the #
+COLOR="#ff0000" # quote a value that starts with #
 TLS_KEY="line one\\nline two"`
+    },
+    testing: {
+        filename: 'config.test.ts',
+        lang: 'ts',
+        code: `// Testing - give each test its own config
+beforeEach(() => {
+  Envapter.useSource(new PortableSource({ PORT: '4000' }));
+});
+afterEach(() => Envapter.useSource(new FileSource()));`
     },
     migrations: {
         filename: 'config.ts',
         lang: 'ts',
         code: `// Migrations - one major version at a time
-// v6 to v7: decorators become TC39 accessors
 // v7 to v8: one universal 'envapt' import
+// v8 to v9: getUsing, getWith, and parse become getAs
 import { Envapter, PortableSource } from 'envapt';`
     },
     'migration-v4-to-v5': {
@@ -167,6 +180,15 @@ import { WorkerEnvSource } from 'envapt/workerd';
 // v8
 import { PortableSource } from 'envapt';`
     },
+    'migration-v8-to-v9': {
+        filename: 'config.ts',
+        lang: 'ts',
+        code: `// Migration - one reader for every converter in v9
+// v8
+Envapter.parse('PORT', z.coerce.number(), 3000);
+// v9
+Envapter.getAs('PORT', z.coerce.number(), 3000);`
+    },
     compatibility: {
         filename: 'tsconfig.json',
         lang: 'jsonc',
@@ -200,7 +222,7 @@ const db = Envapter.getAs(
     workers: {
         filename: 'worker.ts',
         lang: 'ts',
-        code: `// Workers - bind the env binding at module load
+        code: `// Workers - bind the env object at module load
 import { env } from 'cloudflare:workers';
 
 Envapter.useSource(new PortableSource(env));
@@ -211,7 +233,7 @@ const origin = Envapter.getAs(
     browser: {
         filename: 'client.ts',
         lang: 'ts',
-        code: `// Browser - seed your bundler's injected config
+        code: `// Browser - bind your bundler's import.meta.env
 Envapter.useSource(
   new PortableSource(import.meta.env)
 );
@@ -222,10 +244,14 @@ const api = Envapter.getAs(
     'edge-runtimes': {
         filename: 'edge.ts',
         lang: 'ts',
-        code: `// Edge runtimes - hand envapt the platform's config
-import { Envapter, PortableSource, Converters } from 'envapt';
-
+        code: `// Edge runtimes - bind the platform's config object
 Envapter.useSource(new PortableSource(platformEnv));
-const url = Envapter.getRequired('ORIGIN_URL', Converters.Url);`
+const url = Envapter.getRequired(
+  'ORIGIN_URL', Converters.Url
+);`
     }
 };
+
+export function snippetFor(slugs: readonly string[]): OgSnippet | undefined {
+    return OG_SNIPPETS[slugs.join('/') || 'index'];
+}

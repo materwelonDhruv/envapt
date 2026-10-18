@@ -4,7 +4,7 @@
 
 <p>
   <strong>The apt way to read typed config.</strong><br/>
-  Read config from any source as real typed values, with zero runtime dependencies.
+  Typed, validated config from <code>process.env</code>, <code>.env</code> files, or any object, on Node, Bun, Deno, Cloudflare Workers, and the browser. No runtime dependencies.
 </p>
 
 <p>
@@ -18,7 +18,7 @@
 
 <br clear="left"/>
 
-envapt returns config as the type you asked for, with a fallback that removes `undefined` from the return type. It reads from whatever source you bind. On Node, Bun, and Deno that is `process.env` and your `.env` files, bound on import. On Cloudflare Workers, in the browser, or for a secrets object you fetched at boot, you bind the source with `Envapter.useSource(...)`.
+`process.env.PORT` is a string, and `Number(process.env.PORT ?? 3000)` turns `PORT=80a` into `NaN` with no error. envapt reads each variable as the type you ask for and stops the app at startup when a required one is missing or malformed.
 
 ```ts
 import { Converters, Envapter } from 'envapt';
@@ -29,23 +29,29 @@ const { port, databaseUrl, cacheTtl, allowedOrigins } = Envapter.getRequiredAll(
         DATABASE_URL: Converters.Url, // URL
         CACHE_TTL: Converters.Time, // "15m" parsed to 900000
         ALLOWED_ORIGINS: Converters.array() // string[]
-        // ... and many more built-in converters
     },
     'camelCase'
 );
 ```
 
-Call that at startup and a missing or bad value stops the boot. One error lists every missing key, or every bad one. A read with a fallback, like `Envapter.getNumber('WORKERS', 4)`, returns the fallback for a missing value.
+If `PORT` and `DATABASE_URL` are unset, that call throws one error listing both:
+
+```txt
+EnvaptError [305]: Missing required environment variables: PORT, DATABASE_URL.
+```
+
+If every key is set but some values can't convert, the call throws one `InvalidEnvValue` listing every bad key. The message holds keys only, so catch the error and log `error.message` to keep secret values out of your logs.
 
 **[Read the docs →](https://envapt.materwelon.dev)**
 
-## What you get
+## Why envapt
 
-- **Typed values.** A fallback removes `undefined` from the return type. Built-in converters cover numbers, integers, floats, booleans, bigint, JSON, URLs, regular expressions, dates, durations, ports, emails, and arrays, or pass your own function or a Standard Schema validator (zod, valibot, arktype).
-- **Any source.** A source is any object with a `readVars()` method, so you can bind `process.env`, a Cloudflare Workers binding, a browser bundle, or a secrets payload you fetched from a store at boot. On Node, Bun, and Deno one binds on import.
-- **Zero runtime dependencies.** The reader, converters, and built-in `.env` parser are self-contained, so nothing is added to your dependency tree.
-- **Runs on Node, Bun, Deno, Cloudflare Workers, and the browser.** Node `>=22.23.3`, Bun `>=1.3.11`, Deno `>=2.5`, ESM only. The portable build resolves through the package `exports` conditions.
-- **`.env` loading built in on Node.** The default Node source adds a per-environment file cascade, `${VAR}` templates, and strict / required checks. Off Node there is no filesystem, so you bind another source with `Envapter.useSource(...)` and read with the same typed API.
+- **Coming from dotenv.** envapt reads the same `.env` files, picks the ones for the current environment (`.env.production`, `.env.local`, and so on), and returns typed values. `import 'envapt/config'` also copies the keys into `process.env`, the same as `dotenv/config`.
+- **A schema when you want one.** The built-in converters cover ports, URLs, durations, JSON, emails, and more, with no schema library installed. When a converter isn't enough, pass a zod, valibot, or arktype schema, or any synchronous Standard Schema.
+- **One API on every runtime.** Node, Bun, and Deno read `process.env` and your `.env` files from the moment you import envapt. On Cloudflare Workers, edge runtimes, and the browser, you bind the object the platform gives you once, then read with the same calls.
+- **Functions or decorators.** Read with `Envapter` from any call site, or declare typed class fields with a TC39 `@Envapt` accessor decorator.
+
+envapt is ESM only and needs Node `>=22.23.3`, Bun `>=1.3.11`, or Deno `>=2.5`. A read with a fallback also returns the fallback when the value can't convert, so `PORT=80a` reads as `3000`. Use a required read for values that must be right.
 
 ## Install
 
@@ -57,36 +63,40 @@ bun add envapt
 deno add jsr:@materwelon/envapt
 ```
 
-## Quick start
+`require('envapt')` throws `ERR_PACKAGE_PATH_NOT_EXPORTED`. In a CommonJS project, load it with `await import('envapt')`.
 
-Read values functionally with `Envapter`, or bind them to class fields with the `@Envapt` decorator. Both share the same parsing, converters, and cache.
+## Quick start
 
 ### Functional
 
-Read a value from any call site, in JavaScript or TypeScript. No build step. On Node the source is bound for you. On Workers and in the browser, call `Envapter.useSource(...)` first.
+On Node, Bun, and Deno, read from any call site with no setup:
 
 ```ts
 import { Converters, Envapter } from 'envapt';
+import { z } from 'zod';
 
 const requestTimeout = Envapter.getAs('REQUEST_TIMEOUT', Converters.Time, '30s'); // 30000
-const maxRetries = Envapter.getNumber('MAX_RETRIES', 3);
+const maxRetries = Envapter.getAs('MAX_RETRIES', Converters.Integer, 3);
 const debug = Envapter.getBoolean('DEBUG', false);
+const logLevel = Envapter.getRequired('LOG_LEVEL', z.enum(['debug', 'info', 'warn', 'error']));
 ```
 
-On Cloudflare Workers, `env` is importable at module scope, so bind it once in a config module, and in the browser seed a `PortableSource` from the object your bundler injects.
+On Cloudflare Workers, bind `env` once in a config module, before the first read:
 
 ```ts
 import { env } from 'cloudflare:workers';
-import { Envapter, PortableSource } from 'envapt';
+import { Converters, Envapter, PortableSource } from 'envapt';
 
 Envapter.useSource(new PortableSource(env));
 
-export const apiToken = Envapter.get('API_TOKEN');
+export const apiToken = Envapter.getRequired('API_TOKEN', Converters.String);
 ```
+
+In the browser, bind the object your bundler injects, such as Vite's `import.meta.env`.
 
 ### Decorator
 
-Bind a value to a class field with a TC39 accessor decorator. No `experimentalDecorators` flag, and it runs on Bun and Deno from `.ts` directly.
+Declare config as class fields with a TC39 accessor decorator. TypeScript needs no extra compiler flag for it, and Bun and Deno run it from `.ts` directly.
 
 ```ts
 import { Converters, Envapt, EnvTime } from 'envapt';
@@ -100,15 +110,25 @@ class Config {
 }
 ```
 
-The legacy (experimentalDecorators) decorators are exported from `envapt/legacy`.
+For `experimentalDecorators` projects, the legacy decorators are in `envapt/legacy`.
 
-## Agent skill
+### Coming from dotenv
 
-Install the envapt agent skill so AI coding tools use the correct API:
+Swap `import 'dotenv/config'` for this line. Your `process.env.X` reads keep working while you move them over:
 
-```sh
-npx skills add materwelonDhruv/envapt
+```ts
+import 'envapt/config';
 ```
+
+## Docs
+
+- [Quick start](https://envapt.materwelon.dev/docs/quick-start)
+- [Converters](https://envapt.materwelon.dev/docs/converters)
+- [Required values and errors](https://envapt.materwelon.dev/docs/required-values)
+- [Migrating from v8 to v9](https://envapt.materwelon.dev/docs/migration-v8-to-v9)
+- [API reference](https://envapt.materwelon.dev/docs/api)
+
+AI coding tools can use the right API with the envapt agent skill. Install it with `npx skills add materwelonDhruv/envapt`, or point your tool at the [published skill](https://envapt.materwelon.dev/.well-known/agent-skills/envapt/SKILL.md).
 
 ---
 

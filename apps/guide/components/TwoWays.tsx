@@ -7,14 +7,17 @@ import type { ReactNode } from 'react';
 const FUNCTIONAL = `import { Envapter, Converters } from 'envapt';
 
 const config = {
-  port: Envapter.getNumber('PORT', 3000),
+  port: Envapter.getAs('PORT', Converters.Port, 3000),
   dbUrl: Envapter.getAs('DATABASE_URL', Converters.Url)
 };`;
 
-const DECORATOR = `import { EnvNum } from 'envapt';
+const DECORATOR = `import { Envapt, Converters } from 'envapt';
 
 class Config {
-  @EnvNum('PORT', 3000)
+  @Envapt('PORT', {
+    converter: Converters.Port,
+    fallback: 3000
+  })
   static accessor port: number;
 }`;
 
@@ -25,7 +28,7 @@ export function TwoWays(): ReactNode {
             lead={
                 <>
                     Read values with <code className="font-mono text-[0.92em] text-fd-foreground">Envapter</code>, or
-                    bind them to class fields with{' '}
+                    declare them as class fields with{' '}
                     <code className="font-mono text-[0.92em] text-fd-foreground">@Envapt</code>. Both share the same
                     parsing, converters, and cache.
                 </>

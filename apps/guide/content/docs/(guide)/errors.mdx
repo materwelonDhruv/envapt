@@ -1,0 +1,204 @@
+---
+title: Errors and debugging
+description: Find what an EnvaptError code means, and turn on debug logging to see why a read returned your fallback.
+---
+
+A read threw an `EnvaptError` with a number in its name? Find it in the [codes](#codes). A read returned something other than what your `.env` file says? Turn on [debug logging](#debug-logging).
+
+## Catching an error
+
+When envapt detects a failure, it throws an `EnvaptError` with a numeric `code` from `EnvaptErrorCodes`, so you can branch on the cause.
+
+```ts twoslash
+import { EnvaptError, EnvaptErrorCodes } from 'envapt';
+declare function startServer(): void;
+// ---cut---
+try {
+    startServer();
+} catch (error) {
+    if (error instanceof EnvaptError) {
+        error.code;
+        //    ^?
+        if (error.code === EnvaptErrorCodes.MissingEnvValue) {
+            console.error(error.message);
+        }
+    }
+    throw error;
+}
+```
+
+`error.code` is typed `EnvaptErrorCodes`, so comparing it with a member such as `MissingEnvValue` narrows it. A `MissingEnvValue` (305) message lists keys only, so printing it is safe. The `instanceof` check matters because a converter function you wrote can throw its own error, which has no `code`. Inside `getAs` or a decorated field, envapt rethrows that error unchanged. A required read puts it in the `issues` of an `InvalidEnvValue` (210).
+
+## The error shape
+
+<TypeTable
+    type={{
+        code: {
+            type: 'EnvaptErrorCodes',
+            description: 'The number that identifies the failure. See the tables below.'
+        },
+        name: {
+            type: 'string',
+            description: 'EnvaptError followed by the code in brackets, such as EnvaptError [305].'
+        },
+        message: {
+            type: 'string',
+            description:
+                'A description of the failure. The 208, 210, and 305 messages list keys only. The 206 and 209 messages can carry the element or the error text your schema threw.'
+        },
+        issues: {
+            type: 'readonly StandardSchemaV1.Issue[] | undefined',
+            description:
+                'One entry per bad value, each with a message and a path that starts with the env key. Set only for SchemaValidationFailed (208) and InvalidEnvValue (210).'
+        },
+        cause: {
+            type: 'unknown',
+            description: 'The error your schema threw. Set by SchemaThrew (209) and undefined otherwise.'
+        }
+    }}
+/>
+
+An issue's `message` can quote the value it rejected. [Reading the error without leaking values](/docs/required-values#reading-the-error-without-leaking-values) shows what to log instead.
+
+## Codes
+
+### Fallback
+
+{/* prettier-ignore-start */}
+
+| Code | Name | Thrown when |
+| --- | --- | --- |
+| 101 | `InvalidFallback` | A fallback for an array converter isn't an array. |
+| 103 | `ArrayFallbackElementTypeMismatch` | An array fallback mixes element types, or its elements don't match the converter. |
+| 104 | `FallbackConverterTypeMismatch` | The fallback has the wrong type for the converter, such as `'80'` for [`getNumber`](/docs/envapter). This throws even when the variable is set. |
+| 105 | `MalformedTimeFallback` | A time-string fallback isn't `<number><unit>`, such as `'5'` when you meant `'5m'`. [Converters](/docs/converters) lists the units. |
+
+{/* prettier-ignore-end */}
+
+Every row here is a mistake in the code that makes the read, found the first time that read runs.
+
+### Converter and schema
+
+{/* prettier-ignore-start */}
+
+| Code | Name | Thrown when |
+| --- | --- | --- |
+| 201 | `InvalidArrayConverterType` | The [`Converters.array`](/docs/converters#arrays) setup is malformed, such as a schema as its `of`. |
+| 202 | `InvalidBuiltInConverter` | A converter string isn't a built-in token, like `'nmber'`. The message lists the valid tokens. |
+| 203 | `InvalidCustomConverter` | The converter argument has an unsupported type, such as a number. |
+| 206 | `ArrayElementConversionFailed` | An array element can't convert to the element type. |
+| 207 | `EmptyArrayElement` | [Strict mode](/docs/required-values#strict-mode) only: an array element is empty or whitespace. |
+| 208 | `SchemaValidationFailed` | A read that isn't required ([`getAs`](/docs/envapter#other-types-with-getas), or a decorator without `required`) gets a value its [schema](/docs/standard-schema) rejects. |
+| 209 | `SchemaThrew` | A schema's `validate` throws during a read that isn't required. The original error is on `cause`. |
+| 210 | `InvalidEnvValue` | A [required read](/docs/required-values) gets a value it can't convert, or one your converter or schema rejects. [`getRequiredAll`](/docs/required-values) throws one 210 that lists every bad value. |
+
+{/* prettier-ignore-end */}
+
+The 201, 202, and 203 rows are mistakes in the code. The other rows come from the value in your environment. In a required read, 206, 207, and 209 arrive as `issues` of a 210.
+
+### Configuration and lookup
+
+{/* prettier-ignore-start */}
+
+| Code | Name | Thrown when |
+| --- | --- | --- |
+| 301 | `MissingDelimiter` | An array converter's delimiter is empty or isn't a string. |
+| 302 | `InvalidUserDefinedConfig` | A setting, option, or converter is invalid. The message states which. See the list below. |
+| 303 | `EnvFilesNotFound` | A path in `envPaths`, or in the active environment's profile, doesn't exist. See [.env files on Node](/docs/env-files). |
+| 304 | `InvalidKeyInput` | The key list is empty, or a key isn't a string or is blank. |
+| 305 | `MissingEnvValue` | A [required read](/docs/required-values) finds no value. In strict mode, a [`${VAR}` reference](/docs/templates#unresolved-references) or a [`resolve`](/docs/templates#the-resolve-tagged-template) slot with no value throws it too. |
+| 306 | `FileApiUnsupported` | A file API from [.env files on Node](/docs/env-files) runs against a source with no files. The builds differ, see the list below. |
+| 307 | `NoSourceBound` | A read runs before any source is bound. The portable build starts unbound ([Sources](/docs/sources#no-environment-source-is-bound)), and a decorated field throws it there too ([Decorators](/docs/decorators#no-environment-source-is-bound)). |
+| 308 | `InvalidMergedSource` | [`merge`](/docs/sources#combining-sources) gets no members, or more than one source that reads files. |
+
+{/* prettier-ignore-end */}
+
+305 is about the value in your environment. The other codes in this table are mistakes in the code or setup.
+
+A 306 comes from different calls on each build:
+
+- On the node build, `envPaths`, `baseDir`, and `configureProfiles` throw it while a source with no files is bound.
+- On the [portable build](/docs/sources), those three, `envFileOptions`, and `resetPaths` throw it only when `Envapter.fileApiMode` is `'throw'`.
+
+These cause a 302, and the message states which:
+
+- `Envapter.environment` set to something that isn't a string
+- `Envapter.debug` set to an unknown level
+- `syncProcessEnv` set to a non-boolean
+- `fileApiMode` set to anything other than `'warn'` or `'throw'`
+- `envFileOptions` given a key other than `encoding` and `override`
+- `String`, `Number`, `Boolean`, or `BigInt` passed as a converter. The message gives the matching member, such as `Converters.String`
+- `Symbol` passed as a converter
+- a decorator given `required` together with `fallback`
+- a decorator given `schema` together with `converter`, a `schema` that isn't a Standard Schema, or a schema as `converter`
+- a schema whose `validate` returns a Promise, which zod does when a `.transform` or `.refine` throws
+- an assignment to a decorated field ([Decorators](/docs/decorators#declaring-decorated-fields))
+- the removed positional `@Envapt(key, fallback, converter)` form
+- a build tool's Stage 3 decorator transform that leaves out the accessor name, as vitest's does
+
+## Debug logging
+
+By default, if a converter such as `Converters.Port` can't convert a value, the read returns your fallback and logs nothing. A `PORT` of `80a` reads as `3000`, and nothing shows it happened. At the `verbose` level, debug logging prints a line for each such event, plus the files envapt loaded and the order they loaded in. An array element that can't convert throws `ArrayElementConversionFailed` (206) instead.
+
+### Setting the level
+
+The level is a `DebugLevel`: `silent`, `warn`, or `verbose`. Set it in the shell to log from the first load, or in code to log events after that line.
+
+```sh
+ENVAPT_DEBUG=verbose NODE_ENV=production node app.js
+```
+
+```ts twoslash
+import { Envapter } from 'envapt';
+// ---cut---
+Envapter.debug = 'verbose';
+```
+
+On Node, envapt loads the `.env` files when you import it, so an `Envapter.debug` assignment in your code runs after that load and logs only later events. An assignment to `Envapter.debug` wins over `ENVAPT_DEBUG` whenever it runs.
+
+<Callout type="warn">
+
+On Node, `ENVAPT_DEBUG` has to be set before the process starts, in the shell or your process manager. A line in a `.env` file is ignored, because envapt reads the level before it loads any file. A value other than the three lowercase levels is ignored as well.
+
+</Callout>
+
+If you bind a source yourself, as on Workers or in the browser, `ENVAPT_DEBUG` comes from that source. On Workers a `vars` entry in your Wrangler config works, because `PortableSource` reads it like any other key.
+
+### Reading the output
+
+Each line starts with `[envapt]` and a space. It goes to stderr on Node and to `console.error` on the portable build. Take an app that reads the port with a fallback.
+
+```ts twoslash
+import { Envapter, Converters } from 'envapt';
+// ---cut---
+const port = Envapter.getAs('PORT', Converters.Port, 3000);
+```
+
+With `PORT=8080` in `.env` and `PORT=80a` in `.env.production`, a run with `ENVAPT_DEBUG=verbose` and `NODE_ENV=production` prints:
+
+```txt
+[envapt] cache cleared, reloading config
+[envapt] base dir: working directory
+[envapt] effective .env paths: .env.production, .env
+[envapt] loaded .env.production: 1 key
+[envapt] .env.production -> PORT
+[envapt] loaded .env: 3 keys
+[envapt] .env -> DATABASE_URL
+[envapt] .env -> CACHE_TTL
+[envapt] cache populated: 67 keys total
+[envapt] could not convert PORT as port, using the fallback
+```
+
+`.env.production -> PORT` shows the production file set `PORT`. No `.env -> PORT` line follows. envapt keeps the first value it loads for a key, so it skipped the valid `PORT=8080` in `.env`. The last line says why `PORT` reads as 3000. The key total counts your shell's variables too.
+
+{/* prettier-ignore-start */}
+
+| Level | Logs |
+| --- | --- |
+| `silent` (default) | nothing from reads. The portable build still prints its file-API warnings ([Compatibility](/docs/compatibility)) |
+| `warn` | a `.env` file that couldn't be read, a `${VAR}` reference left unresolved, a read of an unset or empty variable (whether it returns a fallback or `undefined`), an environment name envapt doesn't recognize or no environment name at all, and the error from a schema that returned a Promise |
+| `verbose` | everything in `warn`, plus the base directory, the effective paths, every file loaded with its key count, each key a file sets, cache rebuilds, keys mirrored to `process.env`, and a present value a converter couldn't convert |
+
+{/* prettier-ignore-end */}
+
+Lines carry keys and file paths. They leave values out, except the unrecognized environment name and the error text from a rejected schema. Use `verbose` for one run while you debug, since it prints a line for every key in every file.

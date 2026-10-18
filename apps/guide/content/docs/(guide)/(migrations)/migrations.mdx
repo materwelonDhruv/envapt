@@ -1,0 +1,12 @@
+---
+title: Migrations
+description: Find the breaking changes in each envapt major release from v5 to v9, and the edits each one asks of your code.
+---
+
+Read each page from your current version up to v9, in order.
+
+- **[v8 to v9](/docs/migration-v8-to-v9).** envapt is ESM only and requires Node 22.23.3 or newer. `getUsing`, `getWith`, and `parse` become `getAs`, and required reads throw `InvalidEnvValue` for a value they can't use.
+- **[v7 to v8](/docs/migration-v7-to-v8).** The source classes get shorter names, and one universal `envapt` import replaces the `workerd` and `browser` subpaths. The portable file APIs warn once and do nothing by default.
+- **[v6 to v7](/docs/migration-v6-to-v7).** The default decorators become TC39 Stage 3 accessors, and the legacy decorators move to `envapt/legacy`.
+- **[v5 to v6](/docs/migration-v5-to-v6).** The positional decorator form is removed, and `NODE_ENV=test` now resolves to the test environment.
+- **[v4 to v5](/docs/migration-v4-to-v5).** `Converters.array()` replaces `Converters.Array`, `dotenvConfig` becomes `envFileOptions`, and per-environment `.env` files load on their own.

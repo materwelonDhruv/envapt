@@ -1,0 +1,11 @@
+{
+    "compilerOptions": {
+        "target": "ES2022",
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext",
+        "strict": true,
+        "skipLibCheck": true,
+        "noEmit": true
+    },
+    "files": ["node_modules/envapt/dist/types/index.d.mts", "node_modules/envapt/dist/types/legacy.d.mts"]
+}

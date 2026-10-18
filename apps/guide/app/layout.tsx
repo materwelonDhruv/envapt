@@ -2,29 +2,40 @@ import './global.css';
 
 import { RootProvider } from 'fumadocs-ui/provider/next';
 import { Hanken_Grotesk, JetBrains_Mono } from 'next/font/google';
+import localFont from 'next/font/local';
 
-import {
-    AUTHOR_URL,
-    DEFAULT_OG_IMAGE,
-    JSR_URL,
-    NPM_URL,
-    REPO_URL,
-    SITE_DESCRIPTION,
-    SITE_NAME,
-    SITE_URL
-} from '@/lib/site';
+import { AgentLinks } from '@/components/AgentLinks';
+import { JsonLd } from '@/components/JsonLd';
+import { DEFAULT_OG } from '@/lib/og/images';
+import { OG_SIZE } from '@/lib/og/theme';
+import { absoluteUrl, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from '@/lib/site';
+import { siteJsonLd } from '@/lib/structuredData';
 
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 
 const sans = Hanken_Grotesk({ subsets: ['latin'], variable: '--font-hanken', display: 'swap' });
 const mono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-jetbrains', display: 'swap' });
+// google's JetBrains Mono subsets leave out the box-drawing block the guide's tree diagrams use
+const monoBoxDrawing = localFont({
+    src: './fonts/JetBrainsMono-Regular.woff2',
+    variable: '--font-jetbrains-box',
+    display: 'swap',
+    adjustFontFallback: false,
+    declarations: [{ prop: 'unicode-range', value: 'U+2500-257F' }]
+});
 
 export const metadata: Metadata = {
     metadataBase: new URL(SITE_URL),
     title: { default: SITE_NAME, template: `%s · ${SITE_NAME}` },
     description: SITE_DESCRIPTION,
-    openGraph: { type: 'website', siteName: SITE_NAME, url: SITE_URL, locale: 'en_US', images: DEFAULT_OG_IMAGE },
+    openGraph: {
+        type: 'website',
+        siteName: SITE_NAME,
+        url: SITE_URL,
+        locale: 'en_US',
+        images: [{ url: absoluteUrl(DEFAULT_OG.path), ...OG_SIZE, alt: DEFAULT_OG.alt }]
+    },
     twitter: { card: 'summary_large_image' },
     verification: { google: 'zqIImWHhuFI0Yd5Ej2SMF0EYRtVB9zcjMumS2-yaDJ4' }
 };
@@ -33,33 +44,17 @@ export const viewport: Viewport = {
     themeColor: '#de6e39'
 };
 
-const structuredData = {
-    '@context': 'https://schema.org',
-    '@type': 'SoftwareSourceCode',
-    name: SITE_NAME,
-    description: SITE_DESCRIPTION,
-    url: SITE_URL,
-    codeRepository: REPO_URL,
-    sameAs: [NPM_URL, JSR_URL, REPO_URL],
-    programmingLanguage: 'TypeScript',
-    runtimePlatform: ['Node.js', 'Bun', 'Deno', 'Cloudflare Workers', 'Browser'],
-    license: 'https://www.apache.org/licenses/LICENSE-2.0',
-    author: { '@type': 'Person', name: 'Dhruv', url: AUTHOR_URL }
-};
-
 export default function RootLayout({ children }: { children: ReactNode }): ReactNode {
     return (
         <html
             lang="en"
-            className={`${sans.variable} ${mono.variable}`}
+            className={`${sans.variable} ${mono.variable} ${monoBoxDrawing.variable}`}
             data-scroll-behavior="smooth"
             suppressHydrationWarning
         >
             <body className="flex min-h-screen flex-col" suppressHydrationWarning>
-                <script
-                    type="application/ld+json"
-                    dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, '\\u003c') }}
-                />
+                <AgentLinks />
+                <JsonLd data={siteJsonLd()} />
                 <RootProvider
                     theme={{ defaultTheme: 'dark', enableSystem: false }}
                     search={{ options: { type: 'static' } }}

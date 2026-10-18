@@ -1,0 +1,102 @@
+---
+title: Templates
+description: Build one environment variable from others by referencing them inside its value, and assemble strings from several keys with the resolve() tagged template.
+---
+
+A database URL needs a host and a port, and each can come from a different place, such as a default in `.env` and an override from your platform. Without references, every place that sets one of them has to write out the whole URL again. With `${VAR}` references in the URL, [`Envapter`](/docs/envapter) joins whichever values are set when you read it. To build a string from several keys in your code, use the [`resolve`](#the-resolve-tagged-template) tagged template.
+
+```dotenv title=".env"
+DB_HOST=localhost
+DB_PORT=5432
+DATABASE_URL=postgres://${DB_HOST}:${DB_PORT}/app
+```
+
+```ts twoslash
+import { Envapter } from 'envapt';
+// ---cut---
+const url = Envapter.get('DATABASE_URL');
+// "postgres://localhost:5432/app"
+// with DB_HOST=db.internal set by your platform: "postgres://db.internal:5432/app"
+```
+
+`get('DATABASE_URL')` expands both references. Every other reader does too, except `getRaw`, which returns [the raw string](/docs/envapter#the-raw-string) as written. A converter or schema receives the expanded text. A decorated field expands once, on its first access, because it caches the result ([Decorators](/docs/decorators#one-value-per-field)). Expansion works on any [source](/docs/sources), including one you bind with `useSource`.
+
+## Nested references
+
+A variable you reference can hold references of its own. envapt expands them until it reaches a cycle or a missing variable.
+
+```dotenv
+PROTOCOL=https
+HOST=api.example.com
+BASE_URL=${PROTOCOL}://${HOST}
+HEALTHCHECK=${BASE_URL}/health
+```
+
+Reading `HEALTHCHECK` returns `https://api.example.com/health`.
+
+## Unresolved references
+
+If a variable you reference is unset or empty, envapt leaves its `${VAR}` text in the value. A cycle stays as text too. When a referenced variable's own value holds references and none of them resolve, the outer reference stays as text. If some of them resolve, the outer reference becomes the partly resolved text, such as `x-${C}`.
+
+```dotenv
+DB_HOST=localhost
+DATABASE_URL=postgres://${DB_HOST}:${DB_PORT}/app
+
+CACHE_URL=redis://${CACHE_HOST}
+CACHE_HOST=${REDIS_HOST}
+
+PRIMARY_URL=${REPLICA_URL}
+REPLICA_URL=${PRIMARY_URL}
+```
+
+With `DB_PORT` and `REDIS_HOST` unset, the three reads return:
+
+```txt
+DATABASE_URL  ->  postgres://localhost:${DB_PORT}/app
+CACHE_URL     ->  redis://${CACHE_HOST}
+PRIMARY_URL   ->  ${REPLICA_URL}
+```
+
+`${DB_HOST}` resolves, but `${DB_PORT}` stays as written. `CACHE_URL` shows `${CACHE_HOST}`, a variable that is set, because `CACHE_HOST` can't finish expanding. `PRIMARY_URL` and `REPLICA_URL` reference each other, so the read stops at the first reference and returns `${REPLICA_URL}`. Code that uses a value with an unresolved reference fails later. Set `Envapter.debug = 'warn'` to log each unresolved reference when it's read ([Debug logging](/docs/errors#debug-logging)).
+
+<Callout type="tip">
+
+Set `Envapter.strict = true` ([strict mode](/docs/required-values#strict-mode)) to make a reference to a missing variable throw `EnvaptError` with code `MissingEnvValue`. A cycle still stays as text. Under strict mode a whitespace-only variable counts as unset too.
+
+</Callout>
+
+## Syntax limits
+
+envapt recognizes `${NAME}`, where `NAME` is letters, digits, and underscores. A reference like `${VAR:-fallback}` or an empty `${}` doesn't match that pattern, so it stays in the value as written. envapt logs nothing for it, even with `Envapter.debug = 'warn'`. To default a missing variable, pass a fallback to the method, as in `Envapter.get('VAR', 'fallback')`.
+
+A `$` that isn't followed by `{...}` stays as it is, as in `price: $5`. No escape sequence exists. To read a value that contains a literal `${...}`, use `getRaw`, which skips expansion for the whole value.
+
+## The resolve tagged template
+
+If you build a string from two reads by hand and a key is unset, a template literal prints the text `undefined`, because `Envapter.get` without a fallback returns `undefined`. `resolve` builds the string from the keys you list in the template. Each `${...}` slot takes an env var name, or an [ordered key list](/docs/envapter#ordered-keys), and the first name with a value wins. A slot has no fallback. If a value contains `${VAR}` references, envapt expands them first.
+
+```ts twoslash
+import { Envapter } from 'envapt';
+// ---cut---
+// API_HOST=api.example.com, API_PORT=8080
+const endpoint = Envapter.resolve`https://${'API_HOST'}:${'API_PORT'}`;
+//    ^?
+
+// reads READONLY_URL when present, otherwise DATABASE_URL
+const target = Envapter.resolve`Connecting to ${['READONLY_URL', 'DATABASE_URL']}`;
+```
+
+`endpoint` is a plain `string`. `target` uses `READONLY_URL` when it has a value and `DATABASE_URL` otherwise. It holds an empty string when neither has a value. A slot with a missing key behaves differently from a `${VAR}` reference inside a value.
+
+{/* prettier-ignore-start */}
+
+| Key unset or empty | `${VAR}` inside a value | `resolve` slot |
+| --- | --- | --- |
+| [Strict mode](/docs/required-values#strict-mode) off | keeps the text `${VAR}` | inserts an empty string |
+| Strict mode on | throws [`MissingEnvValue`](/docs/errors) | throws [`MissingEnvValue`](/docs/errors) |
+
+{/* prettier-ignore-end */}
+
+An empty string can hide a missing key inside a message that looks fine. If the string is a URL or a path, turn strict mode on or check the key with [`require`](/docs/required-values) first.
+
+If your platform sets `DATABASE_URL` itself, that value wins over the templated line in `.env` by default, so `DB_HOST` and `DB_PORT` no longer affect it. A `resolve` call reads `DB_HOST` and `DB_PORT` directly, so it uses their values whatever `DATABASE_URL` holds.

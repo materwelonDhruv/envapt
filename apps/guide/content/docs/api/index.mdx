@@ -1,0 +1,18 @@
+---
+title: API reference
+description: Every export of envapt and envapt/legacy, with signatures, parameters, and return types generated from the library's type definitions.
+---
+
+These pages come from envapt's published type definitions, so they match the version you install. The [guide](/docs) explains when and why to use each piece.
+
+{/* prettier-ignore-start */}
+
+| entry | what it exports |
+| --- | --- |
+| [`envapt`](/docs/api/reference/envapt) | `Envapter`, `Converters`, the `@Envapt` decorators, the sources, `EnvaptError`, and the types |
+| [`envapt/legacy`](/docs/api/reference/legacy) | the same decorators for projects that compile with `experimentalDecorators` |
+| `envapt/config` | nothing. Importing it loads your `.env` files into `process.env` |
+
+{/* prettier-ignore-end */}
+
+The `Envapter` page documents the Node, Bun, and Deno build. On Workers, the browser, and edge runtimes, `envapt` resolves to the portable build, where `Envapter` has the same members and its file APIs (`envPaths`, `baseDir`, `envFileOptions`, `configureProfiles`, `resetPaths`) warn once and do nothing. [Sources](/docs/sources) explains the two builds.

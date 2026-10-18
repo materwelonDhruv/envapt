@@ -1,0 +1,194 @@
+---
+title: Required values
+description: Stop the app at boot when a variable is missing or malformed, and see every missing key, or every malformed key, in one error.
+---
+
+If a value is wrong, a plain read often returns something and the app keeps running. `Envapter.getAs('DATABASE_URL', Converters.Url)` returns `undefined` for a missing variable, so the app fails later, in whatever request touches the database first. A *required read* throws on a bad value, while a plain read of a token or function returns the fallback or `undefined`. `getRequired`, `getRequiredAll`, and a decorated field with [`required: true`](/docs/decorators#required-fields) are required reads. `require` is one too, but it only checks that each value is present. If the read runs at boot, a bad deploy stops the app before it serves anything.
+
+With one required read per variable, only the first bad value threw. You fixed it, deployed again, and hit the next one. `getRequiredAll` reads the whole group and reports every missing key in one error, or every malformed key in one error:
+
+```ts twoslash
+import { z } from 'zod/v4';
+import { Envapter, Converters } from 'envapt';
+// ---cut---
+export const config = Envapter.getRequiredAll(
+    {
+        DATABASE_URL: Converters.Url,
+        PORT: Converters.Port,
+        CACHE_TTL: Converters.Time,
+        ALLOWED_ORIGINS: Converters.array({ of: Converters.Url }),
+        LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error'])
+    },
+    'camelCase'
+);
+
+export const port = config.port;
+//           ^?
+```
+
+The object you pass is the *spec*. Each key is an env name, and each value is a [token](/docs/converters), an `array()` converter, your own converter function, or a [schema](/docs/standard-schema) like the `LOG_LEVEL` enum. A spec key is a single env name. The returned record holds every value already converted. None of the fields read with a token or function can be `undefined`, which is why `port` is a `number`. A schema field holds whatever its schema returns.
+
+The optional second argument renames the record's keys. envapt splits each name on underscores:
+
+{/* prettier-ignore-start */}
+
+| Casing | `DATABASE_URL` becomes |
+| --- | --- |
+| none | `DATABASE_URL` |
+| `'camelCase'` | `databaseUrl` |
+| `'PascalCase'` | `DatabaseUrl` |
+| `'kebab-case'` | `database-url` |
+
+{/* prettier-ignore-end */}
+
+It also lowercases each word after its first letter. `MY_KEY` becomes `myKey` under `'camelCase'`, while a mixed-case name like `myKey` has no underscore and becomes `mykey`.
+
+## Missing and invalid are different failures
+
+`MissingEnvValue` (305) means the variable is unset or empty. `InvalidEnvValue` (210) means it's set but the converter or schema rejected it. The two codes let a `catch` tell them apart.
+
+`getRequiredAll` checks in a fixed order:
+
+```txt
+getRequiredAll(spec)
+├─ a bad converter in the spec ... throws first (a mistyped token is 202)
+├─ any key missing ............... one MissingEnvValue, every missing key
+└─ every key present
+   └─ any failed ................. one InvalidEnvValue, every failed key
+```
+
+The order has a cost. If one key is missing and another is malformed, you see only the missing key. After you set it, the next run reports the malformed one. A run never mixes the two codes.
+
+[Strict mode](#strict-mode) adds one exception. If a value holds an unresolved `${VAR}`, `require` and `getRequiredAll` throw `MissingEnvValue` for that key right away. Keys that were missing earlier go unreported, and later keys go unchecked.
+
+If `DATABASE_URL`, `PORT`, and `LOG_LEVEL` are unset, the example above throws:
+
+```txt
+EnvaptError [305]: Missing required environment variables: DATABASE_URL, PORT, LOG_LEVEL.
+```
+
+If every variable is set but three values are malformed, among them `ALLOWED_ORIGINS=https://app.example.com,example.com`, it throws:
+
+```txt
+EnvaptError [210]: Validation failed for DATABASE_URL, PORT, ALLOWED_ORIGINS.
+```
+
+## Reading the error without leaking values
+
+The `MissingEnvValue` and `InvalidEnvValue` messages list only keys. An `InvalidEnvValue` also carries `error.issues`, an array of *issues* in the [Standard Schema](/docs/standard-schema) shape. Each has a `message` and a `path` that starts with the env key. For the 210 run above, `issues` holds:
+
+```json
+[
+    { "message": "could not be converted", "path": ["DATABASE_URL"] },
+    { "message": "could not be converted", "path": ["PORT"] },
+    {
+        "message": "Element \"example.com\" at index 1 could not be converted to url.",
+        "path": ["ALLOWED_ORIGINS"]
+    }
+]
+```
+
+The third issue quotes `example.com`. An issue message can quote the value it rejected, and a value can be a secret, such as the password inside `DATABASE_URL`. The error text leaves the messages out for that reason. Node still prints an uncaught error with its properties, so an uncaught `InvalidEnvValue` prints `issues` and those messages. To keep them out of your logs, catch the error, log its message, and exit:
+
+```ts twoslash
+import { Envapter, EnvaptError, Converters } from 'envapt';
+// ---cut---
+function loadConfig() {
+    try {
+        return Envapter.getRequiredAll({
+            DATABASE_URL: Converters.Url,
+            PORT: Converters.Port
+        });
+    } catch (error) {
+        if (error instanceof EnvaptError) {
+            console.error(error.message);
+            process.exit(1);
+        }
+        throw error;
+    }
+}
+```
+
+`error.message` is the line below, which carries every key you need.
+
+```txt
+Validation failed for DATABASE_URL, PORT.
+```
+
+Log `error.issues` only when you know your converters and schemas never quote a value. The sample exits with `process.exit(1)` on Node, Bun, and Deno.
+
+## getRequired, require, and has
+
+{/* prettier-ignore-start */}
+
+| Reader | Returns | When the value is missing | When it can't convert |
+| --- | --- | --- | --- |
+| `getRequired(key, converter)` | the converted value | throws `MissingEnvValue` | throws `InvalidEnvValue` |
+| `getRequiredAll(spec, casing?)` | a record of values | one `MissingEnvValue` for every missing key | one `InvalidEnvValue` for every bad key |
+| `require(key, ...keys)` | nothing | one `MissingEnvValue` for every missing key | not checked |
+| `has(key)` | a boolean | `false` | not checked |
+
+{/* prettier-ignore-end */}
+
+`getRequired` takes the same converters and schemas as `getRequiredAll`. Its key can also be an [ordered key list](/docs/envapter#ordered-keys), which a spec key can't. For a plain string, pass `Converters.String`. A bad converter throws before `MissingEnvValue` does.
+
+`require` converts nothing, so use it for values that other code reads later, such as a decorated class. Each argument can be an ordered key list too, and an argument passes if any of its keys has a value:
+
+```ts twoslash
+import { Envapter } from 'envapt';
+// ---cut---
+Envapter.require('API_KEY', 'SESSION_SECRET', ['READONLY_URL', 'DATABASE_URL']);
+```
+
+This passes when `API_KEY` and `SESSION_SECRET` have values and at least one of `READONLY_URL` and `DATABASE_URL` does.
+
+`has` takes an ordered key list as well. It treats an unset or empty value as missing, and a whitespace-only value too when strict mode is on, the same as a required read. If you call `has` before `getRequired`, the value is optional but still checked when it is set:
+
+```ts twoslash
+import { Envapter, Converters } from 'envapt';
+// ---cut---
+export function sentryDsn(): URL | undefined {
+    if (!Envapter.has('SENTRY_DSN')) return undefined;
+    return Envapter.getRequired('SENTRY_DSN', Converters.Url);
+}
+```
+
+`sentryDsn` returns `undefined` for an unset `SENTRY_DSN` but throws for a malformed one. A `getAs` would return its fallback, or `undefined`, and hide the typo.
+
+## Where to put the check
+
+Put `getRequiredAll` at the top level of one config module that your entry file imports first. Module code runs at import, so the throw happens before the app serves anything. Every other file reads from the exported `config` record. The cost is that every test importing that module needs the variables set first. Set them in a [setup file](/docs/testing#reads-at-module-scope-run-before-the-test) that runs before the import. A library, or a CLI whose `--help` must work without config, should read inside a function and skip this.
+
+On Workers, the browser, and edge runtimes, call [`useSource`](/docs/sources) before the read, in the same module, because a read before it throws `NoSourceBound`.
+
+A decorated field with `required: true` reads the first time something accesses it, so a missing value only throws when that happens. Read the field once at startup to catch it earlier.
+
+## Strict mode
+
+A variable counts as missing when it's unset or empty. Strict mode adds whitespace-only values to that rule and changes the other behaviors in the table below. It's off by default and applies to every read in the process.
+
+Without it, a value of only spaces counts as set. That happens when a CI secret expands to spaces, or when a `.env` file quotes the value, as in `API_KEY="   "`. `Envapter.require('API_KEY')` passes, and `getRequired` with `Converters.String` returns the spaces. Strict mode makes both throw `MissingEnvValue`.
+
+```ts twoslash
+import { Envapter } from 'envapt';
+// ---cut---
+Envapter.strict = true;
+```
+
+When you set it, envapt rebuilds the [cache](/docs/sources#when-values-are-read) from the bound source. On Workers, the browser, and edge runtimes, you can set it before `useSource` too, and `useSource` applies it.
+
+{/* prettier-ignore-start */}
+
+| Behavior | Strict off | Strict on |
+| --- | --- | --- |
+| A whitespace-only value | counts as set and reaches the converter. `Converters.Number` reads it as `0`, and `Converters.Port` can't convert it | counts as missing, so readers use the fallback and required reads throw `MissingEnvValue` |
+| A `${VAR}` whose variable is missing | stays in the text as `${VAR}` | the readers that expand templates throw `MissingEnvValue`. `has` returns `false` for that key, and `getRaw` returns the text |
+| An empty array element, like a trailing comma | skipped | a read with `Converters.array` throws `EmptyArrayElement` (207), and a required read reports it as an issue |
+
+{/* prettier-ignore-end */}
+
+Strict mode also applies to [templates](/docs/templates) and the `resolve` tagged template. An ordered key list skips a whitespace-only key and uses the next one.
+
+Every later read follows the new rule. A value you already read into a variable keeps its old result, so set it before those reads. With strict mode on, a plain reader still returns the fallback for an unset or whitespace-only value. It throws for an unresolved `${VAR}` in any reader that expands templates, and for an empty array element in any array read.
+
+Turn it on if your values come from files with `${VAR}` templates or from CI secrets, because a blank value there is probably a mistake. The cost is that a stray trailing comma in a deployed `.env` makes a startup read throw `EmptyArrayElement`. Leave it off if a whitespace-only value is meaningful in your app.

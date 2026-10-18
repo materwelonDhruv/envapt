@@ -11,9 +11,7 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ENVAPT_DIST = path.resolve(HERE, '../node_modules/envapt/dist');
 const SALT_LENGTH = 12;
 
-// The stock cache keys each entry on the snippet text alone, so it never busts when envapt's
-// own `dist` is rebuilt and would serve stale hovers for the library these docs describe.
-// Hash the built declarations and fold that into the key instead.
+// the stock cache keys on snippet text alone. it serves stale hovers after envapt's dist is rebuilt
 function envaptTypesSalt(): string {
     try {
         const files = readdirSync(ENVAPT_DIST, { recursive: true, encoding: 'utf8' })

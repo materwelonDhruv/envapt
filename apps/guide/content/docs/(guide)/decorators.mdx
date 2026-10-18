@@ -1,0 +1,235 @@
+---
+title: Decorators
+description: Declare typed config as class fields with @Envapt, using accessor fields by default or the legacy decorators from envapt/legacy.
+---
+
+Without a config class, every file that reads `PORT` repeats the key, the converter, and the fallback, so the copies can drift apart. `@Envapt` replaces them with one declaration on a class field. Every file reads `Config.port` and gets the same typed value.
+
+```ts twoslash
+import { Envapt, Converters } from 'envapt';
+// ---cut---
+class Config {
+    @Envapt('PORT', { converter: Converters.Port, fallback: 3000 })
+    static accessor port: number;
+
+    @Envapt('CACHE_TTL', { converter: Converters.Time, fallback: '15m' })
+    static accessor cacheTtl: number;
+}
+
+Config.cacheTtl;
+//     ^?
+```
+
+`cacheTtl` is a `number` of milliseconds even though its fallback is the string `'15m'`, because the Time converter converts the fallback too. A decorated field uses the same keys, [converters](/docs/converters), and cache as `getAs`. A value you read once, in one place, needs no class, and [`Envapter.getAs`](/docs/envapter) is shorter there. The same declaration works on instance fields and through shorthand decorators such as `@EnvNum`. If your project already sets `experimentalDecorators`, import from `envapt/legacy` instead ([Legacy decorators](#legacy-decorators)).
+
+## Declaring decorated fields
+
+Declare each field with the `accessor` keyword. A decorator on a plain field can only return a starting value for it. That value is computed once when the class is defined (for a static field) or each time you construct an instance. It still holds the old value after a later `Envapter.useSource` call or a change of environment. On a static field, a missing required value would also throw while the module loads. An `accessor` field gives the decorator a getter and a setter to replace, so envapt reads the variable on first access and makes assignment throw `InvalidUserDefinedConfig` (302). Because envapt reads on first access, a class can be defined before `useSource` runs on Workers or in the browser ([Sources](/docs/sources)).
+
+TypeScript enforces this. A plain field gives the decorator `undefined`, while an accessor decorator receives the accessor object.
+
+```ts twoslash
+// @errors: 1240 1270
+import { Envapt, Converters } from 'envapt';
+// ---cut---
+class Config {
+    @Envapt('PORT', { converter: Converters.Port, fallback: 3000 })
+    static port: number;
+}
+```
+
+Adding `accessor` fixes both errors. The cost is the keyword, plus a `!` on instance fields. TypeScript reports TS2564 on `accessor host: string` until you write `accessor host!: string`. Static fields skip that check. Write no initializer on either form, since envapt supplies the value.
+
+```ts twoslash
+import { Envapt } from 'envapt';
+// ---cut---
+class Server {
+    @Envapt('HOST', { fallback: 'localhost' })
+    accessor host!: string;
+
+    @Envapt('SENTRY_DSN')
+    accessor sentryDsn!: string | undefined;
+
+    @Envapt('REGION', { fallback: 'us-east-1' })
+    static accessor region: string;
+}
+```
+
+`sentryDsn` has no options, so it is the raw string or `undefined`. This form needs no compiler flag with TypeScript 5.0 or later. Output from `tsc` runs on Node, Bun, and Deno. Bun and Deno also run a `.ts` file with accessor fields directly. On Workers, the browser, and edge runtimes, your bundler has to compile them. [Compatibility](/docs/compatibility#decorators-per-runtime) covers each runtime.
+
+### Legacy decorators
+
+Legacy decorators are TypeScript's older property decorators. They are called with `(target, key)`, where modern ones receive `(target, context)`. TypeScript emits and checks that call shape only when `experimentalDecorators` is on. Use the modern form unless your project already sets the flag. The shorthand decorators below are exported from `envapt/legacy` as well.
+
+{/* prettier-ignore-start */}
+
+| | Modern | Legacy |
+| --- | --- | --- |
+| Import from | `envapt` | `envapt/legacy` |
+| Static field | `static accessor x: T` | `static readonly x: T` |
+| Instance field | `accessor x!: T` | `declare readonly x: T` |
+| `tsconfig.json` | nothing | `"experimentalDecorators": true` |
+
+{/* prettier-ignore-end */}
+
+```ts twoslash
+// @experimentalDecorators: true
+import { Converters } from 'envapt';
+import { Envapt } from 'envapt/legacy';
+// ---cut---
+class Config {
+    @Envapt('PORT', { converter: Converters.Port, fallback: 3000 })
+    static readonly port: number;
+
+    @Envapt('SESSION_TTL', { converter: Converters.Time, fallback: '15m' })
+    declare readonly sessionTtl: number;
+}
+```
+
+`Converters` still comes from `envapt`. Only the decorators come from `envapt/legacy`. `sessionTtl` uses `declare` because with `useDefineForClassFields` on (the default for ES2022 and later targets), `tsc` emits a plain instance field as a class field declaration. That gives every instance its own `undefined` that hides the getter. `declare` stops that emit. A `declare static` field reads `undefined` under `tsc`, so write plain `static readonly`. Neither form takes an initializer.
+
+## Options
+
+The first argument is the variable name, or an [ordered list of names](/docs/envapter#ordered-keys). The first name that has a value wins. The second is an optional options object.
+
+<TypeTable
+    type={{
+        converter: {
+            type: 'Converters member, array(), or function',
+            description:
+                'How to turn the raw string into a value: a Converters member such as Converters.Port, a Converters.array(...) result, or a function (raw: string) => T.',
+            default: "raw string, or the fallback's type"
+        },
+        fallback: {
+            type: 'T',
+            description:
+                'Returned when the value is missing or the converter cannot convert it. It removes undefined from the field type. Time converters also take a string like "15m".',
+            default: 'undefined'
+        },
+        required: {
+            type: 'boolean',
+            description:
+                'Throws on first access when the value is missing or cannot convert. Cannot be combined with fallback.',
+            default: 'false'
+        },
+        schema: {
+            type: 'StandardSchemaV1',
+            description: 'Any Standard Schema validator, such as zod, valibot, or arktype. Cannot be combined with converter.',
+            default: 'undefined'
+        }
+    }}
+/>
+
+If you combine `required` with `fallback`, combine `schema` with `converter`, or give `schema` a value that isn't a Standard Schema, the class throws `InvalidUserDefinedConfig` (302) when it is defined, before any field is read. A `fallback` that doesn't match the converter throws `FallbackConverterTypeMismatch` (104) on first access. With a fallback and no converter, envapt infers the converter from the fallback's type. A string, number, boolean, or bigint fallback converts as that type, and any other fallback is a compile error until you pass a converter. [Converters](/docs/converters) lists the members of `Converters` and the time units.
+
+```ts twoslash
+import { Envapt, Converters } from 'envapt';
+// ---cut---
+class Config {
+    @Envapt('ALLOWED_ORIGINS', { converter: Converters.array({ of: Converters.Url }), fallback: [] })
+    static accessor allowedOrigins: URL[];
+
+    @Envapt('FEATURE_FLAGS', { converter: (raw) => raw.split('|').map((flag) => flag.trim()), fallback: [] })
+    static accessor featureFlags: string[];
+
+    @Envapt('TRUSTED_IPS', { converter: (raw) => new Set(raw.split(',').filter(Boolean)) })
+    static accessor trustedIps: Set<string> | undefined;
+}
+```
+
+`trustedIps` ends in `| undefined` because it has no fallback and isn't required.
+
+### The field type is checked
+
+Without a check, a field typed `number` could read as `undefined` at runtime when the value is missing. The declared type has to hold what the converter returns. A wider type compiles, but a narrower one fails with "field type must hold the converter output". The legacy decorators run the same check through `EnvaptFieldDecorator`, which `envapt/legacy` exports.
+
+```ts twoslash
+// @errors: 1240
+import { Envapt, Converters } from 'envapt';
+// ---cut---
+class Config {
+    @Envapt('SAMPLE_RATE', { converter: Converters.Float })
+    static accessor sampleRate: number;
+}
+```
+
+`SAMPLE_RATE` has no fallback and isn't required, so its output is `number | undefined`. The field needs that union, or a fallback to remove it.
+
+## Shorthand decorators
+
+Each shorthand decorator is `@Envapt` with its converter already set, so you skip the options object and write the key and an optional fallback of the converter's type.
+
+{/* prettier-ignore-start */}
+
+| Decorator | [Converter](/docs/converters) | Fallback |
+| --- | --- | --- |
+| `@EnvStr` | [`Converters.String`](/docs/converters) | `string` |
+| `@EnvNum` | [`Converters.Number`](/docs/converters) | `number` |
+| `@EnvBool` | [`Converters.Boolean`](/docs/converters) | `boolean` |
+| `@EnvTime` | [`Converters.Time`](/docs/converters) | milliseconds, or a string like `'15m'` |
+| `@EnvUrl` | [`Converters.Url`](/docs/converters) | a `URL` |
+
+{/* prettier-ignore-end */}
+
+```ts twoslash
+import { EnvNum, EnvStr, EnvBool } from 'envapt';
+// ---cut---
+class Config {
+    @EnvNum('SAMPLE_RATE', 0.25)
+    static accessor sampleRate: number;
+
+    @EnvStr('AWS_REGION', 'us-east-1')
+    static accessor region: string;
+
+    @EnvBool('ENABLE_BETA', false)
+    static accessor betaEnabled: boolean;
+}
+```
+
+The second arguments `0.25`, `'us-east-1'`, and `false` are the fallbacks. If you omit the fallback, the field is the converted value or `undefined`. A shorthand takes only a fallback, so `required`, `schema`, arrays, ports, and custom functions need `@Envapt`.
+
+## Required fields
+
+`required: true` makes the field throw on its first access when the value is missing or can't convert. [Required values](/docs/required-values) explains both errors, `MissingEnvValue` (305) and `InvalidEnvValue` (210).
+
+```ts twoslash
+import { Envapt, Converters } from 'envapt';
+// ---cut---
+class Config {
+    @Envapt('DATABASE_URL', { converter: Converters.Url, required: true })
+    static accessor databaseUrl: URL;
+
+    @Envapt('SIGNING_KEY', { converter: (raw: string) => new TextEncoder().encode(raw), required: true })
+    static accessor signingKey: Uint8Array;
+}
+```
+
+Nothing reads a field until your code does, so a missing `DATABASE_URL` throws on the first request that touches `Config.databaseUrl`. To make that throw at startup, read each required field once when the app starts, for example `void Config.databaseUrl;`. Each field throws alone, so a deploy missing three variables takes three runs to find. [`getRequiredAll`](/docs/required-values) reports all three at once, but you pass it each key and converter again, which the class already declares.
+
+## Validating with a schema
+
+A converter such as `Converters.Port` returns your fallback without an error when it can't convert a value. A schema checks the value against your rules. If it rejects the value, the read throws `SchemaValidationFailed` (208), or `InvalidEnvValue` (210) on a `required` field. A field that isn't required still throws. Pass `schema` for a Standard Schema validator. The field type is the schema's output, with `| undefined` unless you add `required: true` or a `fallback`.
+
+```ts twoslash
+import { z } from 'zod/v4';
+import { Envapt } from 'envapt';
+// ---cut---
+class Config {
+    @Envapt('STRIPE_SECRET_KEY', { schema: z.string().startsWith('sk_'), required: true })
+    static accessor stripeKey: string;
+}
+```
+
+`startsWith('sk_')` runs on the raw value before `stripeKey` is ever a `string`. A schema in `converter` throws `InvalidUserDefinedConfig` (302). [In a decorator](/docs/standard-schema#in-a-decorator) lists the other schema mistakes.
+
+## One value per field
+
+A decorated value is read on first access and cached per class and field. Every instance of a class reads the same cached value, so two instances of `Config` never differ. A static and an instance field with the same name have separate cached values.
+
+The cached value clears when you call `Envapter.useSource` or change a setting that rebuilds the [cache](/docs/sources#when-values-are-read), such as `Envapter.environment`, and the next access reads again. In a test, `useSource` gives a field a different value, as [Testing](/docs/testing#decorated-classes) shows.
+
+A decorated class doesn't need to extend anything. To call `getAs` and the other read methods on the class too, see [Extending Envapter](/docs/envapter#extending-envapter).
+
+## No environment source is bound
+
+If you access a decorated field before any source is bound, it throws `NoSourceBound` (307) with the message "No environment source is bound". On Node, Bun, and Deno, every envapt entry binds `FileSource` when it loads, `envapt/legacy` included. On Workers, the browser, and edge runtimes, nothing is bound until `Envapter.useSource` runs, so access the field after that call. The error is described on [Sources](/docs/sources#no-environment-source-is-bound).

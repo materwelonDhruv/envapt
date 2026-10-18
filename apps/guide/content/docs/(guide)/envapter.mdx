@@ -1,0 +1,155 @@
+---
+title: Reading values
+description: Read one environment variable as a string, number, boolean, bigint, or converted type, with a fallback, and see what each reader returns for a bad value.
+---
+
+A reader is an `Envapter` method that takes a key, finds the variable, converts it to a type, and returns it. You call every reader on `Envapter` itself, so you construct nothing. Most readers return the value, or `undefined` when it is missing. The [required readers](/docs/required-values) throw. On Workers, the browser, and edge runtimes, every reader throws [`NoSourceBound`](/docs/errors) until you bind a [source](/docs/sources) with `useSource`.
+
+## The primitive readers
+
+Without a reader you write the truthy list for flags yourself, and you remember that an empty string means unset. `getBoolean` includes that truthy list. Every primitive reader treats an empty string as unset. Each one takes a key and an optional fallback.
+
+{/* prettier-ignore-start */}
+
+| Reader | Returns | Raw values it accepts |
+| --- | --- | --- |
+| `get` | `string` | any value |
+| `getNumber` | `number` | what `Number()` parses, such as `8080`, `1.5`, `1e3`, or `0x10` |
+| `getBoolean` | `boolean` | `1`, `yes`, `true`, `on` as true and `0`, `no`, `false`, `off` as false, in any case |
+| `getBigInt` | `bigint` | whole numbers that `BigInt()` parses |
+
+{/* prettier-ignore-end */}
+
+```ts twoslash
+import { Envapter } from 'envapt';
+// ---cut---
+const appName = Envapter.get('APP_NAME', 'envapt');
+const sampleRate = Envapter.getNumber('SAMPLE_RATE', 0.25);
+const debug = Envapter.getBoolean('DEBUG', false);
+const maxUploadBytes = Envapter.getBigInt('MAX_UPLOAD_BYTES', 0n);
+//    ^?
+```
+
+`0n` is the fallback, so `maxUploadBytes` is a plain `bigint`. Read a port, an integer count, or a duration through `getAs` with the matching [converter](/docs/converters), because `getNumber` accepts any number, including `3.5` for a port.
+
+## Fallbacks and missing values
+
+Without a fallback, a reader's type includes `undefined`, so you handle that at every call site. A fallback removes `undefined` from the type.
+
+```ts twoslash
+import { Envapter } from 'envapt';
+// ---cut---
+const withFallback = Envapter.get('API_URL', 'http://localhost');
+//    ^?
+
+const noFallback = Envapter.get('API_URL');
+//    ^?
+```
+
+`withFallback` is a `string` because `'http://localhost'` covers the missing case. `noFallback` can be `undefined`.
+
+A variable is missing when it is unset or empty. `get`, `getNumber`, `getBoolean`, `getBigInt`, and `getAs` return the fallback for a missing variable, or `undefined` when you gave none. In strict mode (`Envapter.strict = true`) a value of only spaces is missing too. With strict mode off, it counts as a value, so `getNumber` reads it as `0` ([Required values](/docs/required-values#strict-mode) covers strict mode).
+
+The readers differ when a value is set but can't convert.
+
+{/* prettier-ignore-start */}
+
+| Reader | Value it can't convert |
+| --- | --- |
+| `get`, `getNumber`, `getBoolean`, `getBigInt`, and `getAs` with a built-in [converter](/docs/converters) | the fallback, or `undefined` without one |
+| `getAs` with [`Converters.array`](/docs/converters#arrays) | throws [`ArrayElementConversionFailed`](/docs/errors) for a bad element, even with a fallback. In strict mode an empty element throws [`EmptyArrayElement`](/docs/errors) |
+| `getAs` with your own function | if the function returns `undefined` or `null`, the fallback, or `undefined` without one. An error it throws reaches your code unchanged |
+| `getAs` with a [schema](/docs/standard-schema) | throws a schema error such as [`SchemaValidationFailed`](/docs/errors), and the fallback is not used |
+| [`getRequired`, `getRequiredAll`](/docs/required-values) | throws [`InvalidEnvValue`](/docs/errors) |
+
+{/* prettier-ignore-end */}
+
+A fallback can hide a typo. `getNumber('SAMPLE_RATE', 0.25)` reads `SAMPLE_RATE=high` as `0.25`. Nothing reports it unless you set `Envapter.debug = 'verbose'` ([debug logging](/docs/errors#debug-logging)).
+
+If a fallback has the wrong type for its reader, every call throws a fallback error such as `FallbackConverterTypeMismatch`, even when the variable is set. On `get`, `getNumber`, `getBoolean`, and `getBigInt`, TypeScript flags a fallback of the wrong type before you run the code. `getAs` with a token checks the fallback only at runtime, so `Envapter.getAs('PORT', Converters.Port, 'abc')` compiles. A malformed time string like `'5'` also throws `MalformedTimeFallback` only at runtime ([Errors and debugging](/docs/errors) lists the codes).
+
+## Ordered keys
+
+Every reader except `getRequiredAll` accepts a list of keys, and the first key with a value wins. A renamed variable can keep its old name as a backup in the same read. An unset or empty key is skipped, while `a ?? b` skips only an unset one.
+
+```ts twoslash
+import { Envapter, Converters } from 'envapt';
+// ---cut---
+// DATABASE_URL if it has a value, else the name older deploys still set
+const databaseUrl = Envapter.getAs(['DATABASE_URL', 'LEGACY_DATABASE_URL'], Converters.Url);
+//    ^?
+```
+
+<Callout type="warn">
+
+If you declare the list on its own, it widens to `string[]`, which a reader's key parameter rejects. Write the list inline, or add `as const`.
+
+```ts
+const keys = ['DATABASE_URL', 'LEGACY_DATABASE_URL'] as const;
+```
+
+</Callout>
+
+## Other types with getAs
+
+`getAs(key, converter, fallback?)` reads any type the primitives don't cover. Without it you call `new URL(raw)` yourself, which throws on a bad value. The converter can be:
+
+- a built-in converter such as `Converters.Url` or `Converters.Time`. [Converters](/docs/converters) covers them all.
+- `Converters.array(...)`, which splits a value into a typed list.
+- your own `(raw: string) => T` function, which runs only when the variable has a value.
+- a [Standard Schema](/docs/standard-schema) validator from zod, valibot, or arktype, passed as the schema object.
+
+```ts twoslash
+import { Envapter, Converters } from 'envapt';
+// ---cut---
+const origins = Envapter.getAs('ALLOWED_ORIGINS', Converters.array({ of: Converters.Url }));
+//    ^?
+
+const hosts = Envapter.getAs('ALLOWED_HOSTS', (raw) => raw.split(' '), ['localhost']);
+//    ^?
+```
+
+`origins` has no fallback, so it can be `undefined`. `hosts` has one, so its type is the function's return type.
+
+## The raw string
+
+Every other reader expands `${NAME}` references inside the value ([Templates](/docs/templates) explains the syntax). Expansion breaks a value your own code fills in later, like an email subject holding `${ORDER_ID}`. A variable with that name gets substituted, and in strict mode a reference to a missing variable throws. `getRaw` returns the string exactly as stored. It takes a key or an ordered key list, but no fallback. It returns `undefined` when the key is unset and an empty string when the variable is empty.
+
+```ts twoslash
+import { Envapter } from 'envapt';
+// ---cut---
+// ORDER_EMAIL_SUBJECT=Your order ${ORDER_ID} has shipped
+const subject = Envapter.getRaw('ORDER_EMAIL_SUBJECT');
+//    ^?
+```
+
+`subject` keeps the `${ORDER_ID}` text, ready for your own code to replace.
+
+## Extending Envapter
+
+Every reader is a static method, so a class that extends `Envapter` inherits all of them. You call them as `Config.get(...)`. A subclass is worth writing when one setting combines several reads. Decorated fields work on any class, so a config class that holds only decorated fields doesn't need to extend `Envapter`.
+
+```ts twoslash
+import { Envapter, Converters } from 'envapt';
+// ---cut---
+class Config extends Envapter {
+    static get origin(): string {
+        const host = Config.get('HOST', 'localhost');
+        const port = Config.getAs('PORT', Converters.Port, 3000);
+        return `http://${host}:${port}`;
+    }
+}
+
+Config.origin;
+//     ^?
+```
+
+`Config.origin` converts again on every access, while a [decorated field](/docs/decorators) keeps the value from its first read until the [cache](/docs/sources#when-values-are-read) is rebuilt.
+
+The subclass shares its settings with `Envapter`, because the strict flag, the cache, and the bound source are stored once for the whole process. If you set `Config.strict = true`, strict mode turns on for every class.
+
+## More readers
+
+- [Required values](/docs/required-values): `getRequired` and `getRequiredAll` throw when a value is missing. `require` throws for a list of keys, and `has` reports whether one has a value.
+- [Templates](/docs/templates): `resolve` builds a string from several keys.
+- [Environment](/docs/environment): `isProduction`, `isDevelopment`, and the other environment checks.

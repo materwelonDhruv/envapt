@@ -4,6 +4,7 @@
     "ignores": [
         "**/node_modules/**",
         "**/dist/**",
+        "apps/guide/out/**",
         "**/.turbo/**",
         "**/coverage/**",
         "**/CHANGELOG.md",

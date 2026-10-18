@@ -1,0 +1,109 @@
+---
+title: Browser
+description: Bind Vite's import.meta.env to envapt once, then read each VITE_ string in your bundle as the URL or boolean your app code expects.
+---
+
+A browser has no `process.env`. When Vite builds the bundle, it replaces `import.meta.env` with an object holding your variables, and every `VITE_` value in it is a string. Read directly, `VITE_ENABLE_BETA` holds `'false'` when the flag is off. That string is truthy, so an `if` on it runs the wrong branch. This page uses Vite, and another bundler hands you its own injected object that you bind the same way.
+
+If you bind `import.meta.env` to envapt, envapt converts each value you read. Bind it before the first read, because a read with no [source](/docs/sources) bound throws `NoSourceBound`.
+
+## Bind in a config module
+
+Put the bind and the reads in one `config.ts`, and read every value through `config`. A module that calls [`Envapter.get`](/docs/envapter) directly can run before the bind.
+
+```ts twoslash title="src/config.ts"
+// @filename: vite-env.d.ts
+interface ImportMetaEnv {
+    readonly VITE_API_URL: string;
+    readonly VITE_ENABLE_BETA: string;
+    readonly [key: string]: unknown;
+}
+interface ImportMeta {
+    readonly env: ImportMetaEnv;
+}
+// @filename: config.ts
+import { Converters, Envapter, PortableSource } from 'envapt';
+// ---cut---
+Envapter.useSource(new PortableSource(import.meta.env));
+
+export const config = Envapter.getRequiredAll(
+    {
+        VITE_API_URL: Converters.Url,
+        VITE_ENABLE_BETA: Converters.Boolean
+    },
+    'camelCase'
+);
+
+config.viteEnableBeta;
+//     ^?
+```
+
+The `'camelCase'` argument turns `VITE_ENABLE_BETA` into `config.viteEnableBeta`, a `boolean`, and `VITE_API_URL` into `config.viteApiUrl`, a `URL`. [`PortableSource`](/docs/sources#the-sources-envapt-ships) takes any object, so `import.meta.env` type-checks with the `ImportMetaEnv` interface above or with Vite's own `vite/client` types. Binding the whole object puts every `VITE_` variable in the bundle, as [Which variables reach the bundle](#which-variables-reach-the-bundle) explains. If a key is missing, `getRequiredAll` throws when the module loads and lists every missing key (see [Required values](/docs/required-values)).
+
+## Which variables reach the bundle
+
+Vite exposes variables whose names start with `VITE_`, a prefix its `envPrefix` option sets, plus `MODE`, `BASE_URL`, `PROD`, `DEV`, and `SSR`. If your `.env` file holds `VITE_API_URL` and `API_SECRET`, only `VITE_API_URL` reaches the bundle. `Envapter.get('API_SECRET')` returns `undefined` in the browser, so a variable you forgot to prefix looks the same as one you forgot to set.
+
+`PROD`, `DEV`, and `SSR` are booleans. `PortableSource` stringifies them, so `Envapter.getBoolean('DEV', false)` works.
+
+<Callout type="warn">
+
+Whatever reaches `import.meta.env` ships in your client bundle, so anyone can read it. Keep secrets and server-side keys out of `VITE_` variables.
+
+</Callout>
+
+If you bind the whole `import.meta.env`, the bundle includes every `VITE_` variable in your `.env` files, including ones no code reads. Vite replaces a named read such as `import.meta.env.VITE_API_URL` with its literal value, so the bundle includes only that value. To put only the variables you read in the bundle, list them by name.
+
+```ts twoslash title="src/config.ts"
+// @filename: vite-env.d.ts
+interface ImportMetaEnv {
+    readonly VITE_API_URL: string;
+    readonly VITE_ENABLE_BETA: string;
+    readonly MODE: string;
+}
+interface ImportMeta {
+    readonly env: ImportMetaEnv;
+}
+// @filename: config.ts
+import { Converters, Envapter, PortableSource } from 'envapt';
+// ---cut---
+Envapter.useSource(
+    new PortableSource({
+        MODE: import.meta.env.MODE,
+        VITE_API_URL: import.meta.env.VITE_API_URL,
+        VITE_ENABLE_BETA: import.meta.env.VITE_ENABLE_BETA
+    })
+);
+
+export const apiUrl = Envapter.getRequired('VITE_API_URL', Converters.Url);
+```
+
+The object lists `MODE` because a source holds only the keys you give it, and [`Envapter.environment`](/docs/environment) reads `MODE`.
+
+## Environment
+
+`Envapter.environment` and helpers like `Envapter.isProduction` read `MODE`, the key envapt checks last among the [detection keys](/docs/environment). `vite build` sets `MODE` to `production`, and `vite build --mode staging` makes `Envapter.environment` `'staging'`. If the mode is one envapt doesn't recognize, `Envapter.environment` is `'development'`.
+
+`Envapter.environment` can disagree with Vite's own flags. `vite build --mode staging` leaves `import.meta.env.PROD` true, while `Envapter.isProduction` is false and `Envapter.isStaging` is true. Use the envapt helpers when you branch on staging.
+
+## Decorators
+
+The default `@Envapt` accessor decorators need your toolchain to compile them, and Vite 7 and Vite 8 differ here.
+
+- **Vite 7** compiles them when the `target` in your `tsconfig.json` is ES2020 or lower, or when there is no tsconfig. With ES2022 or newer, `vite build` stops with a parse error until you set the esbuild target, as the config below does.
+- **Vite 8** outputs them uncompiled even if you set `esbuild.target`, `build.target`, or `oxc.target`. Set `experimentalDecorators: true` in `tsconfig.json` and import from `envapt/legacy`, or read through `Envapter` without decorators.
+
+```ts twoslash title="vite.config.ts"
+// @filename: vite.d.ts
+declare module 'vite' {
+    export function defineConfig(config: { esbuild?: { target?: string } }): unknown;
+}
+// @filename: vite.config.ts
+import { defineConfig } from 'vite';
+// ---cut---
+export default defineConfig({
+    esbuild: { target: 'es2022' }
+});
+```
+
+The `esbuild.target` line is the whole fix on Vite 7. [Decorators](/docs/decorators) shows the field forms, and [Compatibility](/docs/compatibility#decorators-per-runtime) lists the legacy ones.

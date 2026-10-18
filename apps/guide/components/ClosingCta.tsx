@@ -11,7 +11,7 @@ export function ClosingCta(): ReactNode {
                     Read config from any source, fully typed.
                 </h2>
                 <p className="mb-7 text-lg text-fd-muted-foreground">
-                    Zero runtime dependencies. Zod/Valibot/Arktype validation.
+                    Install it, read your first value typed, and bind a source when you leave Node.
                 </p>
                 <div className="flex flex-wrap justify-center gap-3">
                     <BaseButton href="/docs/quick-start" variant="solid">

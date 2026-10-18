@@ -1,0 +1,91 @@
+---
+title: Environment
+description: Read the environment envapt detects from ENVIRONMENT, ENV, NODE_ENV, or MODE, and pin it yourself when a script or a test needs a fixed one.
+---
+
+You've written `process.env.NODE_ENV === 'production'` before. It reads one variable and compares one exact spelling, so `PRODUCTION` takes the other branch and logs nothing. It also finds nothing if `NODE_ENV` isn't set, and a Vite build exposes `MODE` instead.
+
+envapt checks several variables, ignores case, and resolves one of the environments in the table below. Detection works on every runtime once you've bound a [source](/docs/sources). On Node, Bun, and Deno the environment also determines which `.env` files load, as [.env files on Node](/docs/env-files) shows.
+
+## Detecting the environment
+
+envapt reads these variables in order and uses the first one that has a value:
+
+```txt
+ENVIRONMENT → ENV → NODE_ENV → MODE → development
+```
+
+The first variable with a value decides, even when its value is unrecognized. With `ENV=prod` and `NODE_ENV=production` both set, the result is `'development'`, because `ENV` comes first and `prod` matches no environment. Set `Envapter.debug = 'warn'` to log that fallback (see [Errors and debugging](/docs/errors)).
+
+An empty value counts as unset, so envapt checks the next variable. A whitespace-only value counts as unset only in [strict mode](/docs/required-values#strict-mode). `ENVIRONMENT_KEYS`, exported from `envapt`, is a readonly tuple of these variable names in this order, for tools that need to read the same variables.
+
+envapt detects the environment on the first read and keeps the result until the cache rebuilds or you pin one. A test that sets `process.env.NODE_ENV` after something has read `Envapter.environment` still sees the old value until then.
+
+envapt matches the value it found, ignoring case, against these environments:
+
+{/* prettier-ignore-start */}
+
+| Variable holds | `Envapter.environment` |
+| --- | --- |
+| `production` or `PRODUCTION` | `'production'` |
+| `staging` | `'staging'` |
+| `test` | `'test'` |
+| `development` | `'development'` |
+| anything else, such as `prod` | `'development'` |
+| no variable set | `'development'` |
+
+{/* prettier-ignore-end */}
+
+The variables envapt reads come from the bound [source](/docs/sources). On Node that is `process.env` plus your `.env` files. envapt picks which `.env` files to load before it reads any of them, so a `NODE_ENV` line inside `.env` doesn't change the files (see the [warning on .env files on Node](/docs/env-files#which-files-load)).
+
+In a Vite build, [`PortableSource(import.meta.env)`](/docs/sources#the-sources-envapt-ships) makes `MODE` available. envapt checks `MODE` last, so any variable earlier in that order wins over it ([Browser](/docs/browser) has the setup).
+
+If you read the environment on the portable build before binding a source, envapt throws `NoSourceBound` (307).
+
+## Branching on the environment
+
+`Envapter.isProduction`, `isStaging`, `isDevelopment`, and `isTest` are booleans for the common checks.
+
+```ts twoslash
+import { Envapter } from 'envapt';
+// ---cut---
+const logLevel = Envapter.isProduction ? 'warn' : 'debug';
+//    ^?
+```
+
+`logLevel` is the union `'warn' | 'debug'`. When each environment needs its own setting, type a record with `Environment` as its keys, one for each environment in the table above. If you omit one, TypeScript reports an error.
+
+```ts twoslash
+import { Envapter, type Environment } from 'envapt';
+// ---cut---
+const LOG_LEVELS: Record<Environment, 'debug' | 'info' | 'warn' | 'silent'> = {
+    development: 'debug',
+    staging: 'info',
+    production: 'warn',
+    test: 'silent'
+};
+
+export const logLevel = LOG_LEVELS[Envapter.environment];
+```
+
+## Pinning the environment
+
+A script that takes its mode from a flag can't rely on detection. A test that must always run as `'test'` can't rely on it either, whatever the shell sets. Assign `Envapter.environment` to pin it.
+
+```ts twoslash
+import { Envapter, Environment } from 'envapt';
+// ---cut---
+Envapter.environment = Environment.Staging;
+```
+
+A string such as `'production'` works too, matched ignoring case. If you assign a name envapt doesn't recognize, the environment becomes `'development'`. If you assign a value that isn't a string, envapt throws `InvalidUserDefinedConfig` (302).
+
+Assigning `Envapter.environment` rebuilds the [cache](/docs/sources#when-values-are-read), so on Node the `.env` files for the new environment load when you assign. After `import 'envapt/config'`, the first load has already written keys into `process.env`, and those keys win over the files the new environment loads ([Coming from dotenv](/docs/env-files#coming-from-dotenv)). Pinning changes nothing for them. A pin survives later cache rebuilds. Without a pin, a rebuild detects the environment again.
+
+<Callout type="tip">
+
+Pin it once, in a module your entry file imports before anything that reads config. Imports run before your module body, so a pin in the entry file's body runs after every imported module has loaded. If one of those modules reads the environment while it loads, it gets the old value. On the portable build you can pin before `useSource`, and the bind applies the pin.
+
+</Callout>
+
+On Node, `Envapter.resetPaths()` is the only way to remove a pin, and it also removes any `envPaths` and [profiles](/docs/env-files#profiles), the extra file paths you set per environment. On the portable build `resetPaths()` warns and does nothing, so a pin there changes only when you assign again.

@@ -1,13 +1,12 @@
 import { defaultCard, ogImage } from '@/lib/og/cards';
+import { OG_FILE } from '@/lib/og/images';
 
-import type { ImageResponse } from 'next/og';
+import type { ImageResponse } from 'takumi-js/response';
 
 export const dynamic = 'force-static';
 
-// The dynamic segment makes static export emit a real `.png` file; a plain `app/og/route.tsx`
-// emits an extension-less file served as the wrong content-type. The slug value is otherwise unused.
 export function generateStaticParams(): { slug: string[] }[] {
-    return [{ slug: ['image.png'] }];
+    return [{ slug: [OG_FILE] }];
 }
 
 export function GET(): ImageResponse {

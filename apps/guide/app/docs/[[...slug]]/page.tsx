@@ -1,13 +1,23 @@
+import { ComponentEmbed } from 'discord-component-embed/react';
+import { createRelativeLink } from 'fumadocs-ui/mdx';
 import { DocsBody, DocsDescription, DocsPage, DocsTitle } from 'fumadocs-ui/page';
 import { notFound } from 'next/navigation';
 
+import { JsonLd } from '@/components/JsonLd';
+import { PreviewCard } from '@/components/PreviewCard';
 import { TocControls } from '@/components/TocControls';
-import { canonicalUrl, SITE_NAME, SITE_URL } from '@/lib/site';
+import { docsPreview } from '@/lib/linkPreview';
+import { pageMetadata } from '@/lib/metadata';
+import { docsOgImage } from '@/lib/og/images';
 import { source } from '@/lib/source';
+import { docsJsonLd } from '@/lib/structuredData';
 import { getMDXComponents } from '@/mdx-components';
 
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
+
+// deeper levels list the signature, Parameters and Returns headings typedoc writes under every member
+const MAX_TOC_DEPTH = 3;
 
 export default async function Page(props: { params: Promise<{ slug?: string[] }> }): Promise<ReactNode> {
     const params = await props.params;
@@ -15,25 +25,22 @@ export default async function Page(props: { params: Promise<{ slug?: string[] }>
     if (!page) notFound();
 
     const MDXContent = page.data.body;
-    const structuredData = {
-        '@context': 'https://schema.org',
-        '@type': 'TechArticle',
-        headline: page.data.title,
-        description: page.data.description,
-        url: canonicalUrl(page.url),
-        isPartOf: { '@type': 'WebSite', name: SITE_NAME, url: SITE_URL }
-    };
+    const preview = await docsPreview(page);
 
     return (
-        <DocsPage toc={page.data.toc} full={page.data.full} tableOfContent={{ header: <TocControls /> }}>
-            <script
-                type="application/ld+json"
-                dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, '\\u003c') }}
-            />
+        <DocsPage
+            toc={page.data.toc.filter((item) => item.depth <= MAX_TOC_DEPTH)}
+            full={page.data.full}
+            tableOfContent={{ header: <TocControls /> }}
+        >
+            <ComponentEmbed>
+                <PreviewCard {...preview} />
+            </ComponentEmbed>
+            <JsonLd data={docsJsonLd(page)} />
             <DocsTitle>{page.data.title}</DocsTitle>
             <DocsDescription>{page.data.description}</DocsDescription>
             <DocsBody>
-                <MDXContent components={getMDXComponents()} />
+                <MDXContent components={getMDXComponents({ a: createRelativeLink(source, page) })} />
             </DocsBody>
         </DocsPage>
     );
@@ -47,17 +54,12 @@ export async function generateMetadata(props: { params: Promise<{ slug?: string[
     const params = await props.params;
     const page = source.getPage(params.slug);
     if (!page) notFound();
-    const url = canonicalUrl(page.url);
-    const slug = params.slug ?? [];
-    const ogImage = `/docs-og/${[...slug, 'image.png'].join('/')}`;
-    const markdownUrl = slug.length ? new URL(`/llms/docs/${slug.join('/')}`, SITE_URL).toString() : undefined;
-    return {
+    return pageMetadata({
         title: page.data.title,
         description: page.data.description,
-        alternates: {
-            canonical: url,
-            types: markdownUrl ? { 'text/markdown': markdownUrl } : undefined
-        },
-        openGraph: { type: 'article', siteName: SITE_NAME, url, locale: 'en_US', images: ogImage }
-    };
+        path: page.url,
+        image: docsOgImage(page.slugs, page.data.title),
+        type: 'article',
+        hasMarkdownCopy: true
+    });
 }

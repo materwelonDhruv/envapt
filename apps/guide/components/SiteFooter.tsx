@@ -19,10 +19,8 @@ const DOCS = [
 ];
 
 const MIGRATIONS = [
-    { label: 'Migration v4 to v5', href: '/docs/migration-v4-to-v5' },
-    { label: 'Migration v5 to v6', href: '/docs/migration-v5-to-v6' },
-    { label: 'Migration v6 to v7', href: '/docs/migration-v6-to-v7' },
-    { label: 'Migration v7 to v8', href: '/docs/migration-v7-to-v8' }
+    { label: 'Migration v8 to v9', href: '/docs/migration-v8-to-v9' },
+    { label: 'All migrations', href: '/docs/migrations' }
 ];
 
 export function SiteFooter(): ReactNode {
@@ -39,7 +37,7 @@ export function SiteFooter(): ReactNode {
                     </p>
                 </div>
                 <div className="grid grid-cols-2 gap-x-10 gap-y-8 sm:grid-cols-3">
-                    <nav className="flex flex-col gap-2.5 font-mono text-[13px]">
+                    <nav aria-label="Releases" className="flex flex-col gap-2.5 font-mono text-[13px]">
                         <p className="mb-1 text-xs tracking-wide text-fd-muted-foreground/70 uppercase">Releases</p>
                         {RELEASES.map((link) => (
                             <a
@@ -53,7 +51,7 @@ export function SiteFooter(): ReactNode {
                             </a>
                         ))}
                     </nav>
-                    <nav className="flex flex-col gap-2.5 font-mono text-[13px]">
+                    <nav aria-label="Docs" className="flex flex-col gap-2.5 font-mono text-[13px]">
                         <p className="mb-1 text-xs tracking-wide text-fd-muted-foreground/70 uppercase">Docs</p>
                         {DOCS.map((link) => (
                             <Link
@@ -65,7 +63,7 @@ export function SiteFooter(): ReactNode {
                             </Link>
                         ))}
                     </nav>
-                    <nav className="flex flex-col gap-2.5 font-mono text-[13px]">
+                    <nav aria-label="Migrations" className="flex flex-col gap-2.5 font-mono text-[13px]">
                         <p className="mb-1 text-xs tracking-wide text-fd-muted-foreground/70 uppercase">Migrations</p>
                         {MIGRATIONS.map((link) => (
                             <Link

@@ -1,0 +1,62 @@
+---
+title: Migration (v6 to v7)
+description: Moving from envapt v6 to v7. The default decorators are now TC39 Stage 3 accessors, and the legacy decorators move to envapt/legacy.
+---
+
+v7 changes the decorators. Everything else (the `Envapter` readers, converters, sources, and types) is unchanged and stays on `envapt`.
+
+## Decorators are now TC39 accessor decorators
+
+The default `@Envapt` and the sugar decorators are now TC39 Stage 3 accessor decorators. They don't need the `experimentalDecorators` flag. Bun and Deno run them from a `.ts` file directly, and Node runs them once you compile.
+
+Declare the field with the `accessor` keyword. A static field uses `static accessor x: T`. An instance field uses `accessor x!: T` with the definite-assignment `!`.
+
+```ts
+// v6 (legacy form)
+import { Envapt, Converters } from 'envapt';
+
+class Config {
+    @Envapt('PORT', { converter: Converters.Number, fallback: 3000 })
+    static readonly port: number;
+}
+
+// v7 default (accessor form, no experimentalDecorators)
+import { Envapt, Converters } from 'envapt';
+
+class Config {
+    @Envapt('PORT', { converter: Converters.Number, fallback: 3000 })
+    static accessor port: number;
+}
+```
+
+For an instance field, the change is from `declare readonly x: T` to `accessor x!: T`.
+
+## Keeping the legacy decorators
+
+The v6 decorators move to the `envapt/legacy` subpath, for code that can't switch to the accessor form yet. They keep the `static readonly` / `declare readonly` form and still need `experimentalDecorators`.
+
+```ts
+// keep the v6 behavior
+import { Envapt, Converters } from 'envapt/legacy';
+
+class Config {
+    @Envapt('PORT', { converter: Converters.Number, fallback: 3000 })
+    static readonly port: number;
+}
+```
+
+Only the decorators move. In v7, a module that imports decorators only from `envapt/legacy` must also `import 'envapt'` once so envapt binds `FileSource` on Node.
+
+## Decorated properties are read-only
+
+Assigning to a decorated property now throws `EnvaptError` with `InvalidUserDefinedConfig`. Before v7 the legacy decorator installed only a getter, so an assignment did nothing in sloppy mode and threw a native `TypeError` in strict mode. Both the accessor and legacy forms throw the clearer error in v7.
+
+## Decorated fields are typechecked
+
+TypeScript checks the decorated field's declared type against the converter's output. If the field can't hold the value, the compiler reports this error:
+
+```txt
+[envapt] field type must hold the converter output
+```
+
+A read with no fallback can be `null` in v7. A field that compiled as `static readonly port: number` for `@EnvNum('PORT')` on v6 now needs `number | null`. In the accessor form that's `static accessor port: number | null`. v8 changes that `null` to `undefined`, as [v7 to v8](/docs/migration-v7-to-v8) explains. This check applies to both the accessor and legacy decorators.

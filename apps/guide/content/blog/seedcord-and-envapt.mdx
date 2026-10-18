@@ -1,0 +1,194 @@
+---
+title: How seedcord uses envapt
+description: seedcord, my Discord bot framework, reads its config through envapt. Here is what that saves it on Node, on Workers, and in its CLI, and the bugs it took to get there.
+author: Dhruv
+date: '2026-10-18'
+updated: '2026-10-18'
+---
+
+[seedcord](https://github.com/seedcord/seedcord) is the Discord bot framework I'm building, and it reads its config through envapt. Its packages read their own keys, the CLI hands the environment to envapt before anything loads, and a bot built for Cloudflare Workers reads config with the same calls it uses on Node.
+
+envapt also started as a folder inside seedcord, so seedcord is the first thing I check whenever envapt changes. This post is what seedcord gets out of it today, and the bugs it took to get there.
+
+## Small reads, a lot less code
+
+seedcord is on envapt 9 now. It has no central config module. Each package reads what it needs, where it needs it.
+
+The read I use the most by far is the environment check:
+
+```ts
+// seedcord, packages/logger/src/levels.ts
+export function defaultLevel(): LogLevel {
+    if (Envapter.isDevelopment) return 'trace';
+    if (Envapter.isStaging) return 'debug';
+    return 'info';
+}
+```
+
+HMR, dev-only command registration, the log format (pretty in dev, JSON otherwise), and Mongo's TLS flag all branch on these getters. None of them look at `NODE_ENV` themselves. envapt checks `ENVIRONMENT`, `ENV`, `NODE_ENV`, and `MODE` in that order and ignores case, so a bot that sets any one of them gets the right log format.
+
+Everything else is a handful of single reads. The bot token goes through `Envapter.get('DISCORD_BOT_TOKEN')` into seedcord's own validator. The CLI's profiling flag is `Envapter.getBoolean('SEEDCORD_DEV_PROFILE', false)`. And the PR labeler script in the repo reads its whole CI context in one call:
+
+```ts twoslash
+import { Converters, Envapter } from 'envapt';
+// ---cut---
+Envapter.strict = true;
+
+const env = Envapter.getRequiredAll({
+    GITHUB_REPOSITORY: Converters.String,
+    PR_NUMBER: Converters.Number,
+    HEAD_SHA: Converters.String,
+    GITHUB_TOKEN: Converters.String
+});
+
+env.PR_NUMBER;
+//  ^?
+```
+
+That's copied straight out of `scripts/src/semver-label.ts`. It came through the v9 upgrade without a single change. If any of the four is missing, the script throws once with all the missing keys listed, so a broken workflow shows me every missing secret in one run. Pretty much what you want in CI.
+
+There are two decorated fields left in seedcord. The mock bot has a small `Vars extends Envapter` class for the Mongo URI, the database name, and the guild ids. `Bot` has one field for the token. Both use `envapt/legacy`.
+
+## What it replaced
+
+In July 2025 seedcord's config was one class called `Globals`, sitting on a folder at `src/core/utilities/envuments/`. That folder was two files based on Mason Rogers' [envuments](https://github.com/mason-rogers/envuments).
+
+```ts
+// seedcord, src/core/library/globals/Globals.ts, July 2025
+export class Globals extends Envuments {
+  @Env('BOT_TOKEN', undefined)
+  public static readonly botToken: string;
+
+  @Env('HEALTH_CHECK_PORT', '6956')
+  public static readonly healthCheckPort: number;
+
+  @Env('SHUTDOWN_IS_ENABLED', false, Boolean)
+  public static readonly shutdownIsEnabled: boolean;
+
+  // ...
+}
+```
+
+Look at `healthCheckPort`. The field says `number`. The fallback is the string `'6956'`. The decorator's converter defaulted to `String`. So the field held a string while TypeScript called it a number, and nothing checked one against the other.
+
+`botToken` was worse. With no converter passed, the decorator called `Envuments.get(key, String(fallback))`, and `String(undefined)` is `'undefined'`. A bot with no token set got a token that was the word "undefined" 💀.
+
+The number reader ended with `return (!isNaN(num) && num) || def;`. So `0` counted as missing and you got the fallback. Same bug as the `|| 3000` line at the top of my [first post](/blog/reading-typed-env).
+
+None of those can happen in seedcord now. A decorated field's type has to hold what its converter returns, a missing token comes back `undefined` with a type that says so, and `0` is a number like any other.
+
+I patched the worst of it in place in late July 2025. One of those fixes, seedcord PR #11, fixed a "bug where values are not set for newly loaded envs after `set envPaths`". Remember that one. It comes back. At the very end of July the folder became its own repo and envapt 1.0.0 went out, and by mid-August seedcord depended on `envapt ^2.2.8` from npm. So the first real user of envapt was the project it came out of.
+
+## Edge bots and binding a source
+
+seedcord also builds bots for Cloudflare Workers. Off Node, envapt reads from whatever source you bind. Since envapt got Workers support in June 2026, a read with nothing bound throws `NoSourceBound`, so a Worker deployed without its binding stops at the first read. The [v6 to v8 post](/blog/whats-new-v6-to-v8) goes into why v8 kept it that way.
+
+Which means seedcord has to bind it. The build writes this into every worker entry:
+
+```ts
+// seedcord, cli/seedcord/src/commands/build/builder/workerEntry.ts
+// envapt's workerd build throws on a read until something binds a source
+const BIND_ENV = `import { env } from 'cloudflare:workers';
+import { Envapter, PortableSource } from 'envapt';
+Envapter.useSource(new PortableSource(env));
+`;
+```
+
+A bot author never writes that. Their code calls `Envapter.get` the same way it does on Node.
+
+Tests use the same call. A test that needs production does `Envapter.useSource(new PortableSource({ ENVIRONMENT: 'production' }))`, and the HTTP tests `merge` `process.env` with a fake public key and token. envapt keeps its state at module level, so seedcord's shared vitest config also inlines it (`server.deps.inline: ['envapt', ...]`) and the tests bind a fresh source in setup.
+
+## The CLI sets the environment
+
+The seedcord CLI runs your bot through Vite, and the Vite mode has to match envapt's environment. So the CLI reads the mode from the shell before anything loads, checks it, and passes it to envapt. The checking half is in `viteMode.ts`:
+
+```ts twoslash
+import { ENVIRONMENT_KEYS, Environment } from 'envapt';
+// ---cut---
+// seedcord, cli/seedcord/src/core/viteMode.ts
+const MODES = Object.values(Environment);
+//    ^?
+
+function modeFromShell(): string | undefined {
+    return ENVIRONMENT_KEYS.map((key) => process.env[key]).find(Boolean);
+}
+```
+
+On 8.x this file had two workarounds for my own library. It kept a copy of envapt's key order, with a comment saying so. And `Environment` was a numeric enum back then, so getting the names out meant filtering out the reverse-mapped number keys and lowercasing the rest. v9 exports `ENVIRONMENT_KEYS` and stores the names as strings, and both workarounds went when seedcord moved over.
+
+It reads the shell only, without the `.env` files, on purpose. A bot's `.env` usually sets `ENV=development`, and that would override `seedcord build` running in production.
+
+The other half is one line in `ProjectLoader`:
+
+```ts
+Envapter.environment = mode;
+```
+
+Until mid-October, that line had a bug on envapt's side. On Node, setting `Envapter.environment` changed the environment, but if the `.env` files were already loaded for development, reads kept coming from `.env.development`. The `baseDir` and `envPaths` setters both reloaded the files. The `environment` setter never did. That `envPaths` fix from PR #11 back in July 2025 was this exact bug, on a different setter, fifteen months earlier 😭.
+
+This is where owning both projects pays off. The fix and the 8.2.4 release went into envapt that evening. Under an hour later, seedcord's peer range moved to 8.2.4, with a changeset that says the peer "now starts at 8.2.4, which reloads the `.env` files when the CLI sets the mode." The same commit added a test to `ProjectLoader.test.ts`. It writes `.env.test`, `.env.staging`, and `.env.production` with a different `PROBE` value in each, opens the project, and checks which value envapt reads.
+
+## I broke my own HMR
+
+It goes the other way too. envapt 5.2.0 started reading `NODE_ENV=test` as `Environment.Test`. Before that, `test` fell through to development. That change shipped in a minor, which it shouldn't have, so v6 wrote it down as a breaking change.
+
+seedcord skipped 5.2 and went from 5.0.3 straight to 6.0.0 in mid-June 2026. Every HMR gate in seedcord at that point looked like this:
+
+```ts
+if (!Envapter.isDevelopment) return; // HMR only in development
+```
+
+vitest sets `NODE_ENV=test`. So on 6.0.0, `isDevelopment` is false in every test run, and every one of those gates turns HMR off under vitest. The commit before the version bump, twelve seconds apart, is me fixing that:
+
+```diff
+- if (!Envapter.isDevelopment) return; // HMR only in development
++ if (!Envapter.isDevelopment && !Envapter.isTest) return;
+```
+
+That check is in about eight files in seedcord now. It's correct. Test is its own environment, and seedcord runs HMR in two of them. envapt's own 5.2.0 changelog even said `isDevelopment` stops being `true` under a test runner. I still walked into it.
+
+## Throwing seedcord's errors
+
+seedcord has its own error codes and messages, and when a bot is missing its token, the seedcord message says where to get one. In July 2026 I opened envapt issue #148 about it:
+
+> In seedcord, I require users to set some env vars in their file. But when they're missing, I need to throw a custom error. getRequired throws envapt's error, so I have to check for undefined on a plain get and throw which kinda defeats the purpose.
+
+I didn't find a good way to attach a custom error to a read, and closed it two days later. What shipped was smaller, `Envapter.has` in #151, so you check first and throw your own. seedcord's older HTTP engine on `main` does exactly that:
+
+```ts
+// seedcord main, packages/http/src/engine.ts
+if (!Envapter.has('DISCORD_PUBLIC_KEY'))
+    throw new SeedcordError(SeedcordErrorCode.ConfigMissingEnv, ['DISCORD_PUBLIC_KEY']);
+const publicKey = Envapter.getRequired('DISCORD_PUBLIC_KEY', Converters.String);
+```
+
+The token field on `Bot` did it another way on 8.x:
+
+```ts
+// seedcord, packages/gateway/src/bot/Bot.ts (envapt 8.x)
+@Envapt<string>('DISCORD_BOT_TOKEN', {
+    converter: (raw) => validateDiscordToken(raw)
+})
+declare public readonly botToken: string;
+```
+
+`validateDiscordToken` threw seedcord's missing-token error when `raw` was `undefined`. That worked on 8.x because envapt called a custom converter even when the variable wasn't set.
+
+v9 changed that. A custom converter takes the raw string and only runs when there is one. Without a fallback, a missing value comes back `undefined`, and the type says so:
+
+```ts twoslash
+import { Envapter } from 'envapt';
+// ---cut---
+const token = Envapter.getAs('DISCORD_BOT_TOKEN', (raw) => raw.trim());
+//    ^?
+```
+
+A decorated field with a custom converter and no fallback needs `string | undefined` for the same reason. So on v9 the converter on `Bot` never gets called for a missing token. seedcord's missing-token error moved to the same `has` check that `engine.ts` already did. My own breaking change, and my own framework was one of the first things it broke.
+
+## What seedcord doesn't touch
+
+Going through every branch, seedcord has no Standard Schema reads, no `${VAR}` templates, no profiles, no custom `Source`, no `envapt/config`, and no modern accessor decorators. The framework checks which environment it's in, reads a token and a few keys, and leaves the rest of the config to the bot.
+
+One more thing is moving the other way right now. Every seedcord `bot.ts` used to start with `Envapter.baseDir = resolve(import.meta.dirname, '..')` so envapt finds the `.env` next to the project. On the branch I'm working on, seedcord sets that itself on import, and a `baseDir` you set in `bot.ts` still wins.
+
+If you're still on 8.x, the [v8 to v9 migration guide](/docs/migration-v8-to-v9) has every breaking change, including the converter one above. And if you build something on envapt and run into a wall like these, open an issue on [GitHub](https://github.com/materwelonDhruv/envapt). Most of this post started as one.

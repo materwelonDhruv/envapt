@@ -1,0 +1,203 @@
+---
+title: Cloudflare Workers
+description: Read typed config from a Worker's vars and secrets by binding the Cloudflare env object once, in a config module that runs when the Worker loads.
+---
+
+Every `vars` entry and secret reaches a Worker as a property on `env`. If a handler reads `env.ORIGIN_URL` directly, it gets text and has to parse it into a URL itself. A JSON `vars` entry arrives as an object, and your code never checks its shape. Binding `env` to envapt once gives you typed values instead.
+
+The portable build that a Worker loads reads nothing until you [bind a source](/docs/sources#no-environment-source-is-bound). Wrangler resolves envapt's portable build through the `workerd` export condition, so the import itself needs no setup.
+
+## Bind env in a config module
+
+`cloudflare:workers` exports `env`, and you can read it at module scope. Put the bind and the reads in one `config.ts`. Every module that imports `config` reads after the bind. A module that calls [`Envapter.get`](/docs/envapter) directly can run before the bind and throw [`NoSourceBound`](/docs/errors), so read through `config` everywhere.
+
+```ts twoslash title="src/config.ts"
+// @lib: esnext
+/// <reference types="@cloudflare/workers-types" />
+// ---cut---
+import { env } from 'cloudflare:workers';
+import { Converters, Envapter, PortableSource } from 'envapt';
+
+Envapter.useSource(new PortableSource(env));
+
+const values = Envapter.getRequiredAll(
+    {
+        ORIGIN_URL: Converters.Url,
+        API_TOKEN: Converters.String
+    },
+    'camelCase'
+);
+
+export const config = {
+    ...values,
+    cacheTtl: Envapter.getAs('CACHE_TTL', Converters.Time, '1m')
+};
+```
+
+`ORIGIN_URL` is a plain `vars` entry and `API_TOKEN` is a secret, but both are properties of `env`, so one [`getRequiredAll`](/docs/required-values) call reads them. The `'camelCase'` argument turns them into `config.originUrl`, a `URL`, and `config.apiToken`. `cacheTtl` is optional, so it falls back to one minute when `CACHE_TTL` is unset.
+
+```ts twoslash title="src/index.ts"
+// @lib: esnext
+// @filename: config.ts
+/// <reference types="@cloudflare/workers-types" />
+import { env } from 'cloudflare:workers';
+import { Converters, Envapter, PortableSource } from 'envapt';
+
+Envapter.useSource(new PortableSource(env));
+
+const values = Envapter.getRequiredAll(
+    {
+        ORIGIN_URL: Converters.Url,
+        API_TOKEN: Converters.String
+    },
+    'camelCase'
+);
+
+export const config = {
+    ...values,
+    cacheTtl: Envapter.getAs('CACHE_TTL', Converters.Time, '1m')
+};
+// @filename: index.ts
+// ---cut---
+import { config } from './config';
+
+export default {
+    async fetch(request: Request): Promise<Response> {
+        if (request.headers.get('authorization') !== `Bearer ${config.apiToken}`) {
+            return new Response('Unauthorized', { status: 401 });
+        }
+        const { pathname, search } = new URL(request.url);
+        return fetch(new URL(pathname + search, config.originUrl), request);
+    }
+} satisfies ExportedHandler;
+```
+
+The handler only imports `config`, so no request converts or validates an env value. The `satisfies ExportedHandler` line and the `cloudflare:workers` import need Cloudflare's types, or TypeScript can't resolve them. Run `wrangler types` to generate them, or install `@cloudflare/workers-types` and add it to `types` in `tsconfig.json`.
+
+This shape has two costs. If `API_TOKEN` is unset, the config module throws `MissingEnvValue` and `wrangler dev` stops with this error:
+
+```txt
+Uncaught Error: EnvaptError [305]: Missing required environment variables: API_TOKEN.
+```
+
+The same throw can fail a deploy that goes out before the secret exists, because Cloudflare runs a Worker's top-level code when you deploy it and reports a throw there as a validation error (code 10021). [Required values](/docs/required-values) shows how to read the error. The second cost is that a running instance can keep the values it bound after a deploy, which [Reading fresh values](#reading-fresh-values-on-every-request) covers.
+
+<Callout type="warn">
+
+`useSource` sets state for the whole Worker instance, the isolate that serves many requests, so every request it serves shares the bound source. Keep per-request data, such as the `request` or a user id, out of the source.
+
+</Callout>
+
+## Where the values come from
+
+You declare `vars` and secrets in your Cloudflare config file. `src/index.ts` reads either form the same way.
+
+<Tabs items={['wrangler.jsonc', 'cloudflare.config.ts']}>
+<Tab value="wrangler.jsonc">
+
+```jsonc title="wrangler.jsonc"
+{
+    "name": "origin-proxy",
+    "main": "src/index.ts",
+    "compatibility_date": "2026-10-01",
+    "vars": {
+        "ENVIRONMENT": "production",
+        "ORIGIN_URL": "https://origin.example.com",
+        "CACHE_TTL": "5m",
+        "FEATURE_FLAGS": { "beta": true }
+    }
+}
+```
+
+`wrangler.toml` takes the same fields. Keep `API_TOKEN` out of the file. Store the production secret with this command:
+
+```sh
+wrangler secret put API_TOKEN
+```
+
+</Tab>
+<Tab value="cloudflare.config.ts">
+
+```ts title="cloudflare.config.ts"
+import { bindings, defineConfig } from 'cf/config';
+
+export default defineConfig({
+    worker: {
+        name: 'origin-proxy',
+        compatibilityDate: '2026-10-01',
+        entrypoint: 'src/index.ts',
+        env: {
+            ENVIRONMENT: bindings.text('production'),
+            ORIGIN_URL: bindings.text('https://origin.example.com'),
+            CACHE_TTL: bindings.text('5m'),
+            FEATURE_FLAGS: bindings.json({ beta: true }),
+            API_TOKEN: bindings.secret()
+        }
+    }
+});
+```
+
+`cloudflare.config.ts` is the typed config file for Cloudflare's `cf` CLI. Cloudflare says `cf` is in beta and its configuration can change before the stable release. Write a `vars` entry as `bindings.text()`, or as `bindings.json()` for a non-string value. `bindings.secret()` declares that the Worker requires `API_TOKEN` and carries no value. To upload secrets with a new version, pass `--secrets-file` to `cf deploy` ([Cloudflare's migration guide](https://developers.cloudflare.com/cf/wrangler/migrate/)).
+
+</Tab>
+</Tabs>
+
+Both forms read secrets from `.dev.vars` in local development, under `wrangler dev` and `cf dev`:
+
+```txt title=".dev.vars"
+API_TOKEN=local-dev-token
+ENVIRONMENT=development
+```
+
+Under `wrangler dev`, a key in `.dev.vars` replaces a `vars` entry of the same name, which is why `ENVIRONMENT` appears here too. `ENVIRONMENT` is the first of the [detection keys](/docs/environment). If none of those keys is set, `Envapter.environment` is `'development'`, so set `ENVIRONMENT` in your config file for production. Cloudflare's [environment variables](https://developers.cloudflare.com/workers/configuration/environment-variables/) docs explain per-environment `vars` and `wrangler secret bulk`.
+
+## JSON vars and resource bindings
+
+A JSON `vars` entry such as `FEATURE_FLAGS` above arrives on `env` as an object. [`PortableSource`](/docs/sources#the-sources-envapt-ships) stringifies it, and [`Converters.Json`](/docs/converters) parses that string back.
+
+```ts twoslash
+// @lib: esnext
+/// <reference types="@cloudflare/workers-types" />
+// ---cut---
+import { env } from 'cloudflare:workers';
+import { Converters, Envapter, PortableSource } from 'envapt';
+
+Envapter.useSource(new PortableSource(env));
+
+const flags = Envapter.getAs('FEATURE_FLAGS', Converters.Json); // { "beta": true } in vars
+//    ^?
+```
+
+`flags` is `JsonValue | undefined`, the type the converter gives any JSON. To check the shape, pass a [schema](/docs/standard-schema) to `getRequired` as the converter.
+
+A resource binding such as a KV namespace is a property of `env` as well. `PortableSource` runs it through `JSON.stringify`, so for a KV namespace `Envapter.get('CACHE')` returns `'{}'`. Read `vars` and secrets through envapt, and use bindings from `env` directly.
+
+## Reading fresh values on every request
+
+Cloudflare may keep a Worker instance running after a deploy that changes only bindings ([Cloudflare's note on bindings](https://developers.cloudflare.com/workers/runtime-apis/bindings/#making-changes-to-bindings)). A value bound at module scope keeps its old value until Cloudflare replaces the instance. To read the current `env` on every request, bind the `env` argument of the handler. Each bind rebuilds envapt's cache, so every request rebuilds it.
+
+```ts twoslash
+// @lib: esnext
+// @filename: env.d.ts
+interface Env {
+    ORIGIN_URL: string;
+}
+// @filename: index.ts
+/// <reference types="@cloudflare/workers-types" />
+// ---cut---
+import { Converters, Envapter, PortableSource } from 'envapt';
+
+export default {
+    async fetch(request: Request, env: Env): Promise<Response> {
+        Envapter.useSource(new PortableSource(env));
+        const origin = Envapter.getRequired('ORIGIN_URL', Converters.Url);
+        return fetch(new URL(new URL(request.url).pathname, origin), request);
+    }
+} satisfies ExportedHandler<Env>;
+```
+
+`PortableSource` accepts the `Env` interface because its constructor takes any object.
+
+## Decorators
+
+Wrangler's bundler compiles the default `@Envapt` accessor decorators, so they run on Workers. A decorated field reads its variable on first access. If any code reads the field before your bind runs, that read throws `NoSourceBound`. [Compatibility](/docs/compatibility#decorators-per-runtime) lists the legacy form.

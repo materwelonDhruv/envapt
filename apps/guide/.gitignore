@@ -4,3 +4,4 @@ out/
 .wrangler/
 next-env.d.ts
 *.tsbuildinfo
+content/docs/api/reference/
