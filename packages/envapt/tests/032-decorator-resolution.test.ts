@@ -36,7 +36,6 @@ describe('decorator value resolution', () => {
             const decorate = createAccessorDecorator('SOME_KEY', {
                 fallback: undefined,
                 converter: undefined,
-                hasFallback: false,
                 required: false,
                 schema: undefined
             });

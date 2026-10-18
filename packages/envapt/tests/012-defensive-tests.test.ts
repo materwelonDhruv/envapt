@@ -5,27 +5,6 @@ import { Envapter } from '../src/engine/Envapter';
 import { TemplateResolver } from '../src/engine/TemplateResolver';
 import { EnvaptError, EnvaptErrorCodes } from '../src/infra/Error';
 
-import type { EnvapterService } from '../src/types/Env';
-
-class StubEnvService implements EnvapterService {
-    constructor(
-        private readonly values: Record<string, string | undefined>,
-        private readonly strict = false
-    ) {}
-
-    getRaw(key: string): string | undefined {
-        return this.values[key];
-    }
-
-    get(key: string): string | undefined {
-        return this.values[key];
-    }
-
-    isStrict(): boolean {
-        return this.strict;
-    }
-}
-
 const createMatchResult = (...parts: (string | undefined)[]): RegExpMatchArray => {
     const result = parts as unknown as RegExpMatchArray;
     result.index = 0;
@@ -72,12 +51,11 @@ describe('Defensive tests', () => {
 
     describe('Converter and template-resolver defensive code paths', () => {
         it('preserves unresolved templates when nested resolution produces placeholders', () => {
-            const resolver = new TemplateResolver(
-                new StubEnvService({
-                    TEMPLATE_ONE: '${TEMPLATE_TWO}',
-                    TEMPLATE_TWO: '${TEMPLATE_THREE}'
-                })
-            );
+            const values: Record<string, string> = {
+                TEMPLATE_ONE: '${TEMPLATE_TWO}',
+                TEMPLATE_TWO: '${TEMPLATE_THREE}'
+            };
+            const resolver = new TemplateResolver((key) => values[key]);
 
             const resolved = resolver.resolveTemplate('TEMPLATE_ONE', '${TEMPLATE_TWO}');
             expect(resolved).to.equal('${TEMPLATE_TWO}');

@@ -64,6 +64,17 @@ describe('Converters.Time — time-string fallbacks', () => {
                 .with.property('code', EnvaptErrorCodes.MalformedTimeFallback);
         });
 
+        it('throws MalformedTimeFallback even when the value is set', () => {
+            // TEST_TIME_SECONDS=5s in the fixture
+            expect(() => Envapter.getUsing('TEST_TIME_SECONDS', 'time', 'bogus' as unknown as TimeFallback))
+                .to.throw(EnvaptError)
+                .with.property('code', EnvaptErrorCodes.MalformedTimeFallback);
+            // TEST_ARRAY_TIME=5ms,5s,5m,5h in the fixture
+            expect(() => Envapter.getUsing('TEST_ARRAY_TIME', Converters.array({ of: 'time' }), ['bogus' as never]))
+                .to.throw(EnvaptError)
+                .with.property('code', EnvaptErrorCodes.MalformedTimeFallback);
+        });
+
         it('throws MalformedTimeFallback for a unit-less time-string', () => {
             class UnitLessFallback extends Envapter {
                 // TimeFallback rejects a string without a unit

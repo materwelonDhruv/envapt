@@ -3,12 +3,10 @@ import { state } from '../core/state';
 import { debugWarn } from '../infra/Debug';
 import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
 
-import type { EnvapterService } from '../types/Env';
-
 export class TemplateResolver {
     private readonly TEMPLATE_REGEX = /\${\w*}/g;
 
-    constructor(private readonly envService: EnvapterService) {}
+    constructor(private readonly getRaw: (key: string) => string | undefined) {}
 
     resolveTemplate(key: string, value: string, stack: Set<string> = new Set<string>()): string {
         stack.add(key);
@@ -19,7 +17,7 @@ export class TemplateResolver {
 
             if (stack.has(variable)) return template; // cycle, preserve
 
-            const raw = this.envService.getRaw(variable);
+            const raw = this.getRaw(variable);
             if (raw === undefined || isMissing(raw)) {
                 if (strict) {
                     throw new EnvaptError(

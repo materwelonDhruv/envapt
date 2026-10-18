@@ -182,7 +182,7 @@ Envapter.getRequired('PORT', z.coerce.number().int().min(1024).max(65535)); // n
 
 Two constraints: validation is **sync-only** (an async `validate` throws), and a **fallback is returned as-is and is NOT passed through the schema**. Only a present env value is validated.
 
-`getRequiredAll` takes a schema for any field, mixed with converters. Missing keys throw one `MissingEnvValue` first, before any schema runs. A schema `.default()` never applies there. After that envapt reads every field and throws one `InvalidEnvValue` for all the bad values: a schema or converter that rejects its value, a bad array element, or a custom parser or schema that throws. Each issue's `path` starts with its env key. The error message lists only the keys, since an issue message can quote a secret value.
+`getRequiredAll` takes a schema for any field, mixed with converters. A bad converter in the spec throws first. Missing keys then throw one `MissingEnvValue`, before any schema runs. A schema `.default()` never applies there. After that envapt reads every field and throws one `InvalidEnvValue` for all the bad values: a schema or converter that rejects its value, a bad array element, or a custom parser or schema that throws. Each issue's `path` starts with its env key. The error message lists only the keys, since an issue message can quote a secret value.
 
 ```ts
 const db = Envapter.getRequiredAll(

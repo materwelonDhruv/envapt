@@ -28,11 +28,11 @@ Read the module before you write a parallel one:
 | --- | --- |
 | "is this value missing", "was a fallback passed" | `core/missing.ts` (`isMissing`, `hasFallback`) |
 | a key or key list resolved to a value | `core/engine.ts` (`resolveKeyInput`, `findPresent`) |
-| a required read, or a schema read with a fallback | `core/engine.ts` (`readRequired`, `readSchema`) |
+| a converter or schema read, with a fallback or required | `core/engine.ts` (`readOptional`, `readRequired`, `readRequiredAll`) |
 | `${VAR}` expansion | `engine/TemplateResolver.ts` |
 | a runtime type guard or config check | `engine/Validators.ts` (`Validator`) |
-| a string turned into a typed value | `converters/` (`Converters`, `BuiltInConverters`, `ValueConverter`) |
-| a Standard Schema run | `ValueConverter.readValidated` (one key) or `readSpecField` (a `getRequiredAll` field) |
+| a string turned into a typed value | `converters/` (`Converters`, `BuiltInConverters`, `createField`) |
+| a Standard Schema run | `createField(schema)`, then `convert` or `check` on the field |
 | an error | `infra/Error.ts` (`EnvaptError` + a code from `EnvaptErrorCodes`) |
 | a missing-value or validation error | `infra/failures.ts` (`missingValue`, `missingValues`, `validationFailed`) |
 | a debug line | `infra/Debug.ts` (`debugWarn`, `debugVerbose`) |

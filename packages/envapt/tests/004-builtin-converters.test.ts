@@ -116,6 +116,10 @@ describe('Built-in Converters', () => {
         it('should use fallback for invalid JSON', () => {
             expect(JsonTest.jsonInvalid).to.deep.equal({ error: 'fallback' });
         });
+
+        it('returns the JSON value null over the fallback', () => {
+            expect(Envapter.getUsing('TEST_JSON_NULL', Converters.Json, { error: 'fallback' })).to.equal(null);
+        });
     });
 
     describe('url converter', () => {

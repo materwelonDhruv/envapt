@@ -1,6 +1,6 @@
-import { BuiltInConverters, ValueConverter } from '../converters';
+import { createField } from '../converters';
 import { ENV_KEYS, Environment, firstEnvKeyValue, parseEnvironment } from './Environment';
-import { isMissing } from './missing';
+import { hasFallback, isMissing } from './missing';
 import { resolveEffectivePaths } from './paths';
 import { cache, state } from './state';
 import { TemplateResolver } from '../engine/TemplateResolver';
@@ -8,18 +8,12 @@ import { Validator } from '../engine/Validators';
 import { debugVerbose, debugWarn } from '../infra/Debug';
 import { loadDotenv } from '../infra/Dotenv';
 import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
-import { missingValue, validationFailed } from '../infra/failures';
+import { missingValue, missingValues, validationFailed } from '../infra/failures';
+import { recase } from '../infra/recase';
 
-import type { ValidationCode } from '../infra/failures';
+import type { Field, FieldSpec } from '../converters';
 import type { StandardSchemaV1 } from '../infra/StandardSchema';
-import type {
-    AdvancedConverterReturn,
-    EnvKeyInput,
-    InferConverterReturnType,
-    PresentValue,
-    RequiredConverter
-} from '../types';
-import type { EnvapterService } from '../types/Env';
+import type { AdvancedConverterReturn, EnvKeyInput, InferConverterReturnType, KeyCasing, PresentValue } from '../types';
 
 function toKeyList(keyInput: EnvKeyInput): readonly string[] {
     const keys = (Array.isArray(keyInput) ? keyInput : [keyInput]) as readonly string[];
@@ -54,33 +48,66 @@ export function resolveKeyInput(keyInput: EnvKeyInput): { key: string; value: st
     return firstPresent ?? { key: normalizedKeys[0] as string, value: undefined };
 }
 
-export function findPresent(keyInput: EnvKeyInput): PresentValue | undefined {
+function lookup(keyInput: EnvKeyInput): { key: string; value: string | undefined } {
     const { key, value } = resolveKeyInput(keyInput);
-    if (value === undefined || isMissing(value)) return undefined;
+    if (value === undefined || isMissing(value)) return { key, value: undefined };
     return { key, value: templateResolver.resolveTemplate(key, value) };
 }
 
-export function readRequired(keyInput: EnvKeyInput, field: RequiredConverter | StandardSchemaV1): unknown {
+export function findPresent(keyInput: EnvKeyInput): PresentValue | undefined {
+    const { key, value } = lookup(keyInput);
+    return value === undefined ? undefined : { key, value };
+}
+
+export function readOptional(keyInput: EnvKeyInput, spec: FieldSpec | undefined, fallback: unknown): unknown {
+    const field = createField(spec, fallback);
+    const { key, value } = lookup(keyInput);
+    if (value === undefined) {
+        debugWarn(`${key} is missing or empty${hasFallback(fallback) ? ', using the fallback' : ''}`);
+        return field.fallback;
+    }
+    return field.convert({ key, value });
+}
+
+export function readRequired(keyInput: EnvKeyInput, spec: FieldSpec | undefined): unknown {
+    const field = createField(spec);
     const present = findPresent(keyInput);
     if (present === undefined) throw missingValue(keyInput);
-    return valueOrThrow(EnvaptErrorCodes.InvalidEnvValue, present.key, valueConverter.readSpecField(present, field));
-}
-
-export function readSchema(keyInput: EnvKeyInput, schema: StandardSchemaV1, fallback: unknown): unknown {
-    // readPrimitive logs the missing-value warning
-    const value = readPrimitive(keyInput, 'string');
-    if (value === undefined) return fallback;
-    const { key } = resolveKeyInput(keyInput);
-    return valueOrThrow(
-        EnvaptErrorCodes.SchemaValidationFailed,
-        key,
-        valueConverter.readValidated({ key, value }, schema)
-    );
-}
-
-function valueOrThrow(code: ValidationCode, key: string, outcome: StandardSchemaV1.Result<unknown>): unknown {
-    if (outcome.issues !== undefined) throw validationFailed(code, [key], outcome.issues);
+    const outcome = field.check(present);
+    if (outcome.issues !== undefined) {
+        throw validationFailed(EnvaptErrorCodes.InvalidEnvValue, [present.key], outcome.issues);
+    }
     return outcome.value;
+}
+
+export function readRequiredAll(
+    spec: Record<string, FieldSpec>,
+    casing: KeyCasing | undefined
+): Record<string, unknown> {
+    const fields = Object.entries(spec).map(([key, entry]) => ({ key, field: createField(entry) }));
+    const missing: string[] = [];
+    const reads: { present: PresentValue; field: Field }[] = [];
+    for (const { key, field } of fields) {
+        const present = findPresent(key);
+        if (present === undefined) missing.push(key);
+        else reads.push({ present, field });
+    }
+    if (missing.length > 0) throw missingValues(missing);
+
+    const result: Record<string, unknown> = {};
+    const failedKeys: string[] = [];
+    const issues: StandardSchemaV1.Issue[] = [];
+    for (const { present, field } of reads) {
+        const outcome = field.check(present);
+        if (outcome.issues === undefined) {
+            result[recase(present.key, casing)] = outcome.value;
+        } else {
+            failedKeys.push(present.key);
+            issues.push(...outcome.issues);
+        }
+    }
+    if (failedKeys.length > 0) throw validationFailed(EnvaptErrorCodes.InvalidEnvValue, failedKeys, issues);
+    return result;
 }
 
 function ensureLoaded(): Map<string, unknown> {
@@ -181,14 +208,7 @@ export function determineEnvironment(): void {
     state.environment = parsed;
 }
 
-// arrows because readPrimitive reads templateResolver, which is assigned below
-const envService: EnvapterService = {
-    getRaw: (key) => resolveKeyInput(key).value,
-    get: (key, fallback) => readPrimitive(key, 'string', fallback)
-};
-
-const templateResolver: TemplateResolver = new TemplateResolver(envService);
-export const valueConverter: ValueConverter = new ValueConverter(envService);
+const templateResolver: TemplateResolver = new TemplateResolver((key) => resolveKeyInput(key).value);
 
 type PrimitiveToken = 'string' | 'number' | 'boolean' | 'bigint';
 
@@ -197,29 +217,6 @@ export function readPrimitive<
     TToken extends PrimitiveToken,
     TFallback extends InferConverterReturnType<TToken> | undefined = undefined
 >(key: EnvKeyInput, type: TToken, fallback?: TFallback): AdvancedConverterReturn<TToken, TFallback>;
-export function readPrimitive(
-    key: EnvKeyInput,
-    type: PrimitiveToken,
-    fallback?: InferConverterReturnType<PrimitiveToken>
-): unknown {
-    const { key: resolvedKey, value } = resolveKeyInput(key);
-    if (isMissing(value)) {
-        if (fallback !== undefined) debugWarn(`${resolvedKey} is missing or empty, using fallback ${String(fallback)}`);
-        else debugWarn(`${resolvedKey} is missing or empty`);
-        return fallback;
-    }
-
-    const parsed = templateResolver.resolveTemplate(resolvedKey, String(value));
-
-    const converted = BuiltInConverters.getConverter(type)(parsed);
-
-    if (converted === undefined) {
-        // leave the value out because env values can be secrets
-        debugVerbose(
-            `could not convert ${resolvedKey} as ${type}${fallback !== undefined ? ', using the fallback' : ''}`
-        );
-        return fallback;
-    }
-
-    return converted;
+export function readPrimitive(key: EnvKeyInput, type: PrimitiveToken, fallback?: unknown): unknown {
+    return readOptional(key, type, fallback);
 }

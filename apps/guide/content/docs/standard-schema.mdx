@@ -101,7 +101,7 @@ function loadDatabaseConfig() {
 
 An issue message can quote the raw value, and that value may be a secret like the password inside `DATABASE_URL`. That's why the error message lists only the failed keys, and why the sample logs each issue's `path` and leaves `issue.message` out.
 
-Missing keys are checked first and throw one `MissingEnvValue` before any schema runs. A schema default such as zod's `.default()` never applies here. Use `getUsing` with a fallback for an optional value.
+A bad converter in the spec throws first. Missing keys then throw one `MissingEnvValue`, before any schema runs. A schema default such as zod's `.default()` never applies here. Use `getUsing` with a fallback for an optional value.
 
 ## What throws
 

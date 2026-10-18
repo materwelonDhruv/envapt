@@ -13,7 +13,6 @@ function sugar<TFallback>(
     return createPropertyDecorator<TFallback>(key, {
         converter,
         fallback,
-        hasFallback: fallback !== undefined,
         required: false,
         schema: undefined
     }) as EnvaptFieldDecorator<TFallback>;

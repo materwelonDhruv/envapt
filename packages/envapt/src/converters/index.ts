@@ -1,5 +1,6 @@
 export { Converters } from './Converters';
 export { BuiltInConverters } from './BuiltInConverters';
-export { ValueConverter } from './ValueConverter';
+export { createField } from './Field';
 
 export type { ArrayOf, ConverterToken } from './Converters';
+export type { Field, FieldSpec } from './Field';

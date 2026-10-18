@@ -1,14 +1,12 @@
-import { Converters } from '../converters';
-import { readRequired, readSchema, valueConverter } from '../core/engine';
+import { readOptional, readRequired } from '../core/engine';
 import { cache } from '../core/state';
 
 import type { StandardSchemaV1 } from '../infra/StandardSchema';
-import type { EnvaptConverter, EnvKeyInput, RequiredConverter } from '../types';
+import type { EnvaptConverter, EnvKeyInput } from '../types';
 
 export interface DecoratorConfig<TFallback> {
     fallback: TFallback | undefined;
     converter: EnvaptConverter<TFallback> | undefined;
-    hasFallback: boolean;
     required: boolean;
     schema: StandardSchemaV1 | undefined;
 }
@@ -31,20 +29,14 @@ export function resolveDecoratorValue<TFallback>(
     config: DecoratorConfig<TFallback>,
     cacheKey: string
 ): TFallback | undefined {
-    const { fallback, converter, hasFallback, required, schema } = config;
+    const { fallback, converter, required, schema } = config;
 
     // has() because a resolved value can be undefined
     if (cache.has(cacheKey)) return cache.get(cacheKey) as TFallback | undefined;
 
-    let value: TFallback | undefined;
-    if (required) {
-        value = readRequired(key, schema ?? ((converter ?? Converters.String) as RequiredConverter)) as TFallback;
-    } else if (schema !== undefined) {
-        value = readSchema(key, schema, fallback) as TFallback;
-    } else {
-        value = valueConverter.convertValue(key, fallback, converter, hasFallback);
-    }
+    const field = schema ?? converter;
+    const value = required ? readRequired(key, field) : readOptional(key, field, fallback);
 
     cache.set(cacheKey, value);
-    return value;
+    return value as TFallback | undefined;
 }

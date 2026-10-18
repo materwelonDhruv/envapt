@@ -23,6 +23,25 @@ describe('Runtime Validation', () => {
                 .with.property('code', EnvaptErrorCodes.InvalidBuiltInConverter);
         });
 
+        it('throws InvalidBuiltInConverter for a mistyped converter even when the key is unset', () => {
+            // cast past the type to reach the runtime check
+            const typo = 'nmber' as never;
+            for (const read of [
+                () => Envapter.getUsing('NEVER_SET_KEY', typo),
+                () => Envapter.getRequired('NEVER_SET_KEY', typo),
+                () => Envapter.getRequiredAll({ NEVER_SET_KEY: typo })
+            ]) {
+                expect(read).to.throw(EnvaptError).with.property('code', EnvaptErrorCodes.InvalidBuiltInConverter);
+            }
+        });
+
+        it('throws FallbackConverterTypeMismatch for a primitive reader given the wrong fallback type', () => {
+            // cast past the type to reach the runtime check that JS callers hit
+            expect(() => Envapter.getNumber('NEVER_SET_KEY', 'eighty' as never))
+                .to.throw(EnvaptError)
+                .with.property('code', EnvaptErrorCodes.FallbackConverterTypeMismatch);
+        });
+
         it('throws InvalidCustomConverter for a converter that is neither a token nor a function', () => {
             // cast past the type to reach the runtime check
             expect(() => Envapter.getUsing('VAR_IN_EXTRA_FILE', 42 as never))

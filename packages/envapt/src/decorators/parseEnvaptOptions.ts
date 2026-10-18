@@ -59,5 +59,5 @@ export function parseEnvaptOptions<TFallback>(options: unknown): DecoratorConfig
         }
     }
 
-    return { fallback, converter, hasFallback: hasFallback(fallback), required, schema };
+    return { fallback, converter, required, schema };
 }

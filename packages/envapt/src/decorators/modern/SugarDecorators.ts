@@ -14,7 +14,6 @@ function sugar<TFallback>(
     return createAccessorDecorator<TFallback>(key, {
         converter,
         fallback,
-        hasFallback: fallback !== undefined,
         required: false,
         schema: undefined
     }) as EnvaptAccessorDecorator<TFallback>;
