@@ -15,32 +15,19 @@ const nodeExists = (path: string): boolean => existsSync(path);
 describe('Runtime Validation', () => {
     beforeAll(() => (Envapter.envPaths = resolve(import.meta.dirname, '.env.extra')));
 
-    describe('Built-in converter validation', () => {
-        it('should throw for invalid built-in converter types', () => {
-            // 'array' stopped being a scalar token in v5
-            const invalidTypes = ['invalid', 'str', 'num', 'array'];
-
-            const testFunction = (type: string) => () => Validator.builtInConverter(type);
-
-            invalidTypes.forEach((type) => {
-                expect(testFunction(type))
-                    .to.throw(EnvaptError)
-                    .with.property('code', EnvaptErrorCodes.InvalidBuiltInConverter);
-            });
+    describe('converter validation', () => {
+        it('throws InvalidBuiltInConverter with the valid tokens for a mistyped token', () => {
+            // @ts-expect-error a mistyped token
+            expect(() => Envapter.getUsing('VAR_IN_EXTRA_FILE', 'nmber'))
+                .to.throw(EnvaptError, 'Valid types are: string,number')
+                .with.property('code', EnvaptErrorCodes.InvalidBuiltInConverter);
         });
 
-        it('should throw for non-string types', () => {
-            const nonStringTypes = [
-                { value: 123, expectedCode: EnvaptErrorCodes.InvalidConverterType },
-                { value: {}, expectedCode: EnvaptErrorCodes.InvalidConverterType },
-                { value: null, expectedCode: EnvaptErrorCodes.InvalidConverterType }
-            ];
-
-            const testFunction = (value: unknown) => () => Validator.builtInConverter(value);
-
-            nonStringTypes.forEach(({ value, expectedCode }) => {
-                expect(testFunction(value)).to.throw(EnvaptError).with.property('code', expectedCode);
-            });
+        it('throws InvalidCustomConverter for a converter that is neither a token nor a function', () => {
+            // cast past the type to reach the runtime check
+            expect(() => Envapter.getUsing('VAR_IN_EXTRA_FILE', 42 as never))
+                .to.throw(EnvaptError)
+                .with.property('code', EnvaptErrorCodes.InvalidCustomConverter);
         });
     });
 
@@ -97,20 +84,6 @@ describe('Runtime Validation', () => {
 
         it('should return undefined when ArrayOf is used without fallback for missing env var', () => {
             expect(FallbackTests.noFallbackArray).to.be.undefined;
-        });
-    });
-
-    describe('Custom converter validation', () => {
-        class CustomConverterTests {
-            // @ts-expect-error Invalid custom converter type
-            @Envapt('CUSTOM_CONVERTER_VAR', { converter: 'lol' })
-            static readonly customConverter: string;
-        }
-
-        it('should throw on invalid passed converter', () => {
-            expect(() => CustomConverterTests.customConverter)
-                .to.throw(EnvaptError)
-                .with.property('code', EnvaptErrorCodes.InvalidCustomConverter);
         });
     });
 

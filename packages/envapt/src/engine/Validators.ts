@@ -3,7 +3,7 @@ import { isArrayOf } from '../converters/Converters';
 import { ListOfBuiltInConverters, BuiltInConverterTypeCheckers } from '../converters/ListOfBuiltInConverters';
 import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
 
-import type { ArrayOf, ConverterToken } from '../converters/Converters';
+import type { ArrayOf } from '../converters/Converters';
 import type { EnvFileOptions } from '../infra/Dotenv';
 import type { StandardSchemaV1 } from '../infra/StandardSchema';
 import type { BuiltInConverter, ConverterFunction, EnvaptConverter, FileApiMode } from '../types';
@@ -68,6 +68,12 @@ export class Validator {
         converter: EnvaptConverter<TFallback>
     ): asserts converter is ConverterFunction<TFallback> {
         Validator.rejectNonConverter(converter);
+        if (typeof converter === 'string') {
+            throw new EnvaptError(
+                EnvaptErrorCodes.InvalidBuiltInConverter,
+                `"${converter}" is not a valid converter type. Valid types are: ${ListOfBuiltInConverters.join(',')}`
+            );
+        }
         if (typeof converter !== 'function') {
             throw new EnvaptError(
                 EnvaptErrorCodes.InvalidCustomConverter,
@@ -100,19 +106,6 @@ export class Validator {
             throw new EnvaptError(
                 EnvaptErrorCodes.InvalidArrayConverterType,
                 `ArrayOf<...> element ("of") must be a built-in scalar token or a function, got ${isSchema ? 'a Standard Schema' : typeof elementOf}`
-            );
-        }
-    }
-
-    static builtInConverter(value: unknown): asserts value is BuiltInConverter {
-        if (typeof value !== 'string') {
-            throw new EnvaptError(EnvaptErrorCodes.InvalidConverterType, `Expected string, got ${typeof value}`);
-        }
-
-        if (!ListOfBuiltInConverters.includes(value as ConverterToken)) {
-            throw new EnvaptError(
-                EnvaptErrorCodes.InvalidBuiltInConverter,
-                `"${value}" is not a valid converter type. Valid types are: ${ListOfBuiltInConverters.join(',')}`
             );
         }
     }

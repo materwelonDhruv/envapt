@@ -9,8 +9,6 @@ export const EnvaptErrorCodes = {
     // Fallback related errors
     /** Thrown when an invalid fallback value is provided */
     InvalidFallback: 101,
-    /** Thrown when fallback value type doesn't match expected converter type */
-    InvalidFallbackType: 102,
     /** Thrown when array fallback contains elements of wrong type */
     ArrayFallbackElementTypeMismatch: 103,
     /** Thrown when fallback type doesn't match the specified converter */
@@ -21,12 +19,10 @@ export const EnvaptErrorCodes = {
     // Converter related errors
     /** Thrown when invalid array converter configuration is provided */
     InvalidArrayConverterType: 201,
-    /** Thrown when an invalid built-in converter is specified */
+    /** Thrown when a converter string is not one of the built-in tokens */
     InvalidBuiltInConverter: 202,
-    /** Thrown when a custom converter is not a function */
+    /** Thrown when a converter is neither a built-in token nor a function */
     InvalidCustomConverter: 203,
-    /** Thrown when converter type is not recognized */
-    InvalidConverterType: 204,
     /** Thrown when an array element fails to convert to the configured element type */
     ArrayElementConversionFailed: 206,
     /** Thrown under strict mode when an array element is empty or whitespace only */

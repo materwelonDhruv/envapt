@@ -381,7 +381,7 @@ describe('Required reads (v8)', () => {
         it('still throws a spec mistake on its own, outside the aggregated error', () => {
             // cast past the type to reach the runtime check on an unknown token
             const e = thrownBy(() => Envapter.getRequiredAll({ SET_VALUE: 'not-a-token' as never }));
-            expect(e.code).to.equal(EnvaptErrorCodes.InvalidCustomConverter);
+            expect(e.code).to.equal(EnvaptErrorCodes.InvalidBuiltInConverter);
         });
 
         it('lists only the failed keys in the message, since a validator can echo a secret value', () => {

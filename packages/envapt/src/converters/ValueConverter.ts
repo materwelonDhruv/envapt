@@ -51,8 +51,6 @@ export class ValueConverter {
         resolvedConverter: BuiltInConverter,
         hasFallback: boolean
     ): TFallback | undefined {
-        Validator.builtInConverter(resolvedConverter);
-
         if (hasFallback) {
             Validator.validateBuiltInConverterFallback(resolvedConverter, fallback);
         }
