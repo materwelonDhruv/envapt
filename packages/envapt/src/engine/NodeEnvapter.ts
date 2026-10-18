@@ -110,8 +110,8 @@ export class NodeEnvapter extends Envapter {
      * @example
      * ```ts
      * Envapter.configureProfiles({
-     *   [Environment.Staging]: { paths: 'config/staging.env' },
-     *   [Environment.Production]: { paths: ['config/prod.env', 'secrets/prod.env'] }
+     *   staging: { paths: 'config/staging.env' },
+     *   production: { paths: ['config/prod.env', 'secrets/prod.env'] }
      * });
      * ```
      * @see {@link https://envapt.materwelon.dev/docs/environment#custom-profiles}
@@ -123,9 +123,9 @@ export class NodeEnvapter extends Envapter {
     }
 
     /**
-     * Reset path resolution to defaults. Clears any `Envapter.configureProfiles` call, any explicit
-     * `Envapter.envPaths` assignment, and any environment set through `Envapter.environment`. The next read
-     * detects the environment from the env vars again and loads the pure dotenv-flow cascade.
+     * Clears any `Envapter.configureProfiles` call, any explicit `Envapter.envPaths` assignment, and any
+     * environment set through `Envapter.environment`. `Envapter.baseDir` keeps its value. The next read detects
+     * the environment from the env vars again and loads the pure dotenv-flow cascade.
      * @see {@link https://envapt.materwelon.dev/docs/environment#custom-profiles}
      */
     static resetPaths(): void {

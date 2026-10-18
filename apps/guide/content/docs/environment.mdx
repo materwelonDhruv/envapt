@@ -29,9 +29,9 @@ Envapter.isTest;
 ```
 
 <Callout type="info">
-    The environment is one of `'development'`, `'staging'`, `'production'`, or `'test'`, and the `Environment` object
-    holds the same four as `Environment.Production` and so on. Matching is case-insensitive, so `PRODUCTION` reads as
-    `'production'`. Any other value, or no key set at all, falls back to `'development'`. Set `Envapter.debug = 'warn'`
+    The environment is one of `'development'`, `'staging'`, `'production'`, or `'test'`. `Environment.Production` is
+    `'production'`, and the other three members follow the same pattern. Matching is case-insensitive, so `PRODUCTION`
+    reads as `'production'`. Any other value, or no key set at all, falls back to `'development'`. Set `Envapter.debug = 'warn'`
     to log that fallback.
 </Callout>
 
@@ -58,7 +58,7 @@ Set `Envapter.environment` to pin the environment explicitly, regardless of what
 import { Envapter, Environment } from 'envapt';
 // ---cut---
 Envapter.environment = Environment.Staging;
-Envapter.environment = 'production'; // strings work too
+Envapter.environment = 'production';
 ```
 
 Setting it reloads the `.env` files for that environment.
@@ -70,8 +70,8 @@ Setting it reloads the `.env` files for that environment.
 ## Per-environment `.env` files
 
 <Callout type="info">
-    The cascade reads files from disk, so it runs on Node, Bun, and Deno only. On Cloudflare Workers and in the browser
-    there is no filesystem and no cascade. You bind an environment source instead. See [Sources](/docs/sources).
+    The cascade reads files from disk, so it runs on Node, Bun, and Deno only. Cloudflare Workers and the browser have
+    no filesystem and no cascade. You bind an environment source instead. See [Sources](/docs/sources).
 </Callout>
 
 For the detected (or overridden) environment (production, staging, development), envapt layers a dotenv-flow cascade, loading the first file that exists at each level, highest precedence first:
@@ -84,8 +84,8 @@ For the detected (or overridden) environment (production, staging, development),
 So in production it reads `.env.production.local` → `.env.production` → `.env.local` → `.env`. Values from higher-precedence files win. Missing files are skipped.
 
 <Callout type="warn">
-    Precedence is **most-specific-wins**: `.env.production` outranks `.env.local`. This differs from dotenv-flow /
-    Next.js, where `.env.local` outranks every other file. The intent is that a committed `.env.production` stays
+    Precedence is **most-specific-wins**: `.env.production` outranks `.env.local`, the same order dotenv-flow uses.
+    Next.js loads `.env.local` above `.env.production`. The intent is that a committed `.env.production` stays
     authoritative for that environment even if a stray `.env.local` is present.
 </Callout>
 
