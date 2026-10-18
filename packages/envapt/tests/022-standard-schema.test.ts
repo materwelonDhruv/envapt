@@ -296,14 +296,6 @@ describe('Standard Schema adapter (v5)', () => {
         });
     });
 
-    describe('getUsing with a schema: instance counterpart delegates to static', () => {
-        it('returns the same value as the static call', () => {
-            const env = new Envapter();
-            const port = env.getUsing('PORT', z.coerce.number());
-            expect(port).to.equal(8080);
-        });
-    });
-
     describe('@Envapt({ schema }) decorator: happy path', () => {
         class ZodConfig {
             @Envapt('PORT', { schema: z.coerce.number().int().min(1024).max(65535) })

@@ -27,22 +27,6 @@ import type {
     TimeFallback
 } from '../types';
 
-type AnyConverter = BuiltInConverter | ArrayOf | ConverterFunction | StandardSchemaV1;
-
-function readUsing(key: EnvKeyInput, converter: AnyConverter, fallback: unknown): unknown {
-    if (Validator.isStandardSchema(converter)) return readSchema(key, converter, fallback);
-
-    const { key: resolvedKey, value } = resolveKeyInput(key);
-
-    // a time fallback can be a string that still needs converting to a number
-    if (isMissing(value) && !hasFallback(fallback)) {
-        debugWarn(`${resolvedKey} is missing or empty`);
-        return undefined;
-    }
-
-    return valueConverter.convertValue(resolvedKey, fallback, converter, hasFallback(fallback));
-}
-
 export class AdvancedMethods extends PrimitiveMethods {
     /**
      * Get an environment variable through a converter: a built-in token such as `Converters.Number`,
@@ -80,36 +64,22 @@ export class AdvancedMethods extends PrimitiveMethods {
         converter: ConverterFunction<TReturn>,
         fallback?: TFallback
     ): ConditionalReturn<NonNullable<TReturn>, TFallback>;
-    static getUsing(key: EnvKeyInput, converter: AnyConverter, fallback?: unknown): unknown {
-        return readUsing(key, converter, fallback);
-    }
+    static getUsing(
+        key: EnvKeyInput,
+        converter: BuiltInConverter | ArrayOf | ConverterFunction | StandardSchemaV1,
+        fallback?: unknown
+    ): unknown {
+        if (Validator.isStandardSchema(converter)) return readSchema(key, converter, fallback);
 
-    /**
-     * @see {@link AdvancedMethods.getUsing}
-     */
-    getUsing<TFallback extends TimeFallback | undefined = undefined>(
-        key: EnvKeyInput,
-        converter: 'time',
-        fallback?: TFallback
-    ): ConditionalReturn<number, TFallback>;
-    getUsing<TConverter extends BuiltInConverter | ArrayOf, TFallback = undefined>(
-        key: EnvKeyInput,
-        converter: TConverter,
-        fallback?: TFallback
-    ): AdvancedConverterReturn<TConverter, TFallback>;
-    getUsing<TReturn>(key: EnvKeyInput, converter: BuiltInConverter | ArrayOf, fallback?: TReturn): TReturn;
-    getUsing<Schema extends StandardSchemaV1, TFallback extends InferSchemaOutput<Schema> | undefined = undefined>(
-        key: EnvKeyInput,
-        schema: SchemaConstraint<Schema>,
-        fallback?: TFallback
-    ): ConditionalReturn<InferSchemaOutput<Schema>, TFallback>;
-    getUsing<TReturn, TFallback extends NonNullable<TReturn> | undefined = undefined>(
-        key: EnvKeyInput,
-        converter: ConverterFunction<TReturn>,
-        fallback?: TFallback
-    ): ConditionalReturn<NonNullable<TReturn>, TFallback>;
-    getUsing(key: EnvKeyInput, converter: AnyConverter, fallback?: unknown): unknown {
-        return readUsing(key, converter, fallback);
+        const { key: resolvedKey, value } = resolveKeyInput(key);
+
+        // a time fallback can be a string that still needs converting to a number
+        if (isMissing(value) && !hasFallback(fallback)) {
+            debugWarn(`${resolvedKey} is missing or empty`);
+            return undefined;
+        }
+
+        return valueConverter.convertValue(resolvedKey, fallback, converter, hasFallback(fallback));
     }
 
     /**
@@ -135,22 +105,6 @@ export class AdvancedMethods extends PrimitiveMethods {
         converter: ConverterFunction<TReturnType>
     ): NonNullable<TReturnType>;
     static getRequired(key: EnvKeyInput, converter: RequiredConverter | StandardSchemaV1): unknown {
-        return readRequired(key, converter);
-    }
-
-    /**
-     * @see {@link AdvancedMethods.getRequired}
-     */
-    getRequired<TConverter extends BuiltInConverter | ArrayOf>(
-        key: EnvKeyInput,
-        converter: TConverter
-    ): InferConverterReturnType<TConverter>;
-    getRequired<Schema extends StandardSchemaV1>(
-        key: EnvKeyInput,
-        schema: SchemaConstraint<Schema>
-    ): InferSchemaOutput<Schema>;
-    getRequired<TReturnType>(key: EnvKeyInput, converter: ConverterFunction<TReturnType>): NonNullable<TReturnType>;
-    getRequired(key: EnvKeyInput, converter: RequiredConverter | StandardSchemaV1): unknown {
         return readRequired(key, converter);
     }
 
@@ -202,15 +156,5 @@ export class AdvancedMethods extends PrimitiveMethods {
         }
         if (failedKeys.length > 0) throw validationFailed(EnvaptErrorCodes.InvalidEnvValue, failedKeys, issues);
         return result as { [K in keyof Spec as RecaseKey<K & string, Casing>]: InferSpecField<Spec[K]> };
-    }
-
-    /**
-     * @see {@link AdvancedMethods.getRequiredAll}
-     */
-    getRequiredAll<Spec extends RequiredSpec, Casing extends KeyCasing | undefined = undefined>(
-        spec: Spec & SpecSchemaConstraint<Spec>,
-        casing?: Casing
-    ): { [K in keyof Spec as RecaseKey<K & string, Casing>]: InferSpecField<Spec[K]> } {
-        return AdvancedMethods.getRequiredAll<Spec, Casing>(spec, casing);
     }
 }

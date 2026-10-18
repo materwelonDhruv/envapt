@@ -85,12 +85,6 @@ describe('Advanced Converter Methods', () => {
             const result = Envapter.getUsing('NONEXISTENT_VAR', Converters.String);
             expect(result).to.be.undefined;
         });
-
-        it('should work with instance method', () => {
-            const instance = new Envapter();
-            const result = instance.getUsing('TEST_INTEGER', Converters.Integer);
-            expect(result).to.equal(42);
-        });
     });
 
     describe('getUsing method', () => {
@@ -127,11 +121,6 @@ describe('Advanced Converter Methods', () => {
             const result = Envapter.getUsing('TEST_ARRAY_COMMA', (raw) => new Set(splitTrimmed(raw)));
             expect(result).to.be.instanceOf(Set);
             expect(Array.from(result as Set<string>)).to.deep.equal(['item1', 'item2', 'item3']);
-        });
-
-        it('should work with instance method', () => {
-            const instance = new Envapter();
-            expect(instance.getUsing('TEST_STRING', (raw) => raw.toUpperCase())).to.equal('HELLO WORLD');
         });
 
         it('returns the fallback for a missing value without calling the converter', () => {

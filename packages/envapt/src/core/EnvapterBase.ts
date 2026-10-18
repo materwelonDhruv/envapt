@@ -8,6 +8,7 @@ import { normalizeSource } from '../sources/normalizeSource';
 import type { DebugLevel } from '../infra/Debug';
 import type { EnvKeyInput, FileApiMode, Source } from '../types';
 
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class -- the reader chain and user config classes extend it
 export abstract class EnvapterBase {
     /**
      * Enable or disable strict mode. Default `false`. Setting it clears and rebuilds the cache.
@@ -77,7 +78,7 @@ export abstract class EnvapterBase {
     }
 
     /**
-     * Eagerly load the `.env` cascade now instead of lazily on the first read. Idempotent: a no-op
+     * Load the `.env` cascade now. Without this call it loads on the first read. Idempotent: a no-op
      * once the cache is built. Useful before mirroring to `process.env` (see {@link syncProcessEnv}),
      * which is what the `envapt/config` side-effect entry does.
      * @see {@link https://envapt.materwelon.dev/docs/configuration#which-files-load}
@@ -104,7 +105,7 @@ export abstract class EnvapterBase {
      * Read an environment variable as its raw string, skipping parsing and conversion.
      * @see {@link https://envapt.materwelon.dev/docs/envapter#raw-values}
      */
-    getRaw(key: EnvKeyInput): string | undefined {
+    static getRaw(key: EnvKeyInput): string | undefined {
         return resolveKeyInput(key).value;
     }
 }

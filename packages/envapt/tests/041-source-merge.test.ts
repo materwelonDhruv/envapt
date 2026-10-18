@@ -129,7 +129,7 @@ describe('merge composes sources with last-wins precedence', () => {
     it('a later empty-string value wins in the merge', () => {
         Envapter.useSource(merge(new PortableSource({ K: 'value' }), new PortableSource({ K: '' })));
 
-        expect(new Envapter().getRaw('K')).to.equal('');
+        expect(Envapter.getRaw('K')).to.equal('');
     });
 
     it('a single member binds equivalently to that source directly', () => {

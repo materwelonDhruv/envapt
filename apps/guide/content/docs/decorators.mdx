@@ -197,7 +197,7 @@ class Config {
 
 `@Envapt` works on both static and instance properties, and the class does not need to extend anything. The cache is keyed per class and property, so a static and an instance property of the same name never collide.
 
-Extend `Envapter` when you also want the reader methods on the same class:
+Extend `Envapter` when you also want the reader methods on the same class. The subclass inherits them as statics:
 
 ```ts twoslash
 import { Envapt, Converters, Envapter } from 'envapt';
@@ -205,14 +205,12 @@ import { Envapt, Converters, Envapter } from 'envapt';
 class Config extends Envapter {
     @Envapt('PORT', { converter: Converters.Port, fallback: 3000 })
     accessor port!: number;
-
-    // mix decorator fields with reader calls
-    readonly region = this.get('AWS_REGION', 'us-east-1');
 }
 
 const config = new Config();
 config.port;
 //     ^?
+const region = Config.get('AWS_REGION', 'us-east-1');
 ```
 
 A misconfigured options object throws `EnvaptError` as the decorator is applied, before any property access, `required` together with a `fallback`, or a non-`StandardSchemaV1` value passed as `schema`. See [Errors](/docs/errors) for the codes.

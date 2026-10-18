@@ -17,7 +17,7 @@ envapt has two surfaces. They read the same values through the same cache. Pick 
 
 ## Functional API (the portable default)
 
-`Envapter` exposes the readers as both static methods and instance methods with identical signatures. Every key argument accepts a single string or an ordered array (first key that has a value wins).
+`Envapter` exposes the readers as static methods. Every key argument accepts a single string or an ordered array (first key that has a value wins).
 
 ```ts
 import { Envapter, Converters } from 'envapt';

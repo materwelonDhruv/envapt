@@ -32,18 +32,18 @@ describe('Instance Properties with @Envapt', () => {
         });
 
         it('should be in production environment', () => {
-            expect(instance.isProduction).to.be.true;
-            expect(instance.isDevelopment).to.be.false;
-            expect(instance.isStaging).to.be.false;
-            expect(instance.isTest).to.be.false;
+            expect(BasicInstanceProperties.isProduction).to.be.true;
+            expect(BasicInstanceProperties.isDevelopment).to.be.false;
+            expect(BasicInstanceProperties.isStaging).to.be.false;
+            expect(BasicInstanceProperties.isTest).to.be.false;
         });
 
         it('should update environment to Staging', () => {
-            instance.environment = Environment.Staging;
-            expect(instance.isStaging).to.be.true;
-            expect(instance.isProduction).to.be.false;
-            expect(instance.isDevelopment).to.be.false;
-            expect(instance.environment).to.equal(Environment.Staging);
+            BasicInstanceProperties.environment = Environment.Staging;
+            expect(BasicInstanceProperties.isStaging).to.be.true;
+            expect(BasicInstanceProperties.isProduction).to.be.false;
+            expect(BasicInstanceProperties.isDevelopment).to.be.false;
+            expect(BasicInstanceProperties.environment).to.equal(Environment.Staging);
         });
     });
 

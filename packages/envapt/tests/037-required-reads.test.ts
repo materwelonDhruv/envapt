@@ -457,20 +457,6 @@ describe('Required reads (v8)', () => {
         });
     });
 
-    describe('instance methods delegate to the static ones', () => {
-        it('getRequired reads through an instance', () => {
-            const env = new Envapter();
-            expect(env.getRequired('SET_NUMBER', Converters.Number)).to.equal(42);
-        });
-
-        it('getRequiredAll reads through an instance', () => {
-            const env = new Envapter();
-            const cfg = env.getRequiredAll({ SET_NUMBER: Converters.Number, SET_VALUE: Converters.String });
-            expect(cfg.SET_NUMBER).to.equal(42);
-            expect(cfg.SET_VALUE).to.equal('hello');
-        });
-    });
-
     describe('RecaseKey type transforms', () => {
         it('camelCase splits on underscores and lowercases each word', () => {
             expectTypeOf<RecaseKey<'DATABASE_URL', 'camelCase'>>().toEqualTypeOf<'databaseUrl'>();

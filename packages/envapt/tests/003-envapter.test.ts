@@ -61,8 +61,6 @@ describe('Envapter', () => {
             public static readonly varInExtraFile: boolean | undefined;
         }
 
-        const instance = new TestEnvapter();
-
         // relies on the earlier test that added .env.extra to envPaths
         it('should load variable from .env.extra file', () => {
             expect(TestEnvapter.varInExtraFile).to.be.true;
@@ -74,24 +72,11 @@ describe('Envapter', () => {
             expect(TestEnvapter.getBoolean('GETTER_BOOLEAN')).to.equal(true);
             expect(TestEnvapter.getBigInt('GETTER_BIGINT')).to.equal(123456789012345678901234567890n);
         });
-
-        it('should find envs for primitive getters using instance method', () => {
-            expect(instance.get('GETTER_STRING')).to.equal('primitiveString');
-            expect(instance.getNumber('GETTER_NUMBER')).to.equal(12345);
-            expect(instance.getBoolean('GETTER_BOOLEAN')).to.equal(true);
-            expect(instance.getBigInt('GETTER_BIGINT')).to.equal(123456789012345678901234567890n);
-        });
     });
 
     describe('multi-key getters and converters', () => {
-        const envInstance = new Envapter();
-
         it('should resolve the first available key for static getters', () => {
             expect(Envapter.get(['MISSING_STRING', 'GETTER_STRING'])).to.equal('primitiveString');
-        });
-
-        it('should resolve the first available key for instance getters', () => {
-            expect(envInstance.getNumber(['UNKNOWN_NUMBER', 'GETTER_NUMBER'])).to.equal(12345);
         });
 
         it('should fall back to provided default when all keys are missing', () => {

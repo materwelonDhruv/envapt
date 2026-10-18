@@ -323,14 +323,6 @@ describe('Strict mode + required (v5)', () => {
                 expect(e.message).to.not.include('SET_VALUE');
             }
         });
-
-        it('instance counterpart delegates to static', () => {
-            const env = new Envapter();
-            expect(() => env.require('API_KEY')).to.not.throw();
-            expect(() => env.require('NEVER_SET_KEY'))
-                .to.throw(EnvaptError)
-                .with.property('code', EnvaptErrorCodes.MissingEnvValue);
-        });
     });
 
     describe('compile-time type checks (expect-type)', () => {

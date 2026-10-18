@@ -10,22 +10,15 @@ export { Environment } from '../core';
 /**
  * Main configuration class for environment variable management.
  *
- * Provides both static and instance methods for retrieving typed environment variables
- * with support for template resolution, multiple .env files, and environment detection.
- *
- * Extend your own classes from this to define properties with \@Envapt decorators and get access to environment-variable methods.
+ * Reads typed environment variables through static methods, with template resolution, multiple .env
+ * files, and environment detection. A class that extends it inherits every reader as a static, as
+ * in `Config.getNumber('PORT')`.
  *
  * @example
  * ```ts
- * // Static usage
  * const port = Envapter.getNumber('PORT', 3000);
  * const url = Envapter.get('API_URL', 'http://localhost');
  * const replica = Envapter.get(['READONLY_URL', 'DATABASE_URL'], 'sqlite://memory');
- *
- * // Instance usage
- * const env = new Envapter();
- * const dbUrl = env.get('DATABASE_URL', 'sqlite://memory');
- * const primaryHost = env.get(['PRIMARY_HOST', 'SECONDARY_HOST']);
  * ```
  *
  * @public
@@ -64,13 +57,6 @@ export class Envapter extends AdvancedMethods {
     }
 
     /**
-     * @see {@link Envapter.resolve}
-     */
-    resolve(strings: TemplateStringsArray, ...keys: string[]): string {
-        return Envapter.resolve(strings, ...keys);
-    }
-
-    /**
      * Assert that one or more environment variables are present and non-empty after template
      * resolution. Throws `MissingEnvValue` listing every missing key. A whitespace-only value
      * counts as missing only under strict mode. Each argument can be an ordered key list, which
@@ -88,13 +74,6 @@ export class Envapter extends AdvancedMethods {
     static require(...keys: [EnvKeyInput, ...EnvKeyInput[]]): void {
         const missing = keys.filter((key) => findPresent(key) === undefined);
         if (missing.length > 0) throw missingValues(missing);
-    }
-
-    /**
-     * @see {@link Envapter.require}
-     */
-    require(...keys: [EnvKeyInput, ...EnvKeyInput[]]): void {
-        Envapter.require(...keys);
     }
 
     /**
@@ -117,12 +96,5 @@ export class Envapter extends AdvancedMethods {
             if (error instanceof EnvaptError && error.code === EnvaptErrorCodes.MissingEnvValue) return false;
             throw error;
         }
-    }
-
-    /**
-     * @see {@link Envapter.has}
-     */
-    has(key: EnvKeyInput): boolean {
-        return Envapter.has(key);
     }
 }

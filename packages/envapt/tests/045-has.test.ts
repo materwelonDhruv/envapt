@@ -81,12 +81,6 @@ describe('has (v8.1)', () => {
         expect(Envapter.has(['NEVER_SET_KEY', 'ALSO_NEVER_SET'])).to.equal(false);
     });
 
-    it('reads through an instance', () => {
-        const env = new Envapter();
-        expect(env.has('SET_VALUE')).to.equal(true);
-        expect(env.has('NEVER_SET_KEY')).to.equal(false);
-    });
-
     it('still throws InvalidKeyInput for caller bugs', () => {
         // @ts-expect-error Runtime guard ensures empty arrays are rejected
         expect(() => Envapter.has([]))

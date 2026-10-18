@@ -94,7 +94,7 @@ If you hit a peer-dependency conflict, read the actual peer range upstream and c
 - **Pinning the same dep twice** when the catalog already has it.
 - **`as any`**, and **`as unknown as T`** double casts when a type guard works.
 - **Silent fallbacks** (`obj?.x ?? null` returned to a caller that needed the real value).
-- **Static-only classes** used as namespaces. `BuiltInConverters` is the one dispatch-table exception.
+- **Static-only classes** used as namespaces. `BuiltInConverters` is the dispatch-table exception. The `Envapter` reader chain is the other one, because user config classes extend it.
 - **Pre-emptive "for the future"** abstractions. YAGNI.
 - **Commenting out** code or tests to get past a failure.
 
