@@ -57,7 +57,7 @@ Envapter.getRequiredAll(
 );
 ```
 
-`Envapter.resolve` is a tagged template that interpolates env values: ``Envapter.resolve`postgres://${'DB_HOST'}:${'DB_PORT'}` ``. `Envapter.getRaw('KEY')` returns the raw string with no parsing.
+`Envapter.resolve` is a tagged template that interpolates env values: ``Envapter.resolve`postgres://${'DB_HOST'}:${'DB_PORT'}` ``. A slot can also take an ordered key list, as in `${['READONLY_HOST', 'DB_HOST']}`. `Envapter.getRaw('KEY')` returns the raw string with no parsing.
 
 ## Decorators
 

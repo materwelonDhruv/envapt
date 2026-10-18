@@ -3,7 +3,7 @@ title: Templates
 description: Reference one environment variable from inside another, and build strings from keys with the resolve tagged template.
 ---
 
-A value can reference another with `${VAR}`. envapt expands those references when you read the value, whatever source the values came from, so you compose values instead of repeating them.
+A value can reference another with `${VAR}`. envapt expands those references when you read the value, whatever source the values came from, so one value can build on others.
 
 ```dotenv
 DB_HOST=localhost
@@ -18,7 +18,7 @@ const url = Envapter.get('DATABASE_URL');
 // "postgres://localhost:5432/app"
 ```
 
-Expansion runs on read, through every reader (`get`, `getNumber`, `getUsing`, and the rest), not when the file loads.
+Expansion runs on read, through every reader (`get`, `getNumber`, `getUsing`, and the rest). Loading the file keeps the `${VAR}` text as written.
 
 ## Nested references
 
@@ -45,7 +45,7 @@ DATABASE_URL=postgres://${DB_HOST}:${DB_PORT}/app
 With `DB_PORT` unset, reading `DATABASE_URL` returns `postgres://localhost:${DB_PORT}/app`: the resolved `${DB_HOST}`, and the literal `${DB_PORT}` left in place. Enable [debug mode](/docs/configuration#debug-mode) to log each unresolved reference.
 
 <Callout type="tip">
-    Turn on strict mode if an unresolved reference shoud throw `EnvaptError` with code `MissingEnvValue` instead.
+    Turn on strict mode if an unresolved reference should throw `EnvaptError` with code `MissingEnvValue` instead.
 </Callout>
 
 ## Cycle protection
@@ -57,23 +57,22 @@ A=${B}
 B=${A}
 ```
 
-Reading `A` returns `${B}` rather than recursing forever.
+Reading `A` returns `${B}`.
 
 ## Syntax limits
 
 The only recognized form is `${NAME}`, where `NAME` is letters, digits, and underscores.
 
 <Callout type="info">
-    There is no default-value syntax. `${VAR:-fallback}` is not parsed as a default, the whole token is treated as the
-    variable name and left unresolved if it has no match. Pass a fallback to the reader instead, e.g.
-    `Envapter.get('VAR', 'fallback')`.
+    There is no default-value syntax. envapt treats the whole `${VAR:-fallback}` token as the variable name and leaves it
+    unresolved when nothing matches. Pass a fallback to the reader instead, e.g. `Envapter.get('VAR', 'fallback')`.
 </Callout>
 
 There is also no escape sequence. A `$` that is not followed by `{...}` is left untouched, so `price: $5` stays `price: $5`.
 
 ## The resolve tagged template
 
-`resolve` builds a string from keys at the call site, and expands any `${VAR}` references inside the resolved values. Each `${...}` interpolation in the template is an env var name, not a JavaScript value.
+`resolve` builds a string from keys at the call site, and expands any `${VAR}` references inside the resolved values. Each `${...}` in the template takes an env var name, or an ordered list of names where the first one with a value wins.
 
 ```ts twoslash
 import { Envapter } from 'envapt';
@@ -81,6 +80,9 @@ import { Envapter } from 'envapt';
 // API_HOST=api.example.com, API_PORT=8080
 const endpoint = Envapter.resolve`https://${'API_HOST'}:${'API_PORT'}`;
 //    ^?
+
+// reads READONLY_URL when present, otherwise DATABASE_URL
+const target = Envapter.resolve`Connecting to ${['READONLY_URL', 'DATABASE_URL']}`;
 ```
 
 `resolve` returns a `string`. Under strict mode, a missing, empty, or whitespace-only key throws `EnvaptError` with code `MissingEnvValue`. Otherwise a missing or empty key resolves to an empty string, and a whitespace-only key keeps its value.

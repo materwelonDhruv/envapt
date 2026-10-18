@@ -29,6 +29,11 @@ describe('Tagged Template Resolver', () => {
         expect(message).to.equal('john');
     });
 
+    it('reads the first present key of an ordered key list in a slot', () => {
+        const message = Envapter.resolve`Hello ${['NONEXISTENT', 'USERNAME']}`;
+        expect(message).to.equal('Hello john');
+    });
+
     it('should handle consecutive variables', () => {
         const message = Envapter.resolve`${'USERNAME'}${'AGE'}`;
         expect(message).to.equal('john25');

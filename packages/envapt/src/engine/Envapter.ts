@@ -1,7 +1,7 @@
 import { AdvancedMethods } from '../core';
 import { findPresent } from '../core/engine';
 import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
-import { missingValues } from '../infra/failures';
+import { formatKeyForError, missingValues } from '../infra/failures';
 
 import type { EnvKeyInput } from '../types';
 
@@ -37,10 +37,13 @@ export class Envapter extends AdvancedMethods {
      * // API_URL=https://${API_HOST}:${API_PORT}
      * const message = Envapter.resolve`Service endpoint: ${'API_URL'}`;
      * // Returns: "Service endpoint: https://api.example.com:8080"
+     *
+     * // reads READONLY_URL when present, otherwise DATABASE_URL
+     * const db = Envapter.resolve`Connecting to ${['READONLY_URL', 'DATABASE_URL']}`;
      * ```
      * @see {@link https://envapt.materwelon.dev/docs/templates#the-resolve-tagged-template}
      */
-    static resolve(strings: TemplateStringsArray, ...keys: string[]): string {
+    static resolve(strings: TemplateStringsArray, ...keys: EnvKeyInput[]): string {
         const strict = Envapter.strict;
         return strings.reduce((result, string, i) => {
             const envKey = keys[i];
@@ -49,7 +52,7 @@ export class Envapter extends AdvancedMethods {
             if (strict && raw.trim() === '') {
                 throw new EnvaptError(
                     EnvaptErrorCodes.MissingEnvValue,
-                    `Cannot resolve template variable "\${${envKey}}": value is missing or empty.`
+                    `Cannot resolve template variable "\${${formatKeyForError(envKey)}}": value is missing or empty.`
                 );
             }
             return result + string + raw;
