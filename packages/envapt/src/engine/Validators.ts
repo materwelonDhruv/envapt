@@ -6,19 +6,14 @@ import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
 import type { ArrayOf, ConverterToken } from '../converters/Converters';
 import type { EnvFileOptions } from '../infra/Dotenv';
 import type { StandardSchemaV1 } from '../infra/StandardSchema';
-import type { BuiltInConverter, ConverterFunction, EnvaptConverter, FileApiMode, PrimitiveConstructor } from '../types';
+import type { BuiltInConverter, ConverterFunction, EnvaptConverter, FileApiMode } from '../types';
 
-// each token is also what typeof returns for that constructor's values
-const PRIMITIVES = [
-    [String, 'string'],
-    [Number, 'number'],
-    [Boolean, 'boolean'],
-    [BigInt, 'bigint']
-] as const;
-
-export type PrimitiveToken = (typeof PRIMITIVES)[number][1];
-
-const PRIMITIVE_TOKENS = new Map<unknown, PrimitiveToken>(PRIMITIVES);
+const CONSTRUCTOR_NAMES = new Map<unknown, string>([
+    [String, 'String'],
+    [Number, 'Number'],
+    [Boolean, 'Boolean'],
+    [BigInt, 'BigInt']
+]);
 
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class -- cohesive dispatch of stateless type guards, same shape as BuiltInConverters
 export class Validator {
@@ -49,11 +44,22 @@ export class Validator {
                 'A Standard Schema cannot be the `converter` on @Envapt. Pass it as `schema`.'
             );
         }
+        Validator.rejectConstructor(converter);
+    }
+
+    static rejectConstructor(converter: unknown): void {
         // Symbol(raw) returns a new symbol on every read
         if (converter === Symbol) {
             throw new EnvaptError(
                 EnvaptErrorCodes.InvalidUserDefinedConfig,
                 'Symbol is no longer a converter. Read the string and pass it to `Symbol.for()` yourself, like `Symbol.for(Envapter.get(key, fallback))`.'
+            );
+        }
+        const name = CONSTRUCTOR_NAMES.get(converter);
+        if (name !== undefined) {
+            throw new EnvaptError(
+                EnvaptErrorCodes.InvalidUserDefinedConfig,
+                `${name} is no longer a converter. Use \`Converters.${name}\`.`
             );
         }
     }
@@ -86,6 +92,7 @@ export class Validator {
         }
 
         const elementOf = value.of;
+        Validator.rejectConstructor(elementOf);
         const isScalar = typeof elementOf === 'string' && ListOfBuiltInConverters.includes(elementOf);
         const isSchema = Validator.isStandardSchema(elementOf);
         const isCustomFn = typeof elementOf === 'function' && !isSchema;
@@ -165,26 +172,6 @@ export class Validator {
             throw new EnvaptError(
                 EnvaptErrorCodes.ArrayFallbackElementTypeMismatch,
                 `Array converter type "${elementToken}" does not match fallback element type. Expected ${elementToken} compatible elements.`
-            );
-        }
-    }
-
-    static isPrimitiveConstructor(value: unknown): value is PrimitiveConstructor {
-        return PRIMITIVE_TOKENS.has(value);
-    }
-
-    static primitiveToken(value: unknown): PrimitiveToken | undefined {
-        return PRIMITIVE_TOKENS.get(value);
-    }
-
-    static coercePrimitiveFallback<CoercedType>(converter: PrimitiveConstructor, fallback: unknown): CoercedType {
-        if (typeof fallback === PRIMITIVE_TOKENS.get(converter)) return fallback as CoercedType;
-        try {
-            return converter(fallback as string | number | bigint | boolean) as CoercedType;
-        } catch (error) {
-            throw new EnvaptError(
-                EnvaptErrorCodes.PrimitiveCoercionFailed,
-                `Failed to coerce fallback value using ${converter.name}: ${(error as Error).message}`
             );
         }
     }

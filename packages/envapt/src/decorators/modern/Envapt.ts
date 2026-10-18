@@ -10,8 +10,6 @@ import type {
     EnvKeyInput,
     InferConverterFallbackType,
     InferConverterReturnType,
-    InferPrimitiveReturnType,
-    PrimitiveConstructor,
     SchemaConstraint
 } from '../../types';
 
@@ -122,34 +120,6 @@ export function Envapt<TConverter extends BuiltInConverter | ArrayOf>(
     key: EnvKeyInput,
     options: { converter: TConverter; fallback?: undefined; required?: false }
 ): EnvaptAccessorDecorator<InferConverterReturnType<TConverter> | undefined>;
-
-/**
- * A primitive constructor (`Number`, `Boolean`) with an optional fallback.
- *
- * @param key - Environment variable name(s) to load
- * @param options - Configuration options
- * @public
- * @example
- * ```ts
- * class Config {
- *   \@Envapt('MAX_CONNECTIONS', { converter: Number, fallback: 100 })
- *   static accessor maxConnections: number;
- *
- *   \@Envapt('FEATURE_ENABLED', { converter: Boolean, fallback: false })
- *   static accessor featureEnabled: boolean;
- * }
- * ```
- */
-export function Envapt<TConstructor extends PrimitiveConstructor>(
-    key: EnvKeyInput,
-    options:
-        | { converter: TConstructor; fallback: InferPrimitiveReturnType<TConstructor>; required?: false }
-        | { converter: TConstructor; required: true }
-): EnvaptAccessorDecorator<InferPrimitiveReturnType<TConstructor>>;
-export function Envapt<TConstructor extends PrimitiveConstructor>(
-    key: EnvKeyInput,
-    options: { converter: TConstructor; fallback?: undefined; required?: false }
-): EnvaptAccessorDecorator<InferPrimitiveReturnType<TConstructor> | undefined>;
 
 /**
  * Required, no converter (raw string). Throws `MissingEnvValue` on first access when the env

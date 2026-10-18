@@ -133,20 +133,6 @@ describe('Strict mode + required (v5)', () => {
                 .with.property('code', EnvaptErrorCodes.InvalidEnvValue);
         });
 
-        it('converts through a primitive constructor and throws InvalidEnvValue when it cannot', () => {
-            class RequiredNumber {
-                @Envapt('SET_NUMBER', { converter: Number, required: true })
-                static readonly count: number;
-
-                @Envapt('API_KEY', { converter: Number, required: true })
-                static readonly notANumber: number;
-            }
-            expect(RequiredNumber.count).to.equal(42);
-            expect(() => RequiredNumber.notANumber)
-                .to.throw(EnvaptError)
-                .with.property('code', EnvaptErrorCodes.InvalidEnvValue);
-        });
-
         it('returns the typed value when required is paired with a converter', () => {
             expect(RequiredWithConverter.url.toString()).to.equal('postgres://localhost/db');
         });

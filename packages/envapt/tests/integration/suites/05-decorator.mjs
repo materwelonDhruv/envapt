@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 
 import { FIXTURE_PATH } from './_helpers.mjs';
-import { Envapter } from '../../../dist/node/index.mjs';
+import { Converters, Envapter } from '../../../dist/node/index.mjs';
 import { Envapt } from '../../../dist/node/legacy.mjs';
 
 // plain .mjs has no decorator syntax
@@ -11,7 +11,7 @@ export default async function decorator() {
     class Config {}
     Envapt('BASIC_KEY', { fallback: 'default' })(Config, 'BASIC_KEY');
     Envapt('MISSING_DECORATOR_KEY', { fallback: 'fb-value' })(Config, 'MISSING_DECORATOR_KEY');
-    Envapt('NUMBER_KEY', { fallback: 0, converter: Number })(Config, 'NUMBER_KEY');
+    Envapt('NUMBER_KEY', { fallback: 0, converter: Converters.Number })(Config, 'NUMBER_KEY');
 
     assert.equal(Config.BASIC_KEY, 'hello');
     assert.equal(Config.MISSING_DECORATOR_KEY, 'fb-value');

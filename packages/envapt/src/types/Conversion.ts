@@ -4,8 +4,6 @@ import type { InferSchemaOutput, StandardSchemaV1 } from '../infra/StandardSchem
 // scalar tokens only
 type BuiltInConverter = ConverterToken;
 
-type PrimitiveConstructor = typeof String | typeof Number | typeof Boolean | typeof BigInt;
-
 /**
  * Custom converter for an environment variable or an array element. It receives a present value with templates
  * already expanded. envapt applies the fallback itself. A return of `undefined` or `null` means the value could
@@ -14,9 +12,13 @@ type PrimitiveConstructor = typeof String | typeof Number | typeof Boolean | typ
  * @public
  * @see {@link https://envapt.materwelon.dev/docs/converters#custom-converters}
  */
-type ConverterFunction<TReturn = unknown> = ((raw: string) => TReturn) & { readonly '~standard'?: never };
+type ConverterFunction<TReturn = unknown> = ((raw: string) => TReturn) & {
+    readonly '~standard'?: never;
+    // a constructor like Number has a typed prototype
+    readonly prototype?: undefined;
+};
 
-type EnvaptConverter<TFallback> = PrimitiveConstructor | BuiltInConverter | ArrayOf | ConverterFunction<TFallback>;
+type EnvaptConverter<TFallback> = BuiltInConverter | ArrayOf | ConverterFunction<TFallback>;
 
 type JsonPrimitive = string | number | boolean | null;
 type JsonArray = JsonValue[];
@@ -81,7 +83,7 @@ type InferConverterReturnType<TConverter> =
 
 type RequiredSpec = Record<string, BuiltInConverter | ArrayOf | ConverterFunction | StandardSchemaV1<unknown, unknown>>;
 
-type RequiredConverter = Exclude<RequiredSpec[string], StandardSchemaV1> | PrimitiveConstructor;
+type RequiredConverter = Exclude<RequiredSpec[string], StandardSchemaV1>;
 
 // arktype schemas are callable and would match the converter branch
 type InferSpecField<TField> = TField extends StandardSchemaV1
@@ -106,19 +108,8 @@ type AdvancedConverterReturn<TConverter, TFallback = undefined> = ConditionalRet
     TFallback
 >;
 
-type InferPrimitiveReturnType<TConstructor extends PrimitiveConstructor> = TConstructor extends typeof String
-    ? string
-    : TConstructor extends typeof Number
-      ? number
-      : TConstructor extends typeof Boolean
-        ? boolean
-        : TConstructor extends typeof BigInt
-          ? bigint
-          : never;
-
 export type {
     BuiltInConverter,
-    PrimitiveConstructor,
     ConverterFunction,
     EnvaptConverter,
     JsonValue,
@@ -130,7 +121,6 @@ export type {
     InferConverterReturnType,
     InferConverterFallbackType,
     AdvancedConverterReturn,
-    InferPrimitiveReturnType,
     RequiredSpec,
     RequiredConverter,
     InferSpecField

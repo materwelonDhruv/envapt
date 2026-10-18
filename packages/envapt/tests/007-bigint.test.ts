@@ -2,7 +2,7 @@ import { resolve } from 'node:path';
 
 import { beforeAll, describe, expect, it } from 'vitest';
 
-import { Envapter } from '../src';
+import { Converters, Envapter } from '../src';
 import { Envapt } from '../src/legacy';
 
 describe('BigInt Support', () => {
@@ -10,7 +10,7 @@ describe('BigInt Support', () => {
 
     it('should handle large bigint values', () => {
         class BigIntTest {
-            @Envapt('TEST_BIGINT_LARGE', { converter: BigInt, fallback: 0n })
+            @Envapt('TEST_BIGINT_LARGE', { converter: Converters.BigInt, fallback: 0n })
             static readonly testBigintLarge: bigint;
         }
         expect(BigIntTest.testBigintLarge).to.equal(999999999999999999999999999999999999999999999999999999999999n);

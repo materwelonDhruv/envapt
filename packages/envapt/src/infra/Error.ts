@@ -27,8 +27,6 @@ export const EnvaptErrorCodes = {
     InvalidCustomConverter: 203,
     /** Thrown when converter type is not recognized */
     InvalidConverterType: 204,
-    /** Thrown when primitive type coercion on fallback value fails */
-    PrimitiveCoercionFailed: 205,
     /** Thrown when an array element fails to convert to the configured element type */
     ArrayElementConversionFailed: 206,
     /** Thrown under strict mode when an array element is empty or whitespace only */

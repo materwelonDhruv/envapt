@@ -2,7 +2,7 @@ import { resolve } from 'node:path';
 
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 
-import { Envapter, EnvaptErrorCodes } from '../src';
+import { Converters, Envapter, EnvaptErrorCodes } from '../src';
 import { EnvaptError } from '../src/infra/Error';
 
 describe('has (v8.1)', () => {
@@ -43,27 +43,27 @@ describe('has (v8.1)', () => {
 
     it('mirrors getRequired when a strict template throw precedes a present candidate', () => {
         Envapter.strict = true;
-        expect(() => Envapter.getRequired(['TEMPLATE_MISSING', 'SET_VALUE'], String))
+        expect(() => Envapter.getRequired(['TEMPLATE_MISSING', 'SET_VALUE'], Converters.String))
             .to.throw(EnvaptError)
             .with.property('code', EnvaptErrorCodes.MissingEnvValue);
         expect(Envapter.has(['TEMPLATE_MISSING', 'SET_VALUE'])).to.equal(false);
 
-        expect(() => Envapter.getRequired(['NEVER_SET_KEY', 'TEMPLATE_MISSING', 'SET_VALUE'], String))
+        expect(() => Envapter.getRequired(['NEVER_SET_KEY', 'TEMPLATE_MISSING', 'SET_VALUE'], Converters.String))
             .to.throw(EnvaptError)
             .with.property('code', EnvaptErrorCodes.MissingEnvValue);
         expect(Envapter.has(['NEVER_SET_KEY', 'TEMPLATE_MISSING', 'SET_VALUE'])).to.equal(false);
 
-        expect(Envapter.getRequired(['SET_VALUE', 'TEMPLATE_MISSING'], String)).to.equal('hello');
+        expect(Envapter.getRequired(['SET_VALUE', 'TEMPLATE_MISSING'], Converters.String)).to.equal('hello');
         expect(Envapter.has(['SET_VALUE', 'TEMPLATE_MISSING'])).to.equal(true);
     });
 
     it('treats a reference to an empty variable as a preserved literal, like getRequired', () => {
         expect(Envapter.has('TEMPLATE_EMPTY')).to.equal(true);
-        expect(Envapter.getRequired('TEMPLATE_EMPTY', String)).to.equal('${EMPTY_VALUE}');
+        expect(Envapter.getRequired('TEMPLATE_EMPTY', Converters.String)).to.equal('${EMPTY_VALUE}');
 
         Envapter.strict = true;
         expect(Envapter.has('TEMPLATE_EMPTY')).to.equal(false);
-        expect(() => Envapter.getRequired('TEMPLATE_EMPTY', String)).to.throw(EnvaptError);
+        expect(() => Envapter.getRequired('TEMPLATE_EMPTY', Converters.String)).to.throw(EnvaptError);
     });
 
     it('falls through an ordered key list like getRequired', () => {

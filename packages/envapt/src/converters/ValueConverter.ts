@@ -33,44 +33,27 @@ export class ValueConverter {
         hasFallback: boolean
     ): TFallback | undefined {
         const resolvedConverter = this.resolveConverter(converter, fallback);
-        const processedFallback = this.processFallbackForConverter(resolvedConverter, fallback);
 
         if (Validator.isArrayConverter(resolvedConverter)) {
-            return this.processArrayConverter(key, processedFallback, resolvedConverter, hasFallback);
-        }
-
-        const primitiveToken = Validator.primitiveToken(resolvedConverter);
-        if (primitiveToken !== undefined) {
-            return this.processBuiltInConverter(key, processedFallback, primitiveToken, hasFallback, true);
+            return this.processArrayConverter(key, fallback, resolvedConverter, hasFallback);
         }
 
         if (Validator.isBuiltInConverter(resolvedConverter)) {
-            return this.processBuiltInConverter(key, processedFallback, resolvedConverter, hasFallback, false);
+            return this.processBuiltInConverter(key, fallback, resolvedConverter, hasFallback);
         }
 
-        return this.processCustomConverter(key, processedFallback, resolvedConverter, hasFallback);
-    }
-
-    private processFallbackForConverter<TFallback>(
-        converter: EnvaptConverter<TFallback>,
-        fallback: TFallback | undefined
-    ): TFallback | undefined {
-        if (Validator.isPrimitiveConstructor(converter) && fallback !== undefined) {
-            return Validator.coercePrimitiveFallback<TFallback>(converter, fallback);
-        }
-        return fallback;
+        return this.processCustomConverter(key, fallback, resolvedConverter, hasFallback);
     }
 
     private processBuiltInConverter<TFallback>(
         key: EnvKeyInput,
         fallback: TFallback | undefined,
         resolvedConverter: BuiltInConverter,
-        hasFallback: boolean,
-        wasOriginallyConstructor: boolean
+        hasFallback: boolean
     ): TFallback | undefined {
         Validator.builtInConverter(resolvedConverter);
 
-        if (hasFallback && !wasOriginallyConstructor) {
+        if (hasFallback) {
             Validator.validateBuiltInConverterFallback(resolvedConverter, fallback);
         }
 
@@ -212,7 +195,7 @@ export class ValueConverter {
     // a bad spec entry has to throw outside runParser's try
     private requiredParser(field: RequiredConverter): (raw: string) => unknown {
         // safe to widen a `raw: string` parser because it only gets a present value
-        const converter = (Validator.primitiveToken(field) ?? field) as EnvaptConverter<unknown>;
+        const converter = field as EnvaptConverter<unknown>;
         if (Validator.isArrayConverter(converter)) {
             Validator.arrayConverter(converter);
             return (raw) => BuiltInConverters.processArrayConverter(raw, converter, state.strict);

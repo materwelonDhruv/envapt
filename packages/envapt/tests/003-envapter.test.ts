@@ -20,7 +20,7 @@ describe('Envapter', () => {
 
     describe('accessors and multiple files', () => {
         class TestEnvapter extends Envapter {
-            @Envapt('VAR_IN_EXTRA_FILE', { converter: Boolean })
+            @Envapt('VAR_IN_EXTRA_FILE', { converter: Converters.Boolean })
             public static readonly varInExtraFile: boolean | undefined;
         }
 

@@ -18,7 +18,7 @@ describe('Envapt', () => {
 
     describe('automatic type detection', () => {
         class TestTypeDetection {
-            @Envapt('NONEXISTENT_VAR_WITHOUT_FALLBACK', { converter: String })
+            @Envapt('NONEXISTENT_VAR_WITHOUT_FALLBACK', { converter: Converters.String })
             public static readonly nonexistentVarWithoutFallback: string | undefined;
 
             @Envapt('NONEXISTENT_VAR_NO_OPTIONS')
@@ -62,50 +62,6 @@ describe('Envapt', () => {
         });
     });
 
-    describe('explicit overrides', () => {
-        class TestEnv extends Envapter {
-            // @ts-expect-error Inconsistent fallback type
-            @Envapt('TEST_NUMBER_AS_STRING', { fallback: 42, converter: String })
-            public static readonly testNumberAsString: string;
-
-            // @ts-expect-error Inconsistent fallback type
-            @Envapt('TEST_STRING_AS_NUMBER', { fallback: '100', converter: Number })
-            public static readonly testStringAsNumber: number;
-
-            // @ts-expect-error Inconsistent fallback type
-            @Envapt('TEST_STRING_AS_BOOLEAN', { fallback: 'true', converter: Boolean })
-            public static readonly testStringAsBoolean: boolean;
-
-            // @ts-expect-error Inconsistent fallback type
-            @Envapt('TEST_NUMBER_AS_BIGINT', { fallback: 123456789, converter: BigInt })
-            public static readonly testNumberAsBigInt: bigint;
-
-            // @ts-expect-error Inconsistent fallback type
-            @Envapt('TEST_STRING_AS_BIGINT', { fallback: '987654321', converter: BigInt })
-            public static readonly testStringAsBigInt: bigint;
-        }
-
-        it('should use String converter override despite number fallback', () => {
-            expect(TestEnv.testNumberAsString).to.equal('42');
-        });
-
-        it('should use Number converter override despite string fallback', () => {
-            expect(TestEnv.testStringAsNumber).to.equal(100);
-        });
-
-        it('should use Boolean converter override despite string fallback', () => {
-            expect(TestEnv.testStringAsBoolean).to.be.true;
-        });
-
-        it('should use BigInt converter override with number fallback', () => {
-            expect(TestEnv.testNumberAsBigInt).to.equal(123456789n);
-        });
-
-        it('should use BigInt converter override with string fallback', () => {
-            expect(TestEnv.testStringAsBigInt).to.equal(987654321n);
-        });
-    });
-
     describe('custom converter functions', () => {
         class TestCustomEnv {
             @Envapt('NONEXISTENT_ARRAY', { fallback: ['default1', 'default2'], converter: splitList })
@@ -140,10 +96,10 @@ describe('Envapt', () => {
             @Envapt('TEST_VAR_MULTI_CALL', { fallback: 'default' })
             public static readonly testVar: string;
 
-            @Envapt('TEST_VAR_MULTI_CALL', { converter: String })
+            @Envapt('TEST_VAR_MULTI_CALL', { converter: Converters.String })
             public static readonly testVarWithConverter: string | undefined;
 
-            @Envapt('TEST_VAR_MULTI_CALL', { converter: Number })
+            @Envapt('TEST_VAR_MULTI_CALL', { converter: Converters.Number })
             public static readonly testVarWithFallbackAndConverter: number | undefined;
         }
 

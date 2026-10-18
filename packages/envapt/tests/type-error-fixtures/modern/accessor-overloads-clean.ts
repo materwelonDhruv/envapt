@@ -9,7 +9,7 @@ export class OverloadClean {
     @Envapt('B', { converter: Converters.Url })
     static accessor b: URL | undefined;
 
-    @Envapt('C', { converter: Number, fallback: 100 })
+    @Envapt('C', { converter: (raw) => raw.length, fallback: 100 })
     static accessor c: number;
 
     @Envapt('D', { required: true })

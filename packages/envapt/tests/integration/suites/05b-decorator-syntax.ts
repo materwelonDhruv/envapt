@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 
 import { FIXTURE_PATH } from './_helpers.mjs';
-import { Envapter } from '../../../dist/node/index.mjs';
+import { Converters, Envapter } from '../../../dist/node/index.mjs';
 import { Envapt } from '../../../dist/node/legacy.mjs';
 
 // experimentalDecorators comes from deno.json and tsconfig.json in the parent directory
@@ -9,7 +9,7 @@ class Config {
     @Envapt('BASIC_KEY', { fallback: 'default' })
     static readonly BASIC_KEY: string;
 
-    @Envapt('NUMBER_KEY', { fallback: 0, converter: Number })
+    @Envapt('NUMBER_KEY', { fallback: 0, converter: Converters.Number })
     static readonly NUMBER_KEY: number;
 
     @Envapt('MISSING_DECORATOR_KEY', { fallback: 'fb-value' })

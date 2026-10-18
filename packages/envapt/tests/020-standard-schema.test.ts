@@ -367,7 +367,7 @@ describe('Standard Schema adapter (v5)', () => {
                     // no overload accepts schema with converter
                     @Envapt('PORT', {
                         schema: z.coerce.number(),
-                        converter: Number
+                        converter: Converters.Number
                     } as unknown as { schema: typeof z.coerce.number extends () => infer R ? R : never })
                     static readonly port: number | undefined;
                 }

@@ -9,7 +9,7 @@ export class OverloadMismatch {
     @Envapt('B', { converter: Converters.Url })
     static readonly b: URL;
 
-    @Envapt('C', { converter: Number, fallback: 100 })
+    @Envapt('C', { converter: (raw) => raw.length, fallback: 100 })
     static readonly c: string;
 
     @Envapt('D', { required: true })

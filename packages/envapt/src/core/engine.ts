@@ -10,7 +10,6 @@ import { loadDotenv } from '../infra/Dotenv';
 import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
 import { missingValue, validationFailed } from '../infra/failures';
 
-import type { PrimitiveToken } from '../engine/Validators';
 import type { ValidationCode } from '../infra/failures';
 import type { StandardSchemaV1 } from '../infra/StandardSchema';
 import type {
@@ -190,6 +189,8 @@ const envService: EnvapterService = {
 
 const templateResolver: TemplateResolver = new TemplateResolver(envService);
 export const valueConverter: ValueConverter = new ValueConverter(envService);
+
+type PrimitiveToken = 'string' | 'number' | 'boolean' | 'bigint';
 
 // TS can't assign a value to a conditional type on an unresolved generic
 export function readPrimitive<

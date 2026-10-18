@@ -1,6 +1,5 @@
 export type {
     BuiltInConverter,
-    PrimitiveConstructor,
     ConverterFunction,
     EnvaptConverter,
     JsonValue,
@@ -12,7 +11,6 @@ export type {
     InferConverterReturnType,
     InferConverterFallbackType,
     AdvancedConverterReturn,
-    InferPrimitiveReturnType,
     RequiredSpec,
     RequiredConverter,
     InferSpecField
