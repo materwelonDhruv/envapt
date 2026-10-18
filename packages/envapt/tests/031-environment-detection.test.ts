@@ -1,6 +1,6 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, expectTypeOf, it } from 'vitest';
 
-import { Environment, Envapter, FileSource, PortableSource } from '../src';
+import { Environment, Envapter, EnvaptError, EnvaptErrorCodes, FileSource, PortableSource } from '../src';
 
 describe('Environment detection (v5.2)', () => {
     afterEach(() => {
@@ -64,6 +64,8 @@ describe('Environment detection (v5.2)', () => {
         it('matches production and test regardless of case', () => {
             Envapter.useSource(new PortableSource({ ENV: 'PRODUCTION' }));
             expect(Envapter.isProduction).to.be.true;
+            expect(Envapter.environment).to.equal('production');
+            expectTypeOf(Envapter.environment).toEqualTypeOf<'development' | 'staging' | 'production' | 'test'>();
 
             Envapter.useSource(new PortableSource({ ENVIRONMENT: 'Test' }));
             expect(Envapter.isTest).to.be.true;
@@ -81,6 +83,12 @@ describe('Environment detection (v5.2)', () => {
             Envapter.useSource(new PortableSource({}));
             Envapter.environment = 'whatever';
             expect(Envapter.isDevelopment).to.be.true;
+        });
+
+        it('throws InvalidUserDefinedConfig for a non-string', () => {
+            expect(() => (Envapter.environment = 2 as unknown as string))
+                .to.throw(EnvaptError)
+                .with.property('code', EnvaptErrorCodes.InvalidUserDefinedConfig);
         });
     });
 

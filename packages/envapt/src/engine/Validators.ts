@@ -206,6 +206,15 @@ export class Validator {
         }
     }
 
+    static validateEnvironment(value: unknown): asserts value is string {
+        if (typeof value !== 'string') {
+            throw new EnvaptError(
+                EnvaptErrorCodes.InvalidUserDefinedConfig,
+                `Envapter.environment must be a string, got ${typeof value}.`
+            );
+        }
+    }
+
     static validateFileApiMode(value: unknown): asserts value is FileApiMode {
         if (value !== 'warn' && value !== 'throw') {
             const got = typeof value === 'string' ? `'${value}'` : typeof value;

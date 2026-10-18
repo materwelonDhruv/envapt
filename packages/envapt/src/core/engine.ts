@@ -4,6 +4,7 @@ import { isMissing } from './missing';
 import { resolveEffectivePaths } from './paths';
 import { cache, state } from './state';
 import { TemplateResolver } from '../engine/TemplateResolver';
+import { Validator } from '../engine/Validators';
 import { debugVerbose, debugWarn } from '../infra/Debug';
 import { loadDotenv } from '../infra/Dotenv';
 import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
@@ -164,6 +165,7 @@ function resolveForMirror(key: string, value: string): string {
 }
 
 export function setEnvironment(env: string): void {
+    Validator.validateEnvironment(env);
     state.environment = parseEnvironment(env) ?? Environment.Development;
     state.environmentExplicitlySet = true;
     refreshCache();
