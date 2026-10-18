@@ -228,23 +228,23 @@ export class BuiltInConverters {
         });
     }
 
-    static getConverter<TFallback extends BuiltInConverter>(type: TFallback): BuiltInConverterFunction {
-        const converters: MapOfConverterFunctions = {
-            string: BuiltInConverters.string,
-            number: BuiltInConverters.number,
-            boolean: BuiltInConverters.boolean,
-            integer: BuiltInConverters.integer,
-            bigint: BuiltInConverters.bigint,
-            float: BuiltInConverters.float,
-            json: BuiltInConverters.json,
-            url: BuiltInConverters.url,
-            regexp: BuiltInConverters.regexp,
-            date: BuiltInConverters.date,
-            time: BuiltInConverters.time,
-            port: BuiltInConverters.port,
-            email: BuiltInConverters.email
-        } as const;
+    private static readonly converters: MapOfConverterFunctions = {
+        string: BuiltInConverters.string,
+        number: BuiltInConverters.number,
+        boolean: BuiltInConverters.boolean,
+        integer: BuiltInConverters.integer,
+        bigint: BuiltInConverters.bigint,
+        float: BuiltInConverters.float,
+        json: BuiltInConverters.json,
+        url: BuiltInConverters.url,
+        regexp: BuiltInConverters.regexp,
+        date: BuiltInConverters.date,
+        time: BuiltInConverters.time,
+        port: BuiltInConverters.port,
+        email: BuiltInConverters.email
+    };
 
-        return converters[type];
+    static getConverter(type: BuiltInConverter): BuiltInConverterFunction {
+        return BuiltInConverters.converters[type];
     }
 }
