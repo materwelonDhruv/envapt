@@ -34,8 +34,8 @@ Envapter.has('SENTRY_DSN'); // boolean
 
 // Built-in or array converter:
 Envapter.getUsing('ORIGINS', Converters.array({ of: Converters.String }), []); // string[]
-// Custom function converter (raw is the string, or undefined when unset):
-Envapter.getWith('FLAGS', (raw) => (raw ? raw.split(',') : [])); // string[]
+// Custom function converter, called only when the variable is set:
+Envapter.getWith('FLAGS', (raw) => raw.split(','), []); // string[]
 
 // Throw when a key is missing:
 Envapter.require('DATABASE_URL', 'JWT_SECRET'); // throws EnvaptError listing every missing key
@@ -112,10 +112,7 @@ Arrays use the builder. `of` defaults to `Converters.String` and `delimiter` to 
 Converters.array({ of: Converters.Number, delimiter: ';' }); // "1;2;3" -> number[]
 ```
 
-Custom converters have **two different shapes**:
-
-- **Top-level** (`@Envapt({ converter })`, `getWith`) with signature `(raw: string | undefined, fallback) => T`. Gets the raw value (possibly `undefined`) and the fallback.
-- **Array element** (`Converters.array({ of })`) with signature `(raw: string) => T`. Gets one trimmed, non-empty slot, with no `undefined` and no fallback.
+A custom converter is a `(raw: string) => T` function everywhere: `getWith`, `@Envapt({ converter })`, `getRequired`, `getRequiredAll`, and `Converters.array({ of })`. envapt calls it only with a present value and applies the fallback itself. Returning `undefined` or `null` means the value can't be converted. A top-level read then uses the fallback, and an array element throws `ArrayElementConversionFailed`. An error the converter throws reaches the caller unchanged.
 
 ## Runtimes and sources
 

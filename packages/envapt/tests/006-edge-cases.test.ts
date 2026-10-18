@@ -13,19 +13,19 @@ describe('Edge Cases', () => {
     describe('Number conversion edge cases', () => {
         class NumberEdgeCases {
             @Envapt('ZERO_VALUE', { converter: Number })
-            static readonly zero: number;
+            static readonly zero: number | undefined;
 
             @Envapt('NEGATIVE_ZERO', { converter: Number })
-            static readonly negativeZero: number;
+            static readonly negativeZero: number | undefined;
 
             @Envapt('INFINITY_VALUE', { converter: Number })
-            static readonly infinity: number;
+            static readonly infinity: number | undefined;
 
             @Envapt('NEGATIVE_INFINITY', { converter: Number })
-            static readonly negativeInfinity: number;
+            static readonly negativeInfinity: number | undefined;
 
             @Envapt('EPSILON_VALUE', { converter: Number })
-            static readonly epsilon: number;
+            static readonly epsilon: number | undefined;
         }
 
         it('should handle zero correctly', () => {

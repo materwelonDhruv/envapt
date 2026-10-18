@@ -28,18 +28,6 @@ describe('missing-value return unification (v8)', () => {
         });
     });
 
-    describe('getWith passes the raw value to the custom converter', () => {
-        it('calls the converter with undefined for a missing key', () => {
-            const seen: (string | undefined)[] = [];
-            const converter = (raw: string | undefined): string => {
-                seen.push(raw);
-                return raw === undefined ? 'MISSING' : raw.toUpperCase();
-            };
-            expect(Envapter.getWith('MISSING_044', converter)).to.equal('MISSING');
-            expect(seen).to.deep.equal([undefined]);
-        });
-    });
-
     describe('an explicit undefined fallback is no fallback', () => {
         it('parse throws when the key is missing and the fallback is an explicit undefined', () => {
             expect(() => Envapter.parse('MISSING_044', echoSchema, undefined)).to.throw(EnvaptError);

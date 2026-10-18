@@ -94,55 +94,28 @@ describe('Advanced Converter Methods', () => {
     });
 
     describe('getWith method', () => {
-        it('should convert using custom converter function', () => {
-            const customConverter = (raw: string | undefined, fallback?: string[]): string[] => {
-                if (!raw) return fallback ?? [];
-                const items = raw.split(',');
-                const processedItems: string[] = [];
-                for (const item of items) {
-                    processedItems.push(item.trim().toUpperCase());
-                }
-                return processedItems;
-            };
+        const splitTrimmed = (raw: string): string[] => raw.split(',').map((item) => item.trim());
 
-            const result = Envapter.getWith('TEST_ARRAY_COMMA', customConverter);
+        it('should convert using custom converter function', () => {
+            const result = Envapter.getWith('TEST_ARRAY_COMMA', (raw) =>
+                splitTrimmed(raw).map((item) => item.toUpperCase())
+            );
             expect(result).to.deep.equal(['ITEM1', 'ITEM2', 'ITEM3']);
         });
 
         it('should convert to Map using custom converter', () => {
-            const mapConverter = (raw: string | undefined, fallback?: Map<string, string>): Map<string, string> => {
-                if (!raw) return fallback ?? new Map<string, string>();
-                const map = new Map<string, string>();
-                const pairs = raw.split(',');
-                for (const pair of pairs) {
-                    const [key, value] = pair.split('=');
-                    if (key && value) {
-                        map.set(key.trim(), value.trim());
-                    }
-                }
-                return map;
-            };
+            const toMap = (raw: string): Map<string, number> =>
+                new Map(splitTrimmed(raw).map((item) => [item, item.length]));
 
-            const result = Envapter.getWith('TEST_STRING', mapConverter, new Map([['default', 'value']]));
+            const result = Envapter.getWith('TEST_STRING', toMap, new Map([['default', 0]]));
             expect(result).to.be.instanceOf(Map);
         });
 
         it('should work with complex custom converter', () => {
-            const complexConverter = (
-                raw: string | undefined,
-                fallback?: { count: number; items: string[]; reversed: string[] }
-            ): { count: number; items: string[]; reversed: string[] } => {
-                const defaultValue = { count: 0, items: [], reversed: [] };
-                if (!raw) return fallback ?? defaultValue;
-                const items = raw.split(',').map((item) => item.trim());
-                return {
-                    count: items.length,
-                    items,
-                    reversed: [...items].reverse()
-                };
-            };
-
-            const result = Envapter.getWith('TEST_ARRAY_COMMA', complexConverter);
+            const result = Envapter.getWith('TEST_ARRAY_COMMA', (raw) => {
+                const items = splitTrimmed(raw);
+                return { count: items.length, items, reversed: [...items].reverse() };
+            });
             expect(result).to.deep.equal({
                 count: 3,
                 items: ['item1', 'item2', 'item3'],
@@ -151,33 +124,36 @@ describe('Advanced Converter Methods', () => {
         });
 
         it('should convert to Set using custom converter', () => {
-            const setConverter = (raw: string | undefined, fallback?: Set<string>): Set<string> => {
-                if (!raw) return fallback ?? new Set();
-                const items = raw.split(',').map((item) => item.trim());
-                return new Set(items);
-            };
-
-            const result = Envapter.getWith('TEST_ARRAY_COMMA', setConverter);
+            const result = Envapter.getWith('TEST_ARRAY_COMMA', (raw) => new Set(splitTrimmed(raw)));
             expect(result).to.be.instanceOf(Set);
             expect(Array.from(result as Set<string>)).to.deep.equal(['item1', 'item2', 'item3']);
         });
 
-        it('should use fallback for nonexistent variable', () => {
-            const customConverter = (raw: string | undefined, fallback?: number): number => {
-                if (!raw) return fallback ?? 0;
-                return raw.length;
-            };
-
-            const result = Envapter.getWith('NONEXISTENT_VAR', customConverter, 99);
-            expect(result).to.equal(99);
-        });
-
         it('should work with instance method', () => {
             const instance = new Envapter();
-            const customConverter = (raw: string | undefined): string => (raw ? raw.toUpperCase() : 'DEFAULT');
+            expect(instance.getWith('TEST_STRING', (raw) => raw.toUpperCase())).to.equal('HELLO WORLD');
+        });
 
-            const result = instance.getWith('TEST_STRING', customConverter);
-            expect(result).to.equal('HELLO WORLD');
+        it('returns the fallback for a missing value without calling the converter', () => {
+            expect(Envapter.getWith('NONEXISTENT_VAR', (raw) => raw.length, 99)).to.equal(99);
+        });
+
+        it('returns undefined for a missing value with no fallback', () => {
+            expect(Envapter.getWith('NONEXISTENT_VAR', (raw) => raw.length)).to.be.undefined;
+        });
+
+        it('returns the fallback when the converter returns undefined or null', () => {
+            const toMode = (raw: string): 'fast' | undefined => (raw === 'fast' ? 'fast' : undefined);
+            expect(Envapter.getWith('TEST_STRING', toMode, 'fast')).to.equal('fast');
+            const toName = (raw: string): string | null => (raw === 'x' ? raw : null);
+            expect(Envapter.getWith('TEST_STRING', toName, 'fallback')).to.equal('fallback');
+        });
+
+        it("passes the converter's own error through", () => {
+            const parsePositive = (raw: string): number => {
+                throw new Error(`${raw} is not positive`);
+            };
+            expect(() => Envapter.getWith('TEST_STRING', parsePositive)).to.throw('hello world is not positive');
         });
     });
 

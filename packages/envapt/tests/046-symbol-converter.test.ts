@@ -27,7 +27,7 @@ describe('Symbol as a converter (v9)', () => {
         const buildDecorator = (): void => {
             class Cache {
                 @Envapt('CACHE_NAMESPACE', { converter: Symbol })
-                static readonly namespace: symbol;
+                static readonly namespace: symbol | undefined;
             }
             void Cache;
         };

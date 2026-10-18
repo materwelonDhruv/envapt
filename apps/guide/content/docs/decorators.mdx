@@ -87,8 +87,8 @@ class Config {
     static accessor origins: string[];
 
     // custom function: returns a shape the array builder can't, here a deduped Set
-    @Envapt('TRUSTED_IPS', { converter: (raw) => new Set((raw ?? '').split(',').filter(Boolean)) })
-    static accessor trustedIps: Set<string>;
+    @Envapt('TRUSTED_IPS', { converter: (raw) => new Set(raw.split(',').filter(Boolean)) })
+    static accessor trustedIps: Set<string> | undefined;
 }
 ```
 

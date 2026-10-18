@@ -6,6 +6,13 @@ import { Converters, Envapter, type JsonValue } from '../src';
 import { EnvaptError } from '../src/infra/Error';
 import { Envapt } from '../src/legacy';
 
+function splitList(raw: string): string[] {
+    return raw
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean);
+}
+
 describe('Envapt', () => {
     beforeAll(() => (Envapter.envPaths = resolve(`${import.meta.dirname}/.env.envapt-test`)));
 
@@ -164,38 +171,13 @@ describe('Envapt', () => {
 
     describe('custom converter functions', () => {
         class TestCustomEnv {
-            @Envapt('ALLOWED_CHANNELS', {
-                fallback: ['default-channel'],
-                converter: (raw, fallback) => {
-                    if (!raw || raw.trim() === '') return fallback;
-                    return raw
-                        .split(',')
-                        .map((s) => s.trim())
-                        .filter(Boolean);
-                }
-            })
+            @Envapt('ALLOWED_CHANNELS', { fallback: ['default-channel'], converter: splitList })
             public static readonly allowedChannels: string[];
 
-            @Envapt('FEATURE_FLAGS', {
-                fallback: new Set(['basic']),
-                converter: (raw, fallback) => {
-                    if (!raw || raw.trim() === '') return fallback;
-                    const flags = raw
-                        .split(',')
-                        .map((s) => s.trim())
-                        .filter(Boolean);
-                    return new Set(flags);
-                }
-            })
+            @Envapt('FEATURE_FLAGS', { fallback: new Set(['basic']), converter: (raw) => new Set(splitList(raw)) })
             public static readonly featureFlags: Set<string>;
 
-            @Envapt('NONEXISTENT_ARRAY', {
-                fallback: ['default1', 'default2'],
-                converter: (raw, fallback) => {
-                    if (!raw || raw.trim() === '') return fallback;
-                    return raw.split(',').map((s) => s.trim());
-                }
-            })
+            @Envapt('NONEXISTENT_ARRAY', { fallback: ['default1', 'default2'], converter: splitList })
             public static readonly nonexistentArray: string[];
         }
 
@@ -349,10 +331,10 @@ describe('Envapt', () => {
             public static readonly testVar: string;
 
             @Envapt('TEST_VAR_MULTI_CALL', { converter: String })
-            public static readonly testVarWithConverter: string;
+            public static readonly testVarWithConverter: string | undefined;
 
             @Envapt('TEST_VAR_MULTI_CALL', { converter: Number })
-            public static readonly testVarWithFallbackAndConverter: number;
+            public static readonly testVarWithFallbackAndConverter: number | undefined;
         }
 
         it('should return the correct string value for testVar', () => {

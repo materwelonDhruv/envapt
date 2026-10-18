@@ -1,4 +1,5 @@
 import { BuiltInConverters } from './BuiltInConverters';
+import { isUnconverted } from '../core/missing';
 import { state } from '../core/state';
 import { Validator } from '../engine/Validators';
 import { debugVerbose, debugWarn } from '../infra/Debug';
@@ -149,13 +150,22 @@ export class ValueConverter {
         key: EnvKeyInput,
         fallback: TFallback | undefined,
         resolvedConverter: EnvaptConverter<TFallback>,
-        _hasFallback: boolean // unused. the custom converter runs even when raw is undefined
+        hasFallback: boolean
     ): TFallback | undefined {
         Validator.customConvertor(resolvedConverter);
 
         const raw = this.envService.get(key, undefined);
+        if (raw === undefined) return fallback;
 
-        return resolvedConverter(raw, fallback);
+        const converted = resolvedConverter(raw);
+        if (isUnconverted(converted)) {
+            // leave the value out because env values can be secrets
+            debugVerbose(
+                `could not convert ${formatKeyForError(key)} with the custom converter${hasFallback ? ', using the fallback' : ''}`
+            );
+            return fallback;
+        }
+        return converted;
     }
 
     private resolveConverter<TFallback>(
@@ -196,7 +206,7 @@ export class ValueConverter {
         } catch (error) {
             return { issues: [{ message: errorMessage(error) }] };
         }
-        if (converted === undefined || converted === null) return { issues: [{ message: 'could not be converted' }] };
+        if (isUnconverted(converted)) return { issues: [{ message: 'could not be converted' }] };
         return { value: converted };
     }
 

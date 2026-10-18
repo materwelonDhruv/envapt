@@ -89,30 +89,30 @@ export class AdvancedMethods extends PrimitiveMethods {
     }
 
     /**
-     * Get an environment variable using a custom converter function.
+     * Get an environment variable using a custom converter function. The converter runs only on a present
+     * value. A missing value, or a converter result of `undefined` or `null`, returns the fallback.
      * Accepts a single key or an ordered list for automatic fallback.
      * @see {@link https://envapt.materwelon.dev/docs/envapter#converters}
      * @see {@link https://envapt.materwelon.dev/docs/converters#custom-converters}
      */
-    static getWith<TReturnType, TFallback extends TReturnType | undefined = undefined>(
+    static getWith<TReturnType, TFallback extends NonNullable<TReturnType> | undefined = undefined>(
         key: EnvKeyInput,
         converter: ConverterFunction<TReturnType>,
         fallback?: TFallback
-    ): ConditionalReturn<TReturnType, TFallback> {
-        // run the custom converter even on a missing value, with raw as undefined
+    ): ConditionalReturn<NonNullable<TReturnType>, TFallback> {
         const result = valueConverter.convertValue<TReturnType>(key, fallback, converter, hasFallback(fallback));
 
-        return result as ConditionalReturn<TReturnType, TFallback>;
+        return result as ConditionalReturn<NonNullable<TReturnType>, TFallback>;
     }
 
     /**
      * @see {@link AdvancedMethods.getWith}
      */
-    getWith<TReturnType, TFallback extends TReturnType | undefined = undefined>(
+    getWith<TReturnType, TFallback extends NonNullable<TReturnType> | undefined = undefined>(
         key: EnvKeyInput,
         converter: ConverterFunction<TReturnType>,
         fallback?: TFallback
-    ): ConditionalReturn<TReturnType, TFallback> {
+    ): ConditionalReturn<NonNullable<TReturnType>, TFallback> {
         return AdvancedMethods.getWith(key, converter, fallback);
     }
 
@@ -130,12 +130,16 @@ export class AdvancedMethods extends PrimitiveMethods {
         key: EnvKeyInput,
         converter: TConverter
     ): InferConverterReturnType<TConverter>;
-    static getRequired<TReturnType>(key: EnvKeyInput, converter: ConverterFunction<TReturnType, string>): TReturnType;
+    static getRequired<TReturnType>(
+        key: EnvKeyInput,
+        converter: ConverterFunction<TReturnType>
+    ): NonNullable<TReturnType>;
     static getRequired<TConverter extends BuiltInConverter | ArrayOf, TReturnType>(
         key: EnvKeyInput,
-        converter: TConverter | ConverterFunction<TReturnType, string>
-    ): InferConverterReturnType<TConverter> | TReturnType {
-        return readRequired(key, converter as RequiredConverter) as InferConverterReturnType<TConverter> | TReturnType;
+        converter: TConverter | ConverterFunction<TReturnType>
+    ): InferConverterReturnType<TConverter> | NonNullable<TReturnType> {
+        return readRequired(key, converter as RequiredConverter) as
+            InferConverterReturnType<TConverter> | NonNullable<TReturnType>;
     }
 
     /**
@@ -145,12 +149,12 @@ export class AdvancedMethods extends PrimitiveMethods {
         key: EnvKeyInput,
         converter: TConverter
     ): InferConverterReturnType<TConverter>;
-    getRequired<TReturnType>(key: EnvKeyInput, converter: ConverterFunction<TReturnType, string>): TReturnType;
+    getRequired<TReturnType>(key: EnvKeyInput, converter: ConverterFunction<TReturnType>): NonNullable<TReturnType>;
     getRequired<TConverter extends BuiltInConverter | ArrayOf, TReturnType>(
         key: EnvKeyInput,
-        converter: TConverter | ConverterFunction<TReturnType, string>
-    ): InferConverterReturnType<TConverter> | TReturnType {
-        return AdvancedMethods.getRequired(key, converter as ConverterFunction<TReturnType, string>);
+        converter: TConverter | ConverterFunction<TReturnType>
+    ): InferConverterReturnType<TConverter> | NonNullable<TReturnType> {
+        return AdvancedMethods.getRequired(key, converter as ConverterFunction<TReturnType>);
     }
 
     /**
