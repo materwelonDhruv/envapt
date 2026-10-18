@@ -1,8 +1,8 @@
 import { resolve } from 'node:path';
 
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { Converters, Envapter } from '../src';
+import { Converters, Envapter, FileSource, PortableSource } from '../src';
 import { Envapt } from '../src/legacy';
 
 describe('template variable resolution', () => {
@@ -37,5 +37,14 @@ describe('template variable resolution', () => {
     it('expands a template inside regexp braces', () => {
         // \d{${TEMPLATE_NUM_BASE}} becomes \d{42}
         expect(TemplateTest.regexpTemplate.source).to.equal('\\d{42}');
+    });
+
+    describe('an empty ${}', () => {
+        afterEach(() => Envapter.useSource(new FileSource()));
+
+        it('stays in the value as text', () => {
+            Envapter.useSource(new PortableSource({ GREETING: 'hello ${}' }));
+            expect(Envapter.get('GREETING')).to.equal('hello ${}');
+        });
     });
 });
