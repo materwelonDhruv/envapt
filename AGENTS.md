@@ -67,7 +67,7 @@ The `exports` map in `packages/envapt/package.json` is the public surface. Never
 - **Commit subjects are one lowercase line with no scope and no body.** Write `feat:`, never `feat(core):`. A breaking change marks the bare type, `feat!:`.
 - **Move files with `git mv`. Add dependencies with `pnpm add --filter <workspace>`.** Read a new package's README and peer range before using it.
 
-Never edit `AGENTS.md`, `CLAUDE.md`, or an existing changeset without explicit permission.
+Never edit `AGENTS.md` or `CLAUDE.md` without explicit permission.
 
 The maintainer may leave a `Note for Agent:` comment as a deliberate lint or type error. Read it, do what it says, then remove it.
 

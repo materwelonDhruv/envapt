@@ -14,7 +14,6 @@ The shape:
 - `'envapt': patch`, `minor`, or `major` in the frontmatter. envapt is the only published package.
 - One paragraph on one line. No second paragraph, list, heading, quote, or code block.
 - At most two sentences for a patch and three otherwise. One sentence is fine when it already carries the reader's own case.
-- Never edit a changeset already in `.changeset/` without the maintainer's OK. Add a new one.
 
 ---
 
