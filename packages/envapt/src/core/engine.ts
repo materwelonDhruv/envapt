@@ -10,6 +10,7 @@ import { loadDotenv } from '../infra/Dotenv';
 import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
 import { missingValue, missingValues, validationFailed } from '../infra/failures';
 import { recase } from '../infra/recase';
+import { UnboundSource } from '../sources/UnboundSource';
 
 import type { Field, FieldSpec } from '../converters';
 import type { StandardSchemaV1 } from '../infra/StandardSchema';
@@ -161,6 +162,8 @@ export function refreshCache(): void {
     state.cacheBuilt = false;
     state.dotenvAddedKeys = new Set<string>();
     debugVerbose('cache cleared, reloading config');
+    // useSource rebuilds the cache when it binds one
+    if (state.source instanceof UnboundSource) return;
     ensureLoaded();
 }
 
