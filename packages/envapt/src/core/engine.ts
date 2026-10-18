@@ -10,9 +10,16 @@ import { loadDotenv } from '../infra/Dotenv';
 import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
 import { missingValue, validationFailed } from '../infra/failures';
 
+import type { PrimitiveToken } from '../engine/Validators';
 import type { ValidationCode } from '../infra/failures';
 import type { StandardSchemaV1 } from '../infra/StandardSchema';
-import type { ConditionalReturn, EnvKeyInput, PresentValue, RequiredConverter } from '../types';
+import type {
+    AdvancedConverterReturn,
+    EnvKeyInput,
+    InferConverterReturnType,
+    PresentValue,
+    RequiredConverter
+} from '../types';
 import type { EnvapterService } from '../types/Env';
 
 function toKeyList(keyInput: EnvKeyInput): readonly string[] {
@@ -71,7 +78,7 @@ export function readSchema(
     hasFallback: boolean
 ): unknown {
     // readPrimitive logs the missing-value warning
-    const value = readPrimitive<string, undefined>(keyInput, 'string');
+    const value = readPrimitive(keyInput, 'string');
     if (value === undefined) {
         if (hasFallback) return fallback;
         throw missingValue(keyInput);
@@ -190,34 +197,39 @@ export function determineEnvironment(): void {
 // arrows because readPrimitive reads templateResolver, which is assigned below
 const envService: EnvapterService = {
     getRaw: (key) => resolveKeyInput(key).value,
-    get: (key, fallback) => readPrimitive<string, string | undefined>(key, 'string', fallback)
+    get: (key, fallback) => readPrimitive(key, 'string', fallback)
 };
 
 const templateResolver: TemplateResolver = new TemplateResolver(envService);
 export const valueConverter: ValueConverter = new ValueConverter(envService);
 
-export function readPrimitive<EnvVarReturnType, DefaultType extends EnvVarReturnType | undefined = undefined>(
+// TS can't assign a value to a conditional type on an unresolved generic
+export function readPrimitive<
+    TToken extends PrimitiveToken,
+    TFallback extends InferConverterReturnType<TToken> | undefined = undefined
+>(key: EnvKeyInput, type: TToken, fallback?: TFallback): AdvancedConverterReturn<TToken, TFallback>;
+export function readPrimitive(
     key: EnvKeyInput,
-    type: 'string' | 'number' | 'boolean' | 'bigint',
-    fallback?: DefaultType
-): ConditionalReturn<EnvVarReturnType, DefaultType> {
+    type: PrimitiveToken,
+    fallback?: InferConverterReturnType<PrimitiveToken>
+): unknown {
     const { key: resolvedKey, value } = resolveKeyInput(key);
     if (isMissing(value)) {
         if (fallback !== undefined) debugWarn(`${resolvedKey} is missing or empty, using fallback ${String(fallback)}`);
         else debugWarn(`${resolvedKey} is missing or empty`);
-        return fallback as ConditionalReturn<EnvVarReturnType, DefaultType>;
+        return fallback;
     }
 
     const parsed = templateResolver.resolveTemplate(resolvedKey, String(value));
 
-    const converted = BuiltInConverters.getConverter(type)(parsed) as EnvVarReturnType | undefined;
+    const converted = BuiltInConverters.getConverter(type)(parsed);
 
     if (converted === undefined) {
         // leave the value out because env values can be secrets
         debugVerbose(
             `could not convert ${resolvedKey} as ${type}${fallback !== undefined ? ', using the fallback' : ''}`
         );
-        return fallback as ConditionalReturn<EnvVarReturnType, DefaultType>;
+        return fallback;
     }
 
     return converted;

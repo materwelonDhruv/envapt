@@ -9,12 +9,16 @@ import type { StandardSchemaV1 } from '../infra/StandardSchema';
 import type { BuiltInConverter, ConverterFunction, EnvaptConverter, FileApiMode, PrimitiveConstructor } from '../types';
 
 // each token is also what typeof returns for that constructor's values
-const PRIMITIVE_TOKENS = new Map<unknown, BuiltInConverter>([
+const PRIMITIVES = [
     [String, 'string'],
     [Number, 'number'],
     [Boolean, 'boolean'],
     [BigInt, 'bigint']
-]);
+] as const;
+
+export type PrimitiveToken = (typeof PRIMITIVES)[number][1];
+
+const PRIMITIVE_TOKENS: ReadonlyMap<unknown, PrimitiveToken> = new Map<unknown, PrimitiveToken>(PRIMITIVES);
 
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class -- cohesive dispatch of stateless type guards, same shape as BuiltInConverters
 export class Validator {
@@ -168,7 +172,7 @@ export class Validator {
         return PRIMITIVE_TOKENS.has(value);
     }
 
-    static primitiveToken(value: unknown): BuiltInConverter | undefined {
+    static primitiveToken(value: unknown): PrimitiveToken | undefined {
         return PRIMITIVE_TOKENS.get(value);
     }
 
