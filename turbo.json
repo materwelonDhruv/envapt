@@ -39,10 +39,6 @@
             "dependsOn": ["build"],
             "outputs": []
         },
-        "test:cjs-validity": {
-            "dependsOn": ["build"],
-            "outputs": []
-        },
         "test:babel-emit": {
             "dependsOn": ["build"],
             "outputs": []

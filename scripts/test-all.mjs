@@ -29,7 +29,6 @@ const slices = [
     ['tree-shaking', ['--filter', 'envapt', 'test:tree-shaking']],
     ['exports-dedup', ['--filter', 'envapt', 'test:exports-dedup']],
     ['resolution-matrix', ['--filter', 'envapt', 'test:resolution-matrix']],
-    ['cjs-validity', ['--filter', 'envapt', 'test:cjs-validity']],
     ['tsc-emit', ['--filter', 'envapt', 'test:tsc-emit']],
     ['babel-emit', ['--filter', 'envapt', 'test:babel-emit']],
     ['stage3-emit', ['--filter', 'envapt', 'test:stage3-emit']],

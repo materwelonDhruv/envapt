@@ -34,30 +34,18 @@
                 "import": {
                     "types": "./dist/types/index.d.mts",
                     "default": "./dist/node/index.mjs"
-                },
-                "require": {
-                    "types": "./dist/types/index.d.mts",
-                    "default": "./dist/node/index.cjs"
                 }
             },
             "node": {
                 "import": {
                     "types": "./dist/types/index.d.mts",
                     "default": "./dist/node/index.mjs"
-                },
-                "require": {
-                    "types": "./dist/types/index.d.mts",
-                    "default": "./dist/node/index.cjs"
                 }
             },
             "default": {
                 "import": {
                     "types": "./dist/types/index.d.mts",
                     "default": "./dist/node/index.mjs"
-                },
-                "require": {
-                    "types": "./dist/types/index.d.mts",
-                    "default": "./dist/node/index.cjs"
                 }
             }
         },
@@ -65,10 +53,6 @@
             "import": {
                 "types": "./dist/types/config.d.mts",
                 "default": "./dist/node/config.mjs"
-            },
-            "require": {
-                "types": "./dist/types/config.d.mts",
-                "default": "./dist/node/config.cjs"
             }
         },
         "./legacy": {
@@ -100,42 +84,28 @@
                 "import": {
                     "types": "./dist/types/legacy.d.mts",
                     "default": "./dist/node/legacy.mjs"
-                },
-                "require": {
-                    "types": "./dist/types/legacy.d.mts",
-                    "default": "./dist/node/legacy.cjs"
                 }
             },
             "node": {
                 "import": {
                     "types": "./dist/types/legacy.d.mts",
                     "default": "./dist/node/legacy.mjs"
-                },
-                "require": {
-                    "types": "./dist/types/legacy.d.mts",
-                    "default": "./dist/node/legacy.cjs"
                 }
             },
             "default": {
                 "import": {
                     "types": "./dist/types/legacy.d.mts",
                     "default": "./dist/node/legacy.mjs"
-                },
-                "require": {
-                    "types": "./dist/types/legacy.d.mts",
-                    "default": "./dist/node/legacy.cjs"
                 }
             }
         },
         "./package.json": "./package.json"
     },
     "sideEffects": [
-        "./dist/node/config.cjs",
         "./dist/node/config.mjs"
     ],
     "files": [
         "dist/**/*.mjs",
-        "dist/**/*.cjs",
         "dist/**/*.map",
         "dist/types",
         "NOTICE.md",
@@ -168,7 +138,6 @@
         "test:tree-shaking": "node tests/tree-shaking/run.mjs",
         "test:exports-dedup": "node tests/exports-dedup/run.mjs",
         "test:resolution-matrix": "node tests/resolution-matrix/run.mjs",
-        "test:cjs-validity": "node tests/cjs-validity/run.mjs",
         "test:tsc-emit": "node tests/tsc-emit/run.mjs",
         "test:tsc-emit:ts7": "ENVAPT_TSC_PACKAGE=typescript7 node tests/tsc-emit/run.mjs",
         "test:babel-emit": "node tests/babel-emit/run.mjs",
@@ -213,7 +182,7 @@
     "author": "Dhruv <materwelondhruv@gmail.com>",
     "license": "Apache-2.0",
     "engines": {
-        "node": ">=22.0.0",
+        "node": ">=22.23.3",
         "bun": ">=1.3.11",
         "deno": ">=2.5.0"
     },

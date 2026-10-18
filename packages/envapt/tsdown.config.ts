@@ -19,7 +19,7 @@ export default defineConfig([
     {
         ...shared,
         entry: { index: 'src/index.ts', config: 'src/config.ts', legacy: 'src/legacy.ts' },
-        format: ['esm', 'cjs'],
+        format: ['esm'],
         platform: 'node',
         outDir: 'dist/node'
     },

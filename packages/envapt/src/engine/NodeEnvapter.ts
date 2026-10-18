@@ -57,9 +57,8 @@ export class NodeEnvapter extends Envapter {
     /**
      * Set the base directory that relative `.env` paths resolve against. Without one they resolve against
      * `process.cwd()`. It covers the auto-cascade, `Envapter.configureProfiles` paths, and relative `envPaths`.
-     * Absolute paths always bypass it. Pass a directory path (`import.meta.dirname`,
-     * or `__dirname` in CJS) or a module URL (`import.meta.url`) to resolve paths next to the
-     * calling file regardless of launch directory.
+     * Absolute paths always bypass it. Pass a directory path (`import.meta.dirname`) or a module URL
+     * (`import.meta.url`) to resolve paths next to the calling file regardless of launch directory.
      *
      * Set this before `envPaths` so relative `envPaths` validate against the right directory.
      * Setting `undefined` restores `process.cwd()` resolution.

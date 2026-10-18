@@ -18,8 +18,5 @@ function printMirroredKeys(script) {
 }
 
 export default async function configEntry() {
-    for (const script of ['print.mjs', 'print.cjs']) {
-        const mirrored = printMirroredKeys(resolve(FIXTURE_DIR, script));
-        assert.deepEqual(mirrored, ['alpha', 'alpha-beta'], script);
-    }
+    assert.deepEqual(printMirroredKeys(resolve(FIXTURE_DIR, 'print.mjs')), ['alpha', 'alpha-beta']);
 }

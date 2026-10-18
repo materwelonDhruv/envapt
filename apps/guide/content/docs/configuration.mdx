@@ -3,7 +3,7 @@ title: Configuration
 description: Control which files load on Node, mirror values back to process.env, and turn on debug logging.
 ---
 
-On Node, Bun, and Deno the default source reads `process.env` plus the `.env` files it loads. Static settings on `Envapter` control which files load, whether loaded values reach `process.env`, and how much envapt logs. They apply only while a Node source is active, on Workers and in the browser you bind a [source](/docs/sources) instead.
+On Node, Bun, and Deno the default source reads `process.env` plus the `.env` files it loads. Static settings on `Envapter` control which files load, whether loaded values reach `process.env`, and how much envapt logs. They apply only while a Node source is active. On Workers and in the browser you bind a [source](/docs/sources).
 
 ```ts twoslash
 import { Envapter } from 'envapt';
@@ -44,7 +44,7 @@ Envapter.envPaths = ['config/app.env', '.env'];
     unless you set `Envapter.baseDir` (below).
 </Callout>
 
-`envFileOptions` tunes how files are read. `override` (default `false`) decides whether a later file or a file value can replace an already-set key; `encoding` (default `utf8`) sets the file encoding.
+`envFileOptions` tunes how files are read. `override` (default `false`) decides whether a later file or a file value can replace an already-set key. `encoding` (default `utf8`) sets the file encoding.
 
 ```ts twoslash
 import { Envapter } from 'envapt';
@@ -54,19 +54,16 @@ Envapter.envFileOptions = { override: true, encoding: 'utf8' };
 
 ## Reading from a fixed directory
 
-Relative paths resolve against the working directory (`process.cwd()`) by default. In a monorepo the process often starts at the repository root, not the package directory, so a package-local `.env` is not found. Set `Envapter.baseDir` to the directory that relative paths resolve against: the auto-cascade, `configureProfiles` paths, and relative `envPaths`. Absolute paths are used unchanged.
+Relative paths resolve against the working directory (`process.cwd()`) by default. In a monorepo the process often starts at the repository root, so a `.env` inside a package directory is not found. Set `Envapter.baseDir` to the directory that relative paths resolve against: the auto-cascade, `configureProfiles` paths, and relative `envPaths`. Absolute paths are used unchanged.
 
 ```ts twoslash
 import { Envapter } from 'envapt';
 // ---cut---
-// ESM: resolve .env next to this module, whatever the working directory is
+// resolve .env next to this module, whatever the working directory is
 Envapter.baseDir = import.meta.url;
-
-// CommonJS
-Envapter.baseDir = __dirname;
 ```
 
-`baseDir` accepts a directory path, a module URL (`import.meta.url`), or `import.meta.dirname` / `__dirname`. Set it before `envPaths` so relative `envPaths` validate against the same directory. Leave it unset to keep `process.cwd()` resolution.
+`baseDir` accepts a directory path, a module URL (`import.meta.url`), or `import.meta.dirname`. Set it before `envPaths` so relative `envPaths` validate against the same directory. Leave it unset to keep `process.cwd()` resolution.
 
 ## Mirroring to process.env
 
@@ -83,8 +80,8 @@ Only keys envapt's loader wrote are mirrored, so collisions follow `envFileOptio
 Mirrored values are resolved first, so `${VAR}` templates are expanded before they reach `process.env` and match what `Envapter.get` returns.
 
 <Callout type="warn">
-    Mirroring is one-way. Turning `syncProcessEnv` back to `false` does not remove keys already written; they stay in
-    `process.env` until the process exits.
+    Mirroring is one-way. Turning `syncProcessEnv` back to `false` leaves the keys already written in `process.env`
+    until the process exits.
 </Callout>
 
 ## Debug logging
@@ -100,7 +97,7 @@ Envapter.debug = 'verbose';
 - `warn`: signals that may indicate misconfiguration: failed file reads, unresolved templates in non-strict mode, and any read of a missing or empty variable, or under strict mode a whitespace-only one (whether it returns a fallback or `undefined`).
 - `verbose`: adds the base directory, every loaded file, per-file key counts, per-key load lines, effective paths, cache rebuilds, and any present value a built-in converter could not parse (a malformed value that fell back to its default).
 
-You can also set the level without code through the `ENVAPT_DEBUG` environment variable. envapt reads it on first access; an explicit `Envapter.debug` assignment overrides it.
+You can also set the level without code through the `ENVAPT_DEBUG` environment variable. envapt reads it on first access, and an explicit `Envapter.debug` assignment overrides it.
 
 ```dotenv
 ENVAPT_DEBUG=verbose

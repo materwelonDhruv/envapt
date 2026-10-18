@@ -5,7 +5,7 @@ description: Reads typed, validated config from process.env, .env files, or any 
 
 # envapt
 
-envapt reads environment variables, or any config, as typed, validated values, with an optional `.env` cascade layered on top of `process.env`, and nothing in `dependencies` or `peerDependencies`. Available as `envapt` on npm and `@materwelon/envapt` on JSR. Minimum versions are Node >=22, Bun >=1.3.11, Deno >=2.5. Ships ESM and CJS. It also runs on Cloudflare Workers and in the browser, where you bind a source yourself and read with the same typed API (see the Runtimes and sources section below). Import from `envapt` everywhere, because the package export conditions select the right build automatically.
+envapt reads environment variables, or any config, as typed, validated values, with an optional `.env` cascade layered on top of `process.env`, and nothing in `dependencies` or `peerDependencies`. Available as `envapt` on npm and `@materwelon/envapt` on JSR. Minimum versions are Node >=22.23.3, Bun >=1.3.11, Deno >=2.5. Ships ESM only. It also runs on Cloudflare Workers and in the browser, where you bind a source yourself and read with the same typed API (see the Runtimes and sources section below). Import from `envapt` everywhere, because the package export conditions select the right build automatically.
 
 ## Choosing the API: functional vs decorators
 
@@ -168,7 +168,6 @@ The environment is detected from the first set of `ENVIRONMENT` -> `ENV` -> `NOD
 ```ts
 import 'envapt/config'; // ESM, top of entry
 // node --import envapt/config app.js   (preload)
-// node -r envapt/config app.cjs        (CJS preload)
 ```
 
 ## Validation with Standard Schema
@@ -220,7 +219,7 @@ envapt loads `.env` **and** returns typed, validated values from one API, with n
 | dotenv | envapt |
 | --- | --- |
 | `require('dotenv').config()` | `import 'envapt/config'` |
-| `-r dotenv/config` | `-r envapt/config` (CJS) / `--import envapt/config` (ESM) |
+| `-r dotenv/config` | `--import envapt/config` |
 | `process.env.API_KEY` | `Envapter.get('API_KEY')` / `Envapter.require('API_KEY')` |
 | `Number(process.env.PORT) \|\| 3000` | `Envapter.getUsing('PORT', Converters.Port, 3000)` |
 | `process.env.DEBUG === 'true'` | `Envapter.getBoolean('DEBUG', false)` |

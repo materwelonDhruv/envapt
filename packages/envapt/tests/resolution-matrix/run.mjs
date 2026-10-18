@@ -29,13 +29,15 @@ function moduleKindFor(resolution) {
     return ts.ModuleKind.ESNext;
 }
 
+// without a resolution mode, Node16 and NodeNext resolve as a CommonJS importer
 function typesTarget(specifier, resolution, conditions) {
     const options = {
         moduleResolution: resolution,
         module: moduleKindFor(resolution),
         customConditions: conditions.length > 0 ? conditions : undefined
     };
-    const resolved = ts.resolveModuleName(specifier, probe, options, ts.sys).resolvedModule?.resolvedFileName;
+    const resolved = ts.resolveModuleName(specifier, probe, options, ts.sys, undefined, undefined, ts.ModuleKind.ESNext)
+        .resolvedModule?.resolvedFileName;
     return resolved ? basename(resolved) : undefined;
 }
 

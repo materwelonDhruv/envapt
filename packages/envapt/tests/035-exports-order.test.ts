@@ -10,7 +10,6 @@ interface ConditionTarget {
 }
 interface NodeTarget {
     import: ConditionTarget;
-    require: ConditionTarget;
 }
 type SubpathMap = Record<string, ConditionTarget | NodeTarget>;
 interface PackageManifest {
@@ -36,11 +35,7 @@ function portableTarget(kind: 'index' | 'legacy'): ConditionTarget {
 }
 
 function nodeTarget(kind: 'index' | 'legacy'): NodeTarget {
-    const types = `./dist/types/${kind}.d.mts`;
-    return {
-        import: { types, default: `./dist/node/${kind}.mjs` },
-        require: { types, default: `./dist/node/${kind}.cjs` }
-    };
+    return { import: { types: `./dist/types/${kind}.d.mts`, default: `./dist/node/${kind}.mjs` } };
 }
 
 describe('package exports map (v8)', () => {
@@ -90,6 +85,6 @@ describe('package exports map (v8)', () => {
     });
 
     it('scopes sideEffects to the node config entry', () => {
-        expect(pkg.sideEffects).toEqual(['./dist/node/config.cjs', './dist/node/config.mjs']);
+        expect(pkg.sideEffects).toEqual(['./dist/node/config.mjs']);
     });
 });

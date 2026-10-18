@@ -34,8 +34,8 @@ export class FileSource implements FileCapableSource {
 
     /**
      * Resolves a directory path or a module / `file:` URL to an absolute directory. A `file:` URL
-     * resolves to its containing directory, and a plain path (`import.meta.dirname`, `__dirname`) is
-     * taken as the directory itself.
+     * resolves to its containing directory. A plain path (`import.meta.dirname`) is taken as the
+     * directory itself.
      */
     normalizeBaseDir(value: string | URL): string {
         if (value instanceof URL) return dirname(fileURLToPath(value));
