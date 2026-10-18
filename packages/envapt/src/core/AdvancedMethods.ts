@@ -119,10 +119,9 @@ export class AdvancedMethods extends PrimitiveMethods {
     /**
      * Read a required environment variable and convert it, throwing `MissingEnvValue` when the value
      * is missing or empty. A value the converter cannot convert throws `InvalidEnvValue` with
-     * one issue keyed by the env name. A bad array element and an error a custom parser throws both
-     * become that issue, carrying their message. Returns the non-undefined converter output.
-     * Accepts a built-in or `ArrayOf` token, or a custom parser function. The key can be a single
-     * name or an ordered list.
+     * one issue keyed by the env name. A bad array element, an error a custom parser throws, and a
+     * schema's issues all become issues on that error. Accepts a built-in or `ArrayOf` token, a custom
+     * parser function, or a synchronous Standard Schema. The key can be a single name or an ordered list.
      * @see {@link https://envapt.materwelon.dev/docs/envapter#fail-fast-on-missing-values}
      * @see {@link https://envapt.materwelon.dev/docs/converters#require-a-converted-value}
      */
@@ -130,16 +129,17 @@ export class AdvancedMethods extends PrimitiveMethods {
         key: EnvKeyInput,
         converter: TConverter
     ): InferConverterReturnType<TConverter>;
+    // arktype types are callable and would match the function overload below
+    static getRequired<Schema extends StandardSchemaV1>(
+        key: EnvKeyInput,
+        schema: SchemaConstraint<Schema>
+    ): InferSchemaOutput<Schema>;
     static getRequired<TReturnType>(
         key: EnvKeyInput,
         converter: ConverterFunction<TReturnType>
     ): NonNullable<TReturnType>;
-    static getRequired<TConverter extends BuiltInConverter | ArrayOf, TReturnType>(
-        key: EnvKeyInput,
-        converter: TConverter | ConverterFunction<TReturnType>
-    ): InferConverterReturnType<TConverter> | NonNullable<TReturnType> {
-        return readRequired(key, converter as RequiredConverter) as
-            InferConverterReturnType<TConverter> | NonNullable<TReturnType>;
+    static getRequired(key: EnvKeyInput, converter: RequiredConverter | StandardSchemaV1): unknown {
+        return readRequired(key, converter);
     }
 
     /**
@@ -149,12 +149,13 @@ export class AdvancedMethods extends PrimitiveMethods {
         key: EnvKeyInput,
         converter: TConverter
     ): InferConverterReturnType<TConverter>;
-    getRequired<TReturnType>(key: EnvKeyInput, converter: ConverterFunction<TReturnType>): NonNullable<TReturnType>;
-    getRequired<TConverter extends BuiltInConverter | ArrayOf, TReturnType>(
+    getRequired<Schema extends StandardSchemaV1>(
         key: EnvKeyInput,
-        converter: TConverter | ConverterFunction<TReturnType>
-    ): InferConverterReturnType<TConverter> | NonNullable<TReturnType> {
-        return AdvancedMethods.getRequired(key, converter as ConverterFunction<TReturnType>);
+        schema: SchemaConstraint<Schema>
+    ): InferSchemaOutput<Schema>;
+    getRequired<TReturnType>(key: EnvKeyInput, converter: ConverterFunction<TReturnType>): NonNullable<TReturnType>;
+    getRequired(key: EnvKeyInput, converter: RequiredConverter | StandardSchemaV1): unknown {
+        return readRequired(key, converter);
     }
 
     /**

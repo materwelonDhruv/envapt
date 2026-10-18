@@ -8,14 +8,7 @@ import { formatKeyForError } from '../infra/failures';
 
 import type { ArrayOf } from './Converters';
 import type { StandardSchemaV1 } from '../infra/StandardSchema';
-import type {
-    BuiltInConverter,
-    EnvKeyInput,
-    EnvaptConverter,
-    PresentValue,
-    RequiredConverter,
-    RequiredSpec
-} from '../types';
+import type { BuiltInConverter, EnvKeyInput, EnvaptConverter, PresentValue, RequiredConverter } from '../types';
 import type { EnvapterService } from '../types/Env';
 
 function errorMessage(error: unknown): string {
@@ -189,8 +182,11 @@ export class ValueConverter {
         return keyIssues(key, this.runSchema(key, schema, value));
     }
 
-    // getRequiredAll lists a throwing schema with the other bad fields
-    readSpecField(present: PresentValue, field: RequiredSpec[string]): StandardSchemaV1.Result<unknown> {
+    // a schema that throws becomes an issue like any other bad value
+    readSpecField(
+        present: PresentValue,
+        field: RequiredConverter | StandardSchemaV1
+    ): StandardSchemaV1.Result<unknown> {
         if (!Validator.isStandardSchema(field)) return this.readConverted(present, field);
         try {
             return this.readValidated(present, field);

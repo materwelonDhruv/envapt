@@ -119,6 +119,24 @@ describe('Required reads (v8)', () => {
             expect(e.issues).to.deep.equal([{ message: 'out of range', path: ['SET_VALUE'] }]);
         });
 
+        it('returns the schema output for a present value', () => {
+            const port = Envapter.getRequired('SET_NUMBER', z.coerce.number().int());
+            expect(port).to.equal(42);
+            expectTypeOf(port).toEqualTypeOf<number>();
+        });
+
+        it('throws MissingEnvValue for a missing value read through a schema', () => {
+            expect(() => Envapter.getRequired('NEVER_SET_KEY', z.string()))
+                .to.throw(EnvaptError)
+                .with.property('code', EnvaptErrorCodes.MissingEnvValue);
+        });
+
+        it('throws InvalidEnvValue with the schema issues keyed by the env name', () => {
+            const e = thrownBy(() => Envapter.getRequired('SET_VALUE', z.coerce.number()));
+            expect(e.code).to.equal(EnvaptErrorCodes.InvalidEnvValue);
+            expect(e.issues?.[0]?.path?.[0]).to.equal('SET_VALUE');
+        });
+
         it('reports a bad array element as InvalidEnvValue', () => {
             const e = thrownBy(() => Envapter.getRequired('PORTS_BAD', Converters.array({ of: Converters.Port })));
             expect(e.code).to.equal(EnvaptErrorCodes.InvalidEnvValue);

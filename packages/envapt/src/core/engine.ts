@@ -61,14 +61,10 @@ export function findPresent(keyInput: EnvKeyInput): PresentValue | undefined {
     return { key, value: templateResolver.resolveTemplate(key, value) };
 }
 
-export function readRequired(keyInput: EnvKeyInput, converter: RequiredConverter): unknown {
+export function readRequired(keyInput: EnvKeyInput, field: RequiredConverter | StandardSchemaV1): unknown {
     const present = findPresent(keyInput);
     if (present === undefined) throw missingValue(keyInput);
-    return valueOrThrow(
-        EnvaptErrorCodes.InvalidEnvValue,
-        present.key,
-        valueConverter.readConverted(present, converter)
-    );
+    return valueOrThrow(EnvaptErrorCodes.InvalidEnvValue, present.key, valueConverter.readSpecField(present, field));
 }
 
 export function readSchema(
