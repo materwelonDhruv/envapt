@@ -2,4 +2,4 @@
 'envapt': major
 ---
 
-**BREAKING:** Every issue on a `SchemaValidationFailed` from `Envapter.getUsing` and `@Envapt({ schema })` now has the env key as the first entry of its `path`. A schema that fails with no issues now gives one issue with the message `no issue message`.
+**BREAKING:** Each issue on a `SchemaValidationFailed` from `getAs` or `@Envapt({ schema })` now has the env key first in its `path`, and a schema that fails with no issues gives one issue with the message `no issue message`. The error message now lists only the key, as in `Validation failed for PORT.`, where it used to include the first issue's message.
