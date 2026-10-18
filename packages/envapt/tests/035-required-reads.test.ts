@@ -24,7 +24,7 @@ function thrownBy(read: () => unknown): EnvaptError {
 
 describe('Required reads (v8)', () => {
     beforeAll(() => {
-        Envapter.envPaths = resolve(import.meta.dirname, '.env.037-required-reads');
+        Envapter.envPaths = resolve(import.meta.dirname, '.env.035-required-reads');
     });
 
     afterEach(() => {

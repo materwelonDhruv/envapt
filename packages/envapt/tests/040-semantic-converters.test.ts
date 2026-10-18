@@ -7,7 +7,7 @@ import { EnvaptError } from '../src/infra/Error';
 
 describe('Semantic converters (v8): port and email', () => {
     beforeAll(() => {
-        Envapter.envPaths = resolve(import.meta.dirname, '.env.043-semantic-converters');
+        Envapter.envPaths = resolve(import.meta.dirname, '.env.040-semantic-converters');
     });
 
     describe('port', () => {

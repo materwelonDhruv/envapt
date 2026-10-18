@@ -8,7 +8,7 @@ import { EnvaptError } from '../src/infra/Error';
 import { Envapt } from '../src/legacy';
 
 describe('decorator value resolution', () => {
-    beforeAll(() => (Envapter.envPaths = resolve(`${import.meta.dirname}/.env.034`)));
+    beforeAll(() => (Envapter.envPaths = resolve(`${import.meta.dirname}/.env.032`)));
 
     describe('caching an undefined result', () => {
         let calls = 0;

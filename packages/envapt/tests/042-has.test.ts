@@ -7,7 +7,7 @@ import { EnvaptError } from '../src/infra/Error';
 
 describe('has (v8.1)', () => {
     beforeAll(() => {
-        Envapter.envPaths = resolve(import.meta.dirname, '.env.045-has');
+        Envapter.envPaths = resolve(import.meta.dirname, '.env.042-has');
     });
 
     afterEach(() => {

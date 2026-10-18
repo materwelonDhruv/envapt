@@ -8,7 +8,7 @@ import { Envapt } from '../src/legacy';
 
 describe('Symbol as a converter (v9)', () => {
     beforeAll(() => {
-        Envapter.envPaths = resolve(import.meta.dirname, '.env.046-symbol-converter');
+        Envapter.envPaths = resolve(import.meta.dirname, '.env.043-symbol-converter');
     });
 
     it('throws InvalidUserDefinedConfig from getUsing', () => {

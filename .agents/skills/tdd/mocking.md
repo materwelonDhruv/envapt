@@ -3,7 +3,7 @@
 Mock at system boundaries only:
 
 - The environment. Point `Envapter.envPaths` at a fixture `.env` file, or bind an object with `Envapter.useSource(new PortableSource({ ... }))`.
-- Stderr, when a test checks debug output (`vi.spyOn(process.stderr, 'write')`, see `023-debug-mode.test.ts`).
+- Stderr, when a test checks debug output (`vi.spyOn(process.stderr, 'write')`, see `021-debug-mode.test.ts`).
 - The filesystem, sometimes (the `basedir-fixtures` and `cascade-fixtures` folders hold real files to read).
 
 Do not mock:

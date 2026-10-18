@@ -41,7 +41,7 @@ RIGHT (vertical):
 
 ## Where tests live in this repo
 
-Tests sit in `packages/envapt/tests/`. Never `src/**/*.test.ts`. Each file takes the next number, like `046-required-schema.test.ts`, and reads its own `.env.046-required-schema` fixture when it needs env values. Extend an existing numbered file when the behavior already has one.
+Tests sit in `packages/envapt/tests/`. Never `src/**/*.test.ts`. Each file takes the next number, like `044-required-schema.test.ts`, and reads its own `.env.044-required-schema` fixture when it needs env values. Extend an existing numbered file when the behavior already has one.
 
 Vitest is the runner. `pnpm --filter envapt test` runs the suite once. `pnpm --filter envapt test:watch` watches and reruns on change, which is the loop you want during a TDD cycle.
 

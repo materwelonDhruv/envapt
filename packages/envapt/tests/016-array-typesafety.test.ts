@@ -9,7 +9,7 @@ import { Envapt } from '../src/legacy';
 import type { ArrayOf } from '../src/converters/Converters';
 
 describe('ArrayConverter typesafety (v5) — runtime', () => {
-    beforeAll(() => (Envapter.envPaths = resolve(import.meta.dirname, '.env.018-array')));
+    beforeAll(() => (Envapter.envPaths = resolve(import.meta.dirname, '.env.016-array')));
 
     it('throws ArrayElementConversionFailed when an element cannot convert', () => {
         class F1Tests {
