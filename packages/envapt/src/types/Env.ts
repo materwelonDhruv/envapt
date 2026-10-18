@@ -9,7 +9,7 @@ interface PresentValue {
 
 interface EnvapterService {
     getRaw(key: EnvKeyInput): string | undefined;
-    get(key: EnvKeyInput, def?: string): string | undefined;
+    get(key: EnvKeyInput, fallback?: string): string | undefined;
 }
 
 export type { EnvKeyInput, EnvapterService, PresentValue };

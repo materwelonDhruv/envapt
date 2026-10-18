@@ -10,7 +10,7 @@ describe('merge composes sources with last-wins precedence', () => {
     afterEach(() => {
         Envapter.useSource(new FileSource());
         Envapter.baseDir = undefined;
-        Envapter.resetProfiles();
+        Envapter.resetPaths();
         Envapter.envFileOptions = {};
         Envapter.syncProcessEnv = false;
         delete process.env.FROM_FILE;

@@ -15,7 +15,7 @@ An empty value is skipped like an unset key. A whitespace-only value is skipped 
 
 `MODE` is last because Vite-family browser builds expose `import.meta.env.MODE` but none of the others, so binding `new PortableSource(import.meta.env)` lets the same helpers work there. See [Browser](/docs/browser).
 
-Read it as an enum, or through boolean helpers for the common checks.
+Read it as a string, or through boolean helpers for the common checks.
 
 ```ts twoslash
 import { Envapter } from 'envapt';
@@ -29,9 +29,10 @@ Envapter.isTest;
 ```
 
 <Callout type="info">
-    `Environment` has four members: `Development`, `Staging`, `Production`, and `Test`. Matching is case-insensitive:
-    `production`, `staging`, `test`, and `development` map to their member. Any other value, or no key set at all, falls
-    back to `Development`; set `Envapter.debug = 'warn'` to log that fallback.
+    The environment is one of `'development'`, `'staging'`, `'production'`, or `'test'`. `Environment.Production` is
+    `'production'`, and the other three members follow the same pattern. Matching is case-insensitive, so `PRODUCTION`
+    reads as `'production'`. Any other value, or no key set at all, falls back to `'development'`. Set `Envapter.debug = 'warn'`
+    to log that fallback.
 </Callout>
 
 ## Branching on the environment
@@ -51,13 +52,13 @@ if (Envapter.isDevelopment) {
 
 ## Overriding detection
 
-Set `Envapter.environment` to pin the environment explicitly, regardless of what the env vars say. It accepts the `Environment` enum or a string.
+Set `Envapter.environment` to pin the environment explicitly, regardless of what the env vars say. It takes an `Environment` value or any string, matched case-insensitively.
 
 ```ts twoslash
 import { Envapter, Environment } from 'envapt';
 // ---cut---
 Envapter.environment = Environment.Staging;
-Envapter.environment = 'production'; // strings work too
+Envapter.environment = 'production';
 ```
 
 Setting it reloads the `.env` files for that environment.
@@ -69,23 +70,23 @@ Setting it reloads the `.env` files for that environment.
 ## Per-environment `.env` files
 
 <Callout type="info">
-    The cascade reads files from disk, so it runs on Node, Bun, and Deno only. On Cloudflare Workers and in the browser
-    there is no filesystem and no cascade; you bind an environment source instead. See [Sources](/docs/sources).
+    The cascade reads files from disk, so it runs on Node, Bun, and Deno only. Cloudflare Workers and the browser have
+    no filesystem and no cascade. You bind an environment source instead. See [Sources](/docs/sources).
 </Callout>
 
-For the detected (or overridden) environment (production, staging, development), envapt layers a dotenv-flow cascade, loading the first file that exists at each level, highest precedence first:
+For the detected (or overridden) environment, envapt layers a dotenv-flow cascade, loading the first file that exists at each level, highest precedence first:
 
 1. `.env.${env}.local`
 2. `.env.${env}`
 3. `.env.local`
 4. `.env`
 
-So in production it reads `.env.production.local` → `.env.production` → `.env.local` → `.env`. Values from higher-precedence files win; missing files are skipped.
+So in production it reads `.env.production.local` → `.env.production` → `.env.local` → `.env`. Values from higher-precedence files win. Missing files are skipped.
 
 <Callout type="warn">
-    Precedence is **most-specific-wins**: `.env.production` outranks `.env.local`. This differs from dotenv-flow /
-    Next.js, where `.env.local` sits on top. The intent is that a committed `.env.production` stays authoritative for
-    that environment even if a stray `.env.local` is present.
+    Precedence is **most-specific-wins**: `.env.production` outranks `.env.local`, the same order dotenv-flow uses.
+    Next.js loads `.env.local` above `.env.production`. The intent is that a committed `.env.production` stays
+    authoritative for that environment even if a stray `.env.local` is present.
 </Callout>
 
 ## Custom profiles
@@ -93,11 +94,11 @@ So in production it reads `.env.production.local` → `.env.production` → `.en
 When your per-environment files live elsewhere, `configureProfiles` layers explicit paths on top of the cascade for the environments you name. Earlier paths in the array win. On the portable build these no-op by default, see [Compatibility](/docs/compatibility).
 
 ```ts twoslash
-import { Envapter, Environment } from 'envapt';
+import { Envapter } from 'envapt';
 // ---cut---
 Envapter.configureProfiles({
-    [Environment.Production]: { paths: ['config/prod.env', 'secrets/prod.env'] },
-    [Environment.Staging]: { paths: 'config/staging.env' }
+    production: { paths: ['config/prod.env', 'secrets/prod.env'] },
+    staging: { paths: 'config/staging.env' }
 });
 ```
 
@@ -109,14 +110,14 @@ Envapter.configureProfiles({
 Set `useDefaults: false` to load **only** the configured paths and skip the auto-cascade entirely.
 
 ```ts twoslash
-import { Envapter, Environment } from 'envapt';
+import { Envapter } from 'envapt';
 // ---cut---
 Envapter.configureProfiles({
-    [Environment.Production]: { paths: 'config/prod.env' },
+    production: { paths: 'config/prod.env' },
     useDefaults: false
 });
 
-Envapter.resetProfiles(); // back to the pure cascade
+Envapter.resetPaths(); // back to the pure cascade
 ```
 
 To bypass environment-based selection altogether and load a fixed set of files, set `Envapter.envPaths` directly, covered in [Configuration](/docs/configuration).

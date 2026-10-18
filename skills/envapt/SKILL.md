@@ -99,7 +99,7 @@ class Config {
 
 ## Converters
 
-`Converters` carries the scalar tokens `String`, `Number`, `Integer`, `Float`, `Boolean`, `Bigint`, `Json`, `Url`, `Regexp`, `Date`, `Time`, `Port`, `Email`. Four carry semantics the token name alone does not give.
+`Converters` carries the scalar tokens `String`, `Number`, `Integer`, `Float`, `Boolean`, `BigInt`, `Json`, `Url`, `Regexp`, `Date`, `Time`, `Port`, `Email`. Four carry semantics the token name alone does not give.
 
 - `Time` resolves to **milliseconds**. Its fallback is a ms number or a time string like `'10s'`/`'15m'`.
 - `Url` resolves to a **`URL` instance**. Its fallback must be a `URL`, and a string fails to compile.
@@ -145,7 +145,7 @@ For a source that reads one key at a time and cannot list its keys, pass a `(key
 
 `merge(...members)` composes several sources, last-wins across their `readVars()` snapshots. A member may be a `(key) => string | undefined` reader, which fills a key missing from every snapshot. At most one member is filesystem-backed, and the `.env` cascade and file APIs route to it. `merge` throws `EnvaptError` `InvalidMergedSource` with no members or more than one file-backed member.
 
-The portable build (Workers, the browser, edge runtimes) has no filesystem. The file-only config APIs (`envPaths`, `baseDir`, `envFileOptions`, `configureProfiles`, `resetProfiles`) warn once and no-op by default. Set `Envapter.fileApiMode = 'throw'` to make them throw `EnvaptError` `FileApiUnsupported`. A read before `useSource` throws `NoSourceBound` regardless of `fileApiMode`.
+The portable build (Workers, the browser, edge runtimes) has no filesystem. The file-only config APIs (`envPaths`, `baseDir`, `envFileOptions`, `configureProfiles`, `resetPaths`) warn once and no-op by default. Set `Envapter.fileApiMode = 'throw'` to make them throw `EnvaptError` `FileApiUnsupported`. A read before `useSource` throws `NoSourceBound` regardless of `fileApiMode`.
 
 ## Loading .env files
 
@@ -156,7 +156,7 @@ Envapter.baseDir = import.meta.dirname; // anchor relative .env resolution to th
 Envapter.envPaths = ['.env', '.env.local']; // explicit paths, which disables the auto-cascade. Set baseDir first.
 Envapter.strict = true; // whitespace-only values count as missing
 Envapter.syncProcessEnv = true; // mirror loaded keys into process.env
-Envapter.environment; // Environment.Development | Staging | Production | Test. also isProduction / isStaging / isDevelopment / isTest
+Envapter.environment; // 'development' | 'staging' | 'production' | 'test'. also isProduction / isStaging / isDevelopment / isTest
 ```
 
 The environment is detected from the first set of `ENVIRONMENT` -> `ENV` -> `NODE_ENV` -> `MODE` (case-insensitive, and `MODE` covers Vite browser builds), defaulting to development. `Envapter.configureProfiles({ ... })` sets per-environment path lists (node build only, like `baseDir` / `envPaths`). `Envapter.debug` (or the `ENVAPT_DEBUG` env var) turns on logging.

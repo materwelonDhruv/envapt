@@ -32,8 +32,7 @@ export function sourceFileExists(path: string): boolean {
 
 // most specific first, since the loader keeps the first value per key unless override is on
 function buildCascadePaths(env: Environment): string[] {
-    const envName = Environment[env].toLowerCase();
-    return [`.env.${envName}.local`, `.env.${envName}`, '.env.local', '.env']
+    return [`.env.${env}.local`, `.env.${env}`, '.env.local', '.env']
         .map((name) => resolveAgainstBase(name))
         .filter((p) => sourceFileExists(p));
 }

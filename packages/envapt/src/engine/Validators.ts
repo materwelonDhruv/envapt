@@ -8,6 +8,18 @@ import type { EnvFileOptions } from '../infra/Dotenv';
 import type { StandardSchemaV1 } from '../infra/StandardSchema';
 import type { BuiltInConverter, ConverterFunction, EnvaptConverter, FileApiMode, PrimitiveConstructor } from '../types';
 
+// each token is also what typeof returns for that constructor's values
+const PRIMITIVES = [
+    [String, 'string'],
+    [Number, 'number'],
+    [Boolean, 'boolean'],
+    [BigInt, 'bigint']
+] as const;
+
+export type PrimitiveToken = (typeof PRIMITIVES)[number][1];
+
+const PRIMITIVE_TOKENS = new Map<unknown, PrimitiveToken>(PRIMITIVES);
+
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class -- cohesive dispatch of stateless type guards, same shape as BuiltInConverters
 export class Validator {
     static isBuiltInConverter<TFallback>(value: EnvaptConverter<TFallback>): value is BuiltInConverter {
@@ -157,43 +169,23 @@ export class Validator {
     }
 
     static isPrimitiveConstructor(value: unknown): value is PrimitiveConstructor {
-        return value === String || value === Number || value === Boolean || value === BigInt;
+        return PRIMITIVE_TOKENS.has(value);
+    }
+
+    static primitiveToken(value: unknown): PrimitiveToken | undefined {
+        return PRIMITIVE_TOKENS.get(value);
     }
 
     static coercePrimitiveFallback<CoercedType>(converter: PrimitiveConstructor, fallback: unknown): CoercedType {
-        if (this.isCorrectPrimitiveType(converter, fallback)) return fallback as CoercedType;
-        return this.performPrimitiveCoercion<CoercedType>(converter, fallback);
-    }
-
-    private static isCorrectPrimitiveType(converter: PrimitiveConstructor, fallback: unknown): boolean {
-        if (converter === String && typeof fallback === 'string') return true;
-        if (converter === Number && typeof fallback === 'number') return true;
-        if (converter === Boolean && typeof fallback === 'boolean') return true;
-        if (converter === BigInt && typeof fallback === 'bigint') return true;
-        return false;
-    }
-
-    private static performPrimitiveCoercion<CoercedType>(
-        converter: PrimitiveConstructor,
-        fallback: unknown
-    ): CoercedType {
+        if (typeof fallback === PRIMITIVE_TOKENS.get(converter)) return fallback as CoercedType;
         try {
-            if (converter === String) return String(fallback) as CoercedType;
-            if (converter === Number) return Number(fallback) as CoercedType;
-            if (converter === Boolean) return Boolean(fallback) as CoercedType;
-            if (converter === BigInt) return BigInt(fallback as string | number | bigint) as CoercedType;
+            return converter(fallback as string | number | bigint | boolean) as CoercedType;
         } catch (error) {
             throw new EnvaptError(
                 EnvaptErrorCodes.PrimitiveCoercionFailed,
                 `Failed to coerce fallback value using ${converter.name}: ${(error as Error).message}`
             );
         }
-
-        /* v8 ignore next -- @preserve */
-        throw new EnvaptError(
-            EnvaptErrorCodes.PrimitiveCoercionFailed,
-            `Unknown primitive converter: ${converter.name}`
-        );
     }
 
     // a truthy typo like 'true' or 1 would turn the mirror on
@@ -202,6 +194,15 @@ export class Validator {
             throw new EnvaptError(
                 EnvaptErrorCodes.InvalidUserDefinedConfig,
                 `Envapter.syncProcessEnv must be a boolean, got ${typeof value}.`
+            );
+        }
+    }
+
+    static validateEnvironment(value: unknown): asserts value is string {
+        if (typeof value !== 'string') {
+            throw new EnvaptError(
+                EnvaptErrorCodes.InvalidUserDefinedConfig,
+                `Envapter.environment must be a string, got ${typeof value}.`
             );
         }
     }

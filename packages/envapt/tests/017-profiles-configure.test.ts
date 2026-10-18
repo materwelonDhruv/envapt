@@ -11,7 +11,7 @@ describe('profiles — Envapter.configureProfiles overrides', () => {
     const fixtureDir = resolve(import.meta.dirname, 'environment');
 
     beforeEach(() => {
-        Envapter.resetProfiles();
+        Envapter.resetPaths();
         Envapter.environment = Environment.Development;
     });
 
@@ -19,7 +19,7 @@ describe('profiles — Envapter.configureProfiles overrides', () => {
         process.chdir(originalCwd);
         if (originalEnv === undefined) delete process.env.NODE_ENV;
         else process.env.NODE_ENV = originalEnv;
-        Envapter.resetProfiles();
+        Envapter.resetPaths();
     });
 
     it('loads profile-configured paths for the active environment (partial override)', () => {

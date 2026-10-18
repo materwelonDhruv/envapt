@@ -27,7 +27,7 @@ describe('template variable resolution', () => {
         @Envapt('TEST_BOOLEAN_FALSE_TEMPLATE', { converter: Converters.Boolean, fallback: true })
         static readonly booleanFalseTemplate: boolean;
 
-        @Envapt('TEST_BIGINT_TEMPLATE', { converter: Converters.Bigint, fallback: 0n })
+        @Envapt('TEST_BIGINT_TEMPLATE', { converter: Converters.BigInt, fallback: 0n })
         static readonly bigintTemplate: bigint;
 
         @Envapt('TEST_ARRAY_COMMA_TEMPLATE', { converter: Converters.array(), fallback: [] })

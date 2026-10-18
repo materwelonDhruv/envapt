@@ -164,7 +164,7 @@ describe('Runtime Validation', () => {
             static readonly booleanWithStringFallback: boolean;
 
             // @ts-expect-error Inconsistent fallback type
-            @Envapt('NONEXISTENT_BIGINT_VAR', { converter: Converters.Bigint, fallback: 42 })
+            @Envapt('NONEXISTENT_BIGINT_VAR', { converter: Converters.BigInt, fallback: 42 })
             static readonly bigintWithNumberFallback: bigint;
 
             // @ts-expect-error Inconsistent fallback type

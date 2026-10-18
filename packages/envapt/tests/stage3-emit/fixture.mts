@@ -33,7 +33,7 @@ class Config {
     @EnvTime('S3_TTL', '1s')
     static accessor ttl: number;
 
-    @Envapt('S3_BIG', { converter: Converters.Bigint, fallback: 0n })
+    @Envapt('S3_BIG', { converter: Converters.BigInt, fallback: 0n })
     static accessor big: bigint;
 
     @Envapt('S3_TAGS', { converter: Converters.array({ of: Converters.String }), fallback: [] })

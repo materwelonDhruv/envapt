@@ -4,14 +4,22 @@ import { isMissing } from './missing';
 import { resolveEffectivePaths } from './paths';
 import { cache, state } from './state';
 import { TemplateResolver } from '../engine/TemplateResolver';
+import { Validator } from '../engine/Validators';
 import { debugVerbose, debugWarn } from '../infra/Debug';
 import { loadDotenv } from '../infra/Dotenv';
 import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
 import { missingValue, validationFailed } from '../infra/failures';
 
+import type { PrimitiveToken } from '../engine/Validators';
 import type { ValidationCode } from '../infra/failures';
 import type { StandardSchemaV1 } from '../infra/StandardSchema';
-import type { ConditionalReturn, EnvKeyInput, PresentValue, RequiredConverter } from '../types';
+import type {
+    AdvancedConverterReturn,
+    EnvKeyInput,
+    InferConverterReturnType,
+    PresentValue,
+    RequiredConverter
+} from '../types';
 import type { EnvapterService } from '../types/Env';
 
 function toKeyList(keyInput: EnvKeyInput): readonly string[] {
@@ -70,7 +78,7 @@ export function readSchema(
     hasFallback: boolean
 ): unknown {
     // readPrimitive logs the missing-value warning
-    const value = readPrimitive<string, undefined>(keyInput, Primitive.String);
+    const value = readPrimitive(keyInput, 'string');
     if (value === undefined) {
         if (hasFallback) return fallback;
         throw missingValue(keyInput);
@@ -163,8 +171,9 @@ function resolveForMirror(key: string, value: string): string {
     return templateResolver.resolveTemplate(key, value);
 }
 
-export function setEnvironment(env: string | Environment): void {
-    state.environment = typeof env === 'number' ? env : (parseEnvironment(env) ?? Environment.Development);
+export function setEnvironment(env: string): void {
+    Validator.validateEnvironment(env);
+    state.environment = parseEnvironment(env) ?? Environment.Development;
     state.environmentExplicitlySet = true;
     refreshCache();
 }
@@ -185,55 +194,42 @@ export function determineEnvironment(): void {
     state.environment = parsed;
 }
 
-export enum Primitive {
-    String,
-    Number,
-    Boolean,
-    BigInt
-}
-
-const PRIMITIVE_NAMES: Record<Primitive, string> = {
-    [Primitive.String]: 'string',
-    [Primitive.Number]: 'number',
-    [Primitive.Boolean]: 'boolean',
-    [Primitive.BigInt]: 'bigint'
-};
-
 // arrows because readPrimitive reads templateResolver, which is assigned below
 const envService: EnvapterService = {
     getRaw: (key) => resolveKeyInput(key).value,
-    get: (key, def) => readPrimitive<string, string | undefined>(key, Primitive.String, def)
+    get: (key, fallback) => readPrimitive(key, 'string', fallback)
 };
 
 const templateResolver: TemplateResolver = new TemplateResolver(envService);
 export const valueConverter: ValueConverter = new ValueConverter(envService);
 
-export function readPrimitive<EnvVarReturnType, DefaultType extends EnvVarReturnType | undefined = undefined>(
+// TS can't assign a value to a conditional type on an unresolved generic
+export function readPrimitive<
+    TToken extends PrimitiveToken,
+    TFallback extends InferConverterReturnType<TToken> | undefined = undefined
+>(key: EnvKeyInput, type: TToken, fallback?: TFallback): AdvancedConverterReturn<TToken, TFallback>;
+export function readPrimitive(
     key: EnvKeyInput,
-    type: Primitive,
-    def?: DefaultType
-): ConditionalReturn<EnvVarReturnType, DefaultType> {
+    type: PrimitiveToken,
+    fallback?: InferConverterReturnType<PrimitiveToken>
+): unknown {
     const { key: resolvedKey, value } = resolveKeyInput(key);
     if (isMissing(value)) {
-        if (def !== undefined) debugWarn(`${resolvedKey} is missing or empty, using fallback ${String(def)}`);
+        if (fallback !== undefined) debugWarn(`${resolvedKey} is missing or empty, using fallback ${String(fallback)}`);
         else debugWarn(`${resolvedKey} is missing or empty`);
-        return def as ConditionalReturn<EnvVarReturnType, DefaultType>;
+        return fallback;
     }
 
     const parsed = templateResolver.resolveTemplate(resolvedKey, String(value));
 
-    let converted: EnvVarReturnType | undefined;
-    if (type === Primitive.Number) converted = BuiltInConverters.number(parsed) as EnvVarReturnType | undefined;
-    else if (type === Primitive.Boolean) converted = BuiltInConverters.boolean(parsed) as EnvVarReturnType | undefined;
-    else if (type === Primitive.BigInt) converted = BuiltInConverters.bigint(parsed) as EnvVarReturnType | undefined;
-    else converted = BuiltInConverters.string(parsed) as EnvVarReturnType | undefined;
+    const converted = BuiltInConverters.getConverter(type)(parsed);
 
     if (converted === undefined) {
         // leave the value out because env values can be secrets
         debugVerbose(
-            `could not convert ${resolvedKey} as ${PRIMITIVE_NAMES[type]}${def !== undefined ? ', using the fallback' : ''}`
+            `could not convert ${resolvedKey} as ${type}${fallback !== undefined ? ', using the fallback' : ''}`
         );
-        return def as ConditionalReturn<EnvVarReturnType, DefaultType>;
+        return fallback;
     }
 
     return converted;

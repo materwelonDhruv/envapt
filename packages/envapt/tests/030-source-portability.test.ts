@@ -18,7 +18,7 @@ describe('Source portability (v5.2)', () => {
     afterEach(() => {
         // setup.ts binds FileSource per file, and tests here swap it
         Envapter.useSource(new FileSource());
-        Envapter.resetProfiles();
+        Envapter.resetPaths();
     });
 
     describe('UnboundSource', () => {

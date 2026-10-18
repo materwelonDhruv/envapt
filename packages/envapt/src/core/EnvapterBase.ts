@@ -61,7 +61,7 @@ export abstract class EnvapterBase {
 
     /**
      * On the portable build, this controls the filesystem-only config APIs (`envPaths`, `baseDir`,
-     * `envFileOptions`, `configureProfiles`, `resetProfiles`). `'warn'` (the default) warns once and
+     * `envFileOptions`, `configureProfiles`, `resetPaths`). `'warn'` (the default) warns once and
      * no-ops. `'throw'` throws {@link EnvaptError} `FileApiUnsupported`. The node build runs these
      * APIs normally and this value has no effect there.
      * @see {@link https://envapt.materwelon.dev/docs/compatibility#binding-by-runtime}

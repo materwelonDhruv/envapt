@@ -1,4 +1,4 @@
-import { Primitive, readPrimitive } from './engine';
+import { readPrimitive } from './engine';
 import { EnvironmentMethods } from './EnvironmentMethods';
 
 import type { ConditionalReturn, EnvKeyInput } from '../types';
@@ -12,9 +12,9 @@ export class PrimitiveMethods extends EnvironmentMethods {
      */
     static get<Default extends string | undefined = undefined>(
         key: EnvKeyInput,
-        def?: Default
+        fallback?: Default
     ): ConditionalReturn<string, Default> {
-        return readPrimitive(key, Primitive.String, def);
+        return readPrimitive(key, 'string', fallback);
     }
 
     /**
@@ -22,9 +22,9 @@ export class PrimitiveMethods extends EnvironmentMethods {
      */
     get<Default extends string | undefined = undefined>(
         key: EnvKeyInput,
-        def?: Default
+        fallback?: Default
     ): ConditionalReturn<string, Default> {
-        return readPrimitive(key, Primitive.String, def);
+        return readPrimitive(key, 'string', fallback);
     }
 
     /**
@@ -35,9 +35,9 @@ export class PrimitiveMethods extends EnvironmentMethods {
      */
     static getNumber<Default extends number | undefined = undefined>(
         key: EnvKeyInput,
-        def?: Default
+        fallback?: Default
     ): ConditionalReturn<number, Default> {
-        return readPrimitive(key, Primitive.Number, def);
+        return readPrimitive(key, 'number', fallback);
     }
 
     /**
@@ -45,9 +45,9 @@ export class PrimitiveMethods extends EnvironmentMethods {
      */
     getNumber<Default extends number | undefined = undefined>(
         key: EnvKeyInput,
-        def?: Default
+        fallback?: Default
     ): ConditionalReturn<number, Default> {
-        return readPrimitive(key, Primitive.Number, def);
+        return readPrimitive(key, 'number', fallback);
     }
 
     /**
@@ -58,9 +58,9 @@ export class PrimitiveMethods extends EnvironmentMethods {
      */
     static getBoolean<Default extends boolean | undefined = undefined>(
         key: EnvKeyInput,
-        def?: Default
+        fallback?: Default
     ): ConditionalReturn<boolean, Default> {
-        return readPrimitive(key, Primitive.Boolean, def);
+        return readPrimitive(key, 'boolean', fallback);
     }
 
     /**
@@ -68,9 +68,9 @@ export class PrimitiveMethods extends EnvironmentMethods {
      */
     getBoolean<Default extends boolean | undefined = undefined>(
         key: EnvKeyInput,
-        def?: Default
+        fallback?: Default
     ): ConditionalReturn<boolean, Default> {
-        return readPrimitive(key, Primitive.Boolean, def);
+        return readPrimitive(key, 'boolean', fallback);
     }
 
     /**
@@ -81,9 +81,9 @@ export class PrimitiveMethods extends EnvironmentMethods {
      */
     static getBigInt<Default extends bigint | undefined = undefined>(
         key: EnvKeyInput,
-        def?: Default
+        fallback?: Default
     ): ConditionalReturn<bigint, Default> {
-        return readPrimitive(key, Primitive.BigInt, def);
+        return readPrimitive(key, 'bigint', fallback);
     }
 
     /**
@@ -91,8 +91,8 @@ export class PrimitiveMethods extends EnvironmentMethods {
      */
     getBigInt<Default extends bigint | undefined = undefined>(
         key: EnvKeyInput,
-        def?: Default
+        fallback?: Default
     ): ConditionalReturn<bigint, Default> {
-        return readPrimitive(key, Primitive.BigInt, def);
+        return readPrimitive(key, 'bigint', fallback);
     }
 }

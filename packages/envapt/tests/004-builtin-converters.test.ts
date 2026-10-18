@@ -25,7 +25,7 @@ describe('Built-in Converters', () => {
             @Envapt('TEST_FLOAT', { converter: Converters.Float, fallback: 0.0 })
             static readonly testFloat: number;
 
-            @Envapt('TEST_BIGINT', { converter: Converters.Bigint, fallback: 0n })
+            @Envapt('TEST_BIGINT', { converter: Converters.BigInt, fallback: 0n })
             static readonly testBigint: bigint;
         }
 

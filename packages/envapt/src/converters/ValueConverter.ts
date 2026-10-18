@@ -12,7 +12,6 @@ import type {
     EnvKeyInput,
     EnvaptConverter,
     PresentValue,
-    PrimitiveConstructor,
     RequiredConverter,
     RequiredSpec
 } from '../types';
@@ -44,9 +43,9 @@ export class ValueConverter {
             return this.processArrayConverter(key, processedFallback, resolvedConverter, hasFallback);
         }
 
-        if (Validator.isPrimitiveConstructor(resolvedConverter)) {
-            const stringConverter = this.convertPrimitiveToString(resolvedConverter);
-            return this.processBuiltInConverter(key, processedFallback, stringConverter, hasFallback, true);
+        const primitiveToken = Validator.primitiveToken(resolvedConverter);
+        if (primitiveToken !== undefined) {
+            return this.processBuiltInConverter(key, processedFallback, primitiveToken, hasFallback, true);
         }
 
         if (Validator.isBuiltInConverter(resolvedConverter)) {
@@ -64,16 +63,6 @@ export class ValueConverter {
             return Validator.coercePrimitiveFallback<TFallback>(converter, fallback);
         }
         return fallback;
-    }
-
-    private convertPrimitiveToString(primitiveConstructor: PrimitiveConstructor): BuiltInConverter {
-        if (primitiveConstructor === String) return 'string';
-        if (primitiveConstructor === Number) return 'number';
-        if (primitiveConstructor === Boolean) return 'boolean';
-        if (primitiveConstructor === BigInt) return 'bigint';
-
-        /* v8 ignore next -- @preserve */
-        throw new EnvaptError(EnvaptErrorCodes.InvalidConverterType, `Unknown primitive constructor`);
     }
 
     private processBuiltInConverter<TFallback>(
@@ -214,9 +203,7 @@ export class ValueConverter {
     // a bad spec entry has to throw outside runParser's try
     private requiredParser(field: RequiredConverter): (raw: string) => unknown {
         // safe to widen a `raw: string` parser because it only gets a present value
-        const converter = (
-            Validator.isPrimitiveConstructor(field) ? this.convertPrimitiveToString(field) : field
-        ) as EnvaptConverter<unknown>;
+        const converter = (Validator.primitiveToken(field) ?? field) as EnvaptConverter<unknown>;
         if (Validator.isArrayConverter(converter)) {
             Validator.arrayConverter(converter);
             return (raw) => BuiltInConverters.processArrayConverter(raw, converter, state.strict);

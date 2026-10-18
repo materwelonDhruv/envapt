@@ -25,14 +25,14 @@ describe('Envapter.baseDir', () => {
         // start from a dir with no `.env`, so any successful load proves baseDir did the resolving
         process.chdir(os.tmpdir());
         // a leftover relative profile would throw EnvFilesNotFound when the baseDir refresh resolves it against cwd
-        Envapter.resetProfiles();
+        Envapter.resetPaths();
         Envapter.baseDir = undefined;
         Envapter.environment = Environment.Development;
     });
 
     afterEach(() => {
         process.chdir(originalCwd);
-        Envapter.resetProfiles();
+        Envapter.resetPaths();
         Envapter.baseDir = undefined;
     });
 
@@ -110,7 +110,7 @@ describe('Envapter.baseDir', () => {
     describe('when unset', () => {
         it('falls back to process.cwd() resolution (historical default)', () => {
             process.chdir(PKG_DIR); // baseDir stays undefined, so cwd does the resolving
-            Envapter.resetProfiles(); // chdir alone doesn't invalidate the data cache
+            Envapter.resetPaths(); // chdir alone doesn't invalidate the data cache
             expect(Envapter.baseDir).to.equal(undefined);
             expect(Envapter.get('PKG_ONLY')).to.equal('pkg-value');
         });
