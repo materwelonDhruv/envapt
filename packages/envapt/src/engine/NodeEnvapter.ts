@@ -1,12 +1,8 @@
-import process from 'node:process';
-
 import { Envapter } from './Envapter';
 import { Validator } from './Validators';
 import { refreshCache } from '../core/engine';
 import { assertFileApiSupported, resolveAgainstBase, sourceFileExists } from '../core/paths';
 import { state } from '../core/state';
-import { setRuntimeSink } from '../infra/runtime';
-import { FileSource } from '../sources/FileSource';
 
 import type { EnvFileOptions } from '../infra/Dotenv';
 import type { ProfilesConfig } from '../types';
@@ -19,12 +15,6 @@ import type { ProfilesConfig } from '../types';
  * @public
  */
 export class NodeEnvapter extends Envapter {
-    // bundlers drop this block with the class when Envapter is unused. needs the native es2022 static-block emit.
-    static {
-        setRuntimeSink((line) => process.stderr.write(`${line}\n`));
-        NodeEnvapter.useSource(new FileSource());
-    }
-
     /**
      * Set custom .env file paths. Accepts either a single path or array of paths.
      * Setting new paths clears the cache and reloads environment variables.

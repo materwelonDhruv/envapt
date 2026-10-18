@@ -6,6 +6,8 @@
  * @module
  */
 
+import './bindNodeDefaults';
+
 export * from './common';
 export * from './decorators/modern';
 export { NodeEnvapter as Envapter } from './engine/NodeEnvapter';

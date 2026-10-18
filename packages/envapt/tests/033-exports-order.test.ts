@@ -79,7 +79,7 @@ describe('package exports map (v8)', () => {
         expect(pkg.exports['./package.json']).toBe('./package.json');
     });
 
-    it('scopes sideEffects to the node config entry', () => {
-        expect(pkg.sideEffects).toEqual(['./dist/node/config.mjs']);
+    it('scopes sideEffects to the node config entry and the node source bind', () => {
+        expect(pkg.sideEffects).toEqual(['./dist/node/config.mjs', '**/bindNodeDefaults.*']);
     });
 });
