@@ -149,7 +149,7 @@ The portable build (Workers, the browser, edge runtimes) has no filesystem. The 
 
 ## Loading .env files
 
-By default envapt loads a per-environment cascade. Precedence is **most-specific-wins**: `.env.<environment>.local` > `.env.<environment>` > `.env.local` > `.env`. (dotenv-flow and Next.js use the reverse order.) Configure through statics on `Envapter`:
+By default envapt loads a per-environment cascade. Precedence is **most-specific-wins**: `.env.<environment>.local` > `.env.<environment>` > `.env.local` > `.env`, the same order dotenv-flow uses. Next.js loads `.env.local` above `.env.<environment>`. Configure through statics on `Envapter`:
 
 ```ts
 Envapter.baseDir = import.meta.dirname; // anchor relative .env resolution to this dir
