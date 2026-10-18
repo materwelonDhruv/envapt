@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, expectTypeOf, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 
 import { Environment, Envapter, EnvaptError, EnvaptErrorCodes, FileSource, PortableSource } from '../src';
 
@@ -65,7 +65,6 @@ describe('Environment detection (v5.2)', () => {
             Envapter.useSource(new PortableSource({ ENV: 'PRODUCTION' }));
             expect(Envapter.isProduction).to.be.true;
             expect(Envapter.environment).to.equal('production');
-            expectTypeOf(Envapter.environment).toEqualTypeOf<'development' | 'staging' | 'production' | 'test'>();
 
             Envapter.useSource(new PortableSource({ ENVIRONMENT: 'Test' }));
             expect(Envapter.isTest).to.be.true;

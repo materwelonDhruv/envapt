@@ -20,13 +20,6 @@ describe('Envapter.fileApiMode (node build)', () => {
         expect(Envapter.fileApiMode).toBe('warn');
     });
 
-    it('round-trips between warn and throw', () => {
-        Envapter.fileApiMode = 'throw';
-        expect(Envapter.fileApiMode).toBe('throw');
-        Envapter.fileApiMode = 'warn';
-        expect(Envapter.fileApiMode).toBe('warn');
-    });
-
     it('rejects an invalid value with InvalidUserDefinedConfig (302)', () => {
         // justified: bypass the compile-time union to reach the runtime guard
         expect(() => (Envapter.fileApiMode = 'loud' as unknown as FileApiMode))

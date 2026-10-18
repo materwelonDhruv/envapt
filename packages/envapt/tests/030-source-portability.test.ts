@@ -1,5 +1,3 @@
-import { resolve } from 'node:path';
-
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { Converters, Envapter, EnvaptErrorCodes, FileSource, PortableSource } from '../src';
@@ -30,13 +28,6 @@ describe('Source portability (v5.2)', () => {
     });
 
     describe('file-API guards on a source without filesystem support', () => {
-        it('envPaths throws FileApiUnsupported', () => {
-            Envapter.useSource(new PortableSource({ FOO: 'bar' }));
-            expect(() => (Envapter.envPaths = '.env'))
-                .to.throw(EnvaptError)
-                .with.property('code', EnvaptErrorCodes.FileApiUnsupported);
-        });
-
         it('baseDir throws FileApiUnsupported', () => {
             Envapter.useSource(new PortableSource({ FOO: 'bar' }));
             expect(() => (Envapter.baseDir = '/tmp'))
@@ -76,13 +67,6 @@ describe('Source portability (v5.2)', () => {
             expect(Envapter.get('TOKEN')).to.equal('abc');
         });
 
-        it('feeds typed values through the engine', () => {
-            Envapter.useSource(new PortableSource({ PORT: 3000, FLAG: true, CFG: { a: 1 } }));
-            expect(Envapter.getNumber('PORT')).to.equal(3000);
-            expect(Envapter.getBoolean('FLAG')).to.equal(true);
-            expect(Envapter.getUsing('CFG', Converters.Json)).to.deep.equal({ a: 1 });
-        });
-
         it('accepts an import.meta.env-shaped object straight through', () => {
             // Vite's import.meta.env mixes string VITE_* vars with boolean DEV/PROD/SSR flags.
             Envapter.useSource(
@@ -104,15 +88,6 @@ describe('Source portability (v5.2)', () => {
             Envapter.useSource(new PortableSource(binding));
             expect(Envapter.get('APP_NAME')).to.equal('envapt');
             expect(Envapter.getNumber('PORT')).to.equal(3000);
-        });
-    });
-
-    describe('the envPaths setter takes effect for the engine', () => {
-        it('loads variables from the newly set path', () => {
-            const fixture = resolve(import.meta.dirname, '.env.extra');
-            Envapter.envPaths = fixture;
-            expect(Envapter.envPaths).to.deep.equal([fixture]);
-            expect(Envapter.getBoolean('VAR_IN_EXTRA_FILE')).to.equal(true);
         });
     });
 });

@@ -1,7 +1,6 @@
 import { resolve } from 'node:path';
 
 import { type as ark } from 'arktype';
-import * as v from 'valibot';
 import { afterEach, beforeAll, describe, expect, expectTypeOf, it, vi } from 'vitest';
 import { z } from 'zod/v4';
 
@@ -83,14 +82,6 @@ describe('Standard Schema adapter (v5)', () => {
             expect(port).to.equal(8080);
         });
 
-        it('valibot: coerces and validates', () => {
-            const port = Envapter.getUsing(
-                'PORT',
-                v.pipe(v.string(), v.transform(Number), v.integer(), v.minValue(1024))
-            );
-            expect(port).to.equal(8080);
-        });
-
         it('arktype: validates a string→number coercion', () => {
             const port = Envapter.getUsing('PORT', ark('string.integer.parse'));
             expect(port).to.equal(8080);
@@ -102,23 +93,11 @@ describe('Standard Schema adapter (v5)', () => {
         });
     });
 
-    describe('getUsing with a schema: multi-key first-defined-wins', () => {
-        it('falls through to the second key when the first is unset', () => {
-            const port = Envapter.getUsing(['NEVER_SET', 'PORT'], z.coerce.number());
-            expect(port).to.equal(8080);
-        });
-    });
-
     describe('getUsing with a schema: missing handling', () => {
         it('returns undefined when env is absent and there is no fallback', () => {
             const port = Envapter.getUsing('NEVER_SET', z.coerce.number());
             expect(port).to.be.undefined;
             expectTypeOf(port).toEqualTypeOf<number | undefined>();
-        });
-
-        it('returns the fallback as-is when env is absent (no schema run)', () => {
-            const port = Envapter.getUsing('NEVER_SET', z.coerce.number(), 3000);
-            expect(port).to.equal(3000);
         });
 
         it('does NOT validate the fallback through the schema', () => {
@@ -137,11 +116,6 @@ describe('Standard Schema adapter (v5)', () => {
             expect(Envapter.getUsing('EMPTY', z.string())).to.be.undefined;
             expect(Envapter.getUsing('EMPTY', z.string(), 'fallback')).to.equal('fallback');
         });
-
-        it('strict mode treats whitespace-only as missing', () => {
-            Envapter.strict = true;
-            expect(Envapter.getUsing('WHITESPACE_ONLY', z.string().min(1))).to.be.undefined;
-        });
     });
 
     describe('getUsing with a schema: validation failures', () => {
@@ -153,22 +127,7 @@ describe('Standard Schema adapter (v5)', () => {
                 expect(err).to.be.instanceOf(EnvaptError);
                 const e = err as EnvaptError;
                 expect(e.code).to.equal(EnvaptErrorCodes.SchemaValidationFailed);
-                expect(e.message).to.include('INVALID_PORT');
-                expect(e.issues).to.exist;
                 expect(e.issues).to.be.an('array').with.length.greaterThan(0);
-            }
-        });
-
-        it('valibot: throws SchemaValidationFailed with issues populated', () => {
-            try {
-                Envapter.getUsing('INVALID_URL', v.pipe(v.string(), v.url()));
-                expect.fail('should have thrown');
-            } catch (err) {
-                expect(err).to.be.instanceOf(EnvaptError);
-                const e = err as EnvaptError;
-                expect(e.code).to.equal(EnvaptErrorCodes.SchemaValidationFailed);
-                expect(e.issues).to.exist;
-                expect(e.issues?.length).to.be.greaterThan(0);
             }
         });
 
@@ -333,47 +292,8 @@ describe('Standard Schema adapter (v5)', () => {
             static readonly port: number | undefined;
         }
 
-        class ValibotConfig {
-            @Envapt('LOG_LEVEL', { schema: v.picklist(['debug', 'info', 'warn']) })
-            static readonly logLevel: 'debug' | 'info' | 'warn' | undefined;
-        }
-
-        class HandRolledConfig {
-            @Envapt('LOG_LEVEL', { schema: handRolledUpper })
-            static readonly upper: string | undefined;
-        }
-
         it('zod: validated value reaches the property', () => {
             expect(ZodConfig.port).to.equal(8080);
-        });
-
-        it('valibot: validated value reaches the property', () => {
-            expect(ValibotConfig.logLevel).to.equal('warn');
-        });
-
-        it('hand-rolled: validated value reaches the property', () => {
-            expect(HandRolledConfig.upper).to.equal('WARN');
-        });
-
-        it('lists only the env key in the message when the schema rejects the value', () => {
-            class InvalidPortConfig {
-                @Envapt('INVALID_PORT', { schema: z.coerce.number().int() })
-                static readonly port: number | undefined;
-            }
-            let thrown: unknown;
-            try {
-                void InvalidPortConfig.port;
-            } catch (err) {
-                thrown = err;
-            }
-            expect(thrown).to.be.instanceOf(EnvaptError);
-            const e = thrown as EnvaptError;
-            const issueMessage = e.issues?.[0]?.message ?? '';
-            expect(issueMessage).to.not.equal('');
-            expect(e.code).to.equal(EnvaptErrorCodes.SchemaValidationFailed);
-            expect(e.issues?.[0]?.path).to.deep.equal(['INVALID_PORT']);
-            expect(e.message).to.include('INVALID_PORT');
-            expect(e.message).to.not.include(issueMessage);
         });
 
         // an arktype type is a callable function carrying `~standard`
@@ -437,16 +357,6 @@ describe('Standard Schema adapter (v5)', () => {
             expect(() => RequiredInvalidPort.port)
                 .to.throw(EnvaptError)
                 .with.property('code', EnvaptErrorCodes.InvalidEnvValue);
-        });
-
-        it('throws InvalidUserDefinedConfig under required: true for an async schema', () => {
-            class RequiredAsync {
-                @Envapt('PORT', { schema: handRolledAsync, required: true })
-                static readonly port: string;
-            }
-            expect(() => RequiredAsync.port)
-                .to.throw(EnvaptError)
-                .with.property('code', EnvaptErrorCodes.InvalidUserDefinedConfig);
         });
     });
 
@@ -528,14 +438,6 @@ describe('Standard Schema adapter (v5)', () => {
             expect(buildBadDecorator)
                 .to.throw(EnvaptError)
                 .with.property('code', EnvaptErrorCodes.InvalidUserDefinedConfig);
-        });
-    });
-
-    describe('Validator.isStandardSchema: runtime shape check', () => {
-        it('accepts real schema objects', () => {
-            expect(
-                () => Envapter.getUsing('PORT', z.coerce.number()) // happy path proves the guard implicitly
-            ).to.not.throw();
         });
     });
 

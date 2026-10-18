@@ -116,6 +116,10 @@ Tests reach behavior through the public API. A test that reads a private method 
 
 A test pins behavior. `tsc`, ESLint, and the build already reject a missing export or a wrong type. No tautological tests, and nothing gets a test for staying absent.
 
+Before you add a test, find the one that already asserts the same input and outcome. If it exists, add nothing, or put the new assertion in that test. Code that several readers or converters share gets one test. A specific input stays tested even when its code path is covered, because the input is the behavior.
+
+Never test a setter that only stores its value, a type that restates its declaration, or something JavaScript or a dependency does on its own.
+
 ---
 
 ## Subagents

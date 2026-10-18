@@ -53,13 +53,6 @@ describe('syncProcessEnv (v5)', () => {
             expect(Envapter.syncProcessEnv).to.equal(false);
         });
 
-        it('round-trips set/get', () => {
-            Envapter.syncProcessEnv = true;
-            expect(Envapter.syncProcessEnv).to.equal(true);
-            Envapter.syncProcessEnv = false;
-            expect(Envapter.syncProcessEnv).to.equal(false);
-        });
-
         it('throws EnvaptError(InvalidUserDefinedConfig) on a non-boolean value', () => {
             const cases: unknown[] = ['true', 1, 0, null, undefined, {}];
             for (const bad of cases) {
@@ -182,17 +175,6 @@ describe('syncProcessEnv (v5)', () => {
                 const summary = capture.lines.find((l) => /mirrored \d+ keys to the ambient environment/u.test(l));
                 expect(perKey, 'expected a per-key mirror line').to.exist;
                 expect(summary, 'expected a summary mirror line').to.exist;
-            } finally {
-                capture.restore();
-            }
-        });
-
-        it('emits nothing mirror-related when silent', () => {
-            cleanFixtureKeys();
-            const capture = captureStderr();
-            try {
-                Envapter.syncProcessEnv = true;
-                expect(capture.lines.some((l) => l.includes('mirrored'))).to.equal(false);
             } finally {
                 capture.restore();
             }

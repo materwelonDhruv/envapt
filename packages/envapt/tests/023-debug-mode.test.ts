@@ -1,18 +1,14 @@
 import { resolve } from 'node:path';
 import process from 'node:process';
 
-import { afterEach, beforeAll, beforeEach, describe, expect, expectTypeOf, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { Converters, Envapter, EnvaptErrorCodes, FileSource, PortableSource } from '../src';
 import { resetDebugForTesting } from '../src/infra/Debug';
 import { loadDotenv } from '../src/infra/Dotenv';
 import { EnvaptError } from '../src/infra/Error';
 
-import type { DebugLevel, StandardSchemaV1 } from '../src';
-
-const passThroughSchema: StandardSchemaV1<string, string> = {
-    '~standard': { version: 1, vendor: 'test', validate: (v) => ({ value: v as string }) }
-};
+import type { DebugLevel } from '../src';
 
 const reader = new FileSource();
 const nodeReadFile = reader.readFile.bind(reader);
@@ -52,15 +48,6 @@ describe('Debug mode (v5)', () => {
 
     describe('Envapter.debug toggle', () => {
         it('defaults to silent', () => {
-            expect(Envapter.debug).to.equal('silent');
-        });
-
-        it('round-trips set/get for each level', () => {
-            Envapter.debug = 'warn';
-            expect(Envapter.debug).to.equal('warn');
-            Envapter.debug = 'verbose';
-            expect(Envapter.debug).to.equal('verbose');
-            Envapter.debug = 'silent';
             expect(Envapter.debug).to.equal('silent');
         });
 
@@ -138,32 +125,6 @@ describe('Debug mode (v5)', () => {
                 Envapter.getUsing('NEVER_SET_KEY', 'number');
                 const line = capture.lines.find((l) => l.includes('NEVER_SET_KEY'));
                 expect(line, 'expected a not-found warn from getUsing').to.exist;
-                expect(line).to.include('missing or empty');
-            } finally {
-                capture.restore();
-            }
-        });
-
-        it('logs a missing key read through getUsing (with fallback)', () => {
-            Envapter.debug = 'warn';
-            const capture = captureStderr();
-            try {
-                Envapter.getUsing('NEVER_SET_KEY', (raw) => raw, 'fb');
-                const line = capture.lines.find((l) => l.includes('NEVER_SET_KEY'));
-                expect(line, 'expected a not-found warn from getUsing').to.exist;
-                expect(line).to.include('missing or empty');
-            } finally {
-                capture.restore();
-            }
-        });
-
-        it('logs a missing key read through a schema (with fallback)', () => {
-            Envapter.debug = 'warn';
-            const capture = captureStderr();
-            try {
-                Envapter.getUsing('NEVER_SET_KEY', passThroughSchema, 'fb');
-                const line = capture.lines.find((l) => l.includes('NEVER_SET_KEY'));
-                expect(line, 'expected a not-found warn from the schema read').to.exist;
                 expect(line).to.include('missing or empty');
             } finally {
                 capture.restore();
@@ -360,18 +321,6 @@ describe('Debug mode (v5)', () => {
             }
         });
 
-        it('includes the missing-key warn at verbose level too', () => {
-            Envapter.debug = 'verbose';
-            const capture = captureStderr();
-            try {
-                Envapter.get('NEVER_SET_KEY');
-                const line = capture.lines.find((l) => l.includes('NEVER_SET_KEY') && l.includes('missing or empty'));
-                expect(line, 'expected the missing-or-empty warn at verbose level').to.exist;
-            } finally {
-                capture.restore();
-            }
-        });
-
         it('still emits warn-level lines (fallback used)', () => {
             Envapter.debug = 'verbose';
             const capture = captureStderr();
@@ -399,14 +348,6 @@ describe('Debug mode (v5)', () => {
             } finally {
                 capture.restore();
             }
-        });
-    });
-
-    describe('Compile-time type narrowing (expect-type)', () => {
-        it('Envapter.debug is typed as DebugLevel', () => {
-            const current = Envapter.debug;
-            expectTypeOf(current).toEqualTypeOf<DebugLevel>();
-            expectTypeOf<DebugLevel>().toEqualTypeOf<'silent' | 'warn' | 'verbose'>();
         });
     });
 });

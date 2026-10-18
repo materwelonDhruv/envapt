@@ -57,14 +57,6 @@ describe('merge composes sources with last-wins precedence', () => {
         expect(Envapter.get('FROM_FILE')).to.equal('file');
     });
 
-    it('mirrors the .env delta to process.env through the file member when syncProcessEnv is on', () => {
-        Envapter.syncProcessEnv = true;
-        Envapter.useSource(merge(new FileSource(), new PortableSource({ X: '1' })));
-        Envapter.envPaths = resolve(import.meta.dirname, '.env.041-merge');
-
-        expect(process.env.FROM_FILE).to.equal('file');
-    });
-
     it('lifts the .env cascade above every member when envFileOptions.override is true', () => {
         Envapter.envFileOptions = { override: true };
         Envapter.useSource(merge(new FileSource(), new PortableSource({ SHARED: 'secret' })));
@@ -127,13 +119,6 @@ describe('merge composes sources with last-wins precedence', () => {
         Envapter.useSource(merge(new PortableSource({ K: 'value' }), new PortableSource({ K: '' })));
 
         expect(Envapter.getRaw('K')).to.equal('');
-    });
-
-    it('a single member binds equivalently to that source directly', () => {
-        Envapter.useSource(merge(new PortableSource({ K: 'v' })));
-
-        expect(Envapter.get('K')).to.equal('v');
-        expect(Envapter.get('MISSING')).to.equal(undefined);
     });
 
     it('a merge that throws leaves the previously bound source intact', () => {

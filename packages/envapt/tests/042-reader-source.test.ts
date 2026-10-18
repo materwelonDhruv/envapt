@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { Converters, Environment, Envapter, FileSource, merge, PortableSource } from '../src';
+import { Environment, Envapter, FileSource, merge, PortableSource } from '../src';
 import { resetDebugForTesting } from '../src/infra/Debug';
 
 describe('a reader source reads one key at a time', () => {
@@ -13,12 +13,6 @@ describe('a reader source reads one key at a time', () => {
     // reads the debug level first so its ENVAPT_DEBUG lookup does not count as a tracked read
     beforeEach(() => {
         void Envapter.debug;
-    });
-
-    it('binds a reader function and reads a key through it', () => {
-        Envapter.useSource((key) => (key === 'PORT' ? '8080' : undefined));
-
-        expect(Envapter.getNumber('PORT')).to.equal(8080);
     });
 
     it('reads each key once and negative-caches a miss', () => {
@@ -34,12 +28,6 @@ describe('a reader source reads one key at a time', () => {
         expect(Envapter.get('MISS', 'fallback')).to.equal('fallback');
 
         expect(calls).to.deep.equal(['HIT', 'MISS']);
-    });
-
-    it('reads a required value through a reader', () => {
-        Envapter.useSource((key) => (key === 'ORIGIN_URL' ? 'https://origin.test' : undefined));
-
-        expect(Envapter.getRequired('ORIGIN_URL', Converters.Url).href).to.equal('https://origin.test/');
     });
 
     it('detects the environment from a reader', () => {

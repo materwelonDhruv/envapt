@@ -7,52 +7,15 @@ import { Envapt } from '../src/legacy';
 
 describe('Envapter', () => {
     beforeAll(() => {
-        Envapter.envPaths = resolve(`${import.meta.dirname}/.env.envapter-test`);
+        Envapter.envPaths = [
+            resolve(`${import.meta.dirname}/.env.envapter-test`),
+            resolve(`${import.meta.dirname}/.env.extra`)
+        ];
     });
 
-    describe('env path configuration and environment type', () => {
-        it('should be .env.envapter-test set before tests rather than .env', () => {
-            expect(Envapter.envPaths).to.deep.equal([resolve(`${import.meta.dirname}/.env.envapter-test`)]);
-        });
-
-        it('should be true for isDevelopment environment by default', () => {
-            expect(Envapter.isDevelopment).to.be.true;
-            expect(Envapter.isProduction).to.be.false;
-            expect(Envapter.isStaging).to.be.false;
-            expect(Envapter.environment).to.equal(Environment.Development);
-        });
-
-        it('should allow setting custom .env path', () => {
-            const testPath = resolve(import.meta.dirname, '.env.envapter-test');
-            Envapter.envPaths = testPath;
-            expect(Envapter.envPaths).to.deep.equal([testPath]);
-        });
-
-        it('should set to list of .env files', () => {
-            Envapter.envPaths = [
-                resolve(`${import.meta.dirname}/.env.envapter-test`),
-                resolve(`${import.meta.dirname}/.env.extra`)
-            ];
-            expect(Envapter.envPaths).to.deep.equal([
-                resolve(`${import.meta.dirname}/.env.envapter-test`),
-                resolve(`${import.meta.dirname}/.env.extra`)
-            ]);
-        });
-
-        it('should be true for isStaging environment set in .env.extra', () => {
-            expect(Envapter.isStaging).to.be.true;
-            expect(Envapter.isProduction).to.be.false;
-            expect(Envapter.isDevelopment).to.be.false;
-            expect(Envapter.environment).to.equal(Environment.Staging);
-        });
-
-        it('should be true for isProduction environment when set', () => {
-            Envapter.environment = Environment.Production;
-            expect(Envapter.isStaging).to.be.false;
-            expect(Envapter.isProduction).to.be.true;
-            expect(Envapter.isDevelopment).to.be.false;
-            expect(Envapter.environment).to.equal(Environment.Production);
-        });
+    it('detects the environment from a later file in envPaths', () => {
+        expect(Envapter.isStaging).to.be.true;
+        expect(Envapter.environment).to.equal(Environment.Staging);
     });
 
     describe('accessors and multiple files', () => {
@@ -61,7 +24,6 @@ describe('Envapter', () => {
             public static readonly varInExtraFile: boolean | undefined;
         }
 
-        // relies on the earlier test that added .env.extra to envPaths
         it('should load variable from .env.extra file', () => {
             expect(TestEnvapter.varInExtraFile).to.be.true;
         });
@@ -74,13 +36,9 @@ describe('Envapter', () => {
         });
     });
 
-    describe('multi-key getters and converters', () => {
+    describe('ordered key lists', () => {
         it('should resolve the first available key for static getters', () => {
             expect(Envapter.get(['MISSING_STRING', 'GETTER_STRING'])).to.equal('primitiveString');
-        });
-
-        it('should fall back to provided default when all keys are missing', () => {
-            expect(Envapter.get(['UNKNOWN_A', 'UNKNOWN_B'], 'default-value')).to.equal('default-value');
         });
 
         it('should fall through a present-but-empty key to the next in the list', () => {
@@ -89,67 +47,20 @@ describe('Envapter', () => {
                 'primitiveString'
             );
         });
-
-        it('should work with advanced converters for arrays of keys', () => {
-            expect(Envapter.getUsing(['UNKNOWN_BOOL', 'GETTER_BOOLEAN'], Converters.Boolean)).to.be.true;
-        });
-
-        it('should work with custom converters via getUsing', () => {
-            const value = Envapter.getUsing(['UNKNOWN_JSON', 'GETTER_STRING'], (raw) => raw.toUpperCase());
-            expect(value).to.equal('PRIMITIVESTRING');
-        });
     });
 
-    describe('configuration management', () => {
-        describe('envFileOptions', () => {
-            const originalConfig = Envapter.envFileOptions;
-
-            it('should get default envFileOptions', () => {
-                const config = Envapter.envFileOptions;
-                expect(config).to.deep.equal({});
-            });
-
-            it('should set and get valid envFileOptions', () => {
-                const newConfig = { override: true };
-                Envapter.envFileOptions = newConfig;
-                expect(Envapter.envFileOptions).to.deep.equal(newConfig);
-            });
-
-            it('should set encoding option', () => {
-                const configWithEncoding = { encoding: 'latin1' as const };
-                Envapter.envFileOptions = configWithEncoding;
-                expect(Envapter.envFileOptions).to.deep.equal(configWithEncoding);
-            });
-
-            afterEach(() => {
-                Envapter.envFileOptions = originalConfig;
-            });
+    describe('envFileOptions', () => {
+        afterEach(() => {
+            Envapter.envFileOptions = {};
         });
 
-        describe('envPaths', () => {
-            const testPath = resolve(`${import.meta.dirname}/.env.envapt-test`);
+        it('defaults to an empty object', () => {
+            expect(Envapter.envFileOptions).to.deep.equal({});
+        });
 
-            it('should get default envPaths', () => {
-                // can't assert the ['.env'] default here because no .env exists
-                const currentPaths = Envapter.envPaths;
-                expect(currentPaths).to.be.an('array');
-                expect(currentPaths.length).to.be.greaterThan(0);
-            });
-
-            it('should set single env file path', () => {
-                Envapter.envPaths = testPath;
-                expect(Envapter.envPaths).to.deep.equal([testPath]);
-            });
-
-            it('should set multiple env file paths', () => {
-                const paths = [testPath, testPath];
-                Envapter.envPaths = paths;
-                expect(Envapter.envPaths).to.deep.equal(paths);
-            });
-
-            afterEach(() => {
-                Envapter.envPaths = testPath;
-            });
+        it('returns the options that were set', () => {
+            Envapter.envFileOptions = { override: true, encoding: 'latin1' };
+            expect(Envapter.envFileOptions).to.deep.equal({ override: true, encoding: 'latin1' });
         });
     });
 });

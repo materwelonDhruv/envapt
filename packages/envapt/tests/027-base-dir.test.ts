@@ -40,7 +40,6 @@ describe('Envapter.baseDir', () => {
         it('a plain directory path', () => {
             Envapter.baseDir = PKG_DIR;
             expect(Envapter.baseDir).to.equal(PKG_DIR);
-            expect(Envapter.get('BASEDIR_KEY')).to.equal('from-pkg-dev'); // .env.development wins
             expect(Envapter.get('PKG_ONLY')).to.equal('pkg-value');
         });
 

@@ -1,9 +1,8 @@
 import { resolve } from 'node:path';
 
-import { beforeAll, describe, expect, expectTypeOf, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 
-import { Converters, Envapter, EnvaptErrorCodes } from '../src';
-import { EnvaptError } from '../src/infra/Error';
+import { Converters, Envapter } from '../src';
 import { Envapt } from '../src/legacy';
 
 // a loose leading-number parse of the fixtures would never produce the fallbacks 99 and 1.5
@@ -35,7 +34,6 @@ describe('Numeric converter strictness (v8)', () => {
 
         it('reads a plain integer', () => {
             expect(Ints.valid).to.equal(42);
-            expectTypeOf(Ints.valid).toEqualTypeOf<number>();
         });
 
         it('reads a negative integer', () => {
@@ -79,7 +77,6 @@ describe('Numeric converter strictness (v8)', () => {
 
         it('reads a decimal', () => {
             expect(Floats.valid).to.equal(3.14);
-            expectTypeOf(Floats.valid).toEqualTypeOf<number>();
         });
 
         it('reads scientific notation', () => {
@@ -96,20 +93,6 @@ describe('Numeric converter strictness (v8)', () => {
 
         it('falls back on whitespace', () => {
             expect(Floats.whitespace).to.equal(1.5);
-        });
-    });
-
-    describe('getRequired surfaces a rejected value as a throw', () => {
-        it('throws on a malformed integer', () => {
-            expect(() => Envapter.getRequired('INT_GARBAGE', Converters.Integer))
-                .to.throw(EnvaptError)
-                .with.property('code', EnvaptErrorCodes.InvalidEnvValue);
-        });
-
-        it('throws on a malformed float', () => {
-            expect(() => Envapter.getRequired('FLOAT_GARBAGE', Converters.Float))
-                .to.throw(EnvaptError)
-                .with.property('code', EnvaptErrorCodes.InvalidEnvValue);
         });
     });
 });

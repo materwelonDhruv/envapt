@@ -93,16 +93,6 @@ describe('profiles: dotenv-flow auto-cascade', () => {
         expect(Envapter.get('ONLY_DEV')).to.be.undefined;
     });
 
-    it('silently skips missing cascade files', () => {
-        // the default fixture has only .env
-        process.chdir(resolve(import.meta.dirname, 'cascade-fixtures', 'default'));
-        Envapter.environment = Environment.Development;
-        Envapter.resetPaths();
-
-        expect(() => Envapter.get('CASCADE_KEY')).to.not.throw();
-        expect(Envapter.get('CASCADE_KEY')).to.equal('base');
-    });
-
     it('reads process.env.NODE_ENV when Envapter.environment was never explicitly set', () => {
         process.chdir(resolve(import.meta.dirname, 'cascade-fixtures', 'all-layers'));
         process.env.NODE_ENV = 'production';

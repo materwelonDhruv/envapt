@@ -2,7 +2,7 @@ import { resolve } from 'node:path';
 
 import { beforeAll, describe, expect, it } from 'vitest';
 
-import { Converters, Envapter, type JsonValue } from '../src';
+import { Converters, Envapter } from '../src';
 import { EnvaptError } from '../src/infra/Error';
 import { Envapt } from '../src/legacy';
 
@@ -18,9 +18,6 @@ describe('Envapt', () => {
 
     describe('automatic type detection', () => {
         class TestTypeDetection {
-            @Envapt('NONEXISTENT_TEST_VAR', { fallback: undefined })
-            public static readonly testUndefinedVar: string | undefined;
-
             @Envapt('NONEXISTENT_VAR_WITHOUT_FALLBACK', { converter: String })
             public static readonly nonexistentVarWithoutFallback: string | undefined;
 
@@ -40,10 +37,6 @@ describe('Envapt', () => {
             public static readonly bigintVar: bigint;
         }
 
-        it('should detect undefined type for non-existent variables', () => {
-            expect(TestTypeDetection.testUndefinedVar).to.be.undefined;
-        });
-
         it('should return undefined for non-existent variable without fallback but with converter', () => {
             expect(TestTypeDetection.nonexistentVarWithoutFallback).to.be.undefined;
         });
@@ -53,28 +46,23 @@ describe('Envapt', () => {
         });
 
         it('should detect number type from fallback', () => {
-            const expectedPort = 7777;
-            expect(typeof TestTypeDetection.port).to.equal('number');
-            expect(TestTypeDetection.port).to.equal(expectedPort);
+            expect(TestTypeDetection.port).to.equal(7777);
         });
 
         it('should detect boolean type from fallback', () => {
-            expect(typeof TestTypeDetection.isEnabled).to.equal('boolean');
             expect(TestTypeDetection.isEnabled).to.be.true;
         });
 
         it('should detect string type from fallback', () => {
-            expect(typeof TestTypeDetection.uri).to.equal('string');
             expect(TestTypeDetection.uri).to.equal('mongodb://localhost:27017/');
         });
 
         it('should detect bigint type from fallback', () => {
-            expect(typeof TestTypeDetection.bigintVar).to.equal('bigint');
             expect(TestTypeDetection.bigintVar).to.equal(99999n);
         });
     });
 
-    describe('explicit overrides and other tests', () => {
+    describe('explicit overrides', () => {
         class TestEnv extends Envapter {
             // @ts-expect-error Inconsistent fallback type
             @Envapt('TEST_NUMBER_AS_STRING', { fallback: 42, converter: String })
@@ -95,222 +83,48 @@ describe('Envapt', () => {
             // @ts-expect-error Inconsistent fallback type
             @Envapt('TEST_STRING_AS_BIGINT', { fallback: '987654321', converter: BigInt })
             public static readonly testStringAsBigInt: bigint;
-
-            @Envapt('TEST_VAR', { fallback: undefined })
-            public static readonly testVar: string | undefined;
-
-            @Envapt('NONEXISTENT_VAR_WITH_FALLBACK_STRING', { fallback: 'default-value' })
-            public static readonly nonexistentVarWithFallbackString: string;
-
-            @Envapt('NONEXISTENT_VAR_WITH_FALLBACK_NUMBER', { fallback: 12345 })
-            public static readonly nonexistentVarWithFallbackNumber: number;
-
-            @Envapt('NONEXISTENT_VAR_WITH_FALLBACK_BOOLEAN', { fallback: true })
-            public static readonly nonexistentVarWithFallbackBoolean: boolean;
-
-            @Envapt('TEST_VAR_UNDEFINED_FALLBACK_WITH_CONVERTER', {
-                fallback: undefined,
-                converter: Converters.Time
-            })
-            public static readonly undefinedFallbackWithConverter: number | undefined;
-
-            @Envapt('TEST_VAR_UNDEFINED_FALLBACK_WITH_CONVERTER', {
-                fallback: undefined,
-                converter: Converters.array({ of: Converters.Time, delimiter: ',' })
-            })
-            public static readonly undefinedFallbackWithArrayConverter: number[] | undefined;
         }
 
         it('should use String converter override despite number fallback', () => {
-            expect(typeof TestEnv.testNumberAsString).to.equal('string');
             expect(TestEnv.testNumberAsString).to.equal('42');
         });
 
         it('should use Number converter override despite string fallback', () => {
-            expect(typeof TestEnv.testStringAsNumber).to.equal('number');
             expect(TestEnv.testStringAsNumber).to.equal(100);
         });
 
         it('should use Boolean converter override despite string fallback', () => {
-            expect(typeof TestEnv.testStringAsBoolean).to.equal('boolean');
             expect(TestEnv.testStringAsBoolean).to.be.true;
         });
 
         it('should use BigInt converter override with number fallback', () => {
-            expect(typeof TestEnv.testNumberAsBigInt).to.equal('bigint');
             expect(TestEnv.testNumberAsBigInt).to.equal(123456789n);
         });
 
         it('should use BigInt converter override with string fallback', () => {
-            expect(typeof TestEnv.testStringAsBigInt).to.equal('bigint');
             expect(TestEnv.testStringAsBigInt).to.equal(987654321n);
-        });
-
-        it('should resolve template variables in environment values', () => {
-            // TEST_VAR concatenates VAR_1, VAR_2, VAR_3
-            expect(TestEnv.testVar).to.equal('var1var2var3');
-        });
-
-        it('should return fallback for non-existent variable with non-undefined fallback', () => {
-            expect(TestEnv.nonexistentVarWithFallbackString).to.equal('default-value');
-        });
-
-        it('should return fallback for non-existent variable with non-undefined number fallback', () => {
-            expect(TestEnv.nonexistentVarWithFallbackNumber).to.equal(12345);
-        });
-
-        it('should return fallback for non-existent variable with non-undefined boolean fallback', () => {
-            expect(TestEnv.nonexistentVarWithFallbackBoolean).to.be.true;
-        });
-
-        it('should return undefined for variable with undefined fallback', () => {
-            expect(TestEnv.undefinedFallbackWithConverter).to.be.undefined;
-            expect(TestEnv.undefinedFallbackWithArrayConverter).to.be.undefined;
         });
     });
 
     describe('custom converter functions', () => {
         class TestCustomEnv {
-            @Envapt('ALLOWED_CHANNELS', { fallback: ['default-channel'], converter: splitList })
-            public static readonly allowedChannels: string[];
-
-            @Envapt('FEATURE_FLAGS', { fallback: new Set(['basic']), converter: (raw) => new Set(splitList(raw)) })
-            public static readonly featureFlags: Set<string>;
-
             @Envapt('NONEXISTENT_ARRAY', { fallback: ['default1', 'default2'], converter: splitList })
             public static readonly nonexistentArray: string[];
         }
 
-        it('should parse comma-separated string to array', () => {
-            expect(TestCustomEnv.allowedChannels).to.be.an('array');
-            const expectedChannels = ['123456789', '987654321', '555666777'];
-            expect(TestCustomEnv.allowedChannels).to.deep.equal(expectedChannels);
-        });
-
-        it('should parse comma-separated string to Set', () => {
-            expect(TestCustomEnv.featureFlags).to.be.instanceof(Set);
-            const expectedFlags = new Set(['auth', 'logging', 'caching', 'webhooks']);
-            expect(TestCustomEnv.featureFlags).to.deep.equal(expectedFlags);
-        });
-
         it('should use fallback for non-existent variable with custom converter', () => {
-            expect(TestCustomEnv.nonexistentArray).to.be.an('array');
-            const expectedFallback = ['default1', 'default2'];
-            expect(TestCustomEnv.nonexistentArray).to.deep.equal(expectedFallback);
-        });
-    });
-
-    describe('built-in converters showcase', () => {
-        class BuiltInConverterShowcase {
-            @Envapt('DATABASE_CONFIG', { converter: Converters.Json })
-            static readonly databaseConfig: JsonValue | undefined;
-
-            @Envapt('API_ENDPOINTS', { converter: Converters.array({ delimiter: ';' }) })
-            static readonly apiEndpoints: string[] | undefined;
-
-            @Envapt('CORS_ORIGINS', { converter: Converters.array({ of: Converters.Url, delimiter: '|' }) })
-            static readonly corsOrigins: URL[] | undefined;
-
-            @Envapt('SERVICE_TAGS', { converter: Converters.array({ delimiter: ' ' }) })
-            static readonly serviceTags: string[] | undefined;
-
-            @Envapt('ENABLED_FEATURES', { converter: Converters.Boolean })
-            static readonly enabledFeatures: boolean | undefined;
-
-            @Envapt('API_TIMEOUT', { converter: Converters.Integer })
-            static readonly apiTimeout: number | undefined;
-        }
-
-        it('should parse JSON configuration', () => {
-            expect(BuiltInConverterShowcase.databaseConfig).to.deep.equal({
-                host: 'localhost',
-                port: 5432,
-                ssl: true
-            });
-        });
-
-        it('should parse semicolon-delimited arrays', () => {
-            expect(BuiltInConverterShowcase.apiEndpoints).to.deep.equal(['auth', 'users', 'products', 'orders']);
-        });
-
-        it('should parse pipe-delimited URL arrays', () => {
-            expect(BuiltInConverterShowcase.corsOrigins).to.be.an('array');
-            expect(BuiltInConverterShowcase.corsOrigins?.length).to.equal(3);
-
-            expect(BuiltInConverterShowcase.corsOrigins?.[0]).to.be.instanceOf(URL);
-            expect(BuiltInConverterShowcase.corsOrigins?.[1]).to.be.instanceOf(URL);
-            expect(BuiltInConverterShowcase.corsOrigins?.[2]).to.be.instanceOf(URL);
-
-            expect(BuiltInConverterShowcase.corsOrigins?.[0]?.href).to.equal('http://localhost:3000/');
-            expect(BuiltInConverterShowcase.corsOrigins?.[1]?.href).to.equal('https://app.example.com/');
-            expect(BuiltInConverterShowcase.corsOrigins?.[2]?.href).to.equal('https://staging.example.com/');
-        });
-
-        it('should parse space-delimited arrays', () => {
-            expect(BuiltInConverterShowcase.serviceTags).to.deep.equal(['frontend', 'backend', 'api', 'database']);
-        });
-
-        it('should parse boolean values', () => {
-            expect(BuiltInConverterShowcase.enabledFeatures).to.be.true;
-        });
-
-        it('should parse integer values', () => {
-            expect(BuiltInConverterShowcase.apiTimeout).to.equal(5000);
-        });
-    });
-
-    describe('multi-line variables', () => {
-        class MultiLineEnv {
-            @Envapt('MULTI_LINE_VAR')
-            public static readonly multiLineVar: string | undefined;
-
-            @Envapt('MULTI_LINE_VAR_ESCAPED')
-            public static readonly multiLineVarEscaped: string | undefined;
-
-            @Envapt('MULTI_LINE_WITH_BACKSLASHN')
-            public static readonly multiLineWithBackslashN: string | undefined;
-
-            @Envapt('MULTI_LINE_NUMBER', { converter: Converters.Number })
-            public static readonly multiLineNumber: number | undefined;
-        }
-
-        it('should handle multi-line variables correctly', () => {
-            expect(MultiLineEnv.multiLineVar).to.equal('This is a\nvariable that spans\nmultiple lines.');
-        });
-
-        it('should handle escaped multi-line variables correctly', () => {
-            expect(MultiLineEnv.multiLineVarEscaped).to.equal(
-                'This is a \\\nvariable that spans \\\nmultiple lines with \\\nescaping.'
-            );
-        });
-
-        it('should handle multi-line variables with backslash-n correctly', () => {
-            expect(MultiLineEnv.multiLineWithBackslashN).to.equal('This is a\nvariable with a backslash and n.');
-        });
-
-        it('should only allow strings in multiline', () => {
-            expect(MultiLineEnv.multiLineNumber).to.be.undefined;
+            expect(TestCustomEnv.nonexistentArray).to.deep.equal(['default1', 'default2']);
         });
     });
 
     describe('multi-key lookups', () => {
         class MultiKeyEnv extends Envapter {
-            @Envapt(['PRIMARY_DB_URL', 'REPLICA_DB_URL'])
-            public static readonly databaseUrl: string | undefined;
-
             @Envapt(['PRIMARY_SERVICE_PORT', 'LEGACY_SERVICE_PORT'], { converter: Converters.Number })
             public static readonly preferredPort: number | undefined;
 
             @Envapt(['MISSING_SERVICE_PORT', 'LEGACY_SERVICE_PORT'], { converter: Converters.Number })
             public static readonly legacyFallbackPort: number | undefined;
-
-            @Envapt(['NOT_DEFINED_ONE', 'NOT_DEFINED_TWO'], { fallback: 'decorator-fallback' })
-            public static readonly fallbackValue: string;
         }
-
-        it('should pick the first defined value among provided keys', () => {
-            expect(MultiKeyEnv.databaseUrl).to.equal('postgres://replica.local/app');
-        });
 
         it('should respect ordering when multiple keys exist', () => {
             expect(MultiKeyEnv.preferredPort).to.equal(6060);
@@ -319,13 +133,9 @@ describe('Envapt', () => {
         it('should fall through to later keys when earlier ones are missing', () => {
             expect(MultiKeyEnv.legacyFallbackPort).to.equal(9090);
         });
-
-        it('should use fallback when no keys resolve', () => {
-            expect(MultiKeyEnv.fallbackValue).to.equal('decorator-fallback');
-        });
     });
 
-    describe('calling Envapt on the same variable multiple times with different options', () => {
+    it('reads one variable into several fields with different options', () => {
         class MultiEnv {
             @Envapt('TEST_VAR_MULTI_CALL', { fallback: 'default' })
             public static readonly testVar: string;
@@ -337,26 +147,9 @@ describe('Envapt', () => {
             public static readonly testVarWithFallbackAndConverter: number | undefined;
         }
 
-        it('should return the correct string value for testVar', () => {
-            expect(MultiEnv.testVar).to.equal('42');
-        });
-
-        it('should return the correct string value for testVarWithConverter', () => {
-            expect(MultiEnv.testVarWithConverter).to.equal('42');
-        });
-
-        it('should return the correct number value for testVarWithFallbackAndConverter', () => {
-            expect(MultiEnv.testVarWithFallbackAndConverter).to.equal(42);
-        });
-
-        it('should return the same value for testVar and testVarWithConverter', () => {
-            expect(MultiEnv.testVar).to.equal(MultiEnv.testVarWithConverter);
-        });
-
-        it('should return the string "42" for both testVar and testVarWithConverter', () => {
-            expect(MultiEnv.testVarWithConverter).to.equal('42');
-            expect(MultiEnv.testVar).to.equal('42');
-        });
+        expect(MultiEnv.testVar).to.equal('42');
+        expect(MultiEnv.testVarWithConverter).to.equal('42');
+        expect(MultiEnv.testVarWithFallbackAndConverter).to.equal(42);
     });
 
     describe('read-only enforcement', () => {

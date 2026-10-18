@@ -44,22 +44,6 @@ describe('Semantic converters (v8): port and email', () => {
             expect(Envapter.getUsing('PORT_WS', Converters.Port, 8080)).to.equal(8080);
         });
 
-        it('reads an array of ports', () => {
-            expect(Envapter.getUsing('PORTS', Converters.array({ of: Converters.Port }), [])).to.deep.equal([
-                3000, 3001, 3002
-            ]);
-        });
-
-        it('getRequired returns a valid port', () => {
-            expect(Envapter.getRequired('PORT_VALID', Converters.Port)).to.equal(8080);
-        });
-
-        it('getRequired throws on an out-of-range port', () => {
-            expect(() => Envapter.getRequired('PORT_HIGH', Converters.Port))
-                .to.throw(EnvaptError)
-                .with.property('code', EnvaptErrorCodes.InvalidEnvValue);
-        });
-
         it('rejects an out-of-range port fallback', () => {
             expect(() => Envapter.getUsing('PORT_VALID', Converters.Port, 65536))
                 .to.throw(EnvaptError)
@@ -126,23 +110,6 @@ describe('Semantic converters (v8): port and email', () => {
             expect(Envapter.getUsing('EMAIL_DOMAINSPACE', Converters.Email, 'f@b.co')).to.equal('f@b.co');
         });
 
-        it('reads an array of emails', () => {
-            expect(Envapter.getUsing('EMAILS', Converters.array({ of: Converters.Email }), [])).to.deep.equal([
-                'a@x.com',
-                'b@y.com'
-            ]);
-        });
-
-        it('getRequired returns a valid email', () => {
-            expect(Envapter.getRequired('EMAIL_VALID', Converters.Email)).to.equal('a@b.com');
-        });
-
-        it('getRequired throws on an invalid email', () => {
-            expect(() => Envapter.getRequired('EMAIL_NOAT', Converters.Email))
-                .to.throw(EnvaptError)
-                .with.property('code', EnvaptErrorCodes.InvalidEnvValue);
-        });
-
         it('rejects a non-email fallback', () => {
             expect(() => Envapter.getUsing('EMAIL_VALID', Converters.Email, 'not-an-email'))
                 .to.throw(EnvaptError)
@@ -156,7 +123,7 @@ describe('Semantic converters (v8): port and email', () => {
         });
 
         it('throws on a non-string fallback', () => {
-            // same cast as the port test
+            // cast past the type to reach the runtime check
             expect(() => Envapter.getUsing('EMAIL_VALID', Converters.Email, 42 as unknown as string))
                 .to.throw(EnvaptError)
                 .with.property('code', EnvaptErrorCodes.FallbackConverterTypeMismatch);

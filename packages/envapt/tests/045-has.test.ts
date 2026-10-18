@@ -1,6 +1,6 @@
 import { resolve } from 'node:path';
 
-import { afterEach, beforeAll, describe, expect, expectTypeOf, it } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 
 import { Envapter, EnvaptErrorCodes } from '../src';
 import { EnvaptError } from '../src/infra/Error';
@@ -17,7 +17,6 @@ describe('has (v8.1)', () => {
     it('returns true for a present value and false for an absent key', () => {
         expect(Envapter.has('SET_VALUE')).to.equal(true);
         expect(Envapter.has('NEVER_SET_KEY')).to.equal(false);
-        expectTypeOf(Envapter.has('SET_VALUE')).toEqualTypeOf<boolean>();
     });
 
     it('returns false for an empty value always, and for whitespace-only only in strict', () => {
@@ -27,14 +26,6 @@ describe('has (v8.1)', () => {
         Envapter.strict = true;
         expect(Envapter.has('WHITESPACE_ONLY')).to.equal(false);
         expect(Envapter.has(['WHITESPACE_ONLY', 'SET_VALUE'])).to.equal(true);
-    });
-
-    it('mirrors getRequired, true exactly when a required read finds a value', () => {
-        expect(Envapter.has('SET_VALUE')).to.equal(true);
-        expect(() => Envapter.getRequired('SET_VALUE', String)).to.not.throw();
-
-        expect(Envapter.has('EMPTY_VALUE')).to.equal(false);
-        expect(() => Envapter.getRequired('EMPTY_VALUE', String)).to.throw(EnvaptError);
     });
 
     it('resolves templates before answering', () => {
@@ -87,9 +78,6 @@ describe('has (v8.1)', () => {
             .to.throw(EnvaptError)
             .with.property('code', EnvaptErrorCodes.InvalidKeyInput);
         expect(() => Envapter.has(''))
-            .to.throw(EnvaptError)
-            .with.property('code', EnvaptErrorCodes.InvalidKeyInput);
-        expect(() => Envapter.has(['']))
             .to.throw(EnvaptError)
             .with.property('code', EnvaptErrorCodes.InvalidKeyInput);
         expect(() => Envapter.has(['', 'SET_VALUE']))

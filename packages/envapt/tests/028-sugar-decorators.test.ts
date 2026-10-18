@@ -1,6 +1,6 @@
 import { resolve } from 'node:path';
 
-import { afterEach, beforeAll, describe, expect, expectTypeOf, it } from 'vitest';
+import { beforeAll, describe, expect, expectTypeOf, it } from 'vitest';
 
 import { Envapter } from '../src';
 import { EnvBool, EnvNum, EnvStr, EnvTime, EnvUrl } from '../src/legacy';
@@ -9,7 +9,6 @@ import type { TimeFallback } from '../src';
 
 describe('Sugar decorators', () => {
     beforeAll(() => (Envapter.envPaths = resolve(import.meta.dirname, '.env.sugar-decorators')));
-    afterEach(() => (Envapter.strict = false));
 
     describe('resolve env values through the pinned converter', () => {
         class SugarConfig {
@@ -41,18 +40,6 @@ describe('Sugar decorators', () => {
 
     describe('fall back when the env var is missing', () => {
         class SugarDefaults {
-            @EnvNum('SUGAR_MISSING_NUM', 3000)
-            static readonly port: number;
-
-            @EnvStr('SUGAR_MISSING_STR', 'us-east-1')
-            static readonly region: string;
-
-            @EnvBool('SUGAR_MISSING_BOOL', false)
-            static readonly flag: boolean;
-
-            @EnvUrl('SUGAR_MISSING_URL', new URL('http://localhost:3000'))
-            static readonly url: URL;
-
             @EnvTime('SUGAR_MISSING_TIME', '10s')
             static readonly ttl: number;
 
@@ -60,41 +47,17 @@ describe('Sugar decorators', () => {
             static readonly none: number | undefined;
         }
 
-        it('EnvNum uses the numeric fallback', () => expect(SugarDefaults.port).to.equal(3000));
-        it('EnvStr uses the string fallback', () => expect(SugarDefaults.region).to.equal('us-east-1'));
-        it('EnvBool uses the boolean fallback', () => expect(SugarDefaults.flag).to.equal(false));
-        it('EnvUrl coerces the string fallback to a URL', () => {
-            expect(SugarDefaults.url).to.be.instanceOf(URL);
-            expect(SugarDefaults.url.href).to.equal('http://localhost:3000/');
-        });
         it('EnvTime coerces the time-string fallback to milliseconds (10s -> 10000)', () =>
             expect(SugarDefaults.ttl).to.equal(10000));
         it('no fallback resolves to undefined, like @Envapt(key)', () => expect(SugarDefaults.none).to.be.undefined);
     });
 
-    describe('multi-key ordered fallback (inherited)', () => {
+    it('falls through an ordered key list to a later key', () => {
         class SugarMultiKey {
-            @EnvUrl(['SUGAR_CANARY_URL', 'SUGAR_APP_URL'])
-            static readonly url: URL | undefined;
-
             @EnvNum(['SUGAR_MISSING_PORT', 'SUGAR_LEGACY_PORT'])
             static readonly port: number | undefined;
         }
-
-        it('picks the first defined key', () => expect(SugarMultiKey.url?.href).to.equal('https://app.example.com/'));
-        it('falls through to a later key', () => expect(SugarMultiKey.port).to.equal(9090));
-    });
-
-    describe('strict mode (inherited path)', () => {
-        class SugarStrict {
-            @EnvStr('SUGAR_BLANK', 'fallback-region')
-            static readonly region: string;
-        }
-
-        it('treats a whitespace-only value as missing and uses the fallback', () => {
-            Envapter.strict = true;
-            expect(SugarStrict.region).to.equal('fallback-region');
-        });
+        expect(SugarMultiKey.port).to.equal(9090);
     });
 
     describe('fallback parameter types are exact (monomorphic)', () => {

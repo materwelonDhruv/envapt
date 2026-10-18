@@ -16,15 +16,6 @@ describe('Runtime Validation', () => {
     beforeAll(() => (Envapter.envPaths = resolve(import.meta.dirname, '.env.extra')));
 
     describe('Built-in converter validation', () => {
-        it('should validate correct built-in converter types', () => {
-            const validTypes = ['string', 'number', 'boolean', 'bigint', 'json', 'url', 'regexp', 'date'];
-
-            for (const type of validTypes) {
-                const testFunction = (): void => Validator.builtInConverter(type);
-                expect(testFunction).to.not.throw();
-            }
-        });
-
         it('should throw for invalid built-in converter types', () => {
             // 'array' stopped being a scalar token in v5
             const invalidTypes = ['invalid', 'str', 'num', 'array'];
@@ -54,21 +45,6 @@ describe('Runtime Validation', () => {
     });
 
     describe('ArrayOf validation (brand-based)', () => {
-        it('should validate well-formed ArrayOf tokens from Converters.array(...)', () => {
-            const validTokens = [
-                Converters.array(),
-                Converters.array({ of: Converters.String }),
-                Converters.array({ of: Converters.Number, delimiter: '|' }),
-                Converters.array({ of: Converters.Boolean, delimiter: ' ' }),
-                Converters.array({ of: (raw: string) => raw.toUpperCase() })
-            ];
-
-            for (const token of validTokens) {
-                const testFunction = (): void => Validator.arrayConverter(token);
-                expect(testFunction).to.not.throw();
-            }
-        });
-
         it('should throw for values missing the ArrayOf brand', () => {
             const invalidConfigs = [{}, 'string', null, { delimiter: ',' }, { of: 'string', delimiter: ',' }];
 
@@ -129,23 +105,12 @@ describe('Runtime Validation', () => {
             // @ts-expect-error Invalid custom converter type
             @Envapt('CUSTOM_CONVERTER_VAR', { converter: 'lol' })
             static readonly customConverter: string;
-
-            @Envapt('CUSTOM_CONVERTER_INCONSISTENT_FALLBACK_TYPE', {
-                fallback: 42,
-                // @ts-expect-error custom-converter function doesn't fit a BuiltInConverter slot once TFallback narrows to number
-                converter: (_raw, fallback) => String(fallback)
-            })
-            static readonly customConverterInconsistentFallbackType: string | undefined;
         }
 
         it('should throw on invalid passed converter', () => {
             expect(() => CustomConverterTests.customConverter)
                 .to.throw(EnvaptError)
                 .with.property('code', EnvaptErrorCodes.InvalidCustomConverter);
-        });
-
-        it('should not throw on custom converter with consistent fallback type', () => {
-            expect(() => CustomConverterTests.customConverterInconsistentFallbackType).to.not.throw();
         });
     });
 
@@ -186,12 +151,6 @@ describe('Runtime Validation', () => {
             // @ts-expect-error Inconsistent fallback type
             @Envapt('NONEXISTENT_JSON_VAR', { converter: Converters.Json, fallback: Symbol('not-a-json') })
             static readonly jsonWithStringFallback: JsonValue;
-
-            @Envapt('NONEXISTENT_STRING_VAR', { converter: Converters.String, fallback: 'valid-string' })
-            static readonly stringWithValidFallback: string;
-
-            @Envapt('NONEXISTENT_URL_VAR', { converter: Converters.Url, fallback: new URL('http://example.com') })
-            static readonly urlWithValidFallback: URL;
         }
 
         it('should throw when string converter has non-string fallback', () => {
@@ -247,11 +206,6 @@ describe('Runtime Validation', () => {
                 .to.throw(EnvaptError)
                 .with.property('code', EnvaptErrorCodes.FallbackConverterTypeMismatch);
         });
-
-        it('should not throw when converters have matching fallback types', () => {
-            expect(() => FallbackTypeValidationTests.stringWithValidFallback).to.not.throw();
-            expect(() => FallbackTypeValidationTests.urlWithValidFallback).to.not.throw();
-        });
     });
 
     describe('Fallback value validation for built-in converters', () => {
@@ -279,17 +233,6 @@ describe('Runtime Validation', () => {
                 .to.throw(EnvaptError)
                 .with.property('code', EnvaptErrorCodes.FallbackConverterTypeMismatch);
         });
-
-        it('keeps a safe-integer fallback', () => {
-            expect(Envapter.getUsing('NONEXISTENT_INT_FB', Converters.Integer, 42)).to.equal(42);
-        });
-
-        it('keeps a valid Date fallback', () => {
-            const valid = new Date('2024-01-15T00:00:00.000Z');
-            expect(Envapter.getUsing('NONEXISTENT_DATE_FB', Converters.Date, valid).getTime()).to.equal(
-                valid.getTime()
-            );
-        });
     });
 
     describe('Array converter fallback element type validation', () => {
@@ -307,31 +250,6 @@ describe('Runtime Validation', () => {
                 fallback: ['not-a-number', 'also-not-a-number']
             })
             static readonly arrayWithWrongElementType: string | undefined;
-
-            @Envapt('NONEXISTENT_ARRAY_VAR', {
-                // @ts-expect-error `Converters.array()` defaults to string[] and `42` and `true` are not strings
-                converter: Converters.array(),
-                fallback: ['string', 42, true]
-            })
-            static readonly defaultArrayWithMixedTypes: string | undefined;
-
-            @Envapt('NONEXISTENT_ARRAY_VAR', {
-                converter: Converters.array({ of: Converters.String }),
-                fallback: ['all', 'strings', 'here']
-            })
-            static readonly validStringArray: string[];
-
-            @Envapt('NONEXISTENT_ARRAY_VAR', {
-                converter: Converters.array({ of: Converters.Number }),
-                fallback: [1, 2, 3]
-            })
-            static readonly validNumberArray: number[];
-
-            @Envapt('NONEXISTENT_ARRAY_VAR', {
-                converter: Converters.array(),
-                fallback: ['all', 'strings']
-            })
-            static readonly validDefaultArray: string[];
         }
 
         it('should throw when array converter fallback has mixed element types', () => {
@@ -344,18 +262,6 @@ describe('Runtime Validation', () => {
             expect(() => ArrayConverterValidationTests.arrayWithWrongElementType)
                 .to.throw(EnvaptError)
                 .with.property('code', EnvaptErrorCodes.ArrayFallbackElementTypeMismatch);
-        });
-
-        it('should throw when default array converter fallback has mixed element types', () => {
-            expect(() => ArrayConverterValidationTests.defaultArrayWithMixedTypes)
-                .to.throw(EnvaptError)
-                .with.property('code', EnvaptErrorCodes.ArrayFallbackElementTypeMismatch);
-        });
-
-        it('should not throw when array converter fallback elements have consistent and matching types', () => {
-            expect(() => ArrayConverterValidationTests.validStringArray).to.not.throw();
-            expect(() => ArrayConverterValidationTests.validNumberArray).to.not.throw();
-            expect(() => ArrayConverterValidationTests.validDefaultArray).to.not.throw();
         });
     });
 
@@ -404,24 +310,6 @@ describe('Runtime Validation', () => {
             expect(() => Validator.validateArrayConverterElementTypeMatch('number', [])).to.not.throw();
         });
 
-        it('should not throw when array elements match converter type', () => {
-            expect(() => Validator.validateArrayConverterElementTypeMatch('string', ['a', 'b', 'c'])).to.not.throw();
-            expect(() => Validator.validateArrayConverterElementTypeMatch('number', [1, 2, 3])).to.not.throw();
-            expect(() =>
-                Validator.validateArrayConverterElementTypeMatch('boolean', [true, false, true])
-            ).to.not.throw();
-        });
-
-        it('should throw when array elements do not match converter type', () => {
-            expect(() => Validator.validateArrayConverterElementTypeMatch('number', ['not-a-number']))
-                .to.throw(EnvaptError)
-                .with.property('code', EnvaptErrorCodes.ArrayFallbackElementTypeMismatch);
-
-            expect(() => Validator.validateArrayConverterElementTypeMatch('string', [123]))
-                .to.throw(EnvaptError)
-                .with.property('code', EnvaptErrorCodes.ArrayFallbackElementTypeMismatch);
-        });
-
         it('should accept TimeFallback[] (string[]) when element token is "time"', () => {
             expect(() => Validator.validateArrayConverterElementTypeMatch('time', ['5s', '10m'])).to.not.throw();
             expect(() => Validator.validateArrayConverterElementTypeMatch('time', [5000, 600000])).to.not.throw();
@@ -440,14 +328,6 @@ describe('Runtime Validation', () => {
     });
 
     describe('dotenv config validation', () => {
-        it('should accept valid dotenv config options', () => {
-            const validConfigs = [{ override: true }, { encoding: 'utf8' }, { encoding: 'utf8', override: true }];
-
-            for (const config of validConfigs) {
-                expect(() => Validator.validateEnvFileOptions(config)).to.not.throw();
-            }
-        });
-
         it('should reject removed dotenv config options (quiet, DOTENV_KEY)', () => {
             const removedConfigs = [{ quiet: true }, { DOTENV_KEY: 'test-key' }];
 
@@ -456,12 +336,6 @@ describe('Runtime Validation', () => {
                     .to.throw(EnvaptError)
                     .with.property('code', EnvaptErrorCodes.InvalidUserDefinedConfig);
             }
-        });
-
-        it('should throw error for invalid options', () => {
-            expect(() => Validator.validateEnvFileOptions({ invalidOption: 'test' }))
-                .to.throw(EnvaptError)
-                .with.property('code', EnvaptErrorCodes.InvalidUserDefinedConfig);
         });
 
         it('should throw error for multiple invalid options', () => {
@@ -481,12 +355,6 @@ describe('Runtime Validation', () => {
     });
 
     describe('env file validation', () => {
-        it('should throw error for non-existent single file', () => {
-            expect(() => Validator.validateEnvFilesExist(['/non/existent/file.env'], nodeExists))
-                .to.throw(EnvaptError)
-                .with.property('code', EnvaptErrorCodes.EnvFilesNotFound);
-        });
-
         it('should throw error for non-existent multiple files', () => {
             const error = (() => {
                 try {
@@ -500,11 +368,6 @@ describe('Runtime Validation', () => {
             expect(error).to.be.instanceOf(EnvaptError);
             expect(error?.code).to.equal(EnvaptErrorCodes.EnvFilesNotFound);
             expect(error?.message).to.include('/non/existent/file1.env, /non/existent/file2.env');
-        });
-
-        it('should not throw error for existing file', () => {
-            const testEnvPath = resolve(import.meta.dirname, '.env.envapt-test');
-            expect(() => Validator.validateEnvFilesExist([testEnvPath], nodeExists)).to.not.throw();
         });
     });
 });

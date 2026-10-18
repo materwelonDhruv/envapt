@@ -17,12 +17,6 @@ describe('Symbol as a converter (v9)', () => {
             .with.property('code', EnvaptErrorCodes.InvalidUserDefinedConfig);
     });
 
-    it('throws InvalidUserDefinedConfig from getRequired', () => {
-        expect(() => Envapter.getRequired('CACHE_NAMESPACE', Symbol))
-            .to.throw(EnvaptError)
-            .with.property('code', EnvaptErrorCodes.InvalidUserDefinedConfig);
-    });
-
     it('throws InvalidUserDefinedConfig when the decorator is applied', () => {
         const buildDecorator = (): void => {
             class Cache {

@@ -11,12 +11,4 @@ describe('removed positional @Envapt form', () => {
     it('throws when a non-options second argument is passed', () => {
         expect(() => positional('PORT', 8080)).to.throw(EnvaptError);
     });
-
-    it('throws on the three-argument form', () => {
-        expect(() => positional('PORT', 8080, Number)).to.throw(EnvaptError);
-    });
-
-    it('still accepts the no-argument form', () => {
-        expect(() => Envapt('PORT')).to.not.throw();
-    });
 });

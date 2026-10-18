@@ -2,7 +2,7 @@ import { resolve } from 'node:path';
 
 import { beforeAll, describe, expect, it } from 'vitest';
 
-import { Converters, Envapter, Environment, type JsonValue } from '../src';
+import { Converters, Envapter, Environment } from '../src';
 import { Envapt } from '../src/legacy';
 
 describe('Instance Properties with @Envapt', () => {
@@ -15,9 +15,6 @@ describe('Instance Properties with @Envapt', () => {
             @Envapt('INSTANCE_PROP_1') declare instanceProp1: string | undefined;
 
             @Envapt('INSTANCE_PROP_2') declare instanceProp2: string | undefined;
-
-            @Envapt('INSTANCE_PROP_3_TEMPLATED', { fallback: 'default3' })
-            declare instanceProp3: string;
         }
 
         const instance = new BasicInstanceProperties();
@@ -27,184 +24,11 @@ describe('Instance Properties with @Envapt', () => {
             expect(instance.instanceProp2).to.equal('value2');
         });
 
-        it('should resolve templated instance property', () => {
-            expect(instance.instanceProp3).to.equal('value1-value2');
-        });
-
-        it('should be in production environment', () => {
-            expect(BasicInstanceProperties.isProduction).to.be.true;
-            expect(BasicInstanceProperties.isDevelopment).to.be.false;
-            expect(BasicInstanceProperties.isStaging).to.be.false;
-            expect(BasicInstanceProperties.isTest).to.be.false;
-        });
-
-        it('should update environment to Staging', () => {
+        it('sets and reads the environment through the inherited statics on a subclass', () => {
             BasicInstanceProperties.environment = Environment.Staging;
             expect(BasicInstanceProperties.isStaging).to.be.true;
             expect(BasicInstanceProperties.isProduction).to.be.false;
-            expect(BasicInstanceProperties.isDevelopment).to.be.false;
             expect(BasicInstanceProperties.environment).to.equal(Environment.Staging);
-        });
-    });
-
-    describe('type conversion on instance properties', () => {
-        class TypeConversionInstance {
-            @Envapt('INSTANCE_NUMBER', { converter: Converters.Number, fallback: 0 })
-            declare readonly numberProp: number;
-
-            @Envapt('INSTANCE_FLOAT', { converter: Converters.Float, fallback: 0.0 })
-            declare readonly floatProp: number;
-
-            @Envapt('INSTANCE_INTEGER', { converter: Converters.Integer, fallback: 0 })
-            declare readonly integerProp: number;
-
-            @Envapt('INSTANCE_BOOLEAN_TRUE', { converter: Converters.Boolean, fallback: false })
-            declare readonly booleanTrueProp: boolean;
-
-            @Envapt('INSTANCE_BOOLEAN_FALSE', { converter: Converters.Boolean, fallback: true })
-            declare readonly booleanFalseProp: boolean;
-
-            @Envapt('INSTANCE_BIGINT', { converter: Converters.BigInt, fallback: 0n })
-            declare readonly bigintProp: bigint;
-        }
-
-        const instance = new TypeConversionInstance();
-
-        it('should convert number types correctly', () => {
-            expect(instance.numberProp).to.equal(42);
-            expect(instance.floatProp).to.equal(3.14159);
-            expect(instance.integerProp).to.equal(100);
-        });
-
-        it('should convert boolean types correctly', () => {
-            expect(instance.booleanTrueProp).to.be.true;
-            expect(instance.booleanFalseProp).to.be.false;
-        });
-
-        it('should convert bigint types correctly', () => {
-            expect(instance.bigintProp).to.equal(123456789012345678901234567890n);
-        });
-    });
-
-    describe('advanced converters on instance properties', () => {
-        class AdvancedConvertersInstance {
-            @Envapt('INSTANCE_ARRAY', { converter: Converters.array(), fallback: [] })
-            declare readonly arrayProp: string[];
-
-            @Envapt('INSTANCE_JSON', { converter: Converters.Json, fallback: {} })
-            declare readonly jsonProp: JsonValue;
-
-            @Envapt('INSTANCE_URL', { converter: Converters.Url, fallback: new URL('http://localhost') })
-            declare readonly urlProp: URL;
-        }
-
-        const instance = new AdvancedConvertersInstance();
-
-        it('should convert array correctly', () => {
-            expect(instance.arrayProp).to.deep.equal(['value1', 'value2', 'value3']);
-        });
-
-        it('should convert JSON correctly', () => {
-            const expected = { name: 'test', version: '1.0.0', features: ['auth', 'api'] };
-            expect(instance.jsonProp).to.deep.equal(expected);
-        });
-
-        it('should convert URL correctly', () => {
-            expect(instance.urlProp).to.be.instanceof(URL);
-            expect(instance.urlProp.href).to.equal('https://api.example.com/v1');
-        });
-    });
-
-    describe('template resolution on instance properties', () => {
-        class TemplateResolutionInstance {
-            @Envapt('INSTANCE_FULL_URL', { fallback: 'http://localhost/default' })
-            declare readonly fullUrl: string;
-
-            @Envapt('INSTANCE_SERVICE_CONFIG', { fallback: 'default-service:8080@dev' })
-            declare readonly serviceConfig: string;
-
-            @Envapt('BASE_API_URL', { fallback: 'http://localhost' })
-            declare readonly baseApiUrl: string;
-
-            @Envapt('API_VERSION', { fallback: 'v1' })
-            declare readonly apiVersion: string;
-        }
-
-        const instance = new TemplateResolutionInstance();
-
-        it('should resolve simple template variables', () => {
-            expect(instance.fullUrl).to.equal('https://api.example.com/v2/users');
-        });
-
-        it('should resolve complex template variables', () => {
-            expect(instance.serviceConfig).to.equal('user-service:3000@production');
-        });
-
-        it('should work with individual template components', () => {
-            expect(instance.baseApiUrl).to.equal('https://api.example.com');
-            expect(instance.apiVersion).to.equal('v2');
-        });
-    });
-
-    describe('fallback handling on instance properties', () => {
-        class FallbackInstance {
-            @Envapt('INSTANCE_MISSING_STRING', { fallback: 'default-string' })
-            declare readonly missingString: string;
-
-            @Envapt('INSTANCE_MISSING_NUMBER', { converter: Converters.Number, fallback: 999 })
-            declare readonly missingNumber: number;
-
-            @Envapt('INSTANCE_MISSING_BOOLEAN', { converter: Converters.Boolean, fallback: true })
-            declare readonly missingBoolean: boolean;
-
-            @Envapt('INSTANCE_MISSING_ARRAY', { converter: Converters.array(), fallback: ['default1', 'default2'] })
-            declare readonly missingArray: string[];
-        }
-
-        const instance = new FallbackInstance();
-
-        it('should use fallback for missing string', () => {
-            expect(instance.missingString).to.equal('default-string');
-        });
-
-        it('should use fallback for missing number', () => {
-            expect(instance.missingNumber).to.equal(999);
-        });
-
-        it('should use fallback for missing boolean', () => {
-            expect(instance.missingBoolean).to.be.true;
-        });
-
-        it('should use fallback for missing array', () => {
-            expect(instance.missingArray).to.deep.equal(['default1', 'default2']);
-        });
-    });
-
-    describe('edge cases on instance properties', () => {
-        class EdgeCasesInstance {
-            @Envapt('INSTANCE_EMPTY_STRING', { fallback: 'not-empty' })
-            declare readonly emptyString: string;
-
-            @Envapt('INSTANCE_WHITESPACE_ONLY', { fallback: 'fallback' })
-            declare readonly whitespaceOnly: string;
-
-            @Envapt('INSTANCE_SPECIAL_CHARS', { fallback: 'fallback' })
-            declare readonly specialChars: string;
-        }
-
-        const instance = new EdgeCasesInstance();
-
-        it('should use fallback for empty string (expected behavior)', () => {
-            // an empty string counts as missing
-            expect(instance.emptyString).to.equal('not-empty');
-        });
-
-        it('should preserve whitespace-only values', () => {
-            expect(instance.whitespaceOnly).to.equal('   ');
-        });
-
-        it('should handle special characters correctly', () => {
-            expect(instance.specialChars).to.equal('!@#$%^&*()_+-=[]{}|;:,.<>?');
         });
     });
 
@@ -220,15 +44,11 @@ describe('Instance Properties with @Envapt', () => {
         it('should work correctly across multiple instances', () => {
             const instance1 = new MultiInstanceTest();
             const instance2 = new MultiInstanceTest();
-            const instance3 = new MultiInstanceTest();
 
             expect(instance1.prop1).to.equal('value1');
             expect(instance2.prop1).to.equal('value1');
-            expect(instance3.prop1).to.equal('value1');
-
             expect(instance1.numProp).to.equal(42);
             expect(instance2.numProp).to.equal(42);
-            expect(instance3.numProp).to.equal(42);
         });
     });
 
@@ -236,81 +56,17 @@ describe('Instance Properties with @Envapt', () => {
         class BaseClassWithInstance {
             @Envapt('INSTANCE_PROP_1', { fallback: 'base-default' })
             declare readonly baseProp: string;
-
-            @Envapt('INSTANCE_NUMBER', { converter: Converters.Number, fallback: 0 })
-            declare readonly baseNumber: number;
         }
 
         class DerivedClassWithInstance extends BaseClassWithInstance {
             @Envapt('INSTANCE_PROP_2', { fallback: 'derived-default' })
             declare readonly derivedProp: string;
-
-            @Envapt('INSTANCE_BOOLEAN_TRUE', { converter: Converters.Boolean, fallback: false })
-            declare readonly derivedBoolean: boolean;
         }
 
-        const derivedInstance = new DerivedClassWithInstance();
-
-        it('should inherit base class instance properties', () => {
+        it('reads both the inherited and the derived instance properties', () => {
+            const derivedInstance = new DerivedClassWithInstance();
             expect(derivedInstance.baseProp).to.equal('value1');
-            expect(derivedInstance.baseNumber).to.equal(42);
-        });
-
-        it('should have derived class instance properties', () => {
             expect(derivedInstance.derivedProp).to.equal('value2');
-            expect(derivedInstance.derivedBoolean).to.be.true;
-        });
-    });
-
-    describe('mixed static and instance properties', () => {
-        class MixedPropertiesClass {
-            @Envapt('INSTANCE_PROP_1', { fallback: 'instance-default' })
-            declare readonly instanceProp: string;
-
-            @Envapt('INSTANCE_NUMBER', { converter: Converters.Number, fallback: 0 })
-            static readonly staticProp: number;
-
-            @Envapt('INSTANCE_BOOLEAN_TRUE', { converter: Converters.Boolean, fallback: false })
-            declare readonly instanceBoolean: boolean;
-
-            @Envapt('INSTANCE_ARRAY', { converter: Converters.array(), fallback: [] })
-            static readonly staticArray: string[];
-        }
-
-        const instance = new MixedPropertiesClass();
-
-        it('should handle instance properties correctly', () => {
-            expect(instance.instanceProp).to.equal('value1');
-            expect(instance.instanceBoolean).to.be.true;
-        });
-
-        it('should handle static properties correctly', () => {
-            expect(MixedPropertiesClass.staticProp).to.equal(42);
-            expect(MixedPropertiesClass.staticArray).to.deep.equal(['value1', 'value2', 'value3']);
-        });
-    });
-
-    describe('performance and caching with instance properties', () => {
-        class PerformanceTestInstance {
-            @Envapt('INSTANCE_PROP_1', { fallback: 'default' })
-            declare readonly prop1: string;
-
-            @Envapt('INSTANCE_PROP_2', { fallback: 'default' })
-            declare readonly prop2: string;
-        }
-
-        it('should cache property values across multiple accesses', () => {
-            const instance = new PerformanceTestInstance();
-
-            const firstAccess1 = instance.prop1;
-            const firstAccess2 = instance.prop2;
-            const secondAccess1 = instance.prop1;
-            const secondAccess2 = instance.prop2;
-
-            expect(firstAccess1).to.equal(secondAccess1);
-            expect(firstAccess2).to.equal(secondAccess2);
-            expect(firstAccess1).to.equal('value1');
-            expect(firstAccess2).to.equal('value2');
         });
     });
 });

@@ -2,7 +2,7 @@ import { resolve } from 'node:path';
 
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { Converters, Envapter, type JsonValue } from '../src';
+import { Converters, Envapter } from '../src';
 import { Envapt } from '../src/legacy';
 
 describe('template variable resolution', () => {
@@ -15,158 +15,27 @@ describe('template variable resolution', () => {
         @Envapt('TEST_NUMBER_TEMPLATE', { converter: Converters.Number, fallback: 0 })
         static readonly numberTemplate: number;
 
-        @Envapt('TEST_INTEGER_TEMPLATE', { converter: Converters.Integer, fallback: 0 })
-        static readonly integerTemplate: number;
-
-        @Envapt('TEST_FLOAT_TEMPLATE', { converter: Converters.Float, fallback: 0.0 })
-        static readonly floatTemplate: number;
-
-        @Envapt('TEST_BOOLEAN_TEMPLATE', { converter: Converters.Boolean, fallback: false })
-        static readonly booleanTemplate: boolean;
-
-        @Envapt('TEST_BOOLEAN_FALSE_TEMPLATE', { converter: Converters.Boolean, fallback: true })
-        static readonly booleanFalseTemplate: boolean;
-
-        @Envapt('TEST_BIGINT_TEMPLATE', { converter: Converters.BigInt, fallback: 0n })
-        static readonly bigintTemplate: bigint;
-
         @Envapt('TEST_ARRAY_COMMA_TEMPLATE', { converter: Converters.array(), fallback: [] })
         static readonly arrayCommaTemplate: string[];
 
-        @Envapt('TEST_ARRAY_SPACE_TEMPLATE', { converter: Converters.array({ delimiter: ' ' }), fallback: [] })
-        static readonly arraySpaceTemplate: string[];
-
-        @Envapt('TEST_ARRAY_COMMA_SPACE_TEMPLATE', { converter: Converters.array({ delimiter: ', ' }), fallback: [] })
-        static readonly arrayCommaSpaceTemplate: string[];
-
-        @Envapt('TEST_JSON_OBJECT_TEMPLATE', { converter: Converters.Json, fallback: {} })
-        static readonly jsonObjectTemplate: JsonValue;
-
-        @Envapt('TEST_URL_TEMPLATE', { converter: Converters.Url, fallback: new URL('http://fallback.com') })
-        static readonly urlTemplate: URL;
-
         @Envapt('TEST_REGEXP_TEMPLATE', { converter: Converters.Regexp, fallback: /fallback/ })
         static readonly regexpTemplate: RegExp;
-
-        @Envapt('TEST_REGEXP_EMAIL_TEMPLATE', { converter: Converters.Regexp, fallback: /fallback/ })
-        static readonly regexpEmailTemplate: RegExp;
-
-        @Envapt('TEST_REGEXP_PHONE_TEMPLATE', { converter: Converters.Regexp, fallback: /fallback/ })
-        static readonly regexpPhoneTemplate: RegExp;
-
-        @Envapt('TEST_DATE_TEMPLATE', { converter: Converters.Date, fallback: new Date('2020-01-01') })
-        static readonly dateTemplate: Date;
-
-        @Envapt('TEST_TIME_TEMPLATE', { converter: Converters.Time, fallback: 0 })
-        static readonly timeTemplate: number;
     }
 
     it('should resolve templates in string converter', () => {
         expect(TemplateTest.stringTemplate).to.equal('hello world');
     });
 
-    it('should resolve templates in number converter', () => {
+    it('expands the template before a built-in converter runs', () => {
         expect(TemplateTest.numberTemplate).to.equal(42);
     });
 
-    it('should resolve templates in integer converter', () => {
-        expect(TemplateTest.integerTemplate).to.equal(42);
-    });
-
-    it('should resolve templates in float converter', () => {
-        expect(TemplateTest.floatTemplate).to.equal(3.14);
-    });
-
-    it('should resolve templates in boolean converter - true', () => {
-        expect(TemplateTest.booleanTemplate).to.be.true;
-    });
-
-    it('should resolve templates in boolean converter - false', () => {
-        expect(TemplateTest.booleanFalseTemplate).to.be.false;
-    });
-
-    it('should resolve templates in bigint converter', () => {
-        expect(TemplateTest.bigintTemplate).to.equal(42n);
-    });
-
-    it('should resolve templates in comma array converter', () => {
+    it('expands the template before an array converter splits it', () => {
         expect(TemplateTest.arrayCommaTemplate).to.deep.equal(['alpha', 'beta', 'gamma']);
     });
 
-    it('should resolve templates in space array converter', () => {
-        expect(TemplateTest.arraySpaceTemplate).to.deep.equal(['alpha', 'beta', 'gamma']);
-    });
-
-    it('should resolve templates in comma-space array converter', () => {
-        expect(TemplateTest.arrayCommaSpaceTemplate).to.deep.equal(['alpha', 'beta', 'gamma']);
-    });
-
-    it('should resolve templates in JSON converter', () => {
-        expect(TemplateTest.jsonObjectTemplate).to.deep.equal({
-            host: 'localhost',
-            port: 5432,
-            enabled: true
-        });
-    });
-
-    it('should resolve templates in URL converter', () => {
-        expect(TemplateTest.urlTemplate).to.be.instanceOf(URL);
-        expect(TemplateTest.urlTemplate.href).to.equal('https://localhost:5432/api');
-    });
-
-    it('should resolve templates in RegExp converter', () => {
-        expect(TemplateTest.regexpTemplate).to.be.instanceOf(RegExp);
-
-        // the template resolves \d{${TEMPLATE_NUM_BASE}} to \d{42}
+    it('expands a template inside regexp braces', () => {
+        // \d{${TEMPLATE_NUM_BASE}} becomes \d{42}
         expect(TemplateTest.regexpTemplate.source).to.equal('\\d{42}');
-
-        expect(TemplateTest.regexpTemplate.test('123456789012345678901234567890123456789012')).to.be.true;
-        expect(TemplateTest.regexpTemplate.test('abc123456789012345678901234567890123456789012def')).to.be.true; // 42 digits in middle
-        expect(TemplateTest.regexpTemplate.test('12345678901234567890123456789012345678901')).to.be.false; // only 41 digits
-        expect(TemplateTest.regexpTemplate.test('abc')).to.be.false; // not digits
-    });
-
-    it('should resolve templates in complex email RegExp converter', () => {
-        const expectedEmailRegexPattern = String.raw`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.example\.com$`;
-        expect(TemplateTest.regexpEmailTemplate).to.be.instanceOf(RegExp);
-
-        expect(TemplateTest.regexpEmailTemplate.source).to.equal(expectedEmailRegexPattern);
-        expect(TemplateTest.regexpEmailTemplate.flags).to.equal('i');
-
-        expect(TemplateTest.regexpEmailTemplate.test('user@test.example.com')).to.be.true;
-
-        expect(TemplateTest.regexpEmailTemplate.test('user@api.example.com')).to.be.true;
-
-        expect(TemplateTest.regexpEmailTemplate.test('USER@TEST.EXAMPLE.COM')).to.be.true;
-
-        expect(TemplateTest.regexpEmailTemplate.test('user@otherdomain.com')).to.be.false;
-        expect(TemplateTest.regexpEmailTemplate.test('invalid.email')).to.be.false;
-    });
-
-    it('should resolve templates in complex phone RegExp converter', () => {
-        const expectedPhoneRegexPattern = String.raw`^\+?1?[-.\s]?\(?([0-9]{3})\)?[-.\s]?([0-9]{3})[-.\s]?([0-9]{4})$`;
-
-        expect(TemplateTest.regexpPhoneTemplate).to.be.instanceOf(RegExp);
-
-        expect(TemplateTest.regexpPhoneTemplate.source).to.equal(expectedPhoneRegexPattern);
-        expect(TemplateTest.regexpPhoneTemplate.flags).to.equal('');
-
-        expect(TemplateTest.regexpPhoneTemplate.test('555-123-4567')).to.be.true;
-        expect(TemplateTest.regexpPhoneTemplate.test('123-456-7890')).to.be.true;
-        expect(TemplateTest.regexpPhoneTemplate.test('(555) 123-4567')).to.be.true;
-        expect(TemplateTest.regexpPhoneTemplate.test('5551234567')).to.be.true;
-
-        expect(TemplateTest.regexpPhoneTemplate.test('not-a-phone')).to.be.false;
-    });
-
-    it('should resolve templates in Date converter', () => {
-        expect(TemplateTest.dateTemplate).to.be.instanceOf(Date);
-        expect(TemplateTest.dateTemplate.getUTCFullYear()).to.equal(2023);
-        expect(TemplateTest.dateTemplate.getUTCMonth()).to.equal(11); // December (0-indexed)
-        expect(TemplateTest.dateTemplate.getUTCDate()).to.equal(25);
-    });
-
-    it('should resolve templates in Time converter', () => {
-        expect(TemplateTest.timeTemplate).to.equal(10000); // 10s = 10000ms
     });
 });

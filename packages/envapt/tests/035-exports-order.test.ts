@@ -75,11 +75,6 @@ describe('package exports map (v8)', () => {
         }
     });
 
-    it('removes the ./workerd and ./browser subpaths', () => {
-        expect(pkg.exports['./workerd']).toBeUndefined();
-        expect(pkg.exports['./browser']).toBeUndefined();
-    });
-
     it('exposes ./package.json', () => {
         expect(pkg.exports['./package.json']).toBe('./package.json');
     });

@@ -28,16 +28,6 @@ describe('Advanced Converter Methods', () => {
             expect(result).to.deep.equal({ name: 'test', version: 1, enabled: true });
         });
 
-        it('should convert using Converters.array() default', () => {
-            const result = Envapter.getUsing('TEST_ARRAY_COMMA', Converters.array());
-            expect(result).to.deep.equal(['item1', 'item2', 'item3']);
-        });
-
-        it('should convert using array converter with custom delimiter', () => {
-            const result = Envapter.getUsing('TEST_ARRAY_SPACE', Converters.array({ delimiter: ' ' }));
-            expect(result).to.deep.equal(['one', 'two', 'three']);
-        });
-
         it('should convert using array converter with type conversion', () => {
             const result = Envapter.getUsing(
                 'TEST_ARRAY_NUMBERS',
@@ -90,13 +80,6 @@ describe('Advanced Converter Methods', () => {
     describe('getUsing method', () => {
         const splitTrimmed = (raw: string): string[] => raw.split(',').map((item) => item.trim());
 
-        it('should convert using custom converter function', () => {
-            const result = Envapter.getUsing('TEST_ARRAY_COMMA', (raw) =>
-                splitTrimmed(raw).map((item) => item.toUpperCase())
-            );
-            expect(result).to.deep.equal(['ITEM1', 'ITEM2', 'ITEM3']);
-        });
-
         it('should convert to Map using custom converter', () => {
             const toMap = (raw: string): Map<string, number> =>
                 new Map(splitTrimmed(raw).map((item) => [item, item.length]));
@@ -107,24 +90,6 @@ describe('Advanced Converter Methods', () => {
                 ['item2', 5],
                 ['item3', 5]
             ]);
-        });
-
-        it('should work with complex custom converter', () => {
-            const result = Envapter.getUsing('TEST_ARRAY_COMMA', (raw) => {
-                const items = splitTrimmed(raw);
-                return { count: items.length, items, reversed: [...items].reverse() };
-            });
-            expect(result).to.deep.equal({
-                count: 3,
-                items: ['item1', 'item2', 'item3'],
-                reversed: ['item3', 'item2', 'item1']
-            });
-        });
-
-        it('should convert to Set using custom converter', () => {
-            const result = Envapter.getUsing('TEST_ARRAY_COMMA', (raw) => new Set(splitTrimmed(raw)));
-            expect(result).to.be.instanceOf(Set);
-            expect(Array.from(result as Set<string>)).to.deep.equal(['item1', 'item2', 'item3']);
         });
 
         it('returns the fallback for a missing value without calling the converter', () => {
@@ -147,61 +112,6 @@ describe('Advanced Converter Methods', () => {
                 throw new Error(`${raw} is not positive`);
             };
             expect(() => Envapter.getUsing('TEST_STRING', parsePositive)).to.throw('hello world is not positive');
-        });
-    });
-
-    describe('error handling', () => {
-        it('should throw error for invalid built-in converter', () => {
-            expect(() => {
-                //@ts-expect-error We're passing an invalid type here for testing
-                Envapter.getUsing('TEST_STRING', 'invalid-converter');
-            }).to.throw();
-        });
-
-        it('should accept Converters.array() and reject malformed ArrayOf tokens at runtime', () => {
-            expect(() => {
-                Envapter.getUsing('TEST_STRING', Converters.array());
-            }).to.not.throw();
-
-            expect(() => {
-                // intentionally malformed for runtime validation -- justified
-                Envapter.getUsing('TEST_STRING', {
-                    __envaptKind: 'array',
-                    of: 'invalid',
-                    delimiter: ','
-                } as unknown as ReturnType<typeof Converters.array>);
-            }).to.throw();
-        });
-
-        it('should throw error for invalid custom converter', () => {
-            expect(() => {
-                //@ts-expect-error We're passing an invalid type here for testing
-                Envapter.getUsing('TEST_STRING', 'not-a-function');
-            }).to.throw();
-        });
-    });
-
-    describe('type inference', () => {
-        it('should infer correct types for built-in converters', () => {
-            const str = Envapter.getUsing('TEST_STRING', Converters.String);
-            const num = Envapter.getUsing('TEST_NUMBER', Converters.Number);
-            const bool = Envapter.getUsing('TEST_BOOLEAN', Converters.Boolean);
-            const arr = Envapter.getUsing('TEST_ARRAY_COMMA', Converters.array());
-
-            const strWithFallback = Envapter.getUsing('TEST_STRING', Converters.String, 'default');
-            const numWithFallback = Envapter.getUsing('TEST_NUMBER', Converters.Number, 0);
-
-            expect(str).to.be.a('string');
-            expect(num).to.be.a('number');
-            expect(bool).to.be.a('boolean');
-            expect(arr).to.be.an('array');
-            expect(strWithFallback).to.be.a('string');
-            expect(numWithFallback).to.be.a('number');
-        });
-
-        it('should work with template resolution', () => {
-            const result = Envapter.getUsing('TEST_STRING', Converters.String);
-            expect(result).to.equal('hello world');
         });
     });
 });

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { BuiltInConverters, Converters, ValueConverter } from '../src/converters';
+import { BuiltInConverters, Converters } from '../src/converters';
 import { Envapter } from '../src/engine/Envapter';
 import { TemplateResolver } from '../src/engine/TemplateResolver';
 import { EnvaptError, EnvaptErrorCodes } from '../src/infra/Error';
@@ -40,40 +40,9 @@ const createWeirdString = (...parts: (string | undefined)[]): string =>
 
 describe('Defensive tests', () => {
     describe('BuiltInConverters defensive fallbacks', () => {
-        it('returns fallback when bigint conversion fails', () => {
-            const fallback = 42n;
-            expect(BuiltInConverters.bigint('not-a-bigint', fallback)).to.equal(fallback);
-        });
-
-        it('returns fallback when integer parsing fails', () => {
-            const fallback = 321;
-            expect(BuiltInConverters.integer('not-an-integer', fallback)).to.equal(fallback);
-        });
-
-        it('returns fallback when float parsing fails', () => {
-            const fallback = 12.34;
-            expect(BuiltInConverters.float('not-a-float', fallback)).to.equal(fallback);
-        });
-
-        it('returns an empty array when raw input is blank for array converters', () => {
-            const result = BuiltInConverters.processArrayConverter('   ', Converters.array({ delimiter: ',' }));
-            expect(result).to.deep.equal([]);
-        });
-
         it('returns [] when items all collapse to empty after filtering', () => {
             const result = BuiltInConverters.processArrayConverter(' , , ', Converters.array({ delimiter: ',' }));
             expect(result).to.deep.equal([]);
-        });
-
-        it('throws when a typed element conversion fails inside array converter', () => {
-            expect(() =>
-                BuiltInConverters.processArrayConverter(
-                    '1,abc',
-                    Converters.array({ of: Converters.Number, delimiter: ',' })
-                )
-            )
-                .to.throw(EnvaptError)
-                .with.property('code', EnvaptErrorCodes.ArrayElementConversionFailed);
         });
 
         it('returns fallback for invalid numeric timestamp strings', () => {
@@ -112,12 +81,6 @@ describe('Defensive tests', () => {
 
             const resolved = resolver.resolveTemplate('TEMPLATE_ONE', '${TEMPLATE_TWO}');
             expect(resolved).to.equal('${TEMPLATE_TWO}');
-        });
-
-        it('returns [] when array converter yields no items after filtering empty entries', () => {
-            const converter = new ValueConverter(new StubEnvService({ EMPTY_LIST: ' , , ' }));
-            const result = converter.convertValue('EMPTY_LIST', undefined, Converters.array({ delimiter: ',' }), false);
-            expect(result).to.deep.equal([]);
         });
     });
 
