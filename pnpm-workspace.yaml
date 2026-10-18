@@ -13,13 +13,13 @@ allowBuilds:
 
 catalogs:
   dev:
-    '@cloudflare/workers-types': ^5.20260911.1
-    '@seedcord/eslint-config': 2.2.1
-    '@types/node': 26.5.1
-    prettier: 3.9.6
+    '@cloudflare/workers-types': ^5.20261016.1
+    '@seedcord/eslint-config': 2.5.0
+    '@types/node': 26.6.5
+    prettier: 3.9.10
     eslint: 10.10.0
     typescript: 6.0.3
-    zod: 4.6.4
+    zod: 4.6.7
     vitest: 5.0.5
 
 overrides:
