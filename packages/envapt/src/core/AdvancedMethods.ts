@@ -1,6 +1,7 @@
 import { findPresent, readRequired, readSchema, resolveKeyInput, valueConverter } from './engine';
 import { hasFallback, isMissing } from './missing';
 import { PrimitiveMethods } from './PrimitiveMethods';
+import { Validator } from '../engine/Validators';
 import { debugWarn } from '../infra/Debug';
 import { EnvaptErrorCodes } from '../infra/Error';
 import { missingValues, validationFailed } from '../infra/failures';
@@ -28,11 +29,12 @@ import type {
 
 export class AdvancedMethods extends PrimitiveMethods {
     /**
-     * Get an environment variable using a built-in converter.
-     *
-     * Supports both scalar tokens (e.g. `Converters.Number`) and `ArrayOf<...>` tokens
-     * produced by `Converters.array(...)`. The key can be a single name or an ordered list.
-     * The first defined value wins.
+     * Get an environment variable through a converter: a built-in token such as `Converters.Number`,
+     * an `ArrayOf` token from `Converters.array(...)`, a custom `(raw: string) => T` function, or a
+     * synchronous Standard Schema (zod, valibot, arktype). A missing value returns the fallback, or
+     * `undefined` without one. A token or a function that can't convert the value returns the fallback
+     * too. A schema that rejects the value throws `SchemaValidationFailed`. The schema never sees the
+     * fallback. The key can be a single name or an ordered list. The first present value wins.
      * @see {@link https://envapt.materwelon.dev/docs/envapter#converters}
      * @see {@link https://envapt.materwelon.dev/docs/converters#custom-converters}
      */
@@ -48,81 +50,44 @@ export class AdvancedMethods extends PrimitiveMethods {
         fallback?: TFallback
     ): AdvancedConverterReturn<TConverter, TFallback>;
     static getUsing<TReturn>(key: EnvKeyInput, converter: BuiltInConverter | ArrayOf, fallback?: TReturn): TReturn;
-    static getUsing<TConverter extends BuiltInConverter | ArrayOf, TFallback = undefined>(
+    // arktype types are callable and would match the function overload below
+    static getUsing<
+        Schema extends StandardSchemaV1,
+        TFallback extends InferSchemaOutput<Schema> | undefined = undefined
+    >(
         key: EnvKeyInput,
-        converter: TConverter,
+        schema: SchemaConstraint<Schema>,
         fallback?: TFallback
-    ): AdvancedConverterReturn<TConverter, TFallback> {
+    ): ConditionalReturn<InferSchemaOutput<Schema>, TFallback>;
+    static getUsing<TReturn, TFallback extends NonNullable<TReturn> | undefined = undefined>(
+        key: EnvKeyInput,
+        converter: ConverterFunction<TReturn>,
+        fallback?: TFallback
+    ): ConditionalReturn<NonNullable<TReturn>, TFallback>;
+    static getUsing(
+        key: EnvKeyInput,
+        converter: BuiltInConverter | ArrayOf | ConverterFunction | StandardSchemaV1,
+        fallback?: unknown
+    ): unknown {
+        if (Validator.isStandardSchema(converter)) return readSchema(key, converter, fallback);
+
         const { key: resolvedKey, value } = resolveKeyInput(key);
 
         // a time fallback can be a string that still needs converting to a number
         if (isMissing(value) && !hasFallback(fallback)) {
             debugWarn(`${resolvedKey} is missing or empty`);
-            return undefined as AdvancedConverterReturn<TConverter, TFallback>;
+            return undefined;
         }
 
-        const result = valueConverter.convertValue(resolvedKey, fallback, converter, hasFallback(fallback));
-
-        return result as AdvancedConverterReturn<TConverter, TFallback>;
-    }
-
-    /**
-     * @see {@link AdvancedMethods.getUsing}
-     */
-    getUsing<TFallback extends TimeFallback | undefined = undefined>(
-        key: EnvKeyInput,
-        converter: 'time',
-        fallback?: TFallback
-    ): ConditionalReturn<number, TFallback>;
-    getUsing<TConverter extends BuiltInConverter | ArrayOf, TFallback = undefined>(
-        key: EnvKeyInput,
-        converter: TConverter,
-        fallback?: TFallback
-    ): AdvancedConverterReturn<TConverter, TFallback>;
-    getUsing<TReturn>(key: EnvKeyInput, converter: BuiltInConverter | ArrayOf, fallback?: TReturn): TReturn;
-    getUsing<TConverter extends BuiltInConverter | ArrayOf, TFallback = undefined>(
-        key: EnvKeyInput,
-        converter: TConverter,
-        fallback?: TFallback
-    ): AdvancedConverterReturn<TConverter, TFallback> {
-        return AdvancedMethods.getUsing(key, converter, fallback);
-    }
-
-    /**
-     * Get an environment variable using a custom converter function.
-     * Accepts a single key or an ordered list for automatic fallback.
-     * @see {@link https://envapt.materwelon.dev/docs/envapter#converters}
-     * @see {@link https://envapt.materwelon.dev/docs/converters#custom-converters}
-     */
-    static getWith<TReturnType, TFallback extends TReturnType | undefined = undefined>(
-        key: EnvKeyInput,
-        converter: ConverterFunction<TReturnType>,
-        fallback?: TFallback
-    ): ConditionalReturn<TReturnType, TFallback> {
-        // run the custom converter even on a missing value, with raw as undefined
-        const result = valueConverter.convertValue<TReturnType>(key, fallback, converter, hasFallback(fallback));
-
-        return result as ConditionalReturn<TReturnType, TFallback>;
-    }
-
-    /**
-     * @see {@link AdvancedMethods.getWith}
-     */
-    getWith<TReturnType, TFallback extends TReturnType | undefined = undefined>(
-        key: EnvKeyInput,
-        converter: ConverterFunction<TReturnType>,
-        fallback?: TFallback
-    ): ConditionalReturn<TReturnType, TFallback> {
-        return AdvancedMethods.getWith(key, converter, fallback);
+        return valueConverter.convertValue(resolvedKey, fallback, converter, hasFallback(fallback));
     }
 
     /**
      * Read a required environment variable and convert it, throwing `MissingEnvValue` when the value
-     * is missing or empty. A value the converter cannot convert throws `InvalidEnvValue` with
-     * one issue keyed by the env name. A bad array element and an error a custom parser throws both
-     * become that issue, carrying their message. Returns the non-undefined converter output.
-     * Accepts a built-in or `ArrayOf` token, or a custom parser function. The key can be a single
-     * name or an ordered list.
+     * is missing or empty. A value it cannot convert throws `InvalidEnvValue` with issues keyed by
+     * the env name. A bad array element, an error a custom parser or schema throws, and a schema's
+     * own issues all become issues on that error. Accepts a built-in or `ArrayOf` token, a custom
+     * parser function, or a synchronous Standard Schema. The key can be a single name or an ordered list.
      * @see {@link https://envapt.materwelon.dev/docs/envapter#fail-fast-on-missing-values}
      * @see {@link https://envapt.materwelon.dev/docs/converters#require-a-converted-value}
      */
@@ -130,27 +95,16 @@ export class AdvancedMethods extends PrimitiveMethods {
         key: EnvKeyInput,
         converter: TConverter
     ): InferConverterReturnType<TConverter>;
-    static getRequired<TReturnType>(key: EnvKeyInput, converter: ConverterFunction<TReturnType, string>): TReturnType;
-    static getRequired<TConverter extends BuiltInConverter | ArrayOf, TReturnType>(
+    static getRequired<Schema extends StandardSchemaV1>(
         key: EnvKeyInput,
-        converter: TConverter | ConverterFunction<TReturnType, string>
-    ): InferConverterReturnType<TConverter> | TReturnType {
-        return readRequired(key, converter as RequiredConverter) as InferConverterReturnType<TConverter> | TReturnType;
-    }
-
-    /**
-     * @see {@link AdvancedMethods.getRequired}
-     */
-    getRequired<TConverter extends BuiltInConverter | ArrayOf>(
+        schema: SchemaConstraint<Schema>
+    ): InferSchemaOutput<Schema>;
+    static getRequired<TReturnType>(
         key: EnvKeyInput,
-        converter: TConverter
-    ): InferConverterReturnType<TConverter>;
-    getRequired<TReturnType>(key: EnvKeyInput, converter: ConverterFunction<TReturnType, string>): TReturnType;
-    getRequired<TConverter extends BuiltInConverter | ArrayOf, TReturnType>(
-        key: EnvKeyInput,
-        converter: TConverter | ConverterFunction<TReturnType, string>
-    ): InferConverterReturnType<TConverter> | TReturnType {
-        return AdvancedMethods.getRequired(key, converter as ConverterFunction<TReturnType, string>);
+        converter: ConverterFunction<TReturnType>
+    ): NonNullable<TReturnType>;
+    static getRequired(key: EnvKeyInput, converter: RequiredConverter | StandardSchemaV1): unknown {
+        return readRequired(key, converter);
     }
 
     /**
@@ -201,50 +155,5 @@ export class AdvancedMethods extends PrimitiveMethods {
         }
         if (failedKeys.length > 0) throw validationFailed(EnvaptErrorCodes.InvalidEnvValue, failedKeys, issues);
         return result as { [K in keyof Spec as RecaseKey<K & string, Casing>]: InferSpecField<Spec[K]> };
-    }
-
-    /**
-     * @see {@link AdvancedMethods.getRequiredAll}
-     */
-    getRequiredAll<Spec extends RequiredSpec, Casing extends KeyCasing | undefined = undefined>(
-        spec: Spec & SpecSchemaConstraint<Spec>,
-        casing?: Casing
-    ): { [K in keyof Spec as RecaseKey<K & string, Casing>]: InferSpecField<Spec[K]> } {
-        return AdvancedMethods.getRequiredAll<Spec, Casing>(spec, casing);
-    }
-
-    /**
-     * Validate an environment variable through a {@link StandardSchemaV1}-conformant schema
-     * (zod, valibot, arktype, etc). Throws `MissingEnvValue` if the env value is absent and
-     * no fallback is provided. When the value is missing, the fallback is returned as-is and does
-     * not pass through the schema.
-     *
-     * Synchronous schemas only. A `validate` that returns a Promise throws `InvalidUserDefinedConfig`.
-     *
-     * @example
-     * ```ts
-     * import { z } from 'zod';
-     * const port = Envapter.parse('PORT', z.coerce.number().min(1024).max(65535), 3000);
-     * ```
-     * @see {@link https://envapt.materwelon.dev/docs/standard-schema#any-conformant-validator-or-none}
-     */
-    static parse<Schema extends StandardSchemaV1>(
-        key: EnvKeyInput,
-        schema: SchemaConstraint<Schema>,
-        fallback?: InferSchemaOutput<Schema>
-    ): InferSchemaOutput<Schema> {
-        // SchemaConstraint rejects async schemas at compile time
-        return readSchema(key, schema as unknown as StandardSchemaV1, fallback, hasFallback(fallback));
-    }
-
-    /**
-     * @see {@link AdvancedMethods.parse}
-     */
-    parse<Schema extends StandardSchemaV1>(
-        key: EnvKeyInput,
-        schema: SchemaConstraint<Schema>,
-        fallback?: InferSchemaOutput<Schema>
-    ): InferSchemaOutput<Schema> {
-        return AdvancedMethods.parse(key, schema, fallback);
     }
 }

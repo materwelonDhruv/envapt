@@ -56,7 +56,7 @@ The `exports` map in `packages/envapt/package.json` is the public surface. Never
 
 ## Design rules
 
-- **OOP for complex domain logic, plain functions for small stateless helpers.** Reader behavior extends the `core/` mixin chain. No static-only classes as namespaces. `BuiltInConverters` is the one dispatch-table exception.
+- **OOP for complex domain logic, plain functions for small stateless helpers.** Reader behavior extends the `core/` mixin chain. No static-only classes as namespaces. `BuiltInConverters` is the dispatch-table exception. The `Envapter` reader chain is the other one, because user config classes extend it.
 - **Function declarations for exported functions with a body.** Arrow functions for inline callbacks and one-liners.
 - **Throw `EnvaptError` with a code from `EnvaptErrorCodes`.** A new failure gets a new code and a row on the guide's errors page.
 - **Types.** No `any` in production code. Narrow `unknown` with a guard. No `as unknown as T`. Use `import type`. Tests may cast a fixture with a short comment saying why it is safe.

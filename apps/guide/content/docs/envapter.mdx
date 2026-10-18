@@ -1,20 +1,14 @@
 ---
 title: Envapter
-description: Read environment variables as typed values with Envapter's static and instance methods, ordered fallbacks, and fail-fast checks.
+description: Read environment variables as typed values with Envapter's static readers, ordered fallbacks, and fail-fast checks.
 ---
 
-`Envapter` is the functional entry point to envapt. Every reader comes two ways: a **static** method for one-off reads, and an **instance** method for when you hold a `new Envapter()` or extend it. Both read from the same parsed cache.
+`Envapter` is the functional entry point to envapt. You call every reader on the class itself:
 
 ```ts twoslash
 import { Envapter } from 'envapt';
 
-// static, for a one-off read
 const maxRetries = Envapter.getNumber('MAX_RETRIES', 3);
-//    ^?
-
-// instance, when you hold a reference
-const env = new Envapter();
-const apiUrl = env.get('API_URL', 'http://localhost');
 //    ^?
 ```
 
@@ -66,21 +60,22 @@ const db = Envapter.get(['READONLY_URL', 'DATABASE_URL'], 'sqlite://memory');
 
 ## Raw values
 
-`getRaw` returns the string exactly as loaded, with no type conversion. It exists only as an **instance** method:
+`getRaw` returns the string exactly as loaded, with no type conversion:
 
 ```ts twoslash
 import { Envapter } from 'envapt';
 // ---cut---
-const raw = new Envapter().getRaw('DATABASE_URL');
+const raw = Envapter.getRaw('DATABASE_URL');
 //    ^?
 ```
 
 ## Converters
 
-For shapes beyond primitives, two readers take a converter:
+For shapes beyond primitives, `getUsing(key, converter, fallback?)` takes any of these as its converter:
 
-- `getUsing(key, token, fallback?)` for built-in converter tokens (arrays, URLs, dates, durations, and more).
-- `getWith(key, fn, fallback?)` for your own `(raw, fallback) => T` function.
+- a built-in token, for arrays, URLs, dates, durations, and more
+- your own `(raw: string) => T` function, which runs only when the variable is set
+- a [Standard Schema](/docs/standard-schema) validator like zod, valibot, or arktype
 
 ```ts twoslash
 import { Envapter, Converters } from 'envapt';
@@ -88,7 +83,7 @@ import { Envapter, Converters } from 'envapt';
 const origins = Envapter.getUsing('CORS', Converters.array({ of: Converters.String }));
 //    ^?
 
-const retries = Envapter.getWith('RETRIES', (raw, fallback) => (raw ? Number(raw) : fallback), 3);
+const allowedHosts = Envapter.getUsing('ALLOWED_HOSTS', (raw) => raw.split(' '), ['localhost']);
 //    ^?
 ```
 
@@ -171,21 +166,6 @@ A required read always throws on a missing value. For a value with a default, pa
     Best to call `require` and `getRequiredAll` at startup. A missing value then stops the app at boot, and so does a bad one in `getRequiredAll`.
 
 </Callout>
-
-## Static vs instance
-
-Statics suit scattered, one-off reads. Create an instance to carry an env reader as a dependency, or extend `Envapter` to group related config on one class.
-
-```ts twoslash
-import { Envapter } from 'envapt';
-// ---cut---
-class Config extends Envapter {
-    readonly maxUploadMb = this.getNumber('MAX_UPLOAD_MB', 25);
-    readonly debug = this.getBoolean('DEBUG', false);
-}
-```
-
-Static and instance reads hit the same cache.
 
 ## Environment detection
 

@@ -17,10 +17,11 @@ envapt has two surfaces. They read the same values through the same cache. Pick 
 
 ## Functional API (the portable default)
 
-`Envapter` exposes the readers as both static methods and instance methods with identical signatures. Every key argument accepts a single string or an ordered array (first key that has a value wins).
+`Envapter` exposes the readers as static methods. Every key argument accepts a single string or an ordered array (first key that has a value wins).
 
 ```ts
 import { Envapter, Converters } from 'envapt';
+import { z } from 'zod/v4';
 
 Envapter.get('API_KEY'); // string | undefined
 Envapter.get('API_KEY', 'dev-key'); // string
@@ -34,8 +35,10 @@ Envapter.has('SENTRY_DSN'); // boolean
 
 // Built-in or array converter:
 Envapter.getUsing('ORIGINS', Converters.array({ of: Converters.String }), []); // string[]
-// Custom function converter (raw is the string, or undefined when unset):
-Envapter.getWith('FLAGS', (raw) => (raw ? raw.split(',') : [])); // string[]
+// Custom function converter, called only when the variable is set:
+Envapter.getUsing('FLAGS', (raw) => raw.split(','), []); // string[]
+// Standard Schema (zod, valibot, arktype):
+Envapter.getUsing('LOG_LEVEL', z.enum(['debug', 'info', 'warn']), 'info'); // 'debug' | 'info' | 'warn'
 
 // Throw when a key is missing:
 Envapter.require('DATABASE_URL', 'JWT_SECRET'); // throws EnvaptError listing every missing key
@@ -80,7 +83,7 @@ The legacy form (`envapt/legacy`) differs. Static fields use a plain `static rea
 
 ### Options object
 
-`@Envapt(key, options)` accepts: `{ fallback }`, `{ converter, fallback }`, `{ converter }`, `{ converter, required: true }`, `{ required: true }` (raw string, throws on missing), and `{ schema }` / `{ schema, fallback }`. `required` and `fallback` are mutually exclusive, and so are `schema` and `converter`. Passing a Standard Schema as `converter` throws `InvalidUserDefinedConfig`, so give it to `schema`. With `required: true`, a present value the converter can't convert throws `InvalidEnvValue`. A bad combination throws `EnvaptError` when the decorator is applied, before any access.
+`@Envapt(key, options)` accepts: `{ fallback }`, `{ converter, fallback }`, `{ converter }`, `{ converter, required: true }`, `{ required: true }` (raw string, throws on missing), `{ schema }` (`undefined` on missing), `{ schema, fallback }`, and `{ schema, required: true }`. `required` and `fallback` are mutually exclusive, and so are `schema` and `converter`. Passing a Standard Schema as `converter` throws `InvalidUserDefinedConfig`, so give it to `schema`. With `required: true`, a present value the converter can't convert throws `InvalidEnvValue`. A bad combination throws `EnvaptError` when the decorator is applied, before any access.
 
 ### Shorthand decorators
 
@@ -112,10 +115,7 @@ Arrays use the builder. `of` defaults to `Converters.String` and `delimiter` to 
 Converters.array({ of: Converters.Number, delimiter: ';' }); // "1;2;3" -> number[]
 ```
 
-Custom converters have **two different shapes**:
-
-- **Top-level** (`@Envapt({ converter })`, `getWith`) with signature `(raw: string | undefined, fallback) => T`. Gets the raw value (possibly `undefined`) and the fallback.
-- **Array element** (`Converters.array({ of })`) with signature `(raw: string) => T`. Gets one trimmed, non-empty slot, with no `undefined` and no fallback.
+A custom converter is a `(raw: string) => T` function everywhere: `getUsing`, `@Envapt({ converter })`, `getRequired`, `getRequiredAll`, and `Converters.array({ of })`. envapt calls it only with a present value and applies the fallback itself. Returning `undefined` or `null` means the value can't be converted. A top-level read then uses the fallback, and an array element throws `ArrayElementConversionFailed`. An error the converter throws reaches the caller unchanged from `getUsing` and an optional `@Envapt`. A required read reports it as an `InvalidEnvValue` issue carrying its message.
 
 ## Runtimes and sources
 
@@ -173,11 +173,12 @@ import 'envapt/config'; // ESM, top of entry
 
 ## Validation with Standard Schema
 
-`Envapter.parse` (and `@Envapt({ schema })`) validates through any Standard Schema validator: zod, valibot, arktype, or a hand-rolled `StandardSchemaV1`. The result type is the schema's output.
+`Envapter.getUsing`, `Envapter.getRequired`, and `@Envapt({ schema })` validate through any Standard Schema validator: zod, valibot, arktype, or a hand-rolled `StandardSchemaV1`. The result type is the schema's output. A missing value returns the fallback, or `undefined` without one. `getRequired` and `required: true` throw `MissingEnvValue` for it instead.
 
 ```ts
 import { z } from 'zod/v4';
-Envapter.parse('PORT', z.coerce.number().int().min(1024).max(65535)); // number
+Envapter.getUsing('PORT', z.coerce.number().int().min(1024).max(65535), 3000); // number
+Envapter.getRequired('PORT', z.coerce.number().int().min(1024).max(65535)); // number, throws when unset
 ```
 
 Two constraints: validation is **sync-only** (an async `validate` throws), and a **fallback is returned as-is and is NOT passed through the schema**. Only a present env value is validated.
@@ -197,7 +198,7 @@ const db = Envapter.getRequiredAll(
 
 ## Errors
 
-Reader and decorator failures throw `EnvaptError` with a numeric `code` (`EnvaptErrorCodes`). The common error codes are `MissingEnvValue` (a required value is absent), `SchemaValidationFailed` (`parse` or a `schema` decorator gets a value its schema rejects), `InvalidEnvValue` (a required read gets a value it can't convert, a bad array element, or an error from a custom parser or schema). Both carry an `issues` array whose paths start with the env key, and both messages list only the keys. Other common codes are `InvalidUserDefinedConfig` (bad options, e.g. `required` + `fallback`), `MalformedTimeFallback`, `FileApiUnsupported` (a file-only API called with `fileApiMode = 'throw'`, or on the node build with a non-filesystem source), `NoSourceBound` (a read before `useSource` on the portable build).
+Reader and decorator failures throw `EnvaptError` with a numeric `code` (`EnvaptErrorCodes`). The common error codes are `MissingEnvValue` (a required value is absent), `SchemaValidationFailed` (`getUsing` or a `schema` decorator without `required` gets a value its schema rejects), `InvalidEnvValue` (a required read gets a value it can't convert, a bad array element, or an error from a custom parser or schema). Both carry an `issues` array whose paths start with the env key, and both messages list only the keys. Other common codes are `InvalidUserDefinedConfig` (bad options, e.g. `required` + `fallback`), `MalformedTimeFallback`, `FileApiUnsupported` (a file-only API called with `fileApiMode = 'throw'`, or on the node build with a non-filesystem source), `NoSourceBound` (a read before `useSource` on the portable build).
 
 ```ts
 import { EnvaptError, EnvaptErrorCodes } from 'envapt';

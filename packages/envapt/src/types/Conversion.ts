@@ -1,4 +1,4 @@
-import type { ArrayOf, ConverterToken, CustomElementConverter } from '../converters/Converters';
+import type { ArrayOf, ConverterToken } from '../converters/Converters';
 import type { InferSchemaOutput, StandardSchemaV1 } from '../infra/StandardSchema';
 
 // scalar tokens only
@@ -6,21 +6,15 @@ type BuiltInConverter = ConverterToken;
 
 type PrimitiveConstructor = typeof String | typeof Number | typeof Boolean | typeof BigInt;
 
-type BaseInput = string | undefined;
-
 /**
- * Custom parser function for an environment variable. `TRaw` is the raw input, `string | undefined` by
- * default, narrowed to `string` by the readers that guarantee a present value (`getRequired`, `getRequiredAll`).
- * @param raw - Raw value from the environment
- * @param fallback - Fallback value when parsing is skipped
- * @returns Parsed value of type `TFallback`
+ * Custom converter for an environment variable or an array element. It receives a present value with templates
+ * already expanded. envapt applies the fallback itself. A return of `undefined` or `null` means the value could
+ * not be converted. From `getUsing` and an optional `@Envapt`, an error the converter throws reaches the caller as
+ * is. A required read reports it as an `InvalidEnvValue` issue carrying its message.
  * @public
  * @see {@link https://envapt.materwelon.dev/docs/converters#custom-converters}
  */
-type ConverterFunction<TFallback = unknown, TRaw extends BaseInput = BaseInput> = (
-    raw: TRaw,
-    fallback?: TFallback
-) => TFallback;
+type ConverterFunction<TReturn = unknown> = ((raw: string) => TReturn) & { readonly '~standard'?: never };
 
 type EnvaptConverter<TFallback> = PrimitiveConstructor | BuiltInConverter | ArrayOf | ConverterFunction<TFallback>;
 
@@ -78,29 +72,24 @@ type InferConverterReturnType<TConverter> =
     TConverter extends ArrayOf<infer Element>
         ? Element extends BuiltInConverter
             ? ConverterMap[Element][]
-            : Element extends CustomElementConverter<infer Returned>
-              ? Returned[]
+            : Element extends ConverterFunction<infer Returned>
+              ? NonNullable<Returned>[]
               : never
         : TConverter extends BuiltInConverter
           ? BuiltInConverterReturnType<TConverter>
           : never;
 
-// raw is a string because getRequiredAll throws on a missing value before converting
-type RequiredSpec = Record<
-    string,
-    BuiltInConverter | ArrayOf | ConverterFunction<unknown, string> | StandardSchemaV1<unknown, unknown>
->;
+type RequiredSpec = Record<string, BuiltInConverter | ArrayOf | ConverterFunction | StandardSchemaV1<unknown, unknown>>;
 
 type RequiredConverter = Exclude<RequiredSpec[string], StandardSchemaV1> | PrimitiveConstructor;
 
-// arktype schemas are callable and would match the parser branch.
-// a required parser's `raw: string` does not fit ConverterFunction's `raw: string | undefined`
+// arktype schemas are callable and would match the converter branch
 type InferSpecField<TField> = TField extends StandardSchemaV1
     ? InferSchemaOutput<TField>
     : TField extends BuiltInConverter | ArrayOf
       ? InferConverterReturnType<TField>
-      : TField extends (raw: string) => infer TReturn
-        ? TReturn
+      : TField extends ConverterFunction<infer TReturn>
+        ? NonNullable<TReturn>
         : never;
 
 // add any converter whose fallback type differs from its return type here

@@ -61,28 +61,16 @@ export function findPresent(keyInput: EnvKeyInput): PresentValue | undefined {
     return { key, value: templateResolver.resolveTemplate(key, value) };
 }
 
-export function readRequired(keyInput: EnvKeyInput, converter: RequiredConverter): unknown {
+export function readRequired(keyInput: EnvKeyInput, field: RequiredConverter | StandardSchemaV1): unknown {
     const present = findPresent(keyInput);
     if (present === undefined) throw missingValue(keyInput);
-    return valueOrThrow(
-        EnvaptErrorCodes.InvalidEnvValue,
-        present.key,
-        valueConverter.readConverted(present, converter)
-    );
+    return valueOrThrow(EnvaptErrorCodes.InvalidEnvValue, present.key, valueConverter.readSpecField(present, field));
 }
 
-export function readSchema(
-    keyInput: EnvKeyInput,
-    schema: StandardSchemaV1,
-    fallback: unknown,
-    hasFallback: boolean
-): unknown {
+export function readSchema(keyInput: EnvKeyInput, schema: StandardSchemaV1, fallback: unknown): unknown {
     // readPrimitive logs the missing-value warning
     const value = readPrimitive(keyInput, 'string');
-    if (value === undefined) {
-        if (hasFallback) return fallback;
-        throw missingValue(keyInput);
-    }
+    if (value === undefined) return fallback;
     const { key } = resolveKeyInput(keyInput);
     return valueOrThrow(
         EnvaptErrorCodes.SchemaValidationFailed,

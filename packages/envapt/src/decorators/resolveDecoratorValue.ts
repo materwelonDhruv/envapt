@@ -37,10 +37,10 @@ export function resolveDecoratorValue<TFallback>(
     if (cache.has(cacheKey)) return cache.get(cacheKey) as TFallback | undefined;
 
     let value: TFallback | undefined;
-    if (schema !== undefined) {
-        value = readSchema(key, schema, fallback, hasFallback) as TFallback;
-    } else if (required) {
-        value = readRequired(key, (converter ?? Converters.String) as RequiredConverter) as TFallback;
+    if (required) {
+        value = readRequired(key, schema ?? ((converter ?? Converters.String) as RequiredConverter)) as TFallback;
+    } else if (schema !== undefined) {
+        value = readSchema(key, schema, fallback) as TFallback;
     } else {
         value = valueConverter.convertValue(key, fallback, converter, hasFallback);
     }

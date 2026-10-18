@@ -56,20 +56,6 @@ describe('Tagged Template Resolver', () => {
         });
     });
 
-    describe('instance resolve method', () => {
-        it('should work the same as static method', () => {
-            const env = new Envapter();
-            const message = env.resolve`Hello, my name is ${'USERNAME'} and I am ${'AGE'} years old.`;
-            expect(message).to.equal('Hello, my name is john and I am 25 years old.');
-        });
-
-        it('should handle multiple variables on instance', () => {
-            const env = new Envapter();
-            const info = env.resolve`${'USERNAME'} works at ${'COMPANY'}.`;
-            expect(info).to.equal('john works at TechCorp.');
-        });
-    });
-
     describe('edge cases', () => {
         it('should handle variables that contain numbers', () => {
             const message = Envapter.resolve`Age is ${'AGE'}`;

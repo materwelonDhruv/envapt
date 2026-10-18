@@ -37,12 +37,6 @@ describe('BigInt Support', () => {
             expect(result).to.equal(123456789012345678901234567890n);
         });
 
-        it('should work with instance getBigInt method', () => {
-            const env = new Envapter();
-            const result = env.getBigInt('TEST_BIGINT', 0n);
-            expect(result).to.equal(123456789012345678901234567890n);
-        });
-
         it('should return fallback for invalid bigint', () => {
             const result = Envapter.getBigInt('TEST_INVALID_BIGINT', 888n);
             expect(result).to.equal(888n);

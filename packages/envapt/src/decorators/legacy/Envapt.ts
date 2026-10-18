@@ -24,14 +24,8 @@ import type {
  * @example
  * ```ts
  * class Config extends Envapter {
- *   \@Envapt('API_KEY', {
- *     fallback: 'default-key',
- *     converter(raw, _fallback) {
- *       if (!raw || raw.trim() === '') throw new Error('API_KEY required');
- *       return raw.trim();
- *     }
- *   })
- *   static readonly apiKey: string;
+ *   \@Envapt('ALLOWED_HOSTS', { fallback: ['localhost'], converter: (raw) => raw.split(' ') })
+ *   static readonly allowedHosts: string[];
  *
  *   \@Envapt('LOG_FILE', { fallback: '/var/log/app.log' })
  *   static readonly logFile: string;
@@ -48,14 +42,13 @@ export function Envapt(
 export function Envapt<TFallback>(
     key: EnvKeyInput,
     options:
-        | { converter: (raw: string | undefined, fallback: TFallback) => TFallback; fallback: TFallback }
+        | { converter: ConverterFunction<TFallback | null | undefined>; fallback: TFallback }
         | { fallback: TFallback; converter?: undefined }
 ): EnvaptFieldDecorator<TFallback>;
 
 /**
- * A custom converter function without a fallback. Omit `required` to return the converter's
- * output (possibly `undefined`), or pass `required: true` to throw `MissingEnvValue` on
- * missing or empty values.
+ * A custom converter function without a fallback. Omit `required` to get `undefined` for a missing
+ * value, or pass `required: true` to throw `MissingEnvValue` on missing or empty values.
  *
  * @param key - Environment variable name(s) to load
  * @param options - Configuration options
@@ -63,25 +56,22 @@ export function Envapt<TFallback>(
  * @example
  * ```ts
  * class Config extends Envapter {
- *   \@Envapt('FEATURE_FLAGS', { converter(raw) {
- *     return raw ? raw.split('|').map(s => s.trim()) : [];
- *   } })
- *   static readonly featureFlags: string[];
+ *   \@Envapt('FEATURE_FLAGS', { converter: (raw) => raw.split('|').map((flag) => flag.trim()) })
+ *   static readonly featureFlags: string[] | undefined;
  *
- *   \@Envapt('JWT_SECRET', {
- *     converter: (raw) => Buffer.from(raw ?? '', 'base64'),
- *     required: true
- *   })
+ *   \@Envapt('JWT_SECRET', { converter: (raw) => Buffer.from(raw, 'base64'), required: true })
  *   static readonly jwtSecret: Buffer;
  * }
  * ```
  */
 export function Envapt<TReturnType>(
     key: EnvKeyInput,
-    options:
-        | { converter: ConverterFunction<TReturnType>; required?: false }
-        | { converter: ConverterFunction<TReturnType>; required: true }
-): EnvaptFieldDecorator<TReturnType>;
+    options: { converter: ConverterFunction<TReturnType>; required?: false }
+): EnvaptFieldDecorator<NonNullable<TReturnType> | undefined>;
+export function Envapt<TReturnType>(
+    key: EnvKeyInput,
+    options: { converter: ConverterFunction<TReturnType>; required: true }
+): EnvaptFieldDecorator<NonNullable<TReturnType>>;
 
 /**
  * A built-in or array converter with a fallback, or `required: true`. The fallback type tracks
@@ -188,8 +178,12 @@ export function Envapt(key: EnvKeyInput, options: { required: true }): EnvaptFie
  */
 export function Envapt<Schema extends StandardSchemaV1>(
     key: EnvKeyInput,
+    options: { schema: SchemaConstraint<Schema>; fallback?: undefined; required?: false }
+): EnvaptFieldDecorator<InferSchemaOutput<Schema> | undefined>;
+export function Envapt<Schema extends StandardSchemaV1>(
+    key: EnvKeyInput,
     options:
-        | { schema: SchemaConstraint<Schema>; fallback?: InferSchemaOutput<Schema>; required?: false }
+        | { schema: SchemaConstraint<Schema>; fallback: InferSchemaOutput<Schema>; required?: false }
         | { schema: SchemaConstraint<Schema>; required: true }
 ): EnvaptFieldDecorator<InferSchemaOutput<Schema>>;
 

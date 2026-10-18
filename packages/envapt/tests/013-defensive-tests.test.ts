@@ -124,24 +124,18 @@ describe('Defensive tests', () => {
     describe('key-input validation through the public read path', () => {
         it('throws when no keys are provided', () => {
             // @ts-expect-error Runtime guard ensures empty arrays are rejected
-            expect(() => new Envapter().getRaw([]))
+            expect(() => Envapter.getRaw([]))
                 .to.throw(EnvaptError, 'At least one environment key must be provided.')
                 .and.to.have.property('code', EnvaptErrorCodes.InvalidKeyInput);
         });
 
         it('throws when keys include a non-string entry', () => {
             // @ts-expect-error Passing non-string key to trigger runtime guard
-            expect(() => new Envapter().getRaw(['VALID_KEY', 42])).to.throw(
-                EnvaptError,
-                'Environment keys must be strings.'
-            );
+            expect(() => Envapter.getRaw(['VALID_KEY', 42])).to.throw(EnvaptError, 'Environment keys must be strings.');
         });
 
         it('throws when keys include an empty string', () => {
-            expect(() => new Envapter().getRaw(['   '])).to.throw(
-                EnvaptError,
-                'Environment keys cannot be empty strings.'
-            );
+            expect(() => Envapter.getRaw(['   '])).to.throw(EnvaptError, 'Environment keys cannot be empty strings.');
         });
     });
 });

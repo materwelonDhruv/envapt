@@ -5,101 +5,45 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { Envapter } from '../src';
 import { Envapt } from '../src/legacy';
 
-describe('User-defined errors', () => {
+function validKey(raw: string): string {
+    if (!raw.startsWith('valid_')) throw new Error('expected a key starting with valid_');
+    return raw;
+}
+
+describe('custom converters on @Envapt', () => {
     beforeAll(() => (Envapter.envPaths = resolve(`${import.meta.dirname}/.env.user-defined-errors`)));
 
-    describe('custom converter error handling', () => {
-        class TestCustomErrors {
-            @Envapt<string>('SECRET_TOKEN', {
-                converter(raw, _fallback) {
-                    if (typeof raw !== 'string' || raw === '') {
-                        throw new Error('Missing SECRET_TOKEN');
-                    }
-                    return raw;
-                }
-            })
-            public static readonly secretToken: string;
+    class Config {
+        @Envapt('API_KEY', { converter: validKey })
+        public static readonly apiKey: string | undefined;
 
-            @Envapt<string>('REQUIRED_CONFIG', {
-                converter(raw) {
-                    if (typeof raw !== 'string') {
-                        throw new Error('REQUIRED_CONFIG is required');
-                    }
-                    return raw;
-                }
-            })
-            public static readonly requiredConfig: string;
+        @Envapt('DATABASE_URL', { converter: validKey })
+        public static readonly databaseUrl: string | undefined;
 
-            @Envapt<string>('MISSING_INSTANCE_VAR', {
-                converter(raw, _fallback) {
-                    if (typeof raw !== 'string' || raw === '') {
-                        throw new Error('Missing MISSING_INSTANCE_VAR');
-                    }
-                    return raw;
-                }
-            })
-            declare public readonly missingInstanceVar: string;
+        @Envapt('SECRET_TOKEN', { converter: validKey })
+        public static readonly secretToken: string | undefined;
 
-            @Envapt<string>('MISSING_REQUIRED_INSTANCE', {
-                converter(raw) {
-                    if (typeof raw !== 'string') {
-                        throw new Error('MISSING_REQUIRED_INSTANCE is required');
-                    }
-                    return raw;
-                }
-            })
-            declare public readonly missingRequiredInstance: string;
+        @Envapt('SECRET_TOKEN', { converter: validKey, fallback: 'valid_default' })
+        public static readonly secretTokenWithFallback: string;
 
-            @Envapt<string>('API_KEY', {
-                converter(raw, _fallback) {
-                    if (typeof raw !== 'string') {
-                        throw new Error('Missing API_KEY');
-                    }
-                    return raw;
-                }
-            })
-            public static readonly apiKey: string;
-        }
+        @Envapt('REQUIRED_CONFIG', { converter: validKey })
+        declare public readonly requiredConfig: string | undefined;
+    }
 
-        it('should throw error for static property with fallback when env var is missing', () => {
-            // custom converters run even when a fallback is set
-            expect(() => TestCustomErrors.secretToken).to.throw('Missing SECRET_TOKEN');
-        });
-
-        it('should throw error for static property without fallback when env var is missing', () => {
-            // the converter runs with raw undefined
-            expect(() => TestCustomErrors.requiredConfig).to.throw('REQUIRED_CONFIG is required');
-        });
-
-        it('should throw error for instance property with fallback when env var is missing', () => {
-            const instance = new TestCustomErrors();
-            expect(() => instance.missingInstanceVar).to.throw('Missing MISSING_INSTANCE_VAR');
-        });
-
-        it('should throw error for instance property without fallback when env var is missing', () => {
-            const instance = new TestCustomErrors();
-            expect(() => instance.missingRequiredInstance).to.throw('MISSING_REQUIRED_INSTANCE is required');
-        });
-
-        it('should work correctly when env var exists', () => {
-            expect(() => TestCustomErrors.apiKey).to.not.throw();
-            expect(TestCustomErrors.apiKey).to.equal('valid_api_key_12345');
-        });
+    it('returns the converted value for a present variable', () => {
+        expect(Config.apiKey).to.equal('valid_api_key_12345');
     });
 
-    describe('updated behavior', () => {
-        it('should call custom converters even with fallbacks', () => {
-            class UpdatedBehaviorTest {
-                @Envapt<string>('NONEXISTENT_VAR', {
-                    fallback: 'default_value',
-                    converter(_raw, _fallback) {
-                        throw new Error('This should now be thrown');
-                    }
-                })
-                public static readonly testVar: string;
-            }
+    it("passes the converter's own error through for a present variable", () => {
+        expect(() => Config.databaseUrl).to.throw('expected a key starting with valid_');
+    });
 
-            expect(() => UpdatedBehaviorTest.testVar).to.throw('This should now be thrown');
-        });
+    it('returns undefined for a missing variable without calling the converter', () => {
+        expect(Config.secretToken).to.be.undefined;
+        expect(new Config().requiredConfig).to.be.undefined;
+    });
+
+    it('returns the fallback for a missing variable without calling the converter', () => {
+        expect(Config.secretTokenWithFallback).to.equal('valid_default');
     });
 });

@@ -1,4 +1,5 @@
 import { BuiltInConverters } from './BuiltInConverters';
+import { isUnconverted } from '../core/missing';
 import { state } from '../core/state';
 import { Validator } from '../engine/Validators';
 import { debugVerbose, debugWarn } from '../infra/Debug';
@@ -7,15 +8,10 @@ import { formatKeyForError } from '../infra/failures';
 
 import type { ArrayOf } from './Converters';
 import type { StandardSchemaV1 } from '../infra/StandardSchema';
-import type {
-    BuiltInConverter,
-    EnvKeyInput,
-    EnvaptConverter,
-    PresentValue,
-    RequiredConverter,
-    RequiredSpec
-} from '../types';
+import type { BuiltInConverter, EnvKeyInput, EnvaptConverter, PresentValue, RequiredConverter } from '../types';
 import type { EnvapterService } from '../types/Env';
+
+type SchemaOutcome = StandardSchemaV1.Result<unknown> | Promise<StandardSchemaV1.Result<unknown>>;
 
 function errorMessage(error: unknown): string {
     return error instanceof Error ? error.message : String(error);
@@ -149,13 +145,22 @@ export class ValueConverter {
         key: EnvKeyInput,
         fallback: TFallback | undefined,
         resolvedConverter: EnvaptConverter<TFallback>,
-        _hasFallback: boolean // unused. the custom converter runs even when raw is undefined
+        hasFallback: boolean
     ): TFallback | undefined {
         Validator.customConvertor(resolvedConverter);
 
         const raw = this.envService.get(key, undefined);
+        if (raw === undefined) return fallback;
 
-        return resolvedConverter(raw, fallback);
+        const converted = resolvedConverter(raw);
+        if (isUnconverted(converted)) {
+            // leave the value out because env values can be secrets
+            debugVerbose(
+                `could not convert ${formatKeyForError(key)} with the custom converter${hasFallback ? ', using the fallback' : ''}`
+            );
+            return fallback;
+        }
+        return converted;
     }
 
     private resolveConverter<TFallback>(
@@ -179,14 +184,18 @@ export class ValueConverter {
         return keyIssues(key, this.runSchema(key, schema, value));
     }
 
-    // getRequiredAll lists a throwing schema with the other bad fields
-    readSpecField(present: PresentValue, field: RequiredSpec[string]): StandardSchemaV1.Result<unknown> {
+    readSpecField(
+        present: PresentValue,
+        field: RequiredConverter | StandardSchemaV1
+    ): StandardSchemaV1.Result<unknown> {
         if (!Validator.isStandardSchema(field)) return this.readConverted(present, field);
+        let outcome: SchemaOutcome;
         try {
-            return this.readValidated(present, field);
+            outcome = field['~standard'].validate(present.value);
         } catch (error) {
             return keyIssues(present.key, { issues: [{ message: errorMessage(error) }] });
         }
+        return keyIssues(present.key, this.requireSync(present.key, outcome));
     }
 
     private runParser(value: string, parse: (raw: string) => unknown): StandardSchemaV1.Result<unknown> {
@@ -196,7 +205,7 @@ export class ValueConverter {
         } catch (error) {
             return { issues: [{ message: errorMessage(error) }] };
         }
-        if (converted === undefined || converted === null) return { issues: [{ message: 'could not be converted' }] };
+        if (isUnconverted(converted)) return { issues: [{ message: 'could not be converted' }] };
         return { value: converted };
     }
 
@@ -221,7 +230,7 @@ export class ValueConverter {
         schema: StandardSchemaV1,
         raw: string | undefined
     ): StandardSchemaV1.Result<unknown> {
-        let outcome: StandardSchemaV1.Result<unknown> | Promise<StandardSchemaV1.Result<unknown>>;
+        let outcome: SchemaOutcome;
         try {
             outcome = schema['~standard'].validate(raw);
         } catch (cause) {
@@ -231,7 +240,10 @@ export class ValueConverter {
                 { cause }
             );
         }
+        return this.requireSync(key, outcome);
+    }
 
+    private requireSync(key: EnvKeyInput, outcome: SchemaOutcome): StandardSchemaV1.Result<unknown> {
         if (outcome instanceof Promise) {
             // node crashes on an unhandled rejection
             outcome.catch((reason: unknown) => {

@@ -1,3 +1,5 @@
+import type { ConverterFunction } from '../types';
+
 const SCALAR = {
     String: 'string',
     Number: 'number',
@@ -16,16 +18,8 @@ const SCALAR = {
 
 export type ConverterToken = (typeof SCALAR)[keyof typeof SCALAR];
 
-/**
- * Custom element converter for use inside {@link Converters.array}. Receives the trimmed,
- * non-empty raw string for one array slot and returns the parsed value.
- * @public
- * @see {@link https://envapt.materwelon.dev/docs/converters#custom-converters}
- */
-export type CustomElementConverter<TReturn = unknown> = (raw: string) => TReturn;
-
 // json and regexp always parse the whole string
-type ArrayElement = Exclude<ConverterToken, 'json' | 'regexp'> | CustomElementConverter;
+type ArrayElement = Exclude<ConverterToken, 'json' | 'regexp'> | ConverterFunction;
 
 // TElement keeps the element type when the converter is stored in a variable first
 export interface ArrayOf<TElement extends ArrayElement = ArrayElement> {
@@ -40,10 +34,10 @@ export function isArrayOf(value: unknown): value is ArrayOf {
 
 type ArrayScalarElement = Exclude<ConverterToken, 'json' | 'regexp'>;
 
-function buildArrayConverter<TReturn>(opts: {
-    of: CustomElementConverter<TReturn>;
+function buildArrayConverter<TConverter extends ConverterFunction>(opts: {
+    of: TConverter;
     delimiter?: string;
-}): ArrayOf<CustomElementConverter<TReturn>>;
+}): ArrayOf<TConverter>;
 function buildArrayConverter<TToken extends ArrayScalarElement>(opts: {
     of: TToken;
     delimiter?: string;

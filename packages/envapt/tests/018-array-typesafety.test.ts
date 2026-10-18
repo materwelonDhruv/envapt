@@ -73,10 +73,16 @@ describe('ArrayConverter typesafety (v5) — runtime', () => {
             static readonly hexNums: number[];
 
             @Envapt('FAILING_CUSTOM', {
-                converter: Converters.array({ of: (raw) => (raw === 'good' ? raw : undefined) as string }),
+                converter: Converters.array({ of: (raw) => (raw === 'good' ? raw : undefined) }),
                 fallback: []
             })
             static readonly failing: string[];
+
+            @Envapt('FAILING_CUSTOM', {
+                converter: Converters.array({ of: (raw) => (raw === 'good' ? raw : null) }),
+                fallback: []
+            })
+            static readonly failingNull: string[];
         }
 
         it('runs each element through the custom function', () => {
@@ -87,8 +93,11 @@ describe('ArrayConverter typesafety (v5) — runtime', () => {
             expect(S4Tests.hexNums).to.deep.equal([255, 16, 65535]);
         });
 
-        it('throws ArrayElementConversionFailed when the custom function returns undefined', () => {
+        it('throws ArrayElementConversionFailed when the custom function returns undefined or null', () => {
             expect(() => S4Tests.failing)
+                .to.throw(EnvaptError)
+                .with.property('code', EnvaptErrorCodes.ArrayElementConversionFailed);
+            expect(() => S4Tests.failingNull)
                 .to.throw(EnvaptError)
                 .with.property('code', EnvaptErrorCodes.ArrayElementConversionFailed);
         });

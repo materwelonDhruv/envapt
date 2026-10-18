@@ -11,8 +11,8 @@ describe('Symbol as a converter (v9)', () => {
         Envapter.envPaths = resolve(import.meta.dirname, '.env.046-symbol-converter');
     });
 
-    it('throws InvalidUserDefinedConfig from getWith', () => {
-        expect(() => Envapter.getWith('CACHE_NAMESPACE', Symbol))
+    it('throws InvalidUserDefinedConfig from getUsing', () => {
+        expect(() => Envapter.getUsing('CACHE_NAMESPACE', Symbol))
             .to.throw(EnvaptError)
             .with.property('code', EnvaptErrorCodes.InvalidUserDefinedConfig);
     });
@@ -27,7 +27,7 @@ describe('Symbol as a converter (v9)', () => {
         const buildDecorator = (): void => {
             class Cache {
                 @Envapt('CACHE_NAMESPACE', { converter: Symbol })
-                static readonly namespace: symbol;
+                static readonly namespace: symbol | undefined;
             }
             void Cache;
         };

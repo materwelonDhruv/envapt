@@ -119,6 +119,51 @@ describe('Required reads (v8)', () => {
             expect(e.issues).to.deep.equal([{ message: 'out of range', path: ['SET_VALUE'] }]);
         });
 
+        it('returns the schema output for a present value', () => {
+            const port = Envapter.getRequired('SET_NUMBER', z.coerce.number().int());
+            expect(port).to.equal(42);
+            expectTypeOf(port).toEqualTypeOf<number>();
+        });
+
+        it('throws MissingEnvValue for a missing value read through a schema', () => {
+            expect(() => Envapter.getRequired('NEVER_SET_KEY', z.string()))
+                .to.throw(EnvaptError)
+                .with.property('code', EnvaptErrorCodes.MissingEnvValue);
+        });
+
+        it('throws InvalidEnvValue with the schema issues keyed by the env name', () => {
+            const e = thrownBy(() => Envapter.getRequired('SET_VALUE', z.coerce.number()));
+            expect(e.code).to.equal(EnvaptErrorCodes.InvalidEnvValue);
+            expect(e.issues?.[0]?.path?.[0]).to.equal('SET_VALUE');
+        });
+
+        it('reports a schema that throws as an issue carrying its message', () => {
+            const crashing: StandardSchemaV1<unknown, string> = {
+                '~standard': {
+                    version: 1,
+                    vendor: 'envapt-test',
+                    validate: () => {
+                        throw new Error('lookup table not loaded');
+                    }
+                }
+            };
+            const e = thrownBy(() => Envapter.getRequired('SET_VALUE', crashing));
+            expect(e.code).to.equal(EnvaptErrorCodes.InvalidEnvValue);
+            expect(e.issues).to.deep.equal([{ message: 'lookup table not loaded', path: ['SET_VALUE'] }]);
+        });
+
+        it('throws InvalidUserDefinedConfig for a schema that returns a Promise', () => {
+            const asyncSchema: StandardSchemaV1<unknown, string> = {
+                '~standard': {
+                    version: 1,
+                    vendor: 'envapt-test',
+                    validate: (value) => Promise.resolve({ value: String(value) })
+                }
+            };
+            const e = thrownBy(() => Envapter.getRequired('SET_VALUE', asyncSchema));
+            expect(e.code).to.equal(EnvaptErrorCodes.InvalidUserDefinedConfig);
+        });
+
         it('reports a bad array element as InvalidEnvValue', () => {
             const e = thrownBy(() => Envapter.getRequired('PORTS_BAD', Converters.array({ of: Converters.Port })));
             expect(e.code).to.equal(EnvaptErrorCodes.InvalidEnvValue);
@@ -376,13 +421,14 @@ describe('Required reads (v8)', () => {
             expect(e.issues?.[0]?.message).to.include('lookup table not loaded');
         });
 
-        it('reports a zod refine that throws as an issue next to the other bad fields', () => {
+        // zod returns a rejecting Promise when a refine throws
+        it('throws InvalidUserDefinedConfig on its own for a zod refine that throws', () => {
             const crashing = z.string().refine(() => {
                 throw new Error('refine crashed');
             });
             const e = thrownBy(() => Envapter.getRequiredAll({ SET_VALUE: crashing, SAMPLE_REPO: Converters.Number }));
-            expect(e.code).to.equal(EnvaptErrorCodes.InvalidEnvValue);
-            expect(e.issues?.map((issue) => issue.path)).to.deep.equal([['SET_VALUE'], ['SAMPLE_REPO']]);
+            expect(e.code).to.equal(EnvaptErrorCodes.InvalidUserDefinedConfig);
+            expect(e.issues).to.equal(undefined);
         });
 
         it('copies only the message and path of an arktype issue', () => {
@@ -436,20 +482,6 @@ describe('Required reads (v8)', () => {
             const e = thrownBy(() => Envapter.require(['NEVER_SET_KEY', 'EMPTY_VALUE'], 'SET_NUMBER'));
             expect(e.code).to.equal(EnvaptErrorCodes.MissingEnvValue);
             expect(e.message).to.equal('Missing required environment variables: [NEVER_SET_KEY, EMPTY_VALUE].');
-        });
-    });
-
-    describe('instance methods delegate to the static ones', () => {
-        it('getRequired reads through an instance', () => {
-            const env = new Envapter();
-            expect(env.getRequired('SET_NUMBER', Converters.Number)).to.equal(42);
-        });
-
-        it('getRequiredAll reads through an instance', () => {
-            const env = new Envapter();
-            const cfg = env.getRequiredAll({ SET_NUMBER: Converters.Number, SET_VALUE: Converters.String });
-            expect(cfg.SET_NUMBER).to.equal(42);
-            expect(cfg.SET_VALUE).to.equal('hello');
         });
     });
 

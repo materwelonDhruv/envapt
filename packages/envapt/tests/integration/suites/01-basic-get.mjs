@@ -9,8 +9,6 @@ export default async function basicGet() {
     assert.equal(Envapter.get('BASIC_KEY'), 'hello');
     assert.equal(Envapter.get('TEMPLATED_KEY'), 'greeting-hello');
     assert.equal(Envapter.get('MISSING_KEY'), undefined);
-
-    const instance = new Envapter();
-    assert.equal(instance.getRaw('BASIC_KEY'), 'hello');
-    assert.equal(instance.getRaw('MISSING_KEY'), undefined);
+    assert.equal(Envapter.getRaw('BASIC_KEY'), 'hello');
+    assert.equal(Envapter.getRaw('MISSING_KEY'), undefined);
 }

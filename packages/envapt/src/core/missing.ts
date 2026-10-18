@@ -10,3 +10,7 @@ export function isMissing(value: string | undefined): boolean {
 export function hasFallback(fallback: unknown): boolean {
     return fallback !== undefined;
 }
+
+export function isUnconverted(value: unknown): value is null | undefined {
+    return value === undefined || value === null;
+}

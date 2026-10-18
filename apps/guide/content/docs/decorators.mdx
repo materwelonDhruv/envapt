@@ -72,7 +72,7 @@ A module that imports decorators only from `envapt/legacy` must also `import 'en
 
 ## Converters
 
-The `converter` option takes the same values as [`getUsing`/`getWith`](/docs/converters), a built-in token, a primitive constructor, a custom function, or `Converters.array(...)`. A `fallback` removes `undefined` from the value and must match the converter's type.
+The `converter` option takes a built-in token, a primitive constructor, a custom function, or `Converters.array(...)`, the same [converters](/docs/converters) as `getUsing`. A schema goes in the `schema` option. A `fallback` removes `undefined` from the value and must match the converter's type.
 
 ```ts twoslash
 import { Envapt, Converters } from 'envapt';
@@ -87,8 +87,8 @@ class Config {
     static accessor origins: string[];
 
     // custom function: returns a shape the array builder can't, here a deduped Set
-    @Envapt('TRUSTED_IPS', { converter: (raw) => new Set((raw ?? '').split(',').filter(Boolean)) })
-    static accessor trustedIps: Set<string>;
+    @Envapt('TRUSTED_IPS', { converter: (raw) => new Set(raw.split(',').filter(Boolean)) })
+    static accessor trustedIps: Set<string> | undefined;
 }
 ```
 
@@ -165,14 +165,14 @@ The throw happens on first access to the property. An unset or empty value throw
 
 ## Validation with a schema
 
-Pass a `schema` to validate through zod, valibot, arktype, or a hand-rolled `StandardSchemaV1`. The property type is the schema's output.
+Pass a `schema` to validate through zod, valibot, arktype, or a hand-rolled `StandardSchemaV1`. The property type is the schema's output, and it includes `undefined` unless you pass `required: true` or a `fallback`.
 
 ```ts twoslash
 import { z } from 'zod/v4';
 import { Envapt } from 'envapt';
 // ---cut---
 class Config {
-    @Envapt('STRIPE_SECRET_KEY', { schema: z.string().startsWith('sk_') })
+    @Envapt('STRIPE_SECRET_KEY', { schema: z.string().startsWith('sk_'), required: true })
     static accessor stripeKey: string;
 }
 ```
@@ -197,7 +197,7 @@ class Config {
 
 `@Envapt` works on both static and instance properties, and the class does not need to extend anything. The cache is keyed per class and property, so a static and an instance property of the same name never collide.
 
-Extend `Envapter` when you also want the reader methods on the same class:
+Extend `Envapter` when you also want the reader methods on the same class. The subclass inherits them as statics:
 
 ```ts twoslash
 import { Envapt, Converters, Envapter } from 'envapt';
@@ -205,14 +205,12 @@ import { Envapt, Converters, Envapter } from 'envapt';
 class Config extends Envapter {
     @Envapt('PORT', { converter: Converters.Port, fallback: 3000 })
     accessor port!: number;
-
-    // mix decorator fields with reader calls
-    readonly region = this.get('AWS_REGION', 'us-east-1');
 }
 
 const config = new Config();
 config.port;
 //     ^?
+const region = Config.get('AWS_REGION', 'us-east-1');
 ```
 
 A misconfigured options object throws `EnvaptError` as the decorator is applied, before any property access, `required` together with a `fallback`, or a non-`StandardSchemaV1` value passed as `schema`. See [Errors](/docs/errors) for the codes.

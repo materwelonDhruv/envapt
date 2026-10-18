@@ -18,32 +18,12 @@ export class PrimitiveMethods extends EnvironmentMethods {
     }
 
     /**
-     * @see {@link PrimitiveMethods.get}
-     */
-    get<Default extends string | undefined = undefined>(
-        key: EnvKeyInput,
-        fallback?: Default
-    ): ConditionalReturn<string, Default> {
-        return readPrimitive(key, 'string', fallback);
-    }
-
-    /**
      * Get a number environment variable with optional fallback.
      * Automatically converts string values to numbers.
      * Accepts a single key or an ordered array of keys (first match wins).
      * @see {@link https://envapt.materwelon.dev/docs/envapter#primitives}
      */
     static getNumber<Default extends number | undefined = undefined>(
-        key: EnvKeyInput,
-        fallback?: Default
-    ): ConditionalReturn<number, Default> {
-        return readPrimitive(key, 'number', fallback);
-    }
-
-    /**
-     * @see {@link PrimitiveMethods.getNumber}
-     */
-    getNumber<Default extends number | undefined = undefined>(
         key: EnvKeyInput,
         fallback?: Default
     ): ConditionalReturn<number, Default> {
@@ -64,32 +44,12 @@ export class PrimitiveMethods extends EnvironmentMethods {
     }
 
     /**
-     * @see {@link PrimitiveMethods.getBoolean}
-     */
-    getBoolean<Default extends boolean | undefined = undefined>(
-        key: EnvKeyInput,
-        fallback?: Default
-    ): ConditionalReturn<boolean, Default> {
-        return readPrimitive(key, 'boolean', fallback);
-    }
-
-    /**
      * Get a bigint environment variable with optional fallback.
      * Automatically converts string values to bigint.
      * Accepts a single key or an ordered array of keys (first match wins).
      * @see {@link https://envapt.materwelon.dev/docs/envapter#primitives}
      */
     static getBigInt<Default extends bigint | undefined = undefined>(
-        key: EnvKeyInput,
-        fallback?: Default
-    ): ConditionalReturn<bigint, Default> {
-        return readPrimitive(key, 'bigint', fallback);
-    }
-
-    /**
-     * @see {@link PrimitiveMethods.getBigInt}
-     */
-    getBigInt<Default extends bigint | undefined = undefined>(
         key: EnvKeyInput,
         fallback?: Default
     ): ConditionalReturn<bigint, Default> {

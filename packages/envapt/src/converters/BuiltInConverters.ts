@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 
+import { isUnconverted } from '../core/missing';
 import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
 
-import type { ArrayOf, CustomElementConverter } from './Converters';
+import type { ArrayOf } from './Converters';
 import type {
     BuiltInConverter,
     BuiltInConverterFunction,
@@ -203,12 +204,11 @@ export class BuiltInConverters {
 
         if (typeof elementOf === 'function') {
             return items.map((item, index) => {
-                const converter = elementOf as CustomElementConverter;
-                const result = converter(item);
-                if (result === undefined) {
+                const result = elementOf(item);
+                if (isUnconverted(result)) {
                     throw new EnvaptError(
                         EnvaptErrorCodes.ArrayElementConversionFailed,
-                        `Custom element converter returned undefined for item "${item}" at index ${index}.`
+                        `Custom element converter returned ${String(result)} for item "${item}" at index ${index}.`
                     );
                 }
                 return result;
