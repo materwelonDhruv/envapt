@@ -13,7 +13,10 @@ export type {
     AdvancedConverterReturn,
     RequiredSpec,
     RequiredConverter,
-    InferSpecField
+    InferSpecField,
+    FallbackToken,
+    FallbackOnlyValue,
+    FallbackOnlyReturn
 } from './Conversion';
 export type { KeyCasing, RecaseKey } from './Casing';
 export type { SchemaConstraint, SpecSchemaConstraint } from './Schema';

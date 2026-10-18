@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import * as ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 
-// expect-type and tsd do not check diagnostic text, and the SchemaMustBeSync brand depends on it.
+// expect-type and tsd do not check diagnostic text. the SchemaMustBeSync brand puts its message there.
 // type-error-fixtures has its own tsconfig so the IDE shows the same diagnostics as this test.
 
 const TEST_DIR = dirname(fileURLToPath(import.meta.url));
@@ -197,6 +197,24 @@ describe('TS error message verification (compiler API)', () => {
 
         it('rejects an empty @Envapt options object', { timeout: FIXTURE_TIMEOUT_MS }, () => {
             const diagnostics = compileFixture('modern/empty-options.ts', MODERN_CONFIG);
+            expect(
+                diagnostics.some((d) => d.code === 2769),
+                joinedMessages(diagnostics)
+            ).to.be.true;
+        });
+
+        it('rejects an object fallback with no converter', { timeout: FIXTURE_TIMEOUT_MS }, () => {
+            const diagnostics = compileFixture('modern/fallback-only-object.ts', MODERN_CONFIG);
+            expect(
+                diagnostics.some((d) => d.code === 2769),
+                joinedMessages(diagnostics)
+            ).to.be.true;
+        });
+    });
+
+    describe('legacy @Envapt with a fallback and no converter', () => {
+        it('rejects an object fallback', { timeout: FIXTURE_TIMEOUT_MS }, () => {
+            const diagnostics = compileFixture('fallback-only-object.ts');
             expect(
                 diagnostics.some((d) => d.code === 2769),
                 joinedMessages(diagnostics)

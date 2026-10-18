@@ -12,6 +12,7 @@ import type {
     BuiltInConverter,
     BuiltInConverterFunction,
     ConverterFunction,
+    FallbackToken,
     PresentValue,
     RequiredSpec
 } from '../types';
@@ -200,7 +201,7 @@ function requireSync(key: string, outcome: SchemaOutcome): StandardSchemaV1.Resu
     return outcome;
 }
 
-function tokenForFallback(fallback: unknown): BuiltInConverter {
+function tokenForFallback(fallback: unknown): FallbackToken {
     const fallbackType = typeof fallback;
     if (fallbackType === 'number' || fallbackType === 'boolean' || fallbackType === 'bigint') return fallbackType;
     return 'string';

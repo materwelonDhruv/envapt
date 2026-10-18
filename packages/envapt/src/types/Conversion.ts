@@ -51,6 +51,24 @@ interface ConverterMap {
 
 type BuiltInConverterReturnType<ConverterKey extends BuiltInConverter> = ConverterMap[ConverterKey];
 
+// tokenForFallback in converters/Field.ts picks one of these from the fallback's typeof
+type FallbackToken = 'string' | 'number' | 'boolean' | 'bigint';
+
+type FallbackOnlyValue = ConverterMap[FallbackToken];
+
+type TokenForFallback<TFallback extends FallbackOnlyValue> = TFallback extends string
+    ? 'string'
+    : TFallback extends number
+      ? 'number'
+      : TFallback extends boolean
+        ? 'boolean'
+        : TFallback extends bigint
+          ? 'bigint'
+          : never;
+
+// widens a literal fallback such as '/var/log/app.log' to string
+type FallbackOnlyReturn<TFallback extends FallbackOnlyValue> = ConverterMap[TokenForFallback<TFallback>];
+
 type ReturnValuesOfConverterFunctions = ConverterMap[BuiltInConverter];
 
 type BuiltInConverterFunction = (
@@ -123,5 +141,8 @@ export type {
     AdvancedConverterReturn,
     RequiredSpec,
     RequiredConverter,
-    InferSpecField
+    InferSpecField,
+    FallbackToken,
+    FallbackOnlyValue,
+    FallbackOnlyReturn
 };
