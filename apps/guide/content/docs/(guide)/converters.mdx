@@ -86,7 +86,7 @@ const flags = Envapter.getAs<FeatureFlags>('FEATURE_FLAGS', Converters.Json, {})
 //    ^?
 ```
 
-`flags` is typed from your `FeatureFlags` interface, but envapt doesn't check that the JSON matches it. With the generic, the type never includes `undefined`, even with no fallback. If the variable can be unset, pass a fallback, since the read returns `undefined` otherwise.
+`flags` is typed from your `FeatureFlags` interface, though envapt doesn't check that the JSON matches it. Without the `{}` fallback, the type is `FeatureFlags | undefined`, because an unset variable returns `undefined`.
 
 ### URL
 

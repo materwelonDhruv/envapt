@@ -137,12 +137,12 @@ export default defineConfig({
 });
 ```
 
-`cloudflare.config.ts` is the typed config file for Cloudflare's `cf` CLI. Cloudflare says `cf` is in beta and its configuration can change before the stable release. Write a `vars` entry as `bindings.text()`, or as `bindings.json()` for a non-string value. `bindings.secret()` declares that the Worker requires `API_TOKEN` and carries no value. To upload secrets with a new version, pass `--secrets-file` to `cf deploy` ([Cloudflare's migration guide](https://developers.cloudflare.com/cf/wrangler/migrate/)).
+`cloudflare.config.ts` is the typed config file for Cloudflare's `cf` CLI. Cloudflare says `cf` is in beta and its configuration can change before the stable release. Write a `vars` entry as `bindings.text()`, or as `bindings.json()` for a non-string value. `bindings.secret()` declares that the Worker requires `API_TOKEN`. You upload the value separately, for example by passing `--secrets-file` to `cf deploy` ([Cloudflare's migration guide](https://developers.cloudflare.com/cf/wrangler/migrate/)).
 
 </Tab>
 </Tabs>
 
-Both forms read secrets from `.dev.vars` in local development, under `wrangler dev` and `cf dev`:
+In local development, `wrangler dev` and `cf dev` read secrets from `.dev.vars`:
 
 ```txt title=".dev.vars"
 API_TOKEN=local-dev-token
@@ -153,7 +153,7 @@ Under `wrangler dev`, a key in `.dev.vars` replaces a `vars` entry of the same n
 
 ## JSON vars and resource bindings
 
-A JSON `vars` entry such as `FEATURE_FLAGS` above arrives on `env` as an object. [`PortableSource`](/docs/sources#the-sources-envapt-ships) stringifies it, and [`Converters.Json`](/docs/converters) parses that string back.
+A JSON `vars` entry such as `FEATURE_FLAGS` in the config above arrives on `env` as an object. [`PortableSource`](/docs/sources#the-sources-envapt-ships) stringifies it, and [`Converters.Json`](/docs/converters#json) parses that string back.
 
 ```ts twoslash
 // @lib: esnext
@@ -168,13 +168,13 @@ const flags = Envapter.getAs('FEATURE_FLAGS', Converters.Json); // { "beta": tru
 //    ^?
 ```
 
-`flags` is `JsonValue | undefined`, the type the converter gives any JSON. To check the shape, pass a [schema](/docs/standard-schema) to `getRequired` as the converter.
+`flags` is `JsonValue | undefined`, the type `Converters.Json` returns for any JSON. To check the shape, pass a [schema](/docs/standard-schema) to `getAs` or `getRequired` in place of `Converters.Json`.
 
 A resource binding such as a KV namespace is a property of `env` as well. `PortableSource` runs it through `JSON.stringify`, so for a KV namespace `Envapter.get('CACHE')` returns `'{}'`. Read `vars` and secrets through envapt, and use bindings from `env` directly.
 
 ## Reading fresh values on every request
 
-Cloudflare may keep a Worker instance running after a deploy that changes only bindings ([Cloudflare's note on bindings](https://developers.cloudflare.com/workers/runtime-apis/bindings/#making-changes-to-bindings)). A value bound at module scope keeps its old value until Cloudflare replaces the instance. To read the current `env` on every request, bind the `env` argument of the handler. Each bind rebuilds envapt's cache, so every request rebuilds it.
+Cloudflare may keep a Worker instance running after a deploy that changes only bindings ([Cloudflare's note on bindings](https://developers.cloudflare.com/workers/runtime-apis/bindings/#making-changes-to-bindings)). The `config` from the module above keeps its old values until Cloudflare replaces the instance. If you change `vars` or secrets without changing code and need the new values right away, bind the handler's `env` argument on every request. Each bind rebuilds envapt's cache, so every request pays for a rebuild.
 
 ```ts twoslash
 // @lib: esnext
@@ -196,7 +196,7 @@ export default {
 } satisfies ExportedHandler<Env>;
 ```
 
-`PortableSource` accepts the `Env` interface because its constructor takes any object.
+`PortableSource` accepts the typed `env` argument because its constructor takes any object.
 
 ## Decorators
 

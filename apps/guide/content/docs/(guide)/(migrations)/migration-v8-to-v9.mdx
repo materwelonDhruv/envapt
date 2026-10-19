@@ -139,8 +139,11 @@ TypeScript reports each of these in v9, so you can work through them from the co
 | `CustomElementConverter<T>` | `ConverterFunction<T>` |
 | `ConverterFunction<T, string>` | `ConverterFunction<T>` |
 | `EnvaptErrorCodes.MissingEnvValue` as a type | `typeof EnvaptErrorCodes.MissingEnvValue`, or `305` |
+| `getUsing<T>(key, token)` typed as `T` | `getAs<T>(key, token)` typed as `T \| undefined`, or pass a fallback to get `T` |
 
 {/* prettier-ignore-end */}
+
+Without TypeScript, two of these show up as runtime errors. Passing `String` or `Number` as a converter throws `InvalidUserDefinedConfig` (302), with a message pointing to `Converters.String` or `Converters.Number`. A symbol fallback throws `FallbackConverterTypeMismatch` (104).
 
 `getAs` accepts a token, a function, or a schema. `Converters.BigInt` and `Converters.RegExp` are now spelled like the JavaScript globals, the same as `getBigInt` was.
 
@@ -194,4 +197,5 @@ These don't break existing code:
 
 - `getRequired` and `getRequiredAll` take a synchronous Standard Schema.
 - Each argument to [`Envapter.require`](/docs/required-values#getrequired-require-and-has) can be an ordered key list, which passes when any key in it has a value. Each placeholder in [`Envapter.resolve`](/docs/templates#the-resolve-tagged-template) takes one too and uses the first key with a value.
+- [`ENVIRONMENT_KEYS`](/docs/environment#detecting-the-environment) is exported. It lists the variables envapt checks to detect the environment, in order, for tools that need to read the same ones.
 - If a zod `.transform` or `.refine` throws, zod returns a Promise. The read still throws `InvalidUserDefinedConfig`, and Node no longer crashes on the unhandled rejection. With `Envapter.debug = 'warn'`, envapt logs the original error.

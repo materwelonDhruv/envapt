@@ -3,7 +3,7 @@ title: Edge runtimes
 description: Pass envapt the config that Vercel Edge, Fastly Compute, or Expo gives you, then read typed values with the same API you use on Node.
 ---
 
-Vercel Edge gives you `process.env` as an object. Fastly Compute gives you a function that returns one value per call. Expo replaces each `process.env.EXPO_PUBLIC_*` reference with its value when it builds, and it can also hand you an `extra` object. On every one of them you call `Envapter.useSource` before the first read, because the portable build they load [starts with no source](/docs/sources). Other runtimes that load the portable build work the same way: pass an object to `PortableSource`, or a function to `useSource`. [Compatibility](/docs/compatibility#portable-build-you-bind-a-source) lists the export condition each runtime resolves to.
+Vercel Edge gives you `process.env` as an object. Fastly Compute gives you a function that returns one value per call. Expo replaces each `process.env.EXPO_PUBLIC_*` reference with its value when it builds, and it can also hand you an `extra` object. On each of them you call `Envapter.useSource` before the first read, because the portable build they load [starts with no source](/docs/sources). Any other runtime on the portable build works the same way. [Compatibility](/docs/compatibility#portable-build-you-bind-a-source) lists the export condition each runtime resolves to.
 
 ## Vercel Edge
 
@@ -38,6 +38,11 @@ Fastly's types say `env()` works only while a request is being handled, and `use
 declare module 'fastly:env' {
     export function env(name: string): string | undefined;
 }
+interface FetchEvent extends Event {
+    readonly request: Request;
+    respondWith(response: Response | Promise<Response>): void;
+}
+declare function addEventListener(type: 'fetch', listener: (event: FetchEvent) => void): void;
 // @filename: index.ts
 import { env } from 'fastly:env';
 import { Converters, Envapter } from 'envapt';
@@ -53,17 +58,25 @@ export function handle(request: Request): Response {
     const target = new URL(new URL(request.url).pathname, originUrl);
     return new Response(null, { status: 302, headers: { location: target.href } });
 }
+
+addEventListener('fetch', (event) => event.respondWith(handle(event.request)));
 ```
 
 The `bound` flag keeps `handle` from rebuilding envapt's cache on every request. A missing `ORIGIN_URL` throws on the first request that reads it, since nothing reads before then.
 
-Set custom variables when you build, by passing `--env` to the `js-compute-runtime` command in your `build` script, as in `--env ORIGIN_URL=https://origin.example.com`. Fastly's [environment variables](https://www.fastly.com/documentation/reference/compute/ecp-env/) docs list the built-in ones, and none of them is `NODE_ENV`. Until you pass one of the [detection keys](/docs/environment#detecting-the-environment) with `--env`, `Envapter.environment` is `'development'`.
+Set custom variables when you build, by passing `--env` to the `js-compute-runtime` command in your `build` script:
+
+```sh
+js-compute-runtime --env ORIGIN_URL=https://origin.example.com src/index.js bin/main.wasm
+```
+
+Fastly's [environment variables](https://www.fastly.com/documentation/reference/compute/ecp-env/) docs list the built-in ones, and none of them is `NODE_ENV`. Until you pass one of the [detection keys](/docs/environment#detecting-the-environment) with `--env`, `Envapter.environment` is `'development'`.
 
 ## Expo and React Native
 
-Metro resolves the `react-native` export condition, which selects the portable build.
+Metro 0.82 and later read package exports by default and resolve the `react-native` condition, which selects the portable build.
 
-Expo recommends referencing `process.env.EXPO_PUBLIC_*` variables directly in your code ([Expo's environment variables](https://docs.expo.dev/guides/environment-variables/)). Expo replaces each reference that uses dot notation with its string when it builds the bundle, so `process.env['EXPO_PUBLIC_API_URL']` and a destructured `process.env` are never replaced. Metro defines `process.env` at runtime with only `NODE_ENV` in it, so `new PortableSource(process.env)` binds that one key. Reference each variable by name instead. Add `NODE_ENV` to the object too, because `Envapter.environment` reads it from the source.
+Expo recommends referencing `process.env.EXPO_PUBLIC_*` variables directly in your code ([Expo's environment variables](https://docs.expo.dev/guides/environment-variables/)). Expo replaces each reference that uses dot notation with its string when it builds the bundle. Bracket access, as in `process.env['EXPO_PUBLIC_API_URL']`, and destructuring aren't replaced. Metro defines `process.env` at runtime with only `NODE_ENV` in it, so `new PortableSource(process.env)` binds that one key. Reference each variable by name instead. Add `NODE_ENV` to the object too, because `Envapter.environment` reads it from the source.
 
 ```ts twoslash title="src/config.ts"
 import { Converters, Envapter, PortableSource } from 'envapt';

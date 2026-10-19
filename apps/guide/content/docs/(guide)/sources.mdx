@@ -74,7 +74,7 @@ const poolSize = Envapter.getAs('DB_POOL_SIZE', Converters.Integer, 10);
     type={{
         readVars: { type: '() => Record<string, string>', description: 'The variables envapt copies when it builds its cache.', required: true },
         readVar: { type: '(key: string) => string | undefined', description: 'Looks up one key that readVars() did not return.' },
-        supportsFiles: { type: 'boolean', description: 'true makes envapt load the .env cascade through the file members below. Default false.' },
+        supportsFiles: { type: 'boolean', description: 'Set true, together with the four file members below, to make envapt load the .env cascade. Default false.' },
         readFile: { type: '(path: string, encoding: string) => string | undefined', description: 'With supportsFiles: true. Returns the file text, or undefined when it is missing.' },
         resolvePath: { type: '(baseDir: string, candidate: string) => string', description: 'With supportsFiles: true. Joins a relative .env path onto baseDir.' },
         normalizeBaseDir: { type: '(value: string | URL) => string', description: 'With supportsFiles: true. Turns a directory path or module URL into a directory path.' },
@@ -82,11 +82,11 @@ const poolSize = Envapter.getAs('DB_POOL_SIZE', Converters.Integer, 10);
     }}
 />
 
-Only `readVars` is required. Set `supportsFiles: true` when your runtime has files envapt should read, and supply `readFile`, `resolvePath`, `normalizeBaseDir`, and `writeVars`. `FileSource` is the only shipped source that sets it.
+Only `readVars` is required. Set `supportsFiles: true` when your runtime has files envapt should read, and supply `readFile`, `resolvePath`, `normalizeBaseDir`, and `writeVars`. Of the sources envapt ships, `FileSource` sets it.
 
 ### A function can be a source
 
-Some stores answer one key at a time and can't list their keys. Pass a `(key) => string | undefined` function to `useSource` to have envapt call it the first time you read each key. A function is shorthand for a source whose `readVars()` returns `{}` and whose `readVar` is your function.
+Some stores return one key at a time and can't list their keys. Pass a `(key) => string | undefined` function to `useSource` to have envapt call it the first time you read each key. A function is shorthand for a source whose `readVars()` returns `{}` and whose `readVar` is your function.
 
 ```ts twoslash
 import { Envapter, Converters } from 'envapt';
@@ -97,7 +97,7 @@ Envapter.useSource((key) => store.get(key));
 const region = Envapter.getRequired('REGION', Converters.String);
 ```
 
-If the store has no `REGION` on the first read, `getRequired` throws `MissingEnvValue` (305). Adding `REGION` to the store afterwards changes nothing until the cache rebuilds, because envapt caches the miss (see [When values are read](#when-values-are-read)).
+If the store has no `REGION` on the first read, `getRequired` throws `MissingEnvValue` (305). Adding `REGION` to the store afterwards changes nothing until the cache rebuilds, because envapt stores the miss in its cache (see [When values are read](#when-values-are-read)).
 
 ## Combining sources
 
@@ -114,7 +114,19 @@ const dbUrl = Envapter.getAs('DATABASE_URL', Converters.Url);
 
 Here `merge(new FileSource(), ...)` keeps the `.env` cascade and makes the secrets win over it, without writing to `process.env`. A `DATABASE_URL` in `secrets` wins over the same key in `process.env` and in every `.env` file, as long as `override` stays off (see [File options](/docs/env-files#file-options)).
 
-A member can also be a `(key) => string | undefined` function. Wherever it appears in the list, it answers only keys that no other member's `readVars()` returned.
+`FileSource` exists only on the node build. On Workers, the browser, and edge runtimes, merge two `PortableSource`s:
+
+```ts twoslash
+import { Envapter, PortableSource, merge, Converters } from 'envapt';
+// ---cut---
+declare const env: Record<string, unknown>; // the Worker env
+declare const secrets: Record<string, string>; // fetched and awaited
+Envapter.useSource(merge(new PortableSource(env), new PortableSource(secrets)));
+
+const apiKey = Envapter.getRequired('API_KEY', Converters.String);
+```
+
+A member can also be a `(key) => string | undefined` function. Wherever it appears in the list, it supplies a value only for keys that no other member's `readVars()` returned.
 
 ```ts twoslash
 import { Envapter, FileSource, merge, Converters } from 'envapt';
@@ -129,14 +141,14 @@ const redisUrl = Envapter.getAs('REDIS_URL', Converters.Url);
 
 ## When values are read
 
-If a test setup sets `process.env.API_URL` after envapt was imported, the next read still returns the old value. envapt keeps a **cache**, the variables it builds from the bound source and holds until the next rebuild. Reads use it. If the cache lacks a key, envapt calls the source's `readVar` once for that key.
+If a test setup sets `process.env.API_URL` after envapt was imported, the next read still returns the old value. envapt keeps a **cache**, the variables it builds from the bound source and holds until the next rebuild. If the cache lacks a key, envapt calls the source's `readVar` once for that key.
 
 Binding builds the cache, and each read goes through it:
 
 ```txt
 Envapter.useSource(source), or importing envapt on Node
 ├─ source.readVars() .......... copied into the cache
-└─ .env cascade ............... layered on top, FileSource only
+└─ .env cascade ............... loaded only when supportsFiles is true
 
 Envapter.getAs('DATABASE_URL', Converters.Url)
 ├─ cache lookup .................. or source.readVar('DATABASE_URL') when the cache lacks it
@@ -162,6 +174,6 @@ These rules decide what the cache holds.
 
 {/* prettier-ignore-end */}
 
-[Compatibility](/docs/compatibility#file-apis-and-fileapimode) covers when the file APIs throw `FileApiUnsupported` (306) in place of the warning. On the node build, if you bind a source that doesn't read files, `envPaths`, `baseDir`, and `configureProfiles` throw `FileApiUnsupported`, and `envFileOptions` and `resetPaths` still rebuild the cache.
+[Compatibility](/docs/compatibility#file-apis-and-fileapimode) covers when the file APIs throw `FileApiUnsupported` (306) in place of the warning. On the node build, if you bind a source that doesn't read files, `envPaths`, `baseDir`, and `configureProfiles` throw `FileApiUnsupported`. `envFileOptions` and `resetPaths` still rebuild the cache.
 
-A rebuild also clears the values that [decorated fields](/docs/decorators) cache, because envapt stores them in this cache. After a rebuild, envapt converts the value again the next time you access a field you already read.
+A rebuild also clears the converted values of [decorated fields](/docs/decorators), because envapt stores them in this cache. After a rebuild, envapt converts the value again the next time you access a field you already read.

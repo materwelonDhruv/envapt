@@ -66,7 +66,7 @@ export abstract class EnvapterBase {
      * `envFileOptions`, `configureProfiles`, `resetPaths`). `'warn'` (the default) warns once and
      * does nothing. `'throw'` throws {@link EnvaptError} `FileApiUnsupported`. The node build runs these
      * APIs normally and this value has no effect there.
-     * @see {@link https://envapt.materwelon.dev/docs/compatibility#binding-by-runtime}
+     * @see {@link https://envapt.materwelon.dev/docs/compatibility#file-apis-and-fileapimode}
      */
     static set fileApiMode(mode: FileApiMode) {
         Validator.validateFileApiMode(mode);
