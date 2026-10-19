@@ -37,21 +37,19 @@ describe('Runtime Validation', () => {
                 .with.property('code', EnvaptErrorCodes.InvalidCustomConverter);
         });
 
-        it('throws InvalidCustomConverter for an undefined converter', () => {
-            // cast past the type to reach the runtime check
-            const removedToken = undefined as never;
-            for (const read of [
-                () => Envapter.getAs('VAR_IN_EXTRA_FILE', removedToken),
-                () => {
-                    class RemovedTokenField {
-                        @Envapt('VAR_IN_EXTRA_FILE', { converter: removedToken })
-                        static readonly value: unknown;
-                    }
-                    return RemovedTokenField.value;
-                }
-            ]) {
-                expect(read).to.throw(EnvaptError).with.property('code', EnvaptErrorCodes.InvalidCustomConverter);
+        it('reads an explicit `converter: undefined` on @Envapt the same as no converter', () => {
+            class OptionalConverter {
+                @Envapt('NEVER_SET_KEY', { fallback: 3000, converter: undefined })
+                static readonly port: number;
             }
+            expect(OptionalConverter.port).to.equal(3000);
+        });
+
+        it('throws InvalidCustomConverter for an undefined getAs converter', () => {
+            // cast past the type to reach the runtime check
+            expect(() => Envapter.getAs('VAR_IN_EXTRA_FILE', undefined as never))
+                .to.throw(EnvaptError)
+                .with.property('code', EnvaptErrorCodes.InvalidCustomConverter);
         });
     });
 

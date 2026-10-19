@@ -32,7 +32,6 @@ export function parseEnvaptOptions<TFallback>(options: unknown): DecoratorConfig
         };
         fallback = opts.fallback;
         converter = opts.converter;
-        if ('converter' in opts) Validator.rejectUndefinedConverter(converter);
         required = opts.required === true;
         Validator.rejectNonConverter(converter);
 
