@@ -55,7 +55,7 @@ The readers differ when a value is set but can't convert.
 
 A fallback can hide a typo. The `sampleRate` read above returns `0.25` for `SAMPLE_RATE=high`, and nothing reports it unless you set `Envapter.debug = 'verbose'` ([debug logging](/docs/errors#debug-logging)). If a wrong value has to stop the app, read it with [`getRequired`](/docs/required-values) instead.
 
-If a fallback has the wrong type for its converter, TypeScript reports it before you run the code, as with `'abc'` for `Converters.Port`. A time fallback is milliseconds or a string like `'15m'`, so `'5'` is an error too. In plain JavaScript, or with a fallback typed as a plain `string`, the call throws instead. The error is `FallbackConverterTypeMismatch` or `MalformedTimeFallback`, and it throws even when the variable is set. [Errors and debugging](/docs/errors) has every code.
+If a fallback has the wrong type for its converter, TypeScript reports it before you run the code, as with `'abc'` for `Converters.Port`. A time fallback is milliseconds or a string like `'15m'`, so `'5'` is an error too. In plain JavaScript, or when a cast gets past the types, the call throws instead. The error is `FallbackConverterTypeMismatch` or `MalformedTimeFallback`, and it throws even when the variable is set. [Errors and debugging](/docs/errors) has every code.
 
 ## Ordered keys
 
