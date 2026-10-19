@@ -17,7 +17,7 @@ import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 
 // deeper levels list the signature, Parameters and Returns headings typedoc writes under every member
-const MAX_TOC_DEPTH = 3;
+const API_TOC_DEPTH = 3;
 
 export default async function Page(props: { params: Promise<{ slug?: string[] }> }): Promise<ReactNode> {
     const params = await props.params;
@@ -26,13 +26,10 @@ export default async function Page(props: { params: Promise<{ slug?: string[] }>
 
     const MDXContent = page.data.body;
     const preview = await docsPreview(page);
+    const toc = page.slugs[0] === 'api' ? page.data.toc.filter((item) => item.depth <= API_TOC_DEPTH) : page.data.toc;
 
     return (
-        <DocsPage
-            toc={page.data.toc.filter((item) => item.depth <= MAX_TOC_DEPTH)}
-            full={page.data.full}
-            tableOfContent={{ header: <TocControls /> }}
-        >
+        <DocsPage toc={toc} full={page.data.full} tableOfContent={{ header: <TocControls /> }}>
             <ComponentEmbed>
                 <PreviewCard {...preview} />
             </ComponentEmbed>

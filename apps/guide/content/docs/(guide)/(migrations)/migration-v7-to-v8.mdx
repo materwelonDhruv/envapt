@@ -217,7 +217,7 @@ const name = Envapter.getWith('NAME', (raw, fallback) => raw?.toUpperCase(), 'AN
 // v8: undefined (the converter ran with raw === undefined)
 ```
 
-A converter that reads `raw` without a guard now runs on a missing key. Guard it with `raw ?? ''` or an early `if (!raw) return fallback`. The `ConverterFunction` type has always declared `raw` as `string | undefined` and the fallback as the second parameter. The `@Envapt` custom-converter decorator already ran the converter on a missing key, so v8 makes `getWith` behave the same way.
+A converter that reads `raw` without a guard now runs on a missing key. Guard it with `raw ?? ''` or an early `if (!raw) return fallback`. In v8, the `ConverterFunction` type declared `raw` as `string | undefined` and the fallback as the second parameter. The `@Envapt` custom-converter decorator already ran the converter on a missing key, so v8 makes `getWith` behave the same way.
 
 ## An explicit `undefined` fallback counts as no fallback
 

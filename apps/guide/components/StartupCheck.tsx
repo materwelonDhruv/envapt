@@ -16,7 +16,15 @@ export const config = Envapter.getRequiredAll({
 
 const OUTPUT = `$ DATABASE_URL=postgres://db/app \\
   PORT=99999 CACHE_TTL=soon node config.ts
-EnvaptError [210]: Validation failed for PORT, CACHE_TTL.`;
+
+EnvaptError [210]: Validation failed for PORT, CACHE_TTL.
+    at …
+  code: 210,
+  issues: [
+    { message: 'could not be converted', path: [ 'PORT' ] },
+    { message: 'could not be converted', path: [ 'CACHE_TTL' ] }
+  ]
+}`;
 
 export function StartupCheck(): ReactNode {
     return (
@@ -39,7 +47,7 @@ export function StartupCheck(): ReactNode {
                 </CodeCard>
             </div>
             <p className="mt-5 font-mono text-[12.5px] text-fd-muted-foreground">
-                The message holds only keys, so you can log it.{' '}
+                Each issue gives the key and why it failed.{' '}
                 <Link href="/docs/required-values" className="text-(--ev-link) hover:underline">
                     Required values
                 </Link>

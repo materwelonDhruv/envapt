@@ -46,7 +46,7 @@ declare function addEventListener(type: 'fetch', listener: (event: FetchEvent) =
 // @filename: index.ts
 import { env } from 'fastly:env';
 import { Converters, Envapter } from 'envapt';
-
+// ---cut---
 let bound = false;
 
 export function handle(request: Request): Response {

@@ -134,7 +134,7 @@ These cause a 302, and the message states which:
 - a schema whose `validate` returns a Promise, which zod does when a `.transform` or `.refine` throws
 - an assignment to a decorated field ([Decorators](/docs/decorators#declaring-decorated-fields))
 - the removed positional `@Envapt(key, fallback, converter)` form
-- a build tool's Stage 3 decorator transform that leaves out the accessor name, as vitest's does
+- a build tool's Stage 3 decorator transform that leaves out the accessor name
 
 ## Debug logging
 
@@ -196,7 +196,7 @@ With `PORT=8080` in `.env` and `PORT=80a` in `.env.production`, a run with `ENVA
 | Level | Logs |
 | --- | --- |
 | `silent` (default) | nothing from reads. The portable build still prints its file-API warnings ([Compatibility](/docs/compatibility)) |
-| `warn` | a `.env` file that couldn't be read, a `${VAR}` reference left unresolved, a read of an unset or empty variable (whether it returns a fallback or `undefined`), an environment name envapt doesn't recognize or no environment name at all, and the error from a schema that returned a Promise |
+| `warn` | a `.env` file that couldn't be read, a `${VAR}` reference left unresolved, an unset or empty variable read through `get`, a typed getter, `getAs`, or a decorated field without `required` (whether it returns a fallback or `undefined`), an environment name envapt doesn't recognize or no environment name at all, and the error from a schema that returned a Promise |
 | `verbose` | everything in `warn`, plus the base directory, the effective paths, every file loaded with its key count, each key a file sets, cache rebuilds, keys mirrored to `process.env`, and a present value a converter couldn't convert |
 
 {/* prettier-ignore-end */}

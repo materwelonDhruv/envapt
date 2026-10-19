@@ -48,7 +48,7 @@ If every key is set but some values can't convert, the call throws one `InvalidE
 
 - **Coming from dotenv.** envapt reads the same `.env` files, picks the ones for the current environment (`.env.production`, `.env.local`, and so on), and returns typed values. `import 'envapt/config'` also copies the keys into `process.env`, the same as `dotenv/config`.
 - **A schema when you want one.** The built-in converters cover ports, URLs, durations, JSON, emails, and more, with no schema library installed. When a converter isn't enough, pass a zod, valibot, or arktype schema, or any synchronous Standard Schema.
-- **One API on every runtime.** Node, Bun, and Deno read `process.env` and your `.env` files from the moment you import envapt. On Cloudflare Workers, edge runtimes, and the browser, you bind the object the platform gives you once, then read with the same calls.
+- **One API on every runtime.** On Node, Bun, and Deno, envapt reads `process.env` and your `.env` files from the moment you import it. On Cloudflare Workers, edge runtimes, and the browser, you bind the object the platform gives you once, then read with the same calls.
 - **Functions or decorators.** Read with `Envapter` from any call site, or declare typed class fields with a TC39 `@Envapt` accessor decorator.
 
 envapt is ESM only and needs Node `>=22.23.3`, Bun `>=1.3.11`, or Deno `>=2.5`. A read with a fallback also returns the fallback when the value can't convert, so `PORT=80a` reads as `3000`. Use a required read for values that must be right.
