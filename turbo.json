@@ -28,6 +28,10 @@
             "dependsOn": ["^build", "build"],
             "inputs": ["$TURBO_DEFAULT$", "tsconfig*.json"]
         },
+        "@envapt/guide#tc": {
+            "dependsOn": ["^build"],
+            "inputs": ["$TURBO_DEFAULT$", "tsconfig*.json"]
+        },
         "test": {
             "inputs": ["$TURBO_DEFAULT$", "jest.config.*", "vitest.config.*", "src/**", "tests/**"]
         },
