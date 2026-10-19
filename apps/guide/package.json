@@ -15,8 +15,8 @@
         "postinstall": "fumadocs-mdx",
         "lint": "eslint . --cache",
         "lint:fix": "eslint . --fix --cache",
-        "test": "vitest run",
-        "test:watch": "vitest dev",
+        "test": "pnpm api && vitest run",
+        "test:watch": "pnpm api && vitest dev",
         "fmt": "prettier --write . --cache",
         "fmt:check": "prettier --check . --cache"
     },

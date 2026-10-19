@@ -35,8 +35,12 @@ function wantsMarkdown(request: Request): boolean {
     return isMarkdownPreferred(request, { markdownMediaTypes: ['text/markdown'] });
 }
 
-async function markdownCopy(env: Env, request: Request, markdownDir: string): Promise<Response> {
-    const md = await env.ASSETS.fetch(at(request, `${markdownDir}${MARKDOWN_FILE}`));
+function markdownFileIn(path: string): string {
+    return path.endsWith(`/${MARKDOWN_FILE}`) ? path : `${withTrailingSlash(path)}${MARKDOWN_FILE}`;
+}
+
+async function markdownCopy(env: Env, request: Request, path: string): Promise<Response> {
+    const md = await env.ASSETS.fetch(at(request, markdownFileIn(path)));
     if (!md.ok) return md;
     return new Response(md.body, { status: md.status, headers: { 'content-type': MARKDOWN } });
 }
@@ -60,7 +64,7 @@ const handler = {
         const moved = movedPage(url.pathname);
         if (moved !== undefined) return Response.redirect(new URL(moved, url).toString(), PERMANENT_REDIRECT);
 
-        if (url.pathname.startsWith('/llms/docs/')) return markdownCopy(env, request, withTrailingSlash(url.pathname));
+        if (url.pathname.startsWith('/llms/docs/')) return markdownCopy(env, request, url.pathname);
 
         const served = await page(env, request, url.pathname);
         const contentType = served.headers.get('content-type') ?? '';
