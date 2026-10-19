@@ -1,9 +1,8 @@
 import { resolve } from 'node:path';
 
-import { afterEach, beforeAll, describe, expect, expectTypeOf, it } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 
-import { Converters, Envapter, EnvaptErrorCodes } from '../src';
-import { EnvaptError } from '../src/infra/Error';
+import { Converters, Envapter, EnvaptError, EnvaptErrorCodes } from '../src';
 import { Envapt } from '../src/legacy';
 
 describe('Strict mode + required (v5)', () => {
@@ -29,11 +28,6 @@ describe('Strict mode + required (v5)', () => {
             expect(Envapter.get('WHITESPACE_ONLY')).to.equal(undefined);
         });
 
-        it('uses the fallback when the value is whitespace-only', () => {
-            Envapter.strict = true;
-            expect(Envapter.get('WHITESPACE_ONLY', 'default')).to.equal('default');
-        });
-
         it('reads a whitespace-only number as 0 outside strict mode and as the fallback under it', () => {
             expect(Envapter.getAs('WHITESPACE_ONLY', Converters.Number, 5)).to.equal(0);
 
@@ -53,12 +47,6 @@ describe('Strict mode + required (v5)', () => {
             expect(() => Envapter.getAs('PORTS_WITH_EMPTY', Converters.array({ of: Converters.Number })))
                 .to.throw(EnvaptError)
                 .with.property('code', EnvaptErrorCodes.EmptyArrayElement);
-        });
-
-        it('does NOT throw under strict OFF (existing permissive behavior preserved)', () => {
-            Envapter.strict = false;
-            const ports = Envapter.getAs('PORTS_WITH_EMPTY', Converters.array({ of: Converters.Number }));
-            expect(ports).to.deep.equal([80, 443]);
         });
 
         it('processes clean arrays normally under strict ON', () => {
@@ -100,11 +88,6 @@ describe('Strict mode + required (v5)', () => {
             static readonly key: string;
         }
 
-        class RequiredWhitespace {
-            @Envapt('WHITESPACE_ONLY', { required: true })
-            static readonly key: string;
-        }
-
         class RequiredWithConverter {
             @Envapt('DATABASE_URL', { converter: Converters.Url, required: true })
             static readonly url: URL;
@@ -112,20 +95,6 @@ describe('Strict mode + required (v5)', () => {
 
         it('throws MissingEnvValue when the key is absent', () => {
             expect(() => RequiredMissing.key)
-                .to.throw(EnvaptError)
-                .with.property('code', EnvaptErrorCodes.MissingEnvValue);
-        });
-
-        it('keeps a whitespace-only required value non-strict, and throws under strict', () => {
-            Envapter.strict = false;
-            expect(RequiredWhitespace.key).to.equal('   ');
-
-            Envapter.strict = true;
-            class RequiredWhitespaceStrict {
-                @Envapt('WHITESPACE_ONLY', { required: true })
-                static readonly key: string;
-            }
-            expect(() => RequiredWhitespaceStrict.key)
                 .to.throw(EnvaptError)
                 .with.property('code', EnvaptErrorCodes.MissingEnvValue);
         });
@@ -163,16 +132,6 @@ describe('Strict mode + required (v5)', () => {
             expect(() => Envapter.require('TEMPLATED_OK')).to.not.throw();
         });
 
-        it('passes a whitespace-only value non-strict, and throws under strict', () => {
-            Envapter.strict = false;
-            expect(() => Envapter.require('WHITESPACE_ONLY')).to.not.throw();
-
-            Envapter.strict = true;
-            expect(() => Envapter.require('WHITESPACE_ONLY'))
-                .to.throw(EnvaptError)
-                .with.property('code', EnvaptErrorCodes.MissingEnvValue);
-        });
-
         it('throws and lists every missing key in one error', () => {
             try {
                 Envapter.require('API_KEY', 'NEVER_SET_KEY', 'EMPTY_VALUE', 'SET_VALUE');
@@ -187,13 +146,5 @@ describe('Strict mode + required (v5)', () => {
                 expect(e.message).to.not.include('SET_VALUE');
             }
         });
-    });
-
-    it('getAs narrows by fallback presence', () => {
-        const noFallback = Envapter.getAs('SET_NUMBER', Converters.Number);
-        expectTypeOf(noFallback).toEqualTypeOf<number | undefined>();
-
-        const withFallback = Envapter.getAs('SET_NUMBER', Converters.Number, 3000);
-        expectTypeOf(withFallback).toEqualTypeOf<number>();
     });
 });

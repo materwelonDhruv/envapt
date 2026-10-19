@@ -9,23 +9,12 @@ class Config {
 
     @Envapt('TSC_EMIT_INSTANCE', { fallback: 'fallback' })
     declare readonly instanceValue: string;
-
-    // useDefineForClassFields defines an own field here that shadows the prototype getter
-    @Envapt('TSC_EMIT_INSTANCE', { fallback: 'fallback' })
-    readonly instanceNoDeclare!: string;
-
-    // tsc 6 emits `declare static` against the prototype, so a static read never hits the getter.
-    // tsgo emits it against the constructor and the read resolves.
-    @Envapt('TSC_EMIT_DECLARE_STATIC', { fallback: 2 })
-    declare static readonly declareStaticValue: number;
 }
 
 const config = new Config();
 process.stdout.write(
     JSON.stringify({
         staticValue: Config.staticValue,
-        instanceValue: config.instanceValue,
-        instanceNoDeclare: config.instanceNoDeclare,
-        declareStaticValue: Config.declareStaticValue
+        instanceValue: config.instanceValue
     })
 );

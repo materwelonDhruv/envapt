@@ -2,13 +2,12 @@ import { resolve } from 'node:path';
 
 import { beforeAll, describe, expect, it } from 'vitest';
 
-import { Converters, Envapter, EnvaptErrorCodes } from '../src';
-import { EnvaptError } from '../src/infra/Error';
+import { Converters, Envapter, EnvaptError, EnvaptErrorCodes } from '../src';
 import { Envapt } from '../src/legacy';
 
 describe('constructors as converters (v9)', () => {
     beforeAll(() => {
-        Envapter.envPaths = resolve(import.meta.dirname, '.env.042-constructor-converters');
+        Envapter.envPaths = resolve(import.meta.dirname, '.env.040-constructor-converters');
     });
 
     it('rejects Symbol, pointing at Symbol.for', () => {

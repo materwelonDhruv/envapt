@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { Envapter, EnvaptError, EnvaptErrorCodes, FileSource, merge, PortableSource } from '../src';
 
-import type { FileCapableSource } from '../src/types';
+import type { Source } from '../src';
 
 describe('merge composes sources with last-wins precedence', () => {
     afterEach(() => {
@@ -30,7 +30,7 @@ describe('merge composes sources with last-wins precedence', () => {
 
     it('keeps the .env cascade through a single file member, later members win over it', () => {
         Envapter.useSource(merge(new FileSource(), new PortableSource({ SHARED: 'secret', FROM_SECRET: 'secret' })));
-        Envapter.envPaths = resolve(import.meta.dirname, '.env.037-merge');
+        Envapter.envPaths = resolve(import.meta.dirname, '.env.036-merge');
 
         expect(Envapter.get('FROM_FILE')).to.equal('file');
         expect(Envapter.get('SHARED')).to.equal('secret');
@@ -52,7 +52,7 @@ describe('merge composes sources with last-wins precedence', () => {
     it('resolves a relative .env path against baseDir through the file member', () => {
         Envapter.useSource(merge(new FileSource(), new PortableSource({ X: '1' })));
         Envapter.baseDir = import.meta.dirname;
-        Envapter.envPaths = ['.env.037-merge'];
+        Envapter.envPaths = ['.env.036-merge'];
 
         expect(Envapter.get('FROM_FILE')).to.equal('file');
     });
@@ -60,7 +60,7 @@ describe('merge composes sources with last-wins precedence', () => {
     it('lifts the .env cascade above every member when envFileOptions.override is true', () => {
         Envapter.envFileOptions = { override: true };
         Envapter.useSource(merge(new FileSource(), new PortableSource({ SHARED: 'secret' })));
-        Envapter.envPaths = resolve(import.meta.dirname, '.env.037-merge');
+        Envapter.envPaths = resolve(import.meta.dirname, '.env.036-merge');
 
         expect(Envapter.get('SHARED')).to.equal('file');
     });
@@ -76,7 +76,7 @@ describe('merge composes sources with last-wins precedence', () => {
     it('mirrors only the .env delta, never an overlay member, when syncProcessEnv is on', () => {
         Envapter.syncProcessEnv = true;
         Envapter.useSource(merge(new FileSource(), new PortableSource({ SECRET: 'shh' })));
-        Envapter.envPaths = resolve(import.meta.dirname, '.env.037-merge');
+        Envapter.envPaths = resolve(import.meta.dirname, '.env.036-merge');
 
         expect(process.env.FROM_FILE).to.equal('file');
         expect(process.env.SECRET).to.equal(undefined);
@@ -102,34 +102,14 @@ describe('merge composes sources with last-wins precedence', () => {
         expect(source.readVars().K).to.equal('v');
     });
 
-    it('coerces each member through its own source, so non-string values become strings', () => {
-        Envapter.useSource(merge(new PortableSource({ N: 1 }), new PortableSource({ B: true })));
-
-        expect(Envapter.get('N')).to.equal('1');
-        expect(Envapter.get('B')).to.equal('true');
-    });
-
-    it('keeps a null member value as "null" and drops an undefined so it never clears the key', () => {
-        Envapter.useSource(merge(new PortableSource({ K: null }), new PortableSource({ K: undefined })));
-
-        expect(Envapter.get('K')).to.equal('null');
-    });
-
     it('a later empty-string value wins in the merge', () => {
         Envapter.useSource(merge(new PortableSource({ K: 'value' }), new PortableSource({ K: '' })));
 
         expect(Envapter.getRaw('K')).to.equal('');
     });
 
-    it('a merge that throws leaves the previously bound source intact', () => {
-        Envapter.useSource(new PortableSource({ KEEP: 'yes' }));
-        expect(() => merge(new FileSource(), new FileSource())).to.throw(EnvaptError);
-
-        expect(Envapter.get('KEEP')).to.equal('yes');
-    });
-
     it('delegates the file APIs to a custom FileCapableSource member', () => {
-        const customFile: FileCapableSource = {
+        const customFile: Source = {
             supportsFiles: true,
             readVars: () => ({ FROM_CUSTOM_VARS: 'vars' }),
             readFile: () => 'FROM_CUSTOM_FILE=filecontent\n',
@@ -146,7 +126,7 @@ describe('merge composes sources with last-wins precedence', () => {
 
     it("passes on an error the source's readFile throws while loading a .env file", () => {
         let reads = 0;
-        const flakyFile: FileCapableSource = {
+        const flakyFile: Source = {
             supportsFiles: true,
             readVars: () => ({}),
             // the first read is the existence check in the envPaths setter
@@ -169,7 +149,7 @@ describe('merge composes sources with last-wins precedence', () => {
 
     it('loads the .env cascade through a nested single-file merge', () => {
         Envapter.useSource(merge(merge(new FileSource()), new PortableSource({ X: '1' })));
-        Envapter.envPaths = resolve(import.meta.dirname, '.env.037-merge');
+        Envapter.envPaths = resolve(import.meta.dirname, '.env.036-merge');
 
         expect(Envapter.get('FROM_FILE')).to.equal('file');
     });

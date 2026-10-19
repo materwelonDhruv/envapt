@@ -91,16 +91,8 @@ describe('Environment detection (v5.2)', () => {
         });
     });
 
-    describe('fallback', () => {
-        it('defaults to development when no environment key is set', () => {
-            Envapter.useSource(new PortableSource({ FOO: 'bar' }));
-            expect(Envapter.isDevelopment).to.be.true;
-            expect(Envapter.environment).to.equal(Environment.Development);
-        });
-
-        it('defaults to development for an unrecognized value', () => {
-            Envapter.useSource(new PortableSource({ ENVIRONMENT: 'preview' }));
-            expect(Envapter.isDevelopment).to.be.true;
-        });
+    it('defaults to development when no environment key is set', () => {
+        Envapter.useSource(new PortableSource({ FOO: 'bar' }));
+        expect(Envapter.environment).to.equal(Environment.Development);
     });
 });

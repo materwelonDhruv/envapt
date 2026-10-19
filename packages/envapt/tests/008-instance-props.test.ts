@@ -2,7 +2,7 @@ import { resolve } from 'node:path';
 
 import { beforeAll, describe, expect, it } from 'vitest';
 
-import { Converters, Envapter, Environment } from '../src';
+import { Converters, Envapter } from '../src';
 import { Envapt } from '../src/legacy';
 
 describe('Instance Properties with @Envapt', () => {
@@ -22,13 +22,6 @@ describe('Instance Properties with @Envapt', () => {
         it('should have correct instance property values', () => {
             expect(instance.instanceProp1).to.equal('value1');
             expect(instance.instanceProp2).to.equal('value2');
-        });
-
-        it('sets and reads the environment through the inherited statics on a subclass', () => {
-            BasicInstanceProperties.environment = Environment.Staging;
-            expect(BasicInstanceProperties.isStaging).to.be.true;
-            expect(BasicInstanceProperties.isProduction).to.be.false;
-            expect(BasicInstanceProperties.environment).to.equal(Environment.Staging);
         });
     });
 

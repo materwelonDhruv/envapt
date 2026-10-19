@@ -2,210 +2,166 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 
-import { FileSource } from '../src';
-import { loadDotenv, parseDotenv } from '../src/infra/Dotenv';
+import { Envapter, FileSource } from '../src';
 
-const reader = new FileSource();
-const nodeReadFile = reader.readFile.bind(reader);
+import type { Source } from '../src';
 
-describe('Dotenv parser', () => {
-    describe('parseDotenv — basic syntax', () => {
+function sourceOfFiles(files: Record<string, string>): Source {
+    return {
+        supportsFiles: true,
+        readVars: () => ({}),
+        readFile: (path) => files[path],
+        resolvePath: (_baseDir, candidate) => candidate,
+        normalizeBaseDir: (value) => String(value),
+        writeVars: () => {}
+    };
+}
+
+function loadEnvFile(contents: string): void {
+    Envapter.useSource(sourceOfFiles({ 'app.env': contents }));
+    Envapter.envPaths = ['app.env'];
+}
+
+describe('.env file parsing', () => {
+    afterEach(() => {
+        Envapter.useSource(new FileSource());
+        Envapter.envFileOptions = {};
+        Envapter.resetPaths();
+    });
+
+    describe('basic syntax', () => {
         it('parses KEY=VALUE pairs', () => {
-            const result = parseDotenv('FOO=bar\nBAZ=qux');
-            expect(result.get('FOO')).to.equal('bar');
-            expect(result.get('BAZ')).to.equal('qux');
+            loadEnvFile('FOO=bar\nBAZ=qux');
+            expect(Envapter.getRaw('FOO')).to.equal('bar');
+            expect(Envapter.getRaw('BAZ')).to.equal('qux');
         });
 
         it('strips `export ` prefix', () => {
-            const result = parseDotenv('export FOO=bar');
-            expect(result.get('FOO')).to.equal('bar');
+            loadEnvFile('export FOO=bar');
+            expect(Envapter.getRaw('FOO')).to.equal('bar');
         });
 
         it('ignores blank lines and full-line comments', () => {
-            const result = parseDotenv('# top\n\nFOO=bar\n   \n# trailing');
-            expect(result.size).to.equal(1);
-            expect(result.get('FOO')).to.equal('bar');
+            loadEnvFile('# top\n\nFOO=bar\n   \n# trailing');
+            expect(Envapter.getRaw('FOO')).to.equal('bar');
         });
 
         it('returns empty string for empty values', () => {
-            const result = parseDotenv('FOO=');
-            expect(result.get('FOO')).to.equal('');
+            loadEnvFile('FOO=');
+            expect(Envapter.getRaw('FOO')).to.equal('');
         });
 
         it('trims whitespace around the value but preserves internal spaces', () => {
-            const result = parseDotenv('FOO=  hello world  ');
-            expect(result.get('FOO')).to.equal('hello world');
+            loadEnvFile('FOO=  hello world  ');
+            expect(Envapter.getRaw('FOO')).to.equal('hello world');
         });
 
         it('skips malformed lines without keys', () => {
-            const result = parseDotenv('no equals here\nFOO=bar');
-            expect(result.size).to.equal(1);
-            expect(result.get('FOO')).to.equal('bar');
+            loadEnvFile('no equals here\nFOO=bar');
+            expect(Envapter.getRaw('FOO')).to.equal('bar');
+            expect(Envapter.getRaw('no equals here')).to.equal(undefined);
         });
 
         it('accepts CRLF line endings', () => {
-            const result = parseDotenv('FOO=bar\r\nBAZ=qux');
-            expect(result.get('FOO')).to.equal('bar');
-            expect(result.get('BAZ')).to.equal('qux');
+            loadEnvFile('FOO=bar\r\nBAZ=qux');
+            expect(Envapter.getRaw('FOO')).to.equal('bar');
+            expect(Envapter.getRaw('BAZ')).to.equal('qux');
         });
     });
 
-    describe('parseDotenv — quoted values', () => {
+    describe('quoted values', () => {
         it('parses single-quoted values literally', () => {
-            const result = parseDotenv(String.raw`FOO='hello \n world'`);
-            expect(result.get('FOO')).to.equal(String.raw`hello \n world`);
+            loadEnvFile(String.raw`FOO='hello \n world'`);
+            expect(Envapter.getRaw('FOO')).to.equal(String.raw`hello \n world`);
         });
 
         it('parses double-quoted values with escape interpretation', () => {
-            const result = parseDotenv(String.raw`FOO="line1\nline2\ttabbed"`);
-            expect(result.get('FOO')).to.equal('line1\nline2\ttabbed');
+            loadEnvFile(String.raw`FOO="line1\nline2\ttabbed"`);
+            expect(Envapter.getRaw('FOO')).to.equal('line1\nline2\ttabbed');
         });
 
         it('handles all double-quote escape sequences (\\n, \\r, \\t, \\\\, \\")', () => {
-            const result = parseDotenv(String.raw`FOO="n=\n r=\r t=\t bs=\\ q=\""`);
-            expect(result.get('FOO')).to.equal('n=\n r=\r t=\t bs=\\ q="');
+            loadEnvFile(String.raw`FOO="n=\n r=\r t=\t bs=\\ q=\""`);
+            expect(Envapter.getRaw('FOO')).to.equal('n=\n r=\r t=\t bs=\\ q="');
         });
 
         it('leaves unknown escapes intact in double quotes', () => {
-            const result = parseDotenv(String.raw`FOO="\z literal"`);
-            expect(result.get('FOO')).to.equal(String.raw`\z literal`);
+            loadEnvFile(String.raw`FOO="\z literal"`);
+            expect(Envapter.getRaw('FOO')).to.equal(String.raw`\z literal`);
         });
 
         it('parses backtick-quoted values literally', () => {
-            const result = parseDotenv('FOO=`hello world`');
-            expect(result.get('FOO')).to.equal('hello world');
+            loadEnvFile('FOO=`hello world`');
+            expect(Envapter.getRaw('FOO')).to.equal('hello world');
         });
 
         it('skips a quote escaped by an odd number of backslashes and picks an earlier valid close', () => {
             // the parser skips the escaped last quote and closes right after `a`
-            const result = parseDotenv(String.raw`FOO="a"\"`);
-            expect(result.get('FOO')).to.equal('a');
+            loadEnvFile(String.raw`FOO="a"\"`);
+            expect(Envapter.getRaw('FOO')).to.equal('a');
         });
 
         it('treats a quote after an even number of backslashes as the closing quote', () => {
-            // two backslashes before the quote leave it unescaped
-            const result = parseDotenv(String.raw`FOO="a\\"`);
-            expect(result.get('FOO')).to.equal('a\\');
+            loadEnvFile(String.raw`FOO="a\\"`);
+            expect(Envapter.getRaw('FOO')).to.equal('a\\');
         });
 
         it('tolerates unescaped inner double quotes (greedy close)', () => {
-            const result = parseDotenv('FOO="{"a":1,"b":["c"]}"');
-            expect(result.get('FOO')).to.equal('{"a":1,"b":["c"]}');
+            loadEnvFile('FOO="{"a":1,"b":["c"]}"');
+            expect(Envapter.getRaw('FOO')).to.equal('{"a":1,"b":["c"]}');
         });
 
         it('parses multi-line double-quoted values', () => {
-            const result = parseDotenv('FOO="line one\nline two"\nBAR=baz');
-            expect(result.get('FOO')).to.equal('line one\nline two');
-            expect(result.get('BAR')).to.equal('baz');
+            loadEnvFile('FOO="line one\nline two"\nBAR=baz');
+            expect(Envapter.getRaw('FOO')).to.equal('line one\nline two');
+            expect(Envapter.getRaw('BAR')).to.equal('baz');
         });
 
         it('treats an unterminated quote as the rest of the file', () => {
-            const result = parseDotenv('FOO="unterminated\nstill open');
-            expect(result.get('FOO')).to.equal('unterminated\nstill open');
+            loadEnvFile('FOO="unterminated\nstill open');
+            expect(Envapter.getRaw('FOO')).to.equal('unterminated\nstill open');
         });
     });
 
-    describe('parseDotenv — comments', () => {
+    describe('comments', () => {
         it('strips inline comments after a space', () => {
-            const result = parseDotenv('FOO=bar # this is a comment');
-            expect(result.get('FOO')).to.equal('bar');
+            loadEnvFile('FOO=bar # this is a comment');
+            expect(Envapter.getRaw('FOO')).to.equal('bar');
         });
 
         it('does not strip `#` inside unquoted values when not preceded by whitespace', () => {
-            const result = parseDotenv('FOO=bar#tag');
-            expect(result.get('FOO')).to.equal('bar#tag');
+            loadEnvFile('FOO=bar#tag');
+            expect(Envapter.getRaw('FOO')).to.equal('bar#tag');
         });
 
         it('keeps inline `#` characters inside quoted values', () => {
-            const result = parseDotenv('FOO="bar # not a comment"');
-            expect(result.get('FOO')).to.equal('bar # not a comment');
+            loadEnvFile('FOO="bar # not a comment"');
+            expect(Envapter.getRaw('FOO')).to.equal('bar # not a comment');
         });
     });
 
-    describe('loadDotenv — file loading', () => {
-        let tmpDir: string;
-        const written: string[] = [];
-
-        beforeAll(() => {
-            tmpDir = mkdtempSync(join(tmpdir(), 'envapt-dotenv-'));
-        });
-
-        afterAll(() => {
-            rmSync(tmpDir, { recursive: true, force: true });
-        });
-
-        function writeEnv(filename: string, contents: string): string {
-            const fullPath = join(tmpDir, filename);
-            writeFileSync(fullPath, contents);
-            written.push(fullPath);
-            return fullPath;
-        }
-
-        it('reads a single file into processEnv', () => {
-            const path = writeEnv('basic.env', 'FOO=bar\nBAZ=qux');
-            const target: Record<string, string> = {};
-            loadDotenv({ path, processEnv: target, readFile: nodeReadFile });
-            expect(target).to.deep.equal({ FOO: 'bar', BAZ: 'qux' });
-        });
-
-        it('respects first-wins precedence across multiple paths by default', () => {
-            const first = writeEnv('first.env', 'WINNER=first\nONLY_FIRST=a');
-            const second = writeEnv('second.env', 'WINNER=second\nONLY_SECOND=b');
-            const target: Record<string, string> = {};
-            loadDotenv({ path: [first, second], processEnv: target, readFile: nodeReadFile });
-            expect(target.WINNER).to.equal('first');
-            expect(target.ONLY_FIRST).to.equal('a');
-            expect(target.ONLY_SECOND).to.equal('b');
-        });
-
+    describe('loading options', () => {
         it('lets later paths override earlier ones when override is true', () => {
-            const first = writeEnv('over1.env', 'KEY=first');
-            const second = writeEnv('over2.env', 'KEY=second');
-            const target: Record<string, string> = {};
-            loadDotenv({ path: [first, second], processEnv: target, override: true, readFile: nodeReadFile });
-            expect(target.KEY).to.equal('second');
+            Envapter.useSource(sourceOfFiles({ 'base.env': 'KEY=first', 'local.env': 'KEY=second' }));
+            Envapter.envFileOptions = { override: true };
+            Envapter.envPaths = ['base.env', 'local.env'];
+            expect(Envapter.getRaw('KEY')).to.equal('second');
         });
 
-        it('does not overwrite pre-existing processEnv values by default', () => {
-            const path = writeEnv('preset.env', 'KEY=fromfile');
-            const target: Record<string, string> = { KEY: 'frominit' };
-            loadDotenv({ path, processEnv: target, readFile: nodeReadFile });
-            expect(target.KEY).to.equal('frominit');
-        });
-
-        it('overwrites pre-existing processEnv values when override is true', () => {
-            const path = writeEnv('preset-override.env', 'KEY=fromfile');
-            const target: Record<string, string> = { KEY: 'frominit' };
-            loadDotenv({ path, processEnv: target, override: true, readFile: nodeReadFile });
-            expect(target.KEY).to.equal('fromfile');
-        });
-
-        it('silently skips missing files', () => {
-            const real = writeEnv('real.env', 'FOO=bar');
-            const ghost = join(tmpDir, 'does-not-exist.env');
-            const target: Record<string, string> = {};
-            expect(() =>
-                loadDotenv({ path: [ghost, real], processEnv: target, readFile: nodeReadFile })
-            ).to.not.throw();
-            expect(target.FOO).to.equal('bar');
-        });
-
-        it('supports a custom encoding option', () => {
-            const path = writeEnv('latin1.env', 'GREETING=hello');
-            const target: Record<string, string> = {};
-            loadDotenv({ path, processEnv: target, encoding: 'latin1', readFile: nodeReadFile });
-            expect(target.GREETING).to.equal('hello');
-        });
-
-        afterEach(() => {
-            // nothing to reset
-        });
-
-        // keeps `written` from being flagged as unused
-        afterAll(() => {
-            written.length = 0;
+        it('decodes the file with the configured encoding', () => {
+            const dir = mkdtempSync(join(tmpdir(), 'envapt-encoding-'));
+            try {
+                const path = join(dir, 'latin1.env');
+                // 0xe9 is é in latin1 and an invalid byte in utf8
+                writeFileSync(path, Buffer.concat([Buffer.from('GREETING=caf'), Buffer.from([0xe9])]));
+                Envapter.envFileOptions = { encoding: 'latin1' };
+                Envapter.envPaths = path;
+                expect(Envapter.getRaw('GREETING')).to.equal('café');
+            } finally {
+                rmSync(dir, { recursive: true, force: true });
+            }
         });
     });
 });

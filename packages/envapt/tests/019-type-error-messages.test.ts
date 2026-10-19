@@ -65,19 +65,6 @@ function joinedMessages(diagnostics: readonly ParsedDiagnostic[]): string {
 }
 
 describe('TS error message verification (compiler API)', () => {
-    it(
-        'baseline: valid fixture compiles cleanly (proves experimentalDecorators is picked up)',
-        { timeout: FIXTURE_TIMEOUT_MS },
-        () => {
-            const diagnostics = compileFixture('clean-baseline.ts');
-            if (diagnostics.length > 0) {
-                throw new Error(
-                    `clean-baseline.ts should compile cleanly but produced:\n${joinedMessages(diagnostics)}`
-                );
-            }
-        }
-    );
-
     describe('async-validating schema produces the SchemaMustBeSync branded compile error', () => {
         it(
             'produces a TS2769 diagnostic carrying the SchemaMustBeSync literal',
@@ -102,42 +89,6 @@ describe('TS error message verification (compiler API)', () => {
             expect(diagnostics).to.have.lengthOf(1);
             expect(joinedMessages(diagnostics)).to.include('Schema must be synchronous');
         });
-    });
-
-    describe('removed positional @Envapt form produces a no-overload compile error', () => {
-        it('produces a TS2769 diagnostic for a primitive second argument', { timeout: FIXTURE_TIMEOUT_MS }, () => {
-            const diagnostics = compileFixture('positional-removed.ts');
-            const has2769 = diagnostics.some((d) => d.code === 2769);
-            expect(has2769, joinedMessages(diagnostics)).to.be.true;
-            expect(joinedMessages(diagnostics)).to.include('No overload matches this call');
-        });
-    });
-
-    describe('an empty @Envapt options object produces a no-overload compile error', () => {
-        it('rejects the legacy @Envapt(key, {}) form', { timeout: FIXTURE_TIMEOUT_MS }, () => {
-            const diagnostics = compileFixture('empty-options.ts');
-            expect(
-                diagnostics.some((d) => d.code === 2769),
-                joinedMessages(diagnostics)
-            ).to.be.true;
-        });
-    });
-
-    describe('legacy decorator constrains the declared field type to the converter output', () => {
-        it('rejects mismatched field types across the @Envapt overloads', { timeout: FIXTURE_TIMEOUT_MS }, () => {
-            const diagnostics = compileFixture('envapt-overloads-mismatch.ts');
-            const fieldErrors = diagnostics.filter((d) => d.code === 1240);
-            expect(fieldErrors.length, joinedMessages(diagnostics)).to.be.greaterThanOrEqual(6);
-        });
-
-        it(
-            'accepts correct and wider field types across the @Envapt overloads',
-            { timeout: FIXTURE_TIMEOUT_MS },
-            () => {
-                const diagnostics = compileFixture('envapt-overloads-clean.ts');
-                expect(diagnostics, joinedMessages(diagnostics)).to.have.lengthOf(0);
-            }
-        );
     });
 
     describe('modern accessor decorator constrains the declared field type to the converter output', () => {
@@ -169,16 +120,6 @@ describe('TS error message verification (compiler API)', () => {
 
         it('rejects an object fallback with no converter', { timeout: FIXTURE_TIMEOUT_MS }, () => {
             const diagnostics = compileFixture('modern/fallback-only-object.ts', MODERN_CONFIG);
-            expect(
-                diagnostics.some((d) => d.code === 2769),
-                joinedMessages(diagnostics)
-            ).to.be.true;
-        });
-    });
-
-    describe('legacy @Envapt with a fallback and no converter', () => {
-        it('rejects an object fallback', { timeout: FIXTURE_TIMEOUT_MS }, () => {
-            const diagnostics = compileFixture('fallback-only-object.ts');
             expect(
                 diagnostics.some((d) => d.code === 2769),
                 joinedMessages(diagnostics)

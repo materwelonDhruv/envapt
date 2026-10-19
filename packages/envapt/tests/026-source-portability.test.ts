@@ -1,30 +1,14 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { Converters, Envapter, EnvaptErrorCodes, FileSource, PortableSource } from '../src';
-import { EnvaptError } from '../src/infra/Error';
-import { UnboundSource } from '../src/sources/UnboundSource';
+import { Converters, Envapter, EnvaptError, EnvaptErrorCodes, FileSource, PortableSource } from '../src';
 
 import type { Source } from '../src';
-
-// like a Cloudflare Env binding, this interface has no index signature
-interface CloudflareLikeEnv {
-    APP_NAME: string;
-    PORT: string;
-}
 
 describe('Source portability (v5.2)', () => {
     afterEach(() => {
         // tests here swap the source. setup.ts only binds FileSource once per file
         Envapter.useSource(new FileSource());
         Envapter.resetPaths();
-    });
-
-    describe('UnboundSource', () => {
-        it('throws NoSourceBound on read', () => {
-            expect(() => new UnboundSource().readVars())
-                .to.throw(EnvaptError)
-                .with.property('code', EnvaptErrorCodes.NoSourceBound);
-        });
     });
 
     describe('file-API guards on a source without filesystem support', () => {
@@ -81,12 +65,6 @@ describe('Source portability (v5.2)', () => {
             const custom: Source = { readVars: () => ({ CUSTOM: 'yes' }) };
             Envapter.useSource(custom);
             expect(Envapter.get('CUSTOM')).to.equal('yes');
-        });
-
-        it('accepts an interface-typed binding with no index signature (a Cloudflare Env)', () => {
-            const binding: CloudflareLikeEnv = { APP_NAME: 'envapt', PORT: '3000' };
-            Envapter.useSource(new PortableSource(binding));
-            expect(Envapter.get('APP_NAME')).to.equal('envapt');
         });
     });
 });

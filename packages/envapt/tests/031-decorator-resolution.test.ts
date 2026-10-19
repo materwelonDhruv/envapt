@@ -2,9 +2,7 @@ import { resolve } from 'node:path';
 
 import { beforeAll, describe, expect, it } from 'vitest';
 
-import { Envapter } from '../src';
-import { createAccessorDecorator } from '../src/decorators/modern/createAccessorDecorator';
-import { EnvaptError } from '../src/infra/Error';
+import { Envapter, EnvaptError, EnvaptErrorCodes, Envapt as ModernEnvapt } from '../src';
 import { Envapt } from '../src/legacy';
 
 describe('decorator value resolution', () => {
@@ -32,25 +30,15 @@ describe('decorator value resolution', () => {
     });
 
     describe('modern accessor decorator with a missing context name', () => {
-        it('throws EnvaptError instead of collapsing every accessor to the "undefined" cache key', () => {
-            const decorate = createAccessorDecorator('SOME_KEY', {
-                fallback: undefined,
-                converter: undefined,
-                required: false,
-                schema: undefined
-            });
+        it('throws InvalidUserDefinedConfig instead of collapsing every accessor to the "undefined" cache key', () => {
+            const decorate = ModernEnvapt('SOME_KEY') as unknown as (target: unknown, context: unknown) => unknown;
             // a transform that leaves the accessor name unset (vitest's oxc transform does this)
-            const context = {
-                name: undefined,
-                kind: 'accessor',
-                static: true
-            } as unknown as ClassAccessorDecoratorContext<unknown, unknown>;
-            const target = {
-                get: () => undefined,
-                set: () => undefined
-            } as unknown as ClassAccessorDecoratorTarget<unknown, unknown>;
+            const context = { name: undefined, kind: 'accessor', static: true };
+            const target = { get: () => undefined, set: () => undefined };
 
-            expect(() => decorate(target, context)).to.throw(EnvaptError);
+            expect(() => decorate(target, context))
+                .to.throw(EnvaptError)
+                .with.property('code', EnvaptErrorCodes.InvalidUserDefinedConfig);
         });
     });
 });

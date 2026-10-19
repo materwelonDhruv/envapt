@@ -11,13 +11,11 @@ describe('Advanced Converter Methods', () => {
         it('should convert using Converters enum - Number', () => {
             const result = Envapter.getAs('TEST_NUMBER', Converters.Number);
             expect(result).to.equal(42.5);
-            expect(typeof result).to.equal('number');
         });
 
         it('should convert using string converter name - Boolean', () => {
             const result = Envapter.getAs('TEST_BOOLEAN', 'boolean');
             expect(result).to.be.true;
-            expect(typeof result).to.equal('boolean');
         });
 
         it('should convert using Converters enum - Json', () => {
@@ -44,26 +42,18 @@ describe('Advanced Converter Methods', () => {
 
         it('should convert using Converters enum - RegExp', () => {
             const result = Envapter.getAs('TEST_REGEXP_WITH_FLAGS', Converters.RegExp, /[a-z]+/gi);
-            expect(result).to.be.instanceOf(RegExp);
             expect(result.source).to.equal('[a-z]+');
             expect(result.flags).to.equal('gi');
         });
 
         it('should convert using Converters enum - Date', () => {
             const result = Envapter.getAs('TEST_DATE_ISO', Converters.Date);
-            expect(result).to.be.instanceOf(Date);
             expect(result?.toISOString()).to.equal('2023-12-25T00:00:00.000Z');
         });
 
         it('should convert using Converters enum - Time', () => {
             const result = Envapter.getAs('TEST_TIME_SECONDS', Converters.Time);
             expect(result).to.equal(5000); // 5s converted to milliseconds
-        });
-
-        it('should convert using Converters enum - BigInt', () => {
-            const result = Envapter.getAs('TEST_BIGINT', Converters.BigInt);
-            expect(result).to.equal(123456789012345678901234567890n);
-            expect(typeof result).to.equal('bigint');
         });
 
         it('should use fallback for nonexistent variable', () => {

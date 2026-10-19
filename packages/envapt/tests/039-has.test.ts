@@ -2,12 +2,11 @@ import { resolve } from 'node:path';
 
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 
-import { Converters, Envapter, EnvaptErrorCodes } from '../src';
-import { EnvaptError } from '../src/infra/Error';
+import { Converters, Envapter, EnvaptError, EnvaptErrorCodes } from '../src';
 
 describe('has (v8.1)', () => {
     beforeAll(() => {
-        Envapter.envPaths = resolve(import.meta.dirname, '.env.041-has');
+        Envapter.envPaths = resolve(import.meta.dirname, '.env.039-has');
     });
 
     afterEach(() => {

@@ -1,19 +1,17 @@
 import { resolve } from 'node:path';
 
-import { beforeAll, describe, expect, expectTypeOf, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 
-import { Converters, Envapter, EnvaptErrorCodes } from '../src';
-import { EnvaptError } from '../src/infra/Error';
+import { Converters, Envapter, EnvaptError, EnvaptErrorCodes } from '../src';
 
 describe('Semantic converters (v8): port and email', () => {
     beforeAll(() => {
-        Envapter.envPaths = resolve(import.meta.dirname, '.env.039-semantic-converters');
+        Envapter.envPaths = resolve(import.meta.dirname, '.env.038-semantic-converters');
     });
 
     describe('port', () => {
         it('reads a valid port as a number', () => {
             expect(Envapter.getAs('PORT_VALID', Converters.Port, 0)).to.equal(8080);
-            expectTypeOf(Envapter.getAs('PORT_VALID', Converters.Port, 0)).toEqualTypeOf<number>();
         });
 
         it('accepts 0, the ephemeral-bind wildcard', () => {
@@ -67,7 +65,6 @@ describe('Semantic converters (v8): port and email', () => {
     describe('email', () => {
         it('reads a valid email and returns it unchanged', () => {
             expect(Envapter.getAs('EMAIL_VALID', Converters.Email, 'x@y.z')).to.equal('a@b.com');
-            expectTypeOf(Envapter.getAs('EMAIL_VALID', Converters.Email, 'x@y.z')).toEqualTypeOf<string>();
         });
 
         it('accepts a dotted local part and a multi-label domain', () => {

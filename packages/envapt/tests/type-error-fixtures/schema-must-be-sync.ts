@@ -1,6 +1,6 @@
 import { Envapt } from '../../src/legacy';
 
-import type { StandardSchemaV1 } from '../../src/infra/StandardSchema';
+import type { StandardSchemaV1 } from '../../src';
 
 // validate returns a Promise here, like an async-only schema library
 declare const asyncSchema: StandardSchemaV1<string, string> & {

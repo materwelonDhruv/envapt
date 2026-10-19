@@ -3,15 +3,10 @@ import process from 'node:process';
 
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { Converters, Envapter, EnvaptErrorCodes, FileSource, PortableSource } from '../src';
+import { Converters, Envapter, EnvaptError, EnvaptErrorCodes, FileSource, PortableSource } from '../src';
 import { resetDebugForTesting } from '../src/infra/Debug';
-import { loadDotenv } from '../src/infra/Dotenv';
-import { EnvaptError } from '../src/infra/Error';
 
-import type { DebugLevel } from '../src';
-
-const reader = new FileSource();
-const nodeReadFile = reader.readFile.bind(reader);
+import type { DebugLevel, Source } from '../src';
 
 interface StderrCapture {
     lines: string[];
@@ -335,18 +330,33 @@ describe('Debug mode (v5)', () => {
     });
 
     describe('Failed file reads (warn)', () => {
-        // the envPaths setter rejects a missing file before loadDotenv can warn
-        it('emits a "could not read" warn when loadDotenv hits a missing file', () => {
+        it('warns and skips a file that disappears after the existence check', () => {
+            // the envPaths setter reads each file once to check it exists
+            let ghostReads = 0;
+            const source: Source = {
+                supportsFiles: true,
+                readVars: () => ({}),
+                readFile: (path) => {
+                    if (path === 'local.env') return 'FROM_LOCAL=yes';
+                    if (path !== 'ghost.env') return undefined;
+                    ghostReads += 1;
+                    return ghostReads === 1 ? 'FROM_GHOST=yes' : undefined;
+                },
+                resolvePath: (_baseDir, candidate) => candidate,
+                normalizeBaseDir: (value) => String(value),
+                writeVars: () => {}
+            };
             Envapter.debug = 'warn';
-            const ghost = resolve(import.meta.dirname, '.env.does-not-exist-at-all');
+            Envapter.useSource(source);
             const capture = captureStderr();
             try {
-                loadDotenv({ path: ghost, processEnv: {}, readFile: nodeReadFile });
-                const line = capture.lines.find((l) => l.includes(ghost));
-                expect(line, 'expected a could-not-read warn').to.exist;
+                Envapter.envPaths = ['ghost.env', 'local.env'];
+                expect(Envapter.get('FROM_LOCAL')).to.equal('yes');
+                const line = capture.lines.find((l) => l.includes('ghost.env'));
                 expect(line).to.include('could not read');
             } finally {
                 capture.restore();
+                Envapter.useSource(new FileSource());
             }
         });
     });

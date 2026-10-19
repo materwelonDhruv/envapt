@@ -9,7 +9,6 @@ import type {
     BuiltInConverterFunction,
     JsonValue,
     MapOfConverterFunctions,
-    TimeFallback,
     TimeUnit
 } from '../types';
 
@@ -49,12 +48,8 @@ function parseTimeString(input: string, strict = false): number | undefined {
     const match = input.match(strict ? TIME_STRICT_RE : TIME_LOOSE_RE);
     if (!match) return undefined;
 
-    const [, numStr, capturedUnit] = match;
-    if (!numStr) return undefined;
-
+    const [, numStr = '', capturedUnit] = match;
     const value = Number.parseFloat(numStr);
-    if (Number.isNaN(value)) return undefined;
-
     const unit = (capturedUnit ?? 'ms') as TimeUnit;
     return value * TIME_UNIT_MS[unit];
 }
@@ -150,12 +145,11 @@ export class BuiltInConverters {
         return Number.isNaN(parsed.getTime()) ? fallback : parsed;
     }
 
-    static time(raw: string, fallback?: TimeFallback): number | undefined {
+    static time(raw: string, fallback?: string): number | undefined {
         const parsedRaw = parseTimeString(raw);
         if (parsedRaw !== undefined) return parsedRaw;
 
-        if (typeof fallback === 'number') return fallback;
-        if (typeof fallback === 'string') {
+        if (fallback !== undefined) {
             const parsedFallback = parseTimeString(fallback, true);
             if (parsedFallback === undefined) {
                 throw new EnvaptError(

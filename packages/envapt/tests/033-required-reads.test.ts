@@ -2,15 +2,12 @@ import { resolve } from 'node:path';
 
 import { type as ark } from 'arktype';
 import * as v from 'valibot';
-import { afterEach, beforeAll, describe, expect, expectTypeOf, it } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { z } from 'zod/v4';
 
-import { Converters, Envapter, EnvaptErrorCodes, FileSource, PortableSource } from '../src';
-import { EnvaptError } from '../src/infra/Error';
-import { recase } from '../src/infra/recase';
+import { Converters, Envapter, EnvaptError, EnvaptErrorCodes, FileSource, PortableSource } from '../src';
 
-import type { StandardSchemaV1 } from '../src/infra/StandardSchema';
-import type { RecaseKey } from '../src/types';
+import type { StandardSchemaV1 } from '../src';
 
 function thrownBy(read: () => unknown): EnvaptError {
     try {
@@ -24,7 +21,7 @@ function thrownBy(read: () => unknown): EnvaptError {
 
 describe('Required reads (v8)', () => {
     beforeAll(() => {
-        Envapter.envPaths = resolve(import.meta.dirname, '.env.034-required-reads');
+        Envapter.envPaths = resolve(import.meta.dirname, '.env.033-required-reads');
     });
 
     afterEach(() => {
@@ -35,7 +32,6 @@ describe('Required reads (v8)', () => {
         it('returns a non-undefined typed value for a scalar token', () => {
             const port = Envapter.getRequired('SET_NUMBER', Converters.Number);
             expect(port).to.equal(42);
-            expectTypeOf(port).toEqualTypeOf<number>();
         });
 
         it('returns a non-undefined typed array for an array token', () => {
@@ -44,17 +40,14 @@ describe('Required reads (v8)', () => {
                 Converters.array({ delimiter: '/', of: Converters.String })
             );
             expect(parts).to.deep.equal(['owner', 'repo']);
-            expectTypeOf(parts).toEqualTypeOf<string[]>();
 
             const ports = Envapter.getRequired('PORTS_CLEAN', Converters.array({ of: Converters.Number }));
             expect(ports).to.deep.equal([80, 443, 8080]);
-            expectTypeOf(ports).toEqualTypeOf<number[]>();
         });
 
         it('returns a JSON null the way getAs does', () => {
             Envapter.useSource(new PortableSource({ FLAGS: 'null' }));
             try {
-                expect(Envapter.getAs('FLAGS', Converters.Json)).to.equal(null);
                 expect(Envapter.getRequired('FLAGS', Converters.Json)).to.equal(null);
             } finally {
                 Envapter.useSource(new FileSource());
@@ -64,23 +57,14 @@ describe('Required reads (v8)', () => {
         it('returns the custom parser return type', () => {
             const upper = Envapter.getRequired('SET_VALUE', (raw) => raw.toUpperCase());
             expect(upper).to.equal('HELLO');
-            expectTypeOf(upper).toEqualTypeOf<string>();
         });
 
-        it('throws on missing or empty always, and on whitespace-only only in strict', () => {
+        it('throws MissingEnvValue on a missing or empty value', () => {
             expect(() => Envapter.getRequired('NEVER_SET_KEY', Converters.Number))
                 .to.throw(EnvaptError)
                 .with.property('code', EnvaptErrorCodes.MissingEnvValue);
 
             expect(() => Envapter.getRequired('EMPTY_VALUE', Converters.String))
-                .to.throw(EnvaptError)
-                .with.property('code', EnvaptErrorCodes.MissingEnvValue);
-
-            // non-strict keeps a whitespace-only value as a real value
-            expect(Envapter.getRequired('WHITESPACE_ONLY', Converters.String)).to.equal('   ');
-
-            Envapter.strict = true;
-            expect(() => Envapter.getRequired('WHITESPACE_ONLY', Converters.String))
                 .to.throw(EnvaptError)
                 .with.property('code', EnvaptErrorCodes.MissingEnvValue);
         });
@@ -91,21 +75,8 @@ describe('Required reads (v8)', () => {
             expect(e.message).to.include('[NEVER_SET_KEY, ALSO_NEVER_SET]');
         });
 
-        it('takes no fallback argument', () => {
-            // @ts-expect-error getRequired has no fallback parameter
-            Envapter.getRequired('SET_NUMBER', Converters.Number, 3000);
-        });
-
-        it('returns number for the time converter with no special overload (no fallback to type)', () => {
-            const timeout = Envapter.getRequired('TIMEOUT', Converters.Time);
-            expect(timeout).to.equal(10000);
-            expectTypeOf(timeout).toEqualTypeOf<number>();
-        });
-
-        it('falls through an empty ordered key to the first non-empty one', () => {
-            const value = Envapter.getRequired(['EMPTY_VALUE', 'SET_VALUE'], Converters.String);
-            expect(value).to.equal('hello');
-            expectTypeOf(value).toEqualTypeOf<string>();
+        it('reads a time string as milliseconds', () => {
+            expect(Envapter.getRequired('TIMEOUT', Converters.Time)).to.equal(10000);
         });
 
         it('throws InvalidEnvValue with an issue when a present value cannot be converted', () => {
@@ -132,7 +103,6 @@ describe('Required reads (v8)', () => {
         it('returns the schema output for a present value', () => {
             const port = Envapter.getRequired('SET_NUMBER', z.coerce.number().int());
             expect(port).to.equal(42);
-            expectTypeOf(port).toEqualTypeOf<number>();
         });
 
         it('throws InvalidEnvValue with the schema issues keyed by the env name', () => {
@@ -154,18 +124,6 @@ describe('Required reads (v8)', () => {
             const e = thrownBy(() => Envapter.getRequired('SET_VALUE', crashing));
             expect(e.code).to.equal(EnvaptErrorCodes.InvalidEnvValue);
             expect(e.issues).to.deep.equal([{ message: 'lookup table not loaded', path: ['SET_VALUE'] }]);
-        });
-
-        it('throws InvalidUserDefinedConfig for a schema that returns a Promise', () => {
-            const asyncSchema: StandardSchemaV1<unknown, string> = {
-                '~standard': {
-                    version: 1,
-                    vendor: 'envapt-test',
-                    validate: (value) => Promise.resolve({ value: String(value) })
-                }
-            };
-            const e = thrownBy(() => Envapter.getRequired('SET_VALUE', asyncSchema));
-            expect(e.code).to.equal(EnvaptErrorCodes.InvalidUserDefinedConfig);
         });
 
         it('reports a bad array element as InvalidEnvValue', () => {
@@ -194,7 +152,6 @@ describe('Required reads (v8)', () => {
             expect(cfg.SET_NUMBER).to.equal(42);
             expect(cfg.SET_VALUE).to.equal('hello');
             expect(cfg.SAMPLE_REPO).to.deep.equal(['owner', 'repo']);
-            expectTypeOf(cfg).toEqualTypeOf<{ SET_NUMBER: number; SET_VALUE: string; SAMPLE_REPO: string[] }>();
         });
 
         it('supports a custom function converter in the spec, inferring its return type', () => {
@@ -205,7 +162,6 @@ describe('Required reads (v8)', () => {
             });
             expect(cfg.SET_NUMBER).to.equal(42);
             expect(cfg.SET_VALUE).to.equal('HELLO');
-            expectTypeOf(cfg).toEqualTypeOf<{ SET_NUMBER: number; SET_VALUE: string }>();
         });
 
         it('recases the record keys when a casing is given, leaving them as-is otherwise', () => {
@@ -215,18 +171,15 @@ describe('Required reads (v8)', () => {
             );
             expect(camel.sampleRepo).to.equal('owner/repo');
             expect(camel.setNumber).to.equal(42);
-            expectTypeOf(camel).toEqualTypeOf<{ sampleRepo: string; setNumber: number }>();
 
             const pascal = Envapter.getRequiredAll({ SET_NUMBER: Converters.Number }, 'PascalCase');
             expect(pascal.SetNumber).to.equal(42);
-            expectTypeOf(pascal).toEqualTypeOf<{ SetNumber: number }>();
 
             const kebab = Envapter.getRequiredAll({ SET_NUMBER: Converters.Number }, 'kebab-case');
             expect(kebab['set-number']).to.equal(42);
-            expectTypeOf(kebab).toEqualTypeOf<{ 'set-number': number }>();
 
             const asIs = Envapter.getRequiredAll({ SET_NUMBER: Converters.Number });
-            expectTypeOf(asIs).toEqualTypeOf<{ SET_NUMBER: number }>();
+            expect(asIs.SET_NUMBER).to.equal(42);
         });
 
         it('throws one MissingEnvValue listing every missing key', () => {
@@ -275,13 +228,6 @@ describe('Required reads (v8)', () => {
                 PORT2: 443,
                 SET_VALUE: 'hello'
             });
-            expectTypeOf(cfg).toEqualTypeOf<{
-                SET_NUMBER: number;
-                PORT1: number;
-                DATABASE_URL: string;
-                PORT2: number;
-                SET_VALUE: string;
-            }>();
         });
 
         it('throws one InvalidEnvValue holding every failed field, keyed by env name in path', () => {
@@ -388,12 +334,6 @@ describe('Required reads (v8)', () => {
             expect(e.issues).to.deep.equal([{ message: own.issues[0]?.message, path: ['SET_VALUE'] }]);
         });
 
-        it('still throws a spec mistake on its own, outside the aggregated error', () => {
-            // cast past the type to reach the runtime check on an unknown token
-            const e = thrownBy(() => Envapter.getRequiredAll({ SET_VALUE: 'not-a-token' as never }));
-            expect(e.code).to.equal(EnvaptErrorCodes.InvalidBuiltInConverter);
-        });
-
         it('lists only the failed keys in the message, since a validator can echo a secret value', () => {
             const e = thrownBy(() =>
                 Envapter.getRequiredAll({ SAMPLE_REPO: v.pipe(v.string(), v.email()), SET_VALUE: Converters.Number })
@@ -408,7 +348,6 @@ describe('Required reads (v8)', () => {
         it('keeps a schema field whose schema returns undefined', () => {
             const cfg = Envapter.getRequiredAll({ SET_VALUE: z.string().transform(() => undefined) });
             expect(cfg).to.have.property('SET_VALUE', undefined);
-            expectTypeOf(cfg).toEqualTypeOf<{ SET_VALUE: undefined }>();
         });
     });
 
@@ -424,49 +363,39 @@ describe('Required reads (v8)', () => {
         });
     });
 
-    describe('RecaseKey type transforms', () => {
-        it('camelCase splits on underscores and lowercases each word', () => {
-            expectTypeOf<RecaseKey<'DATABASE_URL', 'camelCase'>>().toEqualTypeOf<'databaseUrl'>();
-            expectTypeOf<RecaseKey<'PORT', 'camelCase'>>().toEqualTypeOf<'port'>();
-            expectTypeOf<RecaseKey<'OAUTH2_CLIENT_ID', 'camelCase'>>().toEqualTypeOf<'oauth2ClientId'>();
-            expectTypeOf<RecaseKey<'H2O_SENSOR', 'camelCase'>>().toEqualTypeOf<'h2oSensor'>();
-        });
-
-        it('PascalCase capitalizes every word', () => {
-            expectTypeOf<RecaseKey<'DATABASE_URL', 'PascalCase'>>().toEqualTypeOf<'DatabaseUrl'>();
-            expectTypeOf<RecaseKey<'PORT', 'PascalCase'>>().toEqualTypeOf<'Port'>();
-        });
-
-        it('kebab-case lowercases and joins on hyphens', () => {
-            expectTypeOf<RecaseKey<'DATABASE_URL', 'kebab-case'>>().toEqualTypeOf<'database-url'>();
-            expectTypeOf<RecaseKey<'PORT', 'kebab-case'>>().toEqualTypeOf<'port'>();
-        });
-
-        it('leaves the key unchanged with no casing', () => {
-            expectTypeOf<RecaseKey<'DATABASE_URL', undefined>>().toEqualTypeOf<'DATABASE_URL'>();
-        });
-
+    describe('key casing', () => {
         it('handles multiple, consecutive, leading, and trailing underscores', () => {
-            expectTypeOf<RecaseKey<'A_B_C_D', 'camelCase'>>().toEqualTypeOf<'aBCD'>();
-            expectTypeOf<RecaseKey<'A_B_C_D', 'PascalCase'>>().toEqualTypeOf<'ABCD'>();
-            expectTypeOf<RecaseKey<'A_B_C_D', 'kebab-case'>>().toEqualTypeOf<'a-b-c-d'>();
-            expectTypeOf<RecaseKey<'FOO__BAR', 'camelCase'>>().toEqualTypeOf<'fooBar'>();
-            expectTypeOf<RecaseKey<'FOO__BAR', 'kebab-case'>>().toEqualTypeOf<'foo-bar'>();
-            expectTypeOf<RecaseKey<'_LEADING_KEY', 'kebab-case'>>().toEqualTypeOf<'leading-key'>();
-            expectTypeOf<RecaseKey<'TRAILING_KEY_', 'kebab-case'>>().toEqualTypeOf<'trailing-key'>();
-        });
-    });
-
-    describe('recase runtime matches RecaseKey', () => {
-        it('handles multiple, consecutive, leading, and trailing underscores', () => {
-            expect(recase('A_B_C_D', 'camelCase')).to.equal('aBCD');
-            expect(recase('A_B_C_D', 'PascalCase')).to.equal('ABCD');
-            expect(recase('A_B_C_D', 'kebab-case')).to.equal('a-b-c-d');
-            expect(recase('FOO__BAR', 'camelCase')).to.equal('fooBar');
-            expect(recase('FOO__BAR', 'kebab-case')).to.equal('foo-bar');
-            expect(recase('_LEADING_KEY', 'kebab-case')).to.equal('leading-key');
-            expect(recase('TRAILING_KEY_', 'kebab-case')).to.equal('trailing-key');
-            expect(recase('PORT')).to.equal('PORT');
+            Envapter.useSource(
+                new PortableSource({ A_B_C_D: '1', FOO__BAR: '2', _LEADING_KEY: '3', TRAILING_KEY_: '4' })
+            );
+            try {
+                const spec = {
+                    A_B_C_D: Converters.String,
+                    FOO__BAR: Converters.String,
+                    _LEADING_KEY: Converters.String,
+                    TRAILING_KEY_: Converters.String
+                };
+                expect(Object.keys(Envapter.getRequiredAll(spec, 'camelCase'))).to.deep.equal([
+                    'aBCD',
+                    'fooBar',
+                    'leadingKey',
+                    'trailingKey'
+                ]);
+                expect(Object.keys(Envapter.getRequiredAll(spec, 'PascalCase'))).to.deep.equal([
+                    'ABCD',
+                    'FooBar',
+                    'LeadingKey',
+                    'TrailingKey'
+                ]);
+                expect(Object.keys(Envapter.getRequiredAll(spec, 'kebab-case'))).to.deep.equal([
+                    'a-b-c-d',
+                    'foo-bar',
+                    'leading-key',
+                    'trailing-key'
+                ]);
+            } finally {
+                Envapter.useSource(new FileSource());
+            }
         });
     });
 

@@ -1,15 +1,14 @@
 import { resolve } from 'node:path';
 
 import { type as ark } from 'arktype';
-import { afterEach, beforeAll, describe, expect, expectTypeOf, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod/v4';
 
-import { Converters, Envapter, EnvaptErrorCodes } from '../src';
+import { Converters, Envapter, EnvaptError, EnvaptErrorCodes } from '../src';
 import { resetDebugForTesting } from '../src/infra/Debug';
-import { EnvaptError } from '../src/infra/Error';
 import { Envapt } from '../src/legacy';
 
-import type { StandardSchemaV1 } from '../src/infra/StandardSchema';
+import type { StandardSchemaV1 } from '../src';
 
 // hand-rolled to prove the adapter works without a schema library
 const handRolledUpper: StandardSchemaV1<string, string> = {
@@ -97,7 +96,6 @@ describe('Standard Schema adapter (v5)', () => {
         it('returns undefined when env is absent and there is no fallback', () => {
             const port = Envapter.getAs('NEVER_SET', z.coerce.number());
             expect(port).to.be.undefined;
-            expectTypeOf(port).toEqualTypeOf<number | undefined>();
         });
 
         it('does NOT validate the fallback through the schema', () => {
@@ -438,18 +436,6 @@ describe('Standard Schema adapter (v5)', () => {
             expect(buildBadDecorator)
                 .to.throw(EnvaptError)
                 .with.property('code', EnvaptErrorCodes.InvalidUserDefinedConfig);
-        });
-    });
-
-    describe('Compile-time type narrowing (expect-type)', () => {
-        it('getAs with a schema and a fallback returns the schema output type', () => {
-            const port = Envapter.getAs('NEVER_SET', z.coerce.number(), 3000);
-            expectTypeOf(port).toEqualTypeOf<number>();
-        });
-
-        it('zod string-enum schema narrows to the union literal', () => {
-            const level = Envapter.getAs('LOG_LEVEL', z.enum(['debug', 'info', 'warn']), 'info');
-            expectTypeOf(level).toEqualTypeOf<'debug' | 'info' | 'warn'>();
         });
     });
 });

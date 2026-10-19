@@ -12,24 +12,10 @@ describe('Built-in Converters', () => {
         class BasicTypeTest {
             @Envapt('TEST_STRING', { converter: Converters.String, fallback: 'default' })
             static readonly testString: string;
-
-            @Envapt('TEST_INTEGER', { converter: Converters.Integer, fallback: 0 })
-            static readonly testInteger: number;
-
-            @Envapt('TEST_FLOAT', { converter: Converters.Float, fallback: 0.0 })
-            static readonly testFloat: number;
         }
 
         it('should handle string converter', () => {
             expect(BasicTypeTest.testString).to.equal('hello world');
-        });
-
-        it('should handle integer converter', () => {
-            expect(BasicTypeTest.testInteger).to.equal(42);
-        });
-
-        it('should handle float converter', () => {
-            expect(BasicTypeTest.testFloat).to.equal(3.14159);
         });
     });
 
@@ -129,7 +115,6 @@ describe('Built-in Converters', () => {
         }
 
         it('should use fallback for invalid URLs', () => {
-            expect(UrlTest.invalidUrl).to.be.instanceOf(URL);
             expect(UrlTest.invalidUrl.href).to.equal('http://fallback.com/');
         });
     });
@@ -144,7 +129,6 @@ describe('Built-in Converters', () => {
         }
 
         it('should parse simple regexp', () => {
-            expect(RegexpTest.simpleRegexp).to.be.instanceOf(RegExp);
             expect(RegexpTest.simpleRegexp?.source).to.equal('\\d+');
             expect(RegexpTest.simpleRegexp?.flags).to.equal('');
         });

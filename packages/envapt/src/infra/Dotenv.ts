@@ -19,7 +19,7 @@ export interface EnvFileOptions {
 }
 
 export interface LoadDotenvInput extends EnvFileOptions {
-    path: string | string[];
+    path: readonly string[];
     processEnv: Record<string, string>;
     // passed in because this file must not import node:fs
     readFile(path: string, encoding: string): string | undefined;
@@ -29,7 +29,7 @@ export interface LoadDotenvInput extends EnvFileOptions {
 const KEY_LINE_RE = /^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=(.*)$/u;
 
 // TemplateResolver expands `${VAR}` on read
-export function parseDotenv(src: string): Map<string, string> {
+function parseDotenv(src: string): Map<string, string> {
     const out = new Map<string, string>();
     const lines = src.split(/\r?\n/u);
 
@@ -156,12 +156,11 @@ function unescapeDouble(raw: string): string {
 }
 
 export function loadDotenv(input: LoadDotenvInput): Set<string> {
-    const paths = Array.isArray(input.path) ? input.path : [input.path];
     const encoding = input.encoding ?? 'utf8';
     const override = input.override ?? false;
     const written = new Set<string>();
 
-    for (const filePath of paths) {
+    for (const filePath of input.path) {
         const src = input.readFile(filePath, encoding);
         if (src === undefined) {
             debugWarn(`could not read ${filePath}`);

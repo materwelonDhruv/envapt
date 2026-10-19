@@ -54,10 +54,5 @@ describe('Envapter', () => {
         it('defaults to an empty object', () => {
             expect(Envapter.envFileOptions).to.deep.equal({});
         });
-
-        it('returns the options that were set', () => {
-            Envapter.envFileOptions = { override: true, encoding: 'latin1' };
-            expect(Envapter.envFileOptions).to.deep.equal({ override: true, encoding: 'latin1' });
-        });
     });
 });

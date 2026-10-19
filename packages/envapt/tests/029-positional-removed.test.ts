@@ -1,13 +1,21 @@
 import { describe, expect, it } from 'vitest';
 
-import { EnvaptError } from '../src';
+import { EnvaptError, EnvaptErrorCodes } from '../src';
 import { Envapt } from '../src/legacy';
 
-// v6 removed the positional `@Envapt(key, fallback, converter)` form. plain JS can still call it.
-describe('removed positional @Envapt form', () => {
-    const positional = Envapt as unknown as (key: string, fallback: unknown, converter?: unknown) => PropertyDecorator;
+// plain JS can still call the removed positional form
+describe('@Envapt options validation', () => {
+    const untyped = Envapt as unknown as (key: string, options: unknown) => PropertyDecorator;
 
-    it('throws when a non-options second argument is passed', () => {
-        expect(() => positional('PORT', 8080)).to.throw(EnvaptError);
+    it('throws InvalidUserDefinedConfig for a non-object second argument', () => {
+        expect(() => untyped('PORT', 8080))
+            .to.throw(EnvaptError)
+            .with.property('code', EnvaptErrorCodes.InvalidUserDefinedConfig);
+    });
+
+    it('throws InvalidUserDefinedConfig for an empty options object', () => {
+        expect(() => untyped('PORT', {}))
+            .to.throw(EnvaptError)
+            .with.property('code', EnvaptErrorCodes.InvalidUserDefinedConfig);
     });
 });

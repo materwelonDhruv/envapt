@@ -13,7 +13,7 @@ export default createConfig({
             rules: { '@typescript-eslint/unbound-method': 'off' }
         },
         {
-            files: ['tests/**/*.test.ts'],
+            files: ['tests/**/*.test.ts', 'tests/**/*.types-test.ts'],
             rules: {
                 '@typescript-eslint/no-unused-expressions': 'off',
                 'max-nested-callbacks': ['warn', 10],

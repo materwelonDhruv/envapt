@@ -11,7 +11,9 @@ declare function optionalFlags(): FeatureFlags | undefined;
 expectTypeOf(Envapter.get('API_HOST')).toEqualTypeOf<string | undefined>();
 expectTypeOf(Envapter.get('API_HOST', 'localhost')).toEqualTypeOf<string>();
 
+expectTypeOf(Envapter.getAs('PORT', Converters.Port)).toEqualTypeOf<number | undefined>();
 expectTypeOf(Envapter.getAs('PORT', Converters.Port, 3000)).toEqualTypeOf<number>();
+expectTypeOf(Envapter.getAs('ADMIN_EMAIL', Converters.Email, 'ops@example.com')).toEqualTypeOf<string>();
 expectTypeOf(Envapter.getAs('CACHE_TTL', Converters.Time, '5m')).toEqualTypeOf<number>();
 expectTypeOf(Envapter.getAs('TTLS', Converters.array({ of: Converters.Time }), ['5m'])).toEqualTypeOf<number[]>();
 
