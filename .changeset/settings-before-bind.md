@@ -2,4 +2,4 @@
 'envapt': patch
 ---
 
-Fixed `Envapter.strict` and `Envapter.environment` throwing `NoSourceBound` on Workers, the browser, and edge runtimes when set before `useSource`, while still keeping the new value. They now apply when the source is bound.
+Fixed setting `Envapter.strict` or `Envapter.environment` before `useSource` throwing `NoSourceBound` on Workers, the browser, and edge runtimes. The setting now applies when you bind the source.

@@ -2,4 +2,4 @@
 'envapt': patch
 ---
 
-Fixed `@Envapt('KEY', { fallback })` compiling with an object or array fallback and no converter, where the first read threw `FallbackConverterTypeMismatch`. That call is now a compile error.
+Fixed `@Envapt('KEY', { fallback })` with an object or array fallback and no converter compiling, then throwing `FallbackConverterTypeMismatch` on the first read. That call is now a compile error.
