@@ -91,20 +91,6 @@ describe('TS error message verification (compiler API)', () => {
         });
     });
 
-    describe('with strict off', () => {
-        const NON_STRICT_CONFIG = resolve(FIXTURE_DIR, 'non-strict/tsconfig.json');
-
-        it('keeps getRequiredAll keys as-is with no casing', { timeout: FIXTURE_TIMEOUT_MS }, () => {
-            const diagnostics = compileFixture('non-strict/required-all-keys.ts', NON_STRICT_CONFIG);
-            expect(diagnostics, joinedMessages(diagnostics)).to.have.lengthOf(0);
-        });
-
-        it('types a number-fallback decorator field as a number', { timeout: FIXTURE_TIMEOUT_MS }, () => {
-            const diagnostics = compileFixture('non-strict/fallback-only-field.ts', NON_STRICT_CONFIG);
-            expect(diagnostics, joinedMessages(diagnostics)).to.have.lengthOf(0);
-        });
-    });
-
     describe('modern accessor decorator constrains the declared field type to the converter output', () => {
         const MODERN_CONFIG = resolve(FIXTURE_DIR, 'modern/tsconfig.json');
 

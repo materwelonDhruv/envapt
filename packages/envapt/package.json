@@ -146,6 +146,8 @@
         "test:babel-emit": "node tests/babel-emit/run.mjs",
         "test:stage3-emit": "node tests/stage3-emit/run.mjs",
         "test:stage3-emit:ts7": "ENVAPT_TSC_PACKAGE=typescript7 node tests/stage3-emit/run.mjs",
+        "test:consumer-types": "node tests/consumer-types/run.mjs",
+        "test:consumer-types:ts7": "ENVAPT_TSC_PACKAGE=typescript7 node tests/consumer-types/run.mjs",
         "test:all": "node ../../scripts/test-all.mjs",
         "coverage": "pnpm run test --coverage",
         "cs": "changeset",

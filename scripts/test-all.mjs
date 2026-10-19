@@ -33,7 +33,9 @@ const slices = [
     ['babel-emit', ['--filter', 'envapt', 'test:babel-emit']],
     ['stage3-emit', ['--filter', 'envapt', 'test:stage3-emit']],
     ['tsc-emit-ts7', ['--filter', 'envapt', 'test:tsc-emit:ts7']],
-    ['stage3-emit-ts7', ['--filter', 'envapt', 'test:stage3-emit:ts7']]
+    ['stage3-emit-ts7', ['--filter', 'envapt', 'test:stage3-emit:ts7']],
+    ['consumer-types', ['--filter', 'envapt', 'test:consumer-types']],
+    ['consumer-types-ts7', ['--filter', 'envapt', 'test:consumer-types:ts7']]
 ];
 if (hasChromium) slices.push(['browser', ['--filter', 'envapt', 'test:browser']]);
 

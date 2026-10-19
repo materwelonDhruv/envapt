@@ -69,6 +69,15 @@
             "dependsOn": ["build"],
             "outputs": []
         },
+        "test:consumer-types": {
+            "dependsOn": ["build"],
+            "env": ["ENVAPT_TSC_PACKAGE"],
+            "outputs": []
+        },
+        "test:consumer-types:ts7": {
+            "dependsOn": ["build"],
+            "outputs": []
+        },
         "test:tree-shaking": {
             "dependsOn": ["build"],
             "outputs": []
