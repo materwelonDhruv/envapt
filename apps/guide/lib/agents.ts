@@ -3,7 +3,7 @@ import { llms } from 'fumadocs-core/source';
 import { ENVAPT_SKILL_PATH, LLMS_TXT_PATH } from '@/lib/agentLinks';
 import { markdownPath } from '@/lib/markdownFile';
 import { absoluteUrl, canonicalUrl, SITE_DESCRIPTION, SITE_NAME } from '@/lib/site';
-import { blog, source } from '@/lib/source';
+import { blogPostsNewestFirst, source } from '@/lib/source';
 
 const DOCS_LINK = /\]\((\/docs[^)]*)\)/g;
 
@@ -25,9 +25,7 @@ async function docsLinks(): Promise<string> {
 }
 
 function blogLinks(): string {
-    return blog
-        .getPages()
-        .toSorted((a, b) => b.data.date.localeCompare(a.data.date))
+    return blogPostsNewestFirst()
         .map((post) => `- [${post.data.title}](${canonicalUrl(post.url)}): ${post.data.description}`)
         .join('\n');
 }

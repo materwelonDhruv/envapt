@@ -4,7 +4,7 @@ import { formatDate } from '@/lib/date';
 import { pageMetadata } from '@/lib/metadata';
 import { DEFAULT_OG } from '@/lib/og/images';
 import { SITE_NAME } from '@/lib/site';
-import { blog } from '@/lib/source';
+import { blogPostsNewestFirst } from '@/lib/source';
 
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
@@ -18,7 +18,7 @@ export const metadata: Metadata = pageMetadata({
 });
 
 export default function BlogIndex(): ReactNode {
-    const posts = blog.getPages().toSorted((a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime());
+    const posts = blogPostsNewestFirst();
 
     return (
         <main className="mx-auto w-full max-w-3xl px-4 py-16">

@@ -12,10 +12,7 @@ import {
 } from '@/lib/site';
 import { source } from '@/lib/source';
 
-import type { blog } from '@/lib/source';
-
-type DocsPage = (typeof source)['$inferPage'];
-type BlogPage = (typeof blog)['$inferPage'];
+import type { BlogPage, DocsPage } from '@/lib/source';
 
 // google merges nodes that share an @id
 const SOFTWARE_ID = `${SITE_URL}/#software`;

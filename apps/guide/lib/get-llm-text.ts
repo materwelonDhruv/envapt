@@ -1,8 +1,6 @@
 import { MARKDOWN_COMPONENTS } from '@/lib/markdownComponents';
 
-import type { source } from '@/lib/source';
-
-type DocsPage = (typeof source)['$inferPage'];
+import type { DocsPage } from '@/lib/source';
 
 export async function markdownBody(page: DocsPage): Promise<string> {
     return page.data.getText('processed', { components: MARKDOWN_COMPONENTS });

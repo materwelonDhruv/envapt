@@ -1,16 +1,13 @@
 import { formatDate } from '@/lib/date';
 import { markdownBody } from '@/lib/get-llm-text';
 import { OG } from '@/lib/og/theme';
-import { canonicalUrl, JSR_URL, markdownUrl, NPM_URL, REPO_REF, REPO_URL, SITE_NAME } from '@/lib/site';
+import { canonicalUrl, JSR_URL, markdownUrl, NPM_URL, REPO_REF, REPO_URL, SITE_NAME, SITE_TAGLINE } from '@/lib/site';
 import { source } from '@/lib/source';
 
-import type { blog } from '@/lib/source';
+import type { BlogPage, DocsPage } from '@/lib/source';
 import type { PreviewCardProps, PreviewLink } from '@/components/PreviewCard';
 
-type DocsPage = NonNullable<ReturnType<typeof source.getPage>>;
-type BlogPage = NonNullable<ReturnType<typeof blog.getPage>>;
-
-const SUMMARY = 'Typed config for Node, Bun, Deno, Workers, and the browser.';
+const SUMMARY = `${SITE_TAGLINE}.`;
 // the folder above an API symbol page is its kind: classes, functions, type-aliases
 const KIND_SLUG_FROM_END = -2;
 const FENCE = /```[\s\S]*?```/g;
@@ -39,8 +36,7 @@ type TreeNode = ReturnType<typeof source.getPageTree>['children'][number];
 
 const textOf = (name: unknown): string[] => (typeof name === 'string' ? [name] : []);
 
-// the separators and folders above the page, outermost first
-function trailTo(nodes: readonly TreeNode[], url: string, trail: string[] = []): string[] | undefined {
+function sidebarTrail(nodes: readonly TreeNode[], url: string, trail: string[] = []): string[] | undefined {
     let section: string[] = [];
     for (const node of nodes) {
         if (node.type === 'separator') section = textOf(node.name);
@@ -48,7 +44,7 @@ function trailTo(nodes: readonly TreeNode[], url: string, trail: string[] = []):
         else if (node.type === 'folder') {
             const inside = [...trail, ...section, ...(node.root ? [] : textOf(node.name))];
             if (node.index?.url === url) return inside;
-            const found = trailTo(node.children, url, inside);
+            const found = sidebarTrail(node.children, url, inside);
             if (found) return found;
         }
     }
@@ -90,7 +86,7 @@ export async function docsPreview(page: DocsPage): Promise<PreviewCardProps> {
 
     return {
         accent: ACCENT.guide,
-        breadcrumb: ['guide', ...(trailTo(source.getPageTree().children, page.url) ?? [])],
+        breadcrumb: ['guide', ...(sidebarTrail(source.getPageTree().children, page.url) ?? [])],
         title: page.data.title,
         body: page.data.description ?? SUMMARY,
         links: [

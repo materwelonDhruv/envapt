@@ -4,13 +4,17 @@ import { absoluteUrl, canonicalUrl, markdownUrl, SITE_DESCRIPTION, SITE_NAME } f
 import type { OgImage } from '@/lib/og/images';
 import type { Metadata } from 'next';
 
-export interface PageMetadataOptions {
+interface PageMetadataOptions {
     title: string;
     description?: string | undefined;
     path: string;
     image: OgImage;
     type: 'article' | 'website';
     hasMarkdownCopy?: boolean;
+}
+
+export function ogImages(image: OgImage): { url: string; width: number; height: number; alt: string }[] {
+    return [{ url: absoluteUrl(image.path), ...OG_SIZE, alt: image.alt }];
 }
 
 export function pageMetadata({
@@ -23,7 +27,7 @@ export function pageMetadata({
 }: PageMetadataOptions): Metadata {
     const url = canonicalUrl(path);
     const summary = description ?? SITE_DESCRIPTION;
-    const images = [{ url: absoluteUrl(image.path), ...OG_SIZE, alt: image.alt }];
+    const images = ogImages(image);
 
     return {
         title,

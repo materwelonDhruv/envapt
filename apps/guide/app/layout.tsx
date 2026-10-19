@@ -6,9 +6,9 @@ import localFont from 'next/font/local';
 
 import { AgentLinks } from '@/components/AgentLinks';
 import { JsonLd } from '@/components/JsonLd';
+import { ogImages } from '@/lib/metadata';
 import { DEFAULT_OG } from '@/lib/og/images';
-import { OG_SIZE } from '@/lib/og/theme';
-import { absoluteUrl, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from '@/lib/site';
+import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from '@/lib/site';
 import { siteJsonLd } from '@/lib/structuredData';
 
 import type { Metadata, Viewport } from 'next';
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
         siteName: SITE_NAME,
         url: SITE_URL,
         locale: 'en_US',
-        images: [{ url: absoluteUrl(DEFAULT_OG.path), ...OG_SIZE, alt: DEFAULT_OG.alt }]
+        images: ogImages(DEFAULT_OG)
     },
     twitter: { card: 'summary_large_image' },
     verification: { google: 'zqIImWHhuFI0Yd5Ej2SMF0EYRtVB9zcjMumS2-yaDJ4' }

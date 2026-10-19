@@ -11,11 +11,12 @@ import { TwoWays } from '@/components/TwoWays';
 import { HOME_PREVIEW } from '@/lib/linkPreview';
 import { pageMetadata } from '@/lib/metadata';
 import { DEFAULT_OG } from '@/lib/og/images';
+import { SITE_NAME, SITE_TAGLINE } from '@/lib/site';
 
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 
-const homeTitle = 'envapt · Typed config for Node, Bun, Deno, Workers, and the browser';
+const homeTitle = `${SITE_NAME} · ${SITE_TAGLINE}`;
 
 export const metadata: Metadata = {
     ...pageMetadata({ title: homeTitle, path: '/', image: DEFAULT_OG, type: 'website' }),

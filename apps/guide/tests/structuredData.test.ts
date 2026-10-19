@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { SITE_URL } from '../lib/site';
 import { source } from '../lib/source';
-import { docsJsonLd } from '../lib/structuredData';
+import { docsJsonLd, siteJsonLd } from '../lib/structuredData';
 
 interface Node {
     '@type': string;
@@ -45,10 +45,11 @@ describe('docs page structured data', () => {
         expect(breadcrumb?.itemListElement).toEqual([expect.objectContaining({ position: 1, name: 'Docs' })]);
     });
 
-    it('links the article to the site-wide nodes by id', () => {
+    it('links the article to the website and software nodes the layout emits', () => {
         const article = ofType(nodesOf(['quick-start']), 'TechArticle');
+        const site = (siteJsonLd() as { '@graph': Node[] })['@graph'];
 
-        expect(article?.isPartOf).toEqual({ '@id': `${SITE_URL}/#website` });
-        expect(article?.about).toEqual({ '@id': `${SITE_URL}/#software` });
+        expect(article?.isPartOf).toEqual({ '@id': ofType(site, 'WebSite')?.['@id'] });
+        expect(article?.about).toEqual({ '@id': ofType(site, 'SoftwareSourceCode')?.['@id'] });
     });
 });

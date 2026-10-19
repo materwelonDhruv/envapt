@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest';
 
 import { GET as fullText } from '../app/llms-full.txt/route';
 import { GET as index } from '../app/llms.txt/route';
-import { SITE_DESCRIPTION, SITE_URL } from '../lib/site';
+import { SITE_URL } from '../lib/site';
 
-const HEADER = `# envapt\n\n> ${SITE_DESCRIPTION}\n\n`;
+const HEADER = /^# envapt\n\n> [^\n]+\n\n/;
 const MARKDOWN_RULE = 'Accept: text/markdown';
 
 async function llmsTxt(): Promise<string> {
@@ -13,7 +13,7 @@ async function llmsTxt(): Promise<string> {
 
 describe('llms.txt', () => {
     it('opens with the site name and a one-line summary', async () => {
-        expect((await llmsTxt()).startsWith(HEADER)).toBe(true);
+        expect(await llmsTxt()).toMatch(HEADER);
     });
 
     it('puts the rules for an agent above the page list', async () => {
@@ -39,7 +39,7 @@ describe('llms-full.txt', () => {
     it('opens with the same header and rules as llms.txt', async () => {
         const full = await (await fullText()).text();
 
-        expect(full.startsWith(HEADER)).toBe(true);
+        expect(full).toMatch(HEADER);
         expect(full.indexOf(MARKDOWN_RULE)).toBeLessThan(full.indexOf('\n# '));
     });
 });

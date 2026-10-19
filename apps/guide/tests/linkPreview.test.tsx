@@ -15,7 +15,7 @@ function cardJson(props: PreviewCardProps): string {
 describe('link preview cards', () => {
     it('places a guide page under its sidebar section', async () => {
         const page = source.getPage(['converters']);
-        expect(page && (await docsPreview(page)).breadcrumb).toEqual(['guide', expect.any(String)]);
+        expect(page && (await docsPreview(page)).breadcrumb).toEqual(['guide', 'Reading config']);
     });
 
     it('places an API page under its module and kind', async () => {
