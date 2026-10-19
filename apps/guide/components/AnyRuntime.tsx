@@ -13,12 +13,12 @@ Envapter.useSource(new PortableSource(env));
 
 const api = Envapter.getAs('API_BASE_URL', Converters.Url);`;
 
-const BROWSER = `import { Envapter, PortableSource } from 'envapt';
+const BROWSER = `import { Converters, Envapter, PortableSource } from 'envapt';
 
 // Vite inlines import.meta.env at build time
 Envapter.useSource(new PortableSource(import.meta.env));
 
-const beta = Envapter.getBoolean('VITE_BETA', false);`;
+const beta = Envapter.getAs('VITE_BETA', Converters.Boolean, false);`;
 
 export function AnyRuntime(): ReactNode {
     return (

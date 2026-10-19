@@ -1,12 +1,12 @@
 import assert from 'node:assert/strict';
 import process from 'node:process';
 
-import { Converters, Envapt, EnvBool, EnvNum } from '../../dist/node/index.mjs';
+import { Converters, Envapt } from '../../dist/node/index.mjs';
 
 // tc and eslint skip this file because experimentalDecorators rejects accessor decorators.
 // bun and deno compile it with their own Stage 3 transform.
 class Config {
-    @EnvNum('MD_PORT_ABSENT', 3000)
+    @Envapt('MD_PORT_ABSENT', { fallback: 3000 })
     static accessor port: number;
 
     @Envapt('MD_REGION_ABSENT', { fallback: 'us-east-1' })
@@ -15,7 +15,7 @@ class Config {
     @Envapt('MD_TAGS_ABSENT', { converter: Converters.array({ of: Converters.String }), fallback: ['a', 'b'] })
     static accessor tags: string[];
 
-    @EnvBool('MD_NO_FALLBACK_ABSENT')
+    @Envapt('MD_NO_FALLBACK_ABSENT', { converter: Converters.Boolean })
     static accessor missing: boolean | undefined;
 }
 

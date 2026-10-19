@@ -14,12 +14,15 @@ type SnakeToKebab<Str extends string, Acc extends string = ''> = Str extends `${
         ? Lowercase<Str>
         : `${Acc}-${Lowercase<Str>}`;
 
-type RecaseKey<Key extends string, Casing> = Casing extends 'camelCase'
-    ? Uncapitalize<SnakeToPascal<Key>>
-    : Casing extends 'PascalCase'
-      ? SnakeToPascal<Key>
-      : Casing extends 'kebab-case'
-        ? SnakeToKebab<Key>
-        : Key;
+// with strictNullChecks off, undefined extends 'camelCase'
+type RecaseKey<Key extends string, Casing> = [Casing] extends [undefined]
+    ? Key
+    : Casing extends 'camelCase'
+      ? Uncapitalize<SnakeToPascal<Key>>
+      : Casing extends 'PascalCase'
+        ? SnakeToPascal<Key>
+        : Casing extends 'kebab-case'
+          ? SnakeToKebab<Key>
+          : Key;
 
 export type { KeyCasing, RecaseKey };

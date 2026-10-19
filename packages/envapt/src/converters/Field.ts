@@ -12,7 +12,6 @@ import type {
     BuiltInConverter,
     BuiltInConverterFunction,
     ConverterFunction,
-    FallbackToken,
     PresentValue,
     RequiredSpec
 } from '../types';
@@ -201,14 +200,7 @@ function requireSync(key: string, outcome: SchemaOutcome): StandardSchemaV1.Resu
     return outcome;
 }
 
-function tokenForFallback(fallback: unknown): FallbackToken {
-    const fallbackType = typeof fallback;
-    if (fallbackType === 'number' || fallbackType === 'boolean' || fallbackType === 'bigint') return fallbackType;
-    return 'string';
-}
-
-export function createField(spec: FieldSpec | undefined, fallback?: unknown): Field {
-    if (spec === undefined) return new TokenField(tokenForFallback(fallback), fallback);
+export function createField(spec: FieldSpec, fallback?: unknown): Field {
     if (Validator.isStandardSchema(spec)) return new SchemaField(spec, fallback);
     if (Validator.isArrayConverter(spec)) return new ArrayField(spec, fallback);
     if (Validator.isBuiltInConverter(spec)) return new TokenField(spec, fallback);

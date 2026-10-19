@@ -20,7 +20,7 @@ Config.cacheTtl;
 //     ^?
 ```
 
-`cacheTtl` is a `number` of milliseconds even though its fallback is the string `'15m'`, because the Time converter converts the fallback too. A decorated field uses the same keys, [converters](/docs/converters), and cache as `getAs`. A value you read once, in one place, needs no class, and [`Envapter.getAs`](/docs/envapter) is shorter there. The same declaration works on instance fields and through shorthand decorators such as `@EnvNum`. If your project already sets `experimentalDecorators`, import from `envapt/legacy` instead ([Legacy decorators](#legacy-decorators)).
+`cacheTtl` is a `number` of milliseconds even though its fallback is the string `'15m'`, because the Time converter converts the fallback too. A decorated field uses the same keys, [converters](/docs/converters), and cache as `getAs`. A value you read once, in one place, needs no class, and [`Envapter.getAs`](/docs/envapter) is shorter there. The same declaration works on instance fields. If your project already sets `experimentalDecorators`, import from `envapt/legacy` instead ([Legacy decorators](#legacy-decorators)).
 
 ## Declaring decorated fields
 
@@ -59,7 +59,7 @@ class Server {
 
 ### Legacy decorators
 
-Legacy decorators are TypeScript's older property decorators. They are called with `(target, key)`, where modern ones receive `(target, context)`. TypeScript emits and checks that call shape only when `experimentalDecorators` is on. Use the modern form unless your project already sets the flag. The shorthand decorators below are exported from `envapt/legacy` as well.
+Legacy decorators are TypeScript's older property decorators. They are called with `(target, key)`, where modern ones receive `(target, context)`. TypeScript emits and checks that call shape only when `experimentalDecorators` is on. Use the modern form unless your project already sets the flag.
 
 {/* prettier-ignore-start */}
 
@@ -154,39 +154,6 @@ class Config {
 ```
 
 `SAMPLE_RATE` has no fallback and isn't required, so its output is `number | undefined`. The field needs that union, or a fallback to remove it.
-
-## Shorthand decorators
-
-Each shorthand decorator is `@Envapt` with its converter already set, so you skip the options object and write the key and an optional fallback of the converter's type.
-
-{/* prettier-ignore-start */}
-
-| Decorator | [Converter](/docs/converters) | Fallback |
-| --- | --- | --- |
-| `@EnvStr` | [`Converters.String`](/docs/converters) | `string` |
-| `@EnvNum` | [`Converters.Number`](/docs/converters) | `number` |
-| `@EnvBool` | [`Converters.Boolean`](/docs/converters) | `boolean` |
-| `@EnvTime` | [`Converters.Time`](/docs/converters) | milliseconds, or a string like `'15m'` |
-| `@EnvUrl` | [`Converters.Url`](/docs/converters) | a `URL` |
-
-{/* prettier-ignore-end */}
-
-```ts twoslash
-import { EnvNum, EnvStr, EnvBool } from 'envapt';
-// ---cut---
-class Config {
-    @EnvNum('SAMPLE_RATE', 0.25)
-    static accessor sampleRate: number;
-
-    @EnvStr('AWS_REGION', 'us-east-1')
-    static accessor region: string;
-
-    @EnvBool('ENABLE_BETA', false)
-    static accessor betaEnabled: boolean;
-}
-```
-
-The second arguments `0.25`, `'us-east-1'`, and `false` are the fallbacks. If you omit the fallback, the field is the converted value or `undefined`. A shorthand takes only a fallback, so `required`, `schema`, arrays, ports, and custom functions need `@Envapt`.
 
 ## Required fields
 

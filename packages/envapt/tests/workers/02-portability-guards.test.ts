@@ -23,10 +23,4 @@ describe('portable build guards on workerd', () => {
             expect((err as EnvaptError).code).toBe(EnvaptErrorCodes.FileApiUnsupported);
         }
     });
-
-    it('reads injected config from a PortableSource', () => {
-        Envapter.useSource(new PortableSource({ FLAG: 'true', COUNT: '42' }));
-        expect(Envapter.getBoolean('FLAG')).toBe(true);
-        expect(Envapter.getNumber('COUNT')).toBe(42);
-    });
 });

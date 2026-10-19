@@ -2,8 +2,7 @@ import { resolve } from 'node:path';
 
 import { beforeAll, describe, expect, it } from 'vitest';
 
-import { Converters, Envapter } from '../src';
-import { EnvaptError } from '../src/infra/Error';
+import { Converters, Envapter, EnvaptError } from '../src';
 import { Envapt } from '../src/legacy';
 
 function splitList(raw: string): string[] {

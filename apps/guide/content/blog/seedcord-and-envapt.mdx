@@ -27,7 +27,7 @@ export function defaultLevel(): LogLevel {
 
 HMR, dev-only command registration, the log format (pretty in dev, JSON otherwise), and Mongo's TLS flag all branch on these getters. None of them look at `NODE_ENV` themselves. envapt checks `ENVIRONMENT`, `ENV`, `NODE_ENV`, and `MODE` in that order and ignores case, so a bot that sets any one of them gets the right log format.
 
-Everything else is a handful of single reads. The bot token goes through `Envapter.get('DISCORD_BOT_TOKEN')` into seedcord's own validator. The CLI's profiling flag is `Envapter.getBoolean('SEEDCORD_DEV_PROFILE', false)`. And the PR labeler script in the repo reads its whole CI context in one call:
+Everything else is a handful of single reads. The bot token goes through `Envapter.get('DISCORD_BOT_TOKEN')` into seedcord's own validator. The CLI's profiling flag is `Envapter.getAs('SEEDCORD_DEV_PROFILE', Converters.Boolean, false)`. And the PR labeler script in the repo reads its whole CI context in one call:
 
 ```ts twoslash
 import { Converters, Envapter } from 'envapt';

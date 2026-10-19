@@ -162,6 +162,9 @@ These rules decide what the cache holds.
 2. **`source.readVars()` runs once per cache build.** `FileSource` copies `process.env` at that point, so if code sets `process.env.FEATURE_FLAGS = 'on'` afterwards, the cache keeps the old value. To make envapt read such a change, bind again with `Envapter.useSource(new FileSource())`.
 3. **Some calls rebuild the cache.** The rebuild runs inside the call, so a failing rebuild throws at the assignment.
 
+<Accordions>
+<Accordion title="Every call that rebuilds the cache">
+
 {/* prettier-ignore-start */}
 
 | Call that rebuilds the cache | On the portable build |
@@ -173,6 +176,9 @@ These rules decide what the cache holds.
 | `Envapter.configureProfiles(...)`, `resetPaths()` ([file APIs](/docs/env-files)) | warn once, do nothing |
 
 {/* prettier-ignore-end */}
+
+</Accordion>
+</Accordions>
 
 [Compatibility](/docs/compatibility#file-apis-and-fileapimode) covers when the file APIs throw `FileApiUnsupported` (306) in place of the warning. On the node build, if you bind a source that doesn't read files, `envPaths`, `baseDir`, and `configureProfiles` throw `FileApiUnsupported`. `envFileOptions` and `resetPaths` still rebuild the cache.
 

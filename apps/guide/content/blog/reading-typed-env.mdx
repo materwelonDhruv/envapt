@@ -22,7 +22,7 @@ Here's the same port, read so the fallback only fires when the value is actually
 import { Converters, Envapter } from 'envapt';
 // ---cut---
 const port = Envapter.getAs('PORT', Converters.Port, 3000); // number, 0-65535 checked
-const debug = Envapter.getBoolean('DEBUG', false); // 1/yes/true/on -> true
+const debug = Envapter.getAs('DEBUG', Converters.Boolean, false); // 1/yes/true/on -> true
 ```
 
 `Converters.Port` returns `number`. `PORT=0` reads as `0`, the ephemeral-bind wildcard. A typo in `PORT` is unparseable, so it takes the fallback, and so does `PORT=99999`, which is outside the valid range. The `Number(x) || default` trap is gone because there's no `||` deciding what counts as empty.
@@ -38,7 +38,7 @@ const noFallback = Envapter.getAs('PORT', Converters.Port);
 //    ^?
 ```
 
-Leave the fallback off and you get `number | undefined`. The type makes you handle the missing case. And `getBoolean` reads `1`, `yes`, `true`, `on` as true and `0`, `no`, `false`, `off` as false, case-insensitively, so `DEBUG=1` is `true` and not the silent `false` that `=== 'true'` gives you.
+Leave the fallback off and you get `number | undefined`. The type makes you handle the missing case. And `Converters.Boolean` reads `1`, `yes`, `true`, `on` as true and `0`, `no`, `false`, `off` as false, case-insensitively, so `DEBUG=1` is `true` and not the silent `false` that `=== 'true'` gives you.
 
 ## The shapes that aren't primitives
 
@@ -116,15 +116,20 @@ class Config {
 }
 ```
 
-For the common types there's sugar that takes the key and an optional fallback.
+Every other type is the same decorator with a converter in the options.
 
 ```ts twoslash
-import { EnvNum, EnvUrl, EnvTime } from 'envapt';
+import { Converters, Envapt } from 'envapt';
 // ---cut---
 class Config {
-    @EnvNum('MAX_RETRIES', 3) static accessor maxRetries: number;
-    @EnvUrl('APP_URL', new URL('http://localhost:3000')) static accessor appUrl: URL;
-    @EnvTime('CACHE_TTL', '5m') static accessor ttl: number; // ms
+    @Envapt('MAX_RETRIES', { converter: Converters.Integer, fallback: 3 })
+    static accessor maxRetries: number;
+
+    @Envapt('APP_URL', { converter: Converters.Url, fallback: new URL('http://localhost:3000') })
+    static accessor appUrl: URL;
+
+    @Envapt('CACHE_TTL', { converter: Converters.Time, fallback: '5m' })
+    static accessor ttl: number; // ms
 }
 ```
 

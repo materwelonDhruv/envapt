@@ -82,14 +82,7 @@ export class Validator {
         }
     }
 
-    static arrayConverter(value: unknown): asserts value is ArrayOf {
-        if (!isArrayOf(value)) {
-            throw new EnvaptError(
-                EnvaptErrorCodes.InvalidArrayConverterType,
-                'Expected an ArrayOf<...> token produced by Converters.array(...)'
-            );
-        }
-
+    static arrayConverter(value: ArrayOf): void {
         if (typeof value.delimiter !== 'string' || value.delimiter.length === 0) {
             throw new EnvaptError(
                 EnvaptErrorCodes.MissingDelimiter,

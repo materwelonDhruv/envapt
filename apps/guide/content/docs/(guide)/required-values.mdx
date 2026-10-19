@@ -177,6 +177,9 @@ Envapter.strict = true;
 
 When you set it, envapt rebuilds the [cache](/docs/sources#when-values-are-read) from the bound source. On Workers, the browser, and edge runtimes, you can set it before `useSource` too, and `useSource` applies it.
 
+<Accordions>
+<Accordion title="What strict mode changes, case by case">
+
 {/* prettier-ignore-start */}
 
 | Behavior | Strict off | Strict on |
@@ -186,6 +189,9 @@ When you set it, envapt rebuilds the [cache](/docs/sources#when-values-are-read)
 | An empty array element, like a trailing comma | skipped | a read with `Converters.array` throws `EmptyArrayElement` (207), and a required read reports it as an issue |
 
 {/* prettier-ignore-end */}
+
+</Accordion>
+</Accordions>
 
 Strict mode also applies to [templates](/docs/templates) and the `resolve` tagged template. An ordered key list skips a whitespace-only key and uses the next one.
 

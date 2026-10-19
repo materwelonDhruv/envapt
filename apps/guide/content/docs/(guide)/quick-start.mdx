@@ -56,15 +56,15 @@ A Worker's bindings arrive on the `env` object it imports from `cloudflare:worke
 /// <reference types="@cloudflare/workers-types" />
 // ---cut---
 import { env } from 'cloudflare:workers';
-import { Envapter, PortableSource } from 'envapt';
+import { Converters, Envapter, PortableSource } from 'envapt';
 
 Envapter.useSource(new PortableSource(env));
 
-const maintenanceMode = Envapter.getBoolean('MAINTENANCE_MODE', false);
+const maintenanceMode = Envapter.getAs('MAINTENANCE_MODE', Converters.Boolean, false);
 //    ^?
 ```
 
-A `vars` entry in your Wrangler config can be a boolean or an object. `PortableSource` turns each value in `env` that isn't a string into JSON text, so a boolean `MAINTENANCE_MODE` arrives as `'true'` and `getBoolean` reads it. If a read runs before the `useSource` line, it throws [`NoSourceBound`](/docs/sources#no-environment-source-is-bound). Local dev and secrets are on the [Cloudflare Workers](/docs/workers) page.
+A `vars` entry in your Wrangler config can be a boolean or an object. `PortableSource` turns each value in `env` that isn't a string into JSON text, so a boolean `MAINTENANCE_MODE` arrives as `'true'` and `Converters.Boolean` reads it. If a read runs before the `useSource` line, it throws [`NoSourceBound`](/docs/sources#no-environment-source-is-bound). Local dev and secrets are on the [Cloudflare Workers](/docs/workers) page.
 
 </Tab>
 <Tab value="Browser">
@@ -72,14 +72,14 @@ A `vars` entry in your Wrangler config can be a boolean or an object. `PortableS
 A bundler writes your config into the client code at build time. Vite exposes that config as `import.meta.env`, so bind that object before the first read.
 
 ```ts title="src/config.ts"
-import { Envapter, PortableSource } from 'envapt';
+import { Converters, Envapter, PortableSource } from 'envapt';
 
 Envapter.useSource(new PortableSource(import.meta.env));
 
-const betaEnabled = Envapter.getBoolean('VITE_ENABLE_BETA', false);
+const betaEnabled = Envapter.getAs('VITE_ENABLE_BETA', Converters.Boolean, false);
 ```
 
-The sample passes the whole `import.meta.env` object to `PortableSource`. Then `getBoolean` reads `VITE_ENABLE_BETA` from it like any other key. If a read runs before the `useSource` line, it throws [`NoSourceBound`](/docs/sources#no-environment-source-is-bound). Vite puts every variable it exposes into the client bundle, so expose public values only. [Browser](/docs/browser) explains the `VITE_` prefix.
+The sample passes the whole `import.meta.env` object to `PortableSource`. Then `getAs` reads `VITE_ENABLE_BETA` from it like any other key. If a read runs before the `useSource` line, it throws [`NoSourceBound`](/docs/sources#no-environment-source-is-bound). Vite puts every variable it exposes into the client bundle, so expose public values only. [Browser](/docs/browser) explains the `VITE_` prefix.
 
 </Tab>
 </Tabs>

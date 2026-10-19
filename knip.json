@@ -14,7 +14,9 @@
                 "tests/integration/config-entry/print.mjs",
                 "tests/tree-shaking/node-bind.entry.mjs",
                 "tests/*-emit/fixture.mts",
-                "tests/*-emit/load.mjs"
+                "tests/*-emit/load.mjs",
+                "tests/consumer-types/fixtures/**/*.mts",
+                "tests/*.types-test.ts"
             ],
             "vitest": {
                 "config": ["../../vitest.config.ts", "vitest.browser.config.ts", "vitest.workers.config.ts"]

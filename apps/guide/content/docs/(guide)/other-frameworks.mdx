@@ -1,0 +1,101 @@
+---
+title: SvelteKit, Astro, and Nuxt
+description: Run typed envapt config in a SvelteKit, Astro, or Nuxt server on Node, with the start command and startup checks each framework needs.
+---
+
+This page covers SvelteKit 3 with `adapter-node`, Astro 7 with `@astrojs/node`, and Nuxt 4's Node server. Each one runs your server code on Node, where envapt loads its [node build](/docs/compatibility#node-build-binds-automatically) and reads `process.env` and your `.env` files with no setup. An adapter for Workers or an edge runtime loads the portable build instead, which [Cloudflare Workers](/docs/workers) and [Edge runtimes](/docs/edge-runtimes) explain. Next.js has [its own page](/docs/nextjs).
+
+{/* prettier-ignore-start */}
+
+| | SvelteKit 3 | Astro 7 | Nuxt 4 |
+| --- | --- | --- | --- |
+| Build runs your server modules | yes | prerendered pages only | no |
+| `NODE_ENV` when the built server starts | unset | unset | unset |
+| Hook that runs before the first request | `init` in `hooks.server.ts` | none | a Nitro plugin |
+| `@Envapt` from `envapt` | build stops | first request throws | works |
+| `@Envapt` from `envapt/legacy` | works | works | works |
+
+{/* prettier-ignore-end */}
+
+Each framework also declares variables its own way, with SvelteKit's `defineEnvVars`, Astro's `astro:env`, and Nuxt's `runtimeConfig`. Use those for values the framework passes to its own APIs and to the browser. Use envapt when code outside the framework, such as a worker or a script, imports the same config module. It also gives you converters like [`Converters.Time`](/docs/converters) and the [file order](/docs/env-files#which-files-load) that follows `ENVIRONMENT=staging`.
+
+## Start the server with NODE_ENV set
+
+With `NODE_ENV` unset, [`Envapter.environment`](/docs/environment) returns `'development'`, so envapt skips `.env.production`. Set it in the start command:
+
+```sh
+NODE_ENV=production node build                     # SvelteKit with adapter-node
+NODE_ENV=production node dist/server/entry.mjs     # Astro with @astrojs/node
+NODE_ENV=production node .output/server/index.mjs  # Nuxt
+```
+
+Nuxt makes this easy to miss. Its build replaces each `process.env.NODE_ENV` in your server code with the string `"production"`, so a check in your own code says production. envapt reads `process.env` at runtime, where `NODE_ENV` is still unset.
+
+None of these servers copies your `.env` files into `process.env`. envapt reads the files itself, in its own order, and `ENVIRONMENT=staging` in the start command makes it read `.env.staging` too.
+
+## SvelteKit
+
+Put your reads in one server module, so the `init` hook below can import the same file your routes do:
+
+```ts twoslash title="src/lib/server/config.ts"
+import { Converters, Envapter } from 'envapt';
+
+export const config = Envapter.getRequiredAll(
+    {
+        DATABASE_URL: Converters.Url,
+        SESSION_TTL: Converters.Time
+    },
+    'camelCase'
+);
+```
+
+[`getRequiredAll`](/docs/required-values) turns `SESSION_TTL=15m` into `config.sessionTtl`, the number `900000`. If `DATABASE_URL` and `SESSION_TTL` are both unset, it throws one `MissingEnvValue` error (305) that lists both.
+
+`vite build` runs your server modules during its analysis step. If a route imports `config` and a variable is unset on the build machine, the build stops:
+
+```txt
+error during build:
+EnvaptError [305]: Missing required environment variables: DATABASE_URL.
+```
+
+Set the variables where you build. If your build machine can't have them, export a function that calls `getRequiredAll` and call it from your routes, the way [Next.js](/docs/nextjs#failed-to-collect-page-data) does.
+
+The server can still start with values that differ from the build machine's. To check them at startup, import `config` in the `init` hook:
+
+```ts title="src/hooks.server.ts"
+import type { ServerInit } from '@sveltejs/kit/hooks';
+
+export const init: ServerInit = async () => {
+    await import('./lib/server/config');
+};
+```
+
+SvelteKit runs `init` before it serves a request. If `init` throws, the process exits with code 1 and never starts listening.
+
+SvelteKit's own `defineEnvVars` reads only `process.env`. If you use it alongside envapt, SvelteKit can't find a variable defined only in `.env`, and the server stops with `env_invalid`. envapt reads the same variable from the file.
+
+### SyntaxError: Invalid or unexpected token
+
+`vite build` stops with this error if a class uses `@Envapt` from `envapt`. Vite 8 leaves those decorators uncompiled in the server bundle, and Node can't parse them. To get them compiled, set `experimentalDecorators` in `tsconfig.json` and switch to [`envapt/legacy`](/docs/decorators#legacy-decorators), which declares each field as `static readonly` in place of `static accessor`. The [Browser](/docs/browser#decorators) page has the same fix for Vite 8 in client code.
+
+## Astro
+
+When the first request for a route arrives, Astro imports that route's module. If `config` is missing a variable, that route returns 500, but the rest of the site keeps working. Astro has no hook that runs when the server starts, and `src/middleware.ts` also loads on the first request. To catch a bad config right after a deploy, point your health check at a route that imports `config`.
+
+During `astro build`, `NODE_ENV` is `production`. If a page exports `prerender = true`, Astro renders it then, and the values it reads come from `.env.production` on the build machine. They stay in the HTML until you build again.
+
+Astro builds its server bundle with Vite 8 too. The build passes, but the first request to a route that imports a class using `@Envapt` from `envapt` throws `SyntaxError: Invalid or unexpected token`. Switch to `envapt/legacy` with `experimentalDecorators`, the same fix as for SvelteKit.
+
+## Nuxt
+
+Nuxt's build doesn't run your server routes, so it passes even if variables are unset. To catch them when the server starts, add a Nitro plugin. Nitro is the server Nuxt builds, and it runs each file in `server/plugins` once at startup, before it listens:
+
+```ts title="server/plugins/check-config.ts"
+import '../lib/config';
+
+export default defineNitroPlugin(() => {});
+```
+
+`server/lib/config.ts` holds the same `getRequiredAll` call as the SvelteKit sample. The import runs that call. If a variable is missing or doesn't convert, the plugin throws and the process exits with code 1.
+
+Nuxt's server build compiles `@Envapt` from `envapt`, so `static accessor` fields work without `experimentalDecorators`.

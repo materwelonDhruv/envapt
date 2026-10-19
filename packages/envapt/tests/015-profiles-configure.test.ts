@@ -32,7 +32,6 @@ describe('profiles — Envapter.configureProfiles overrides', () => {
         });
 
         expect(Envapter.get('PROFILE_NAME')).to.equal('staging-profile');
-        expect(Envapter.getNumber('PROFILE_PORT')).to.equal(4004);
     });
 
     it('falls through to cascade for environments not in configureProfiles', () => {

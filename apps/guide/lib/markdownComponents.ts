@@ -54,6 +54,11 @@ async function Tab({ value, children }: { value: string; children?: ReactNode })
     return block(`**${value}**\n\n${await markdownOf(children)}`);
 }
 
+async function Accordion({ title, children }: { title: string; children?: ReactNode }): Promise<string> {
+    asMarkdown();
+    return block(`**${title}**\n\n${await markdownOf(children)}`);
+}
+
 function PassThrough({ children }: { children?: ReactNode }): ReactNode {
     asMarkdown();
     return children;
@@ -105,6 +110,8 @@ export const MARKDOWN_COMPONENTS: MDXComponents = {
     Callout,
     Tabs: PassThrough,
     Tab,
+    Accordions: PassThrough,
+    Accordion,
     Steps: PassThrough,
     Step: PassThrough,
     Cards: List,

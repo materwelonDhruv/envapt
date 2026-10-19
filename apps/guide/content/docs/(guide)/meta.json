@@ -24,6 +24,10 @@
         "workers",
         "edge-runtimes",
         "browser",
+        "---Frameworks---",
+        "nextjs",
+        "other-frameworks",
+        "building-on-envapt",
         "---Reference---",
         "errors",
         "(migrations)"

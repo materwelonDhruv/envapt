@@ -17,6 +17,6 @@ describe('BigInt Support', () => {
     });
 
     it('should return fallback for invalid bigint', () => {
-        expect(Envapter.getBigInt('TEST_INVALID_BIGINT', 888n)).to.equal(888n);
+        expect(Envapter.getAs('TEST_INVALID_BIGINT', Converters.BigInt, 888n)).to.equal(888n);
     });
 });

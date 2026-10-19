@@ -77,7 +77,7 @@ import { z } from 'zod';
 
 const requestTimeout = Envapter.getAs('REQUEST_TIMEOUT', Converters.Time, '30s'); // 30000
 const maxRetries = Envapter.getAs('MAX_RETRIES', Converters.Integer, 3);
-const debug = Envapter.getBoolean('DEBUG', false);
+const debug = Envapter.getAs('DEBUG', Converters.Boolean, false);
 const logLevel = Envapter.getRequired('LOG_LEVEL', z.enum(['debug', 'info', 'warn', 'error']));
 ```
 
@@ -99,13 +99,13 @@ In the browser, bind the object your bundler injects, such as Vite's `import.met
 Declare config as class fields with a TC39 accessor decorator. TypeScript needs no extra compiler flag for it, and Bun and Deno run it from `.ts` directly.
 
 ```ts
-import { Converters, Envapt, EnvTime } from 'envapt';
+import { Converters, Envapt } from 'envapt';
 
 class Config {
     @Envapt('PORT', { converter: Converters.Port, fallback: 3000 })
     static accessor port: number;
 
-    @EnvTime('CACHE_TTL', '15m')
+    @Envapt('CACHE_TTL', { converter: Converters.Time, fallback: '15m' })
     static accessor cacheTtl: number;
 }
 ```

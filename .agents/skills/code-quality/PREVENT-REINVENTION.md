@@ -44,7 +44,7 @@ Read the module before you write a parallel one:
 
 If your helper is "almost" one that already exists but has one different behavior, that is a missing **option or overload**. Extend the existing one.
 
-New reader behavior belongs on the mixin chain in `core/` (`EnvapterBase` → `EnvironmentMethods` → `PrimitiveMethods` → `AdvancedMethods`). Do not build a parallel set of free functions next to it.
+New reader behavior belongs on the mixin chain in `core/` (`EnvapterBase` → `EnvironmentMethods` → `ReaderMethods`). Do not build a parallel set of free functions next to it.
 
 ### 2. Is the literal value a typed constant?
 

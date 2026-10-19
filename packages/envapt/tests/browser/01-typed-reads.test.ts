@@ -4,13 +4,11 @@ import { Converters, Envapter, PortableSource } from '../../dist/portable/index.
 
 describe('envapt in the browser', () => {
     beforeEach(() => {
-        Envapter.useSource(new PortableSource({ APP: 'web', PORT: '443', FLAG: 'true', API: 'https://api.test/v1' }));
+        Envapter.useSource(new PortableSource({ APP: 'web', API: 'https://api.test/v1' }));
     });
 
     it('reads typed values from an injected source', () => {
         expect(Envapter.get('APP')).toBe('web');
-        expect(Envapter.getNumber('PORT')).toBe(443);
-        expect(Envapter.getBoolean('FLAG')).toBe(true);
         expect(Envapter.getAs('API', Converters.Url)?.href).toBe('https://api.test/v1');
     });
 });

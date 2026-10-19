@@ -1,16 +1,11 @@
-import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 import { beforeAll, describe, expect, it } from 'vitest';
 
-import { Converters, Envapter, EnvaptErrorCodes } from '../src';
-import { Validator } from '../src/engine/Validators';
-import { EnvaptError } from '../src/infra/Error';
+import { Converters, Envapter, EnvaptError, EnvaptErrorCodes } from '../src';
 import { Envapt } from '../src/legacy';
 
 import type { JsonValue } from '../src';
-
-const nodeExists = (path: string): boolean => existsSync(path);
 
 describe('Runtime Validation', () => {
     beforeAll(() => (Envapter.envPaths = resolve(import.meta.dirname, '.env.extra')));
@@ -35,46 +30,40 @@ describe('Runtime Validation', () => {
             }
         });
 
-        it('throws FallbackConverterTypeMismatch for a primitive reader given the wrong fallback type', () => {
-            // cast past the type to reach the runtime check that JS callers hit
-            expect(() => Envapter.getNumber('NEVER_SET_KEY', 'eighty' as never))
-                .to.throw(EnvaptError)
-                .with.property('code', EnvaptErrorCodes.FallbackConverterTypeMismatch);
-        });
-
         it('throws InvalidCustomConverter for a converter that is neither a token nor a function', () => {
             // cast past the type to reach the runtime check
             expect(() => Envapter.getAs('VAR_IN_EXTRA_FILE', 42 as never))
                 .to.throw(EnvaptError)
                 .with.property('code', EnvaptErrorCodes.InvalidCustomConverter);
         });
-    });
 
-    describe('ArrayOf validation (brand-based)', () => {
-        it('should throw for values missing the ArrayOf brand', () => {
-            const invalidConfigs = [{}, 'string', null, { delimiter: ',' }, { of: 'string', delimiter: ',' }];
-
-            const testFunction = (config: unknown) => () => Validator.arrayConverter(config);
-
-            invalidConfigs.forEach((config) => {
-                expect(testFunction(config))
-                    .to.throw(EnvaptError)
-                    .with.property('code', EnvaptErrorCodes.InvalidArrayConverterType);
-            });
+        it('reads an explicit `converter: undefined` on @Envapt the same as no converter', () => {
+            class OptionalConverter {
+                @Envapt('NEVER_SET_KEY', { fallback: 3000, converter: undefined })
+                static readonly port: number;
+            }
+            expect(OptionalConverter.port).to.equal(3000);
         });
 
-        it('should throw when a hand-rolled ArrayOf has an unknown `of` token', () => {
-            // intentionally malformed for runtime validation -- justified
-            const malformed = { __envaptKind: 'array', of: 'not-a-real-token', delimiter: ',' };
-            expect(() => Validator.arrayConverter(malformed))
+        it('throws InvalidCustomConverter for an undefined getAs converter', () => {
+            // cast past the type to reach the runtime check
+            expect(() => Envapter.getAs('VAR_IN_EXTRA_FILE', undefined as never))
+                .to.throw(EnvaptError)
+                .with.property('code', EnvaptErrorCodes.InvalidCustomConverter);
+        });
+    });
+
+    describe('ArrayOf validation', () => {
+        it('throws InvalidArrayConverterType for an unknown `of` token', () => {
+            // cast past the type to reach the runtime check
+            const unknownOf = Converters.array({ of: 'not-a-real-token' as never });
+            expect(() => Envapter.getAs('VAR_IN_EXTRA_FILE', unknownOf))
                 .to.throw(EnvaptError)
                 .with.property('code', EnvaptErrorCodes.InvalidArrayConverterType);
         });
 
-        it('should throw when a hand-rolled ArrayOf has a missing or empty delimiter', () => {
-            // intentionally malformed for runtime validation -- justified
-            const missingDelimiter = { __envaptKind: 'array', of: 'string', delimiter: '' };
-            expect(() => Validator.arrayConverter(missingDelimiter))
+        it('throws MissingDelimiter for an empty delimiter', () => {
+            expect(() => Envapter.getAs('VAR_IN_EXTRA_FILE', Converters.array({ delimiter: '' })))
                 .to.throw(EnvaptError)
                 .with.property('code', EnvaptErrorCodes.MissingDelimiter);
         });
@@ -258,69 +247,46 @@ describe('Runtime Validation', () => {
     });
 
     describe('Array converter element type validation', () => {
-        it('should not throw for empty arrays', () => {
-            expect(() => Validator.validateArrayConverterElementTypeMatch('string', [])).to.not.throw();
-            expect(() => Validator.validateArrayConverterElementTypeMatch('number', [])).to.not.throw();
-        });
-
-        it('should accept TimeFallback[] (string[]) when element token is "time"', () => {
-            expect(() => Validator.validateArrayConverterElementTypeMatch('time', ['5s', '10m'])).to.not.throw();
-            expect(() => Validator.validateArrayConverterElementTypeMatch('time', [5000, 600000])).to.not.throw();
-        });
-
-        it('should throw for a time-array fallback that is neither all numbers nor all strings', () => {
-            expect(() => Validator.validateArrayConverterElementTypeMatch('time', [{}, {}]))
+        it('throws for a time-array fallback that is neither all numbers nor all strings', () => {
+            // cast past the type to reach the runtime check
+            const mixed = [{}, {}] as never;
+            expect(() => Envapter.getAs('NEVER_SET_KEY', Converters.array({ of: Converters.Time }), mixed))
                 .to.throw(EnvaptError)
                 .with.property('code', EnvaptErrorCodes.ArrayFallbackElementTypeMismatch);
         });
 
-        it('should skip element-type validation when `of` is a custom function', () => {
+        it('skips element-type validation when `of` is a custom function', () => {
             const customOf = (raw: string): number => Number(raw);
-            expect(() => Validator.validateArrayConverterElementTypeMatch(customOf, [1, 2, 3])).to.not.throw();
+            expect(Envapter.getAs('NEVER_SET_KEY', Converters.array({ of: customOf }), [1, 2, 3])).to.deep.equal([
+                1, 2, 3
+            ]);
         });
     });
 
-    describe('dotenv config validation', () => {
-        it('should reject removed dotenv config options (quiet, DOTENV_KEY)', () => {
-            const removedConfigs = [{ quiet: true }, { DOTENV_KEY: 'test-key' }];
-
-            for (const config of removedConfigs) {
-                expect(() => Validator.validateEnvFileOptions(config))
+    describe('.env file option validation', () => {
+        it('rejects removed dotenv options (quiet, DOTENV_KEY)', () => {
+            // cast past the type to reach the runtime check
+            for (const options of [{ quiet: true }, { DOTENV_KEY: 'test-key' }] as never[]) {
+                expect(() => (Envapter.envFileOptions = options))
                     .to.throw(EnvaptError)
                     .with.property('code', EnvaptErrorCodes.InvalidUserDefinedConfig);
             }
         });
 
-        it('should throw error for multiple invalid options', () => {
-            const error = (() => {
-                try {
-                    Validator.validateEnvFileOptions({ invalidOption1: 'test', invalidOption2: 'test' });
-                    return null;
-                } catch (err) {
-                    return err as EnvaptError;
-                }
-            })();
-
-            expect(error).to.be.instanceOf(EnvaptError);
-            expect(error?.code).to.equal(EnvaptErrorCodes.InvalidUserDefinedConfig);
-            expect(error?.message).to.include('invalidOption1, invalidOption2');
+        it('lists every invalid option in one error', () => {
+            // cast past the type to reach the runtime check
+            const options = { invalidOption1: 'test', invalidOption2: 'test' } as never;
+            expect(() => (Envapter.envFileOptions = options))
+                .to.throw(EnvaptError, 'invalidOption1, invalidOption2')
+                .with.property('code', EnvaptErrorCodes.InvalidUserDefinedConfig);
         });
     });
 
     describe('env file validation', () => {
-        it('should throw error for non-existent multiple files', () => {
-            const error = (() => {
-                try {
-                    Validator.validateEnvFilesExist(['/non/existent/file1.env', '/non/existent/file2.env'], nodeExists);
-                    return null;
-                } catch (err) {
-                    return err as EnvaptError;
-                }
-            })();
-
-            expect(error).to.be.instanceOf(EnvaptError);
-            expect(error?.code).to.equal(EnvaptErrorCodes.EnvFilesNotFound);
-            expect(error?.message).to.include('/non/existent/file1.env, /non/existent/file2.env');
+        it('lists every missing file in one EnvFilesNotFound', () => {
+            expect(() => (Envapter.envPaths = ['/non/existent/file1.env', '/non/existent/file2.env']))
+                .to.throw(EnvaptError, '/non/existent/file1.env, /non/existent/file2.env')
+                .with.property('code', EnvaptErrorCodes.EnvFilesNotFound);
         });
     });
 });

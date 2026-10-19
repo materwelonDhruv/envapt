@@ -1,6 +1,6 @@
 import { Converters, Envapter } from '../../src';
 
-import type { StandardSchemaV1 } from '../../src/infra/StandardSchema';
+import type { StandardSchemaV1 } from '../../src';
 
 declare const asyncSchema: StandardSchemaV1<string, string> & {
     readonly '~standard': {

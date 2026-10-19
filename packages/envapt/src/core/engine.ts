@@ -14,7 +14,7 @@ import { UnboundSource } from '../sources/UnboundSource';
 
 import type { Field, FieldSpec } from '../converters';
 import type { StandardSchemaV1 } from '../infra/StandardSchema';
-import type { AdvancedConverterReturn, EnvKeyInput, InferConverterReturnType, KeyCasing, PresentValue } from '../types';
+import type { EnvKeyInput, KeyCasing, PresentValue } from '../types';
 
 function toKeyList(keyInput: EnvKeyInput): readonly string[] {
     const keys = (Array.isArray(keyInput) ? keyInput : [keyInput]) as readonly string[];
@@ -59,7 +59,7 @@ export function findPresent(keyInput: EnvKeyInput): PresentValue | undefined {
     return value === undefined ? undefined : { key, value };
 }
 
-export function readOptional(keyInput: EnvKeyInput, spec: FieldSpec | undefined, fallback: unknown): unknown {
+export function readOptional(keyInput: EnvKeyInput, spec: FieldSpec, fallback: unknown): unknown {
     const field = createField(spec, fallback);
     const { key, value } = lookup(keyInput);
     if (value === undefined) {
@@ -69,7 +69,7 @@ export function readOptional(keyInput: EnvKeyInput, spec: FieldSpec | undefined,
     return field.convert({ key, value });
 }
 
-export function readRequired(keyInput: EnvKeyInput, spec: FieldSpec | undefined): unknown {
+export function readRequired(keyInput: EnvKeyInput, spec: FieldSpec): unknown {
     const field = createField(spec);
     const present = findPresent(keyInput);
     if (present === undefined) throw missingValue(keyInput);
@@ -211,14 +211,3 @@ export function determineEnvironment(): void {
 }
 
 const templateResolver: TemplateResolver = new TemplateResolver((key) => resolveKeyInput(key).value);
-
-type PrimitiveToken = 'string' | 'number' | 'boolean' | 'bigint';
-
-// TS can't assign a value to a conditional type on an unresolved generic
-export function readPrimitive<
-    TToken extends PrimitiveToken,
-    TFallback extends InferConverterReturnType<TToken> | undefined = undefined
->(key: EnvKeyInput, type: TToken, fallback?: TFallback): AdvancedConverterReturn<TToken, TFallback>;
-export function readPrimitive(key: EnvKeyInput, type: PrimitiveToken, fallback?: unknown): unknown {
-    return readOptional(key, type, fallback);
-}

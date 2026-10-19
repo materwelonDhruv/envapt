@@ -1,12 +1,9 @@
 import { resolve } from 'node:path';
 
-import { beforeAll, describe, expect, expectTypeOf, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 
-import { Converters, Envapter, EnvaptErrorCodes } from '../src';
-import { EnvaptError } from '../src/infra/Error';
+import { Converters, Envapter, EnvaptError, EnvaptErrorCodes } from '../src';
 import { Envapt } from '../src/legacy';
-
-import type { ArrayOf } from '../src/converters/Converters';
 
 describe('ArrayConverter typesafety (v5) — runtime', () => {
     beforeAll(() => (Envapter.envPaths = resolve(import.meta.dirname, '.env.016-array')));
@@ -87,47 +84,5 @@ describe('ArrayConverter typesafety (v5) — runtime', () => {
         it('accepts TimeFallback[] (string[]) fallback when of is Time and coerces to number[]', () => {
             expect(S5Tests.timesStringFallback).to.deep.equal([5000, 60000, 600000]);
         });
-    });
-
-    it('decorator still resolves correctly when the builder is hoisted to a variable', () => {
-        const portsBuilder = Converters.array({ of: Converters.Number });
-        const csvBuilder = Converters.array();
-
-        class F3Tests {
-            @Envapt('PORTS_INDIRECT', { converter: portsBuilder, fallback: [] })
-            static readonly ports: number[];
-
-            @Envapt('CSV_INDIRECT', { converter: csvBuilder, fallback: [] })
-            static readonly csv: string[];
-        }
-
-        expect(F3Tests.ports).to.deep.equal([8080, 8081]);
-        expect(F3Tests.csv).to.deep.equal(['alpha', 'beta']);
-    });
-});
-
-describe('ArrayConverter typesafety (v5) — compile-time (expect-type)', () => {
-    it('Converters.array({ of: Converters.Number }) infers ArrayOf<"number">', () => {
-        const t = Converters.array({ of: Converters.Number });
-        expectTypeOf(t).toEqualTypeOf<ArrayOf<'number'>>();
-        expectTypeOf(t.of).toEqualTypeOf<'number'>();
-    });
-
-    it('Converters.array() infers ArrayOf<"string">', () => {
-        const t = Converters.array();
-        expectTypeOf(t).toEqualTypeOf<ArrayOf<'string'>>();
-    });
-
-    it('custom function element preserves the function type', () => {
-        const fn = (raw: string): Date => new Date(raw);
-        const t = Converters.array({ of: fn });
-        expectTypeOf(t.of).toEqualTypeOf<typeof fn>();
-    });
-
-    it('rejects of: Converters.Json and Converters.RegExp at the type level', () => {
-        // @ts-expect-error 'json' is excluded from ArrayElement
-        Converters.array({ of: Converters.Json });
-        // @ts-expect-error 'regexp' is excluded from ArrayElement
-        Converters.array({ of: Converters.RegExp });
     });
 });

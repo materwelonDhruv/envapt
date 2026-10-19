@@ -44,7 +44,7 @@ The `'camelCase'` argument turns `VITE_ENABLE_BETA` into `config.viteEnableBeta`
 
 Vite exposes variables whose names start with `VITE_`, a prefix its `envPrefix` option sets, plus `MODE`, `BASE_URL`, `PROD`, `DEV`, and `SSR`. If your `.env` file holds `VITE_API_URL` and `API_SECRET`, only `VITE_API_URL` reaches the bundle. `Envapter.get('API_SECRET')` returns `undefined` in the browser, so a variable you forgot to prefix looks the same as one you forgot to set.
 
-`PROD`, `DEV`, and `SSR` are booleans. `PortableSource` stringifies them, so `Envapter.getBoolean('DEV', false)` works.
+`PROD`, `DEV`, and `SSR` are booleans. `PortableSource` stringifies them, so `Envapter.getAs('DEV', Converters.Boolean, false)` works.
 
 <Callout type="warn">
 

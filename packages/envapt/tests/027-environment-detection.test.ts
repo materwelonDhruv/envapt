@@ -1,0 +1,98 @@
+import { afterEach, describe, expect, it } from 'vitest';
+
+import { Environment, Envapter, EnvaptError, EnvaptErrorCodes, FileSource, PortableSource } from '../src';
+
+describe('Environment detection (v5.2)', () => {
+    afterEach(() => {
+        Envapter.useSource(new FileSource());
+        Envapter.resetPaths();
+        Envapter.strict = false;
+    });
+
+    describe('MODE (Vite-family browser builds)', () => {
+        it('maps MODE to the environment when no other key is set', () => {
+            Envapter.useSource(new PortableSource({ MODE: 'production' }));
+            expect(Envapter.isProduction).to.be.true;
+            expect(Envapter.environment).to.equal(Environment.Production);
+        });
+
+        it('reads MODE for staging, development, and test', () => {
+            Envapter.useSource(new PortableSource({ MODE: 'staging' }));
+            expect(Envapter.isStaging).to.be.true;
+
+            Envapter.useSource(new PortableSource({ MODE: 'development' }));
+            expect(Envapter.isDevelopment).to.be.true;
+
+            Envapter.useSource(new PortableSource({ MODE: 'test' }));
+            expect(Envapter.isTest).to.be.true;
+        });
+
+        it('lets an explicit ENVIRONMENT outrank MODE', () => {
+            Envapter.useSource(new PortableSource({ ENVIRONMENT: 'production', MODE: 'development' }));
+            expect(Envapter.isProduction).to.be.true;
+        });
+
+        it('skips a whitespace-only higher-precedence key only under strict', () => {
+            // non-strict keeps a whitespace ENVIRONMENT as an unrecognized value
+            Envapter.useSource(new PortableSource({ ENVIRONMENT: '   ', NODE_ENV: 'production' }));
+            expect(Envapter.environment).to.equal(Environment.Development);
+
+            // under strict it counts as blank
+            Envapter.strict = true;
+            Envapter.useSource(new PortableSource({ ENVIRONMENT: '   ', NODE_ENV: 'production' }));
+            expect(Envapter.environment).to.equal(Environment.Production);
+        });
+    });
+
+    describe('isTest', () => {
+        it('detects the test environment from NODE_ENV=test', () => {
+            Envapter.useSource(new PortableSource({ NODE_ENV: 'test' }));
+            expect(Envapter.isTest).to.be.true;
+            expect(Envapter.isDevelopment).to.be.false;
+            expect(Envapter.environment).to.equal(Environment.Test);
+        });
+    });
+
+    describe('case-insensitive matching (regression)', () => {
+        it('matches staging regardless of case', () => {
+            for (const value of ['staging', 'Staging', 'STAGING']) {
+                Envapter.useSource(new PortableSource({ ENVIRONMENT: value }));
+                expect(Envapter.isStaging, value).to.be.true;
+            }
+        });
+
+        it('matches production and test regardless of case', () => {
+            Envapter.useSource(new PortableSource({ ENV: 'PRODUCTION' }));
+            expect(Envapter.isProduction).to.be.true;
+            expect(Envapter.environment).to.equal('production');
+
+            Envapter.useSource(new PortableSource({ ENVIRONMENT: 'Test' }));
+            expect(Envapter.isTest).to.be.true;
+        });
+    });
+
+    describe('explicit setter off Node', () => {
+        it('accepts a string name', () => {
+            Envapter.useSource(new PortableSource({}));
+            Envapter.environment = 'staging';
+            expect(Envapter.isStaging).to.be.true;
+        });
+
+        it('falls back to development for an unknown name', () => {
+            Envapter.useSource(new PortableSource({}));
+            Envapter.environment = 'whatever';
+            expect(Envapter.isDevelopment).to.be.true;
+        });
+
+        it('throws InvalidUserDefinedConfig for a non-string', () => {
+            expect(() => (Envapter.environment = 2 as unknown as string))
+                .to.throw(EnvaptError)
+                .with.property('code', EnvaptErrorCodes.InvalidUserDefinedConfig);
+        });
+    });
+
+    it('defaults to development when no environment key is set', () => {
+        Envapter.useSource(new PortableSource({ FOO: 'bar' }));
+        expect(Envapter.environment).to.equal(Environment.Development);
+    });
+});

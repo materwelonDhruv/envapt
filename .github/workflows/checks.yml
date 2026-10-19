@@ -20,31 +20,91 @@ concurrency:
 permissions:
     contents: read
 
+env:
+    TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+    TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+
 jobs:
-    run-checks:
+    lint:
+        name: Lint
         runs-on: ubuntu-latest
-        timeout-minutes: 25
-        env:
-            TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-            TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+        timeout-minutes: 15
         steps:
-            - name: Checkout repository
-              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
               with:
                   fetch-depth: 0
                   persist-credentials: false
-            - name: Turbo cache
-              uses: $/.github/actions/turbo-cache
-            - name: Setup workspace
-              uses: $/.github/actions/setup
-            - name: Workspace catalog check
-              run: pnpm check:catalog
-            - name: Markdown lint
-              run: pnpm lint:md
-            - name: Build, type-check, lint, format, and build guards
-              run: >
-                  pnpm exec turbo run build tc lint fmt:check build:verify test:exports-dedup test:resolution-matrix test:tsc-emit test:stage3-emit test:babel-emit test:tsc-emit:ts7 test:stage3-emit:ts7 test:tree-shaking
-            - name: Root scripts type-check, lint, and test
-              run: pnpm tc:root && pnpm lint:root && pnpm test:scripts
-            - name: Test
-              run: pnpm exec turbo run test
+            - uses: $/.github/actions/turbo-cache
+            - uses: $/.github/actions/setup
+            - run: pnpm check:catalog
+            - run: pnpm exec turbo run lint
+            - run: pnpm lint:root
+
+    format:
+        name: Format
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+        steps:
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  fetch-depth: 0
+                  persist-credentials: false
+            - uses: $/.github/actions/turbo-cache
+            - uses: $/.github/actions/setup
+            - run: pnpm lint:md
+            - run: pnpm exec turbo run fmt:check
+
+    typecheck:
+        name: Type check
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        steps:
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  fetch-depth: 0
+                  persist-credentials: false
+            - uses: $/.github/actions/turbo-cache
+            - uses: $/.github/actions/setup
+            - run: pnpm exec turbo run tc
+            - run: pnpm tc:root
+
+    guards:
+        name: Build guards
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        steps:
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  fetch-depth: 0
+                  persist-credentials: false
+            - uses: $/.github/actions/turbo-cache
+            - uses: $/.github/actions/setup
+            - run: >
+                  pnpm exec turbo run build:verify test:exports-dedup test:resolution-matrix test:tsc-emit test:stage3-emit test:babel-emit test:tsc-emit:ts7 test:stage3-emit:ts7 test:consumer-types test:consumer-types:ts7 test:tree-shaking
+
+    test:
+        name: Test
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        steps:
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  fetch-depth: 0
+                  persist-credentials: false
+            - uses: $/.github/actions/turbo-cache
+            - uses: $/.github/actions/setup
+            - run: pnpm exec turbo run test
+            - run: pnpm test:scripts
+
+    guide-build:
+        name: Guide build
+        runs-on: ubuntu-latest
+        timeout-minutes: 20
+        steps:
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  fetch-depth: 0
+                  persist-credentials: false
+            - uses: $/.github/actions/turbo-cache
+            - uses: $/.github/actions/setup
+            - run: pnpm exec turbo run build --filter=@envapt/guide

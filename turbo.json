@@ -28,6 +28,10 @@
             "dependsOn": ["^build", "build"],
             "inputs": ["$TURBO_DEFAULT$", "tsconfig*.json"]
         },
+        "@envapt/guide#tc": {
+            "dependsOn": ["^build"],
+            "inputs": ["$TURBO_DEFAULT$", "tsconfig*.json"]
+        },
         "test": {
             "inputs": ["$TURBO_DEFAULT$", "jest.config.*", "vitest.config.*", "src/**", "tests/**"]
         },
@@ -66,6 +70,15 @@
             "outputs": []
         },
         "test:stage3-emit:ts7": {
+            "dependsOn": ["build"],
+            "outputs": []
+        },
+        "test:consumer-types": {
+            "dependsOn": ["build"],
+            "env": ["ENVAPT_TSC_PACKAGE"],
+            "outputs": []
+        },
+        "test:consumer-types:ts7": {
             "dependsOn": ["build"],
             "outputs": []
         },

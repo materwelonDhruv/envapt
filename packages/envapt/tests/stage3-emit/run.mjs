@@ -18,9 +18,6 @@ const env = {
     ...process.env,
     S3_PORT: '8080',
     S3_REGION: 'eu-west-1',
-    S3_DEBUG: 'true',
-    S3_URL: 'https://app.example.com',
-    S3_TTL: '15m',
     S3_BIG: '9007199254740993',
     S3_TAGS: 'alpha,beta,gamma',
     S3_GREETING: 'Hello ${S3_REGION}'
@@ -34,9 +31,6 @@ const source = join(here, 'fixture.mts');
 function assertReads(reads, runtime) {
     assert.equal(reads.port, 8080, `${runtime}: static accessor resolves the env number`);
     assert.equal(reads.region, 'eu-west-1', `${runtime}: instance accessor resolves the env string`);
-    assert.equal(reads.debug, true, `${runtime}: boolean converter`);
-    assert.equal(reads.url, 'https://app.example.com/', `${runtime}: url converter`);
-    assert.equal(reads.ttl, 900000, `${runtime}: time converter (15m -> 900000)`);
     assert.equal(reads.big, '9007199254740993', `${runtime}: bigint converter`);
     assert.deepEqual(reads.tags, ['alpha', 'beta', 'gamma'], `${runtime}: array converter`);
     assert.equal(reads.fallbackValue, 1234, `${runtime}: fallback when the env var is absent`);
@@ -44,7 +38,7 @@ function assertReads(reads, runtime) {
     assert.equal(reads.greeting, 'Hello eu-west-1', `${runtime}: template variable resolution`);
     assert.equal(reads.schemaPort, 8080, `${runtime}: standard schema validates and returns the output`);
     assert.equal(reads.arkPort, 8080, `${runtime}: a callable arktype schema validates and returns the output`);
-    assert.equal(reads.noFallback, undefined, `${runtime}: no-fallback sugar resolves to undefined`);
+    assert.equal(reads.noFallback, undefined, `${runtime}: no-fallback read resolves to undefined`);
     assert.equal(reads.inheritedRegion, 'eu-west-1', `${runtime}: subclass reads the inherited instance accessor`);
     assert.equal(reads.collisionA, 8080, `${runtime}: first of two same-named classes`);
     assert.equal(reads.collisionB, 4321, `${runtime}: second same-named class resolves independently`);

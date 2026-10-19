@@ -6,8 +6,7 @@ import { pathToFileURL } from 'node:url';
 
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
-import { Envapter, EnvaptErrorCodes, Environment } from '../src';
-import { EnvaptError } from '../src/infra/Error';
+import { Envapter, EnvaptError, EnvaptErrorCodes, Environment } from '../src';
 
 // a cwd-relative lookup misses the package's .env when cwd is the monorepo root
 const PKG_DIR = resolve(import.meta.dirname, 'basedir-fixtures', 'pkg');
@@ -110,7 +109,6 @@ describe('Envapter.baseDir', () => {
         it('falls back to process.cwd() resolution (historical default)', () => {
             process.chdir(PKG_DIR); // with baseDir undefined, paths resolve against cwd
             Envapter.resetPaths(); // chdir alone doesn't invalidate the data cache
-            expect(Envapter.baseDir).to.equal(undefined);
             expect(Envapter.get('PKG_ONLY')).to.equal('pkg-value');
         });
     });

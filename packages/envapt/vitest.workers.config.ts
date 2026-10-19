@@ -10,7 +10,6 @@ export default defineConfig({
                 bindings: {
                     APP_NAME: 'envapt',
                     PORT: '8787',
-                    DEBUG: 'true',
                     API_URL: 'https://api.example.com/v1',
                     FEATURES: '{"beta":true}',
                     GREETING: 'Hello ${APP_NAME}',

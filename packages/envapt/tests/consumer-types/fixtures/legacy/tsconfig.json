@@ -1,0 +1,14 @@
+{
+    "$schema": "https://json.schemastore.org/tsconfig.json",
+    "compilerOptions": {
+        "target": "ES2022",
+        "module": "esnext",
+        "moduleResolution": "bundler",
+        "lib": ["ES2023"],
+        "types": ["node"],
+        "experimentalDecorators": true,
+        "strict": true,
+        "noEmit": true
+    },
+    "include": ["*.mts"]
+}

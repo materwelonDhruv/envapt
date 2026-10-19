@@ -6,10 +6,6 @@ import { Converters, Envapter } from '../../../dist/node/index.mjs';
 export default async function converters() {
     Envapter.envPaths = FIXTURE_PATH;
 
-    assert.equal(Envapter.getNumber('NUMBER_KEY'), 42);
-    assert.equal(Envapter.getBoolean('BOOL_KEY'), true);
-    assert.equal(Envapter.getBigInt('BIGINT_KEY'), 9007199254740993n);
-
     const json = Envapter.getAs('JSON_KEY', Converters.Json);
     assert.deepEqual(json, { name: 'x', n: 1 });
 

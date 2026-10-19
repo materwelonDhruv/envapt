@@ -1,0 +1,98 @@
+---
+title: Building on envapt
+description: Read config from a library, framework, or CLI that depends on envapt, so the source, environment, and .env files the app sets up reach your reads.
+---
+
+Your package reads a variable or two, and the app that installs it decides where config comes from. The app may bind a source with `useSource`, pin the environment, or point envapt at another folder for its `.env` files, and it often does that after it imports your package. seedcord, a Discord framework built on envapt, follows each pattern here.
+
+## Declare envapt as a peer dependency
+
+envapt keeps its source, its environment, and its cache in module state. Each installed copy keeps its own. If your package installs a second copy, the app's `useSource` call binds the app's copy, and your reads go through the other one. List envapt under `peerDependencies`, and the package manager installs one copy for both:
+
+```json title="package.json"
+{
+    "peerDependencies": {
+        "envapt": "^9.0.0"
+    }
+}
+```
+
+## Read inside your functions
+
+A read at the top of a module runs when the app imports your package, which is before the app's own setup code. Put the read inside the function that needs it:
+
+```ts twoslash title="src/client.ts"
+import { Envapter } from 'envapt';
+// ---cut---
+export function apiBaseUrl(): string {
+    return Envapter.get('ACME_API_URL', 'https://api.acme.dev');
+}
+```
+
+If the app binds a [`PortableSource`](/docs/sources#the-sources-envapt-ships) after importing your package, `apiBaseUrl()` reads from it. The same read at module scope ran first, against the default source, and keeps that answer.
+
+Branch on the environment the same way. A check like `Envapter.isProduction` inside a function reads the environment the app pinned, while a module-scope constant holds the one detected at import.
+
+## Throw your own error for a missing key
+
+`getRequired` throws envapt's `MissingEnvValue` error. If your package documents its own error codes, check the key with `has` first, so your users get your error:
+
+```ts twoslash title="src/token.ts"
+import { Converters, Envapter } from 'envapt';
+class AcmeError extends Error {
+    constructor(readonly code: 'MissingApiKey') {
+        super('Set ACME_API_KEY to use the Acme client.');
+    }
+}
+// ---cut---
+export function apiKey(): string {
+    if (!Envapter.has('ACME_API_KEY')) throw new AcmeError('MissingApiKey');
+    return Envapter.getRequired('ACME_API_KEY', Converters.String);
+}
+```
+
+`has` and `getRequired` decide whether a key is present the same way, so `has` returns `false` in exactly the cases where `getRequired` would throw `MissingEnvValue`.
+
+## Set the environment before you load the app
+
+A CLI that starts the user's app often picks the mode itself, such as `production` for a build. Assign [`Envapter.environment`](/docs/environment#pinning-the-environment) before you import the user's code:
+
+```ts twoslash title="src/cli.ts"
+import { Envapter } from 'envapt';
+declare const userEntry: string;
+// ---cut---
+Envapter.environment = 'production';
+await import(userEntry);
+```
+
+The assignment reloads the `.env` files on Node, so `.env.production` loads even though envapt read the files for `development` when your CLI imported it. Modules the user's entry imports then read the production values.
+
+## Set defaults the app can override
+
+If your package already has the path to the app's `.env` files, set `Envapter.baseDir` when your entry module loads:
+
+```ts twoslash title="src/index.ts"
+import { Envapter } from 'envapt';
+declare const projectRoot: string;
+// ---cut---
+Envapter.baseDir = projectRoot;
+```
+
+The app imports your package before its own code runs, so a `baseDir` the app assigns later replaces yours. [Reading from a fixed directory](/docs/env-files#reading-from-a-fixed-directory) shows what `baseDir` changes.
+
+## Write the bind into generated entries
+
+On Workers and edge runtimes, envapt reads nothing until something calls `useSource`. If your build step writes the app's entry file, generate the bind as a module of its own:
+
+```ts twoslash title="src/workerEntry.ts"
+export const BIND_ENV = `import { env } from 'cloudflare:workers';
+import { Envapter, PortableSource } from 'envapt';
+Envapter.useSource(new PortableSource(env));
+`;
+```
+
+Import that module first in the entry you generate, above the import of the app. JavaScript runs every import before the statements in the same file, so a `useSource` line written into the entry itself would run after the app's modules have loaded and read. With the bind imported first, the app's code reads config with no setup of its own, the same as on Node. [Cloudflare Workers](/docs/workers) explains the bind.
+
+## Testing your package
+
+Your tests bind a `PortableSource` with the values each test needs, the same as an app's tests. If your test runner shares modules between files, envapt's state carries over too. [Testing](/docs/testing#with-isolate-turned-off) has the vitest setup for that.

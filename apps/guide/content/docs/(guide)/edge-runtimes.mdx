@@ -90,10 +90,10 @@ Envapter.useSource(
 );
 
 export const apiUrl = Envapter.getRequired('API_URL', Converters.Url);
-export const betaEnabled = Envapter.getBoolean('FEATURE_BETA', false);
+export const betaEnabled = Envapter.getAs('FEATURE_BETA', Converters.Boolean, false);
 ```
 
-A variable that is unset when you build is `undefined` here, and `PortableSource` leaves it out. `getBoolean` then returns its fallback, and `getRequired` throws.
+A variable that is unset when you build is `undefined` here, and `PortableSource` leaves it out. `getAs` then returns its fallback, and `getRequired` throws.
 
 If your config already comes from `app.config.js`, put it under `extra`. `expo-constants` returns that object at runtime, so you bind the whole object.
 

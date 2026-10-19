@@ -96,18 +96,18 @@ Two `getRequiredAll` calls, one per group, throw separately. If `DATABASE_URL` a
 If your code is written around classes, declare each setting as a typed field with the [`@Envapt` decorator](/docs/decorators):
 
 ```ts twoslash title="src/Config.ts"
-import { Converters, Envapt, EnvTime } from 'envapt';
+import { Converters, Envapt } from 'envapt';
 // ---cut---
 export class Config {
     @Envapt('DATABASE_URL', { converter: Converters.Url, required: true })
     static accessor databaseUrl: URL;
 
-    @EnvTime('CACHE_TTL', '5m')
+    @Envapt('CACHE_TTL', { converter: Converters.Time, fallback: '5m' })
     static accessor cacheTtl: number;
 }
 ```
 
-`@EnvTime` is the [shorthand](/docs/decorators#shorthand-decorators) for a duration with a fallback. The shorthands take only a key and a fallback, so `databaseUrl` uses the full `@Envapt` form to set `required: true`. Each field needs the `accessor` keyword, which [Decorators](/docs/decorators#declaring-decorated-fields) explains. If your project sets `experimentalDecorators`, import from `envapt/legacy` and declare `static readonly` fields instead. A decorated field reads its variable the first time something accesses it. A missing `DATABASE_URL` then throws during the first request that touches `Config.databaseUrl`, which brings back the crash from the top of this page, and missing fields show up one at a time. The `getRequiredAll` module checks every required key when the app starts.
+Each field needs the `accessor` keyword, which [Decorators](/docs/decorators#declaring-decorated-fields) explains. If your project sets `experimentalDecorators`, import from `envapt/legacy` and declare `static readonly` fields instead. A decorated field reads its variable the first time something accesses it. A missing `DATABASE_URL` then throws during the first request that touches `Config.databaseUrl`, which brings back the crash from the top of this page, and missing fields show up one at a time. The `getRequiredAll` module checks every required key when the app starts.
 
 The class has one thing the module lacks. If something binds a new source after startup, such as a secrets refresh, a field reads its variable again on its next access. `config` keeps the values it read at load. Pick the class when you need that, and start with the module otherwise.
 

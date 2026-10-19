@@ -20,7 +20,7 @@ export function parseEnvaptOptions<TFallback>(options: unknown): DecoratorConfig
         ) {
             throw new EnvaptError(
                 EnvaptErrorCodes.InvalidUserDefinedConfig,
-                'The positional `@Envapt(key, fallback, converter)` form was removed in v6. Pass an options object instead, like `@Envapt(key, { converter, fallback })`, or use one of the sugar decorators.'
+                '`@Envapt` takes an options object as its second argument, like `@Envapt(key, { converter, fallback })`.'
             );
         }
 

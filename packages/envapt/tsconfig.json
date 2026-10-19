@@ -23,6 +23,7 @@
         "tests/exports-dedup/**",
         "tests/tsc-emit/**",
         "tests/stage3-emit/**",
+        "tests/consumer-types/**",
         "tests/integration/modern-decorator-check.ts"
     ]
 }
