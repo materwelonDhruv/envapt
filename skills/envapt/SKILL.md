@@ -159,7 +159,7 @@ Envapter.syncProcessEnv = true; // mirror loaded keys into process.env
 Envapter.environment; // 'development' | 'staging' | 'production' | 'test'. also isProduction / isStaging / isDevelopment / isTest
 ```
 
-The environment is detected from the first set of `ENVIRONMENT` -> `ENV` -> `NODE_ENV` -> `MODE` (case-insensitive, and `MODE` covers Vite browser builds), defaulting to development. `Envapter.configureProfiles({ ... })` sets per-environment path lists (node build only, like `baseDir` / `envPaths`). `Envapter.debug` (or the `ENVAPT_DEBUG` env var) turns on logging.
+The environment is detected from the first set of `ENVIRONMENT` -> `ENV` -> `NODE_ENV` -> `MODE` (case-insensitive, and `MODE` covers Vite browser builds), defaulting to development. `ENVIRONMENT_KEYS` exports that list in order, for code that has to read the mode before envapt loads. `Envapter.configureProfiles({ ... })` sets per-environment path lists (node build only, like `baseDir` / `envPaths`). `Envapter.debug` (or the `ENVAPT_DEBUG` env var) turns on logging.
 
 ### Drop-in for dotenv
 

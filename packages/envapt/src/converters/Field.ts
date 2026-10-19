@@ -12,6 +12,7 @@ import type {
     BuiltInConverter,
     BuiltInConverterFunction,
     ConverterFunction,
+    FallbackToken,
     PresentValue,
     RequiredSpec
 } from '../types';
@@ -71,7 +72,7 @@ abstract class ConverterField implements Field {
         } catch (error) {
             return keyIssue(key, errorMessage(error));
         }
-        if (isUnconverted(converted)) return keyIssue(key, 'could not be converted');
+        if (this.couldNotConvert(converted)) return keyIssue(key, 'could not be converted');
         return { value: converted };
     }
 }
@@ -200,7 +201,7 @@ function requireSync(key: string, outcome: SchemaOutcome): StandardSchemaV1.Resu
     return outcome;
 }
 
-function tokenForFallback(fallback: unknown): BuiltInConverter {
+function tokenForFallback(fallback: unknown): FallbackToken {
     const fallbackType = typeof fallback;
     if (fallbackType === 'number' || fallbackType === 'boolean' || fallbackType === 'bigint') return fallbackType;
     return 'string';

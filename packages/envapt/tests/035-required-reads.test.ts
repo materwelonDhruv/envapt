@@ -5,7 +5,7 @@ import * as v from 'valibot';
 import { afterEach, beforeAll, describe, expect, expectTypeOf, it } from 'vitest';
 import { z } from 'zod/v4';
 
-import { Converters, Envapter, EnvaptErrorCodes } from '../src';
+import { Converters, Envapter, EnvaptErrorCodes, FileSource, PortableSource } from '../src';
 import { EnvaptError } from '../src/infra/Error';
 import { recase } from '../src/infra/recase';
 
@@ -51,6 +51,16 @@ describe('Required reads (v8)', () => {
             expectTypeOf(ports).toEqualTypeOf<number[]>();
         });
 
+        it('returns a JSON null the way getAs does', () => {
+            Envapter.useSource(new PortableSource({ FLAGS: 'null' }));
+            try {
+                expect(Envapter.getAs('FLAGS', Converters.Json)).to.equal(null);
+                expect(Envapter.getRequired('FLAGS', Converters.Json)).to.equal(null);
+            } finally {
+                Envapter.useSource(new FileSource());
+            }
+        });
+
         it('returns the custom parser return type', () => {
             const upper = Envapter.getRequired('SET_VALUE', (raw) => raw.toUpperCase());
             expect(upper).to.equal('HELLO');
@@ -82,7 +92,7 @@ describe('Required reads (v8)', () => {
         });
 
         it('takes no fallback argument', () => {
-            // @ts-expect-error getRequired throws on missing, so it has no fallback parameter
+            // @ts-expect-error getRequired has no fallback parameter
             Envapter.getRequired('SET_NUMBER', Converters.Number, 3000);
         });
 
@@ -469,7 +479,7 @@ describe('Required reads (v8)', () => {
         it('counts a whitespace-only value as missing only under strict in the aggregated throw', () => {
             const spec = { WHITESPACE_ONLY: Converters.String, NEVER_SET_KEY: Converters.String };
 
-            // non-strict keeps whitespace as a real value, so only the truly-missing key is listed
+            // non-strict keeps whitespace as a real value
             const lenient = thrownBy(() => Envapter.getRequiredAll(spec));
             expect(lenient.message).to.include('NEVER_SET_KEY');
             expect(lenient.message).to.not.include('WHITESPACE_ONLY');

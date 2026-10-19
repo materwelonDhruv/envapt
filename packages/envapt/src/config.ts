@@ -8,7 +8,9 @@
  * @module
  */
 
+import './bindNodeDefaults';
+
 import { Envapter } from '.';
 
-// the setter mirrors the cache that binding FileSource on import already loaded
+// bindNodeDefaults loads the .env files. this setter copies their keys into process.env
 Envapter.syncProcessEnv = true;

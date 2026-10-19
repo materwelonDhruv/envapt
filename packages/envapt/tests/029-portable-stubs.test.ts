@@ -37,7 +37,7 @@ describe('portable file-API behavior', () => {
         throws306(() => Envapter.resetPaths());
     });
 
-    // a fresh module graph starts with an empty warned set and no NodeEnvapter sink
+    // a fresh module graph starts with an empty warned set and no Node stderr sink
     it('warns once per api under warn mode', async () => {
         vi.resetModules();
         const { Envapter: Portable } = await import('../src/index.portable');
@@ -51,6 +51,32 @@ describe('portable file-API behavior', () => {
         spy.mockRestore();
         expect(lines.filter((line) => line.includes('envPaths'))).toHaveLength(1);
         expect(lines.filter((line) => line.includes('baseDir'))).toHaveLength(1);
+    });
+
+    it('applies strict and a pinned environment set before the first bind', async () => {
+        vi.resetModules();
+        const { Envapter: Portable, PortableSource } = await import('../src/index.portable');
+
+        Portable.strict = true;
+        Portable.environment = 'production';
+        Portable.useSource(new PortableSource({ BLANK: '   ', ENVIRONMENT: 'staging' }));
+
+        expect(Portable.get('BLANK')).toBeUndefined();
+        expect(Portable.environment).toBe('production');
+    });
+
+    it('reads ENVAPT_DEBUG from the first bound source when strict was set before the bind', async () => {
+        vi.resetModules();
+        const { Envapter: Portable, PortableSource } = await import('../src/index.portable');
+        const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+        Portable.strict = true;
+        Portable.useSource(new PortableSource({ ENVAPT_DEBUG: 'verbose' }));
+        Portable.get('UNSET_KEY');
+
+        const lines = spy.mock.calls.map((call) => String(call[0])).filter((line) => line.includes('[envapt]'));
+        spy.mockRestore();
+        expect(lines).not.toHaveLength(0);
     });
 
     it('still throws NoSourceBound on first read under warn mode', async () => {

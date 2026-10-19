@@ -31,8 +31,13 @@ export type Environment = (typeof Environment)[keyof typeof Environment];
 
 const ENVIRONMENTS: readonly string[] = Object.values(Environment);
 
-// highest precedence first
-export const ENV_KEYS = ['ENVIRONMENT', 'ENV', 'NODE_ENV', 'MODE'] as const;
+/**
+ * The variables envapt reads to detect the {@link Environment}, highest precedence first. The first one
+ * with a value decides it.
+ * @public
+ * @see {@link https://envapt.materwelon.dev/docs/environment#detecting-the-environment}
+ */
+export const ENVIRONMENT_KEYS = ['ENVIRONMENT', 'ENV', 'NODE_ENV', 'MODE'] as const;
 
 function isEnvironment(name: string): name is Environment {
     return ENVIRONMENTS.includes(name);
@@ -44,7 +49,7 @@ export function parseEnvironment(raw: string): Environment | undefined {
 }
 
 export function firstEnvKeyValue(read: (key: string) => string | undefined): string | undefined {
-    for (const key of ENV_KEYS) {
+    for (const key of ENVIRONMENT_KEYS) {
         const value = read(key);
         if (!isMissing(value)) return value;
     }

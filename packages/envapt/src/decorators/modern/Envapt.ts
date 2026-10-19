@@ -8,6 +8,8 @@ import type {
     ConverterFunction,
     EnvaptAccessorDecorator,
     EnvKeyInput,
+    FallbackOnlyReturn,
+    FallbackOnlyValue,
     InferConverterFallbackType,
     InferConverterReturnType,
     SchemaConstraint
@@ -27,9 +29,6 @@ import type {
  *
  *   \@Envapt('LOG_FILE', { fallback: '/var/log/app.log' })
  *   static accessor logFile: string;
- *
- *   \@Envapt('RETRY_POLICY', { fallback: { retries: 3, backoff: 'exponential' } })
- *   static accessor retryPolicy: unknown;
  * }
  * ```
  */
@@ -39,10 +38,12 @@ export function Envapt(
 ): EnvaptAccessorDecorator<string | undefined>;
 export function Envapt<TFallback>(
     key: EnvKeyInput,
-    options:
-        | { converter: ConverterFunction<TFallback | null | undefined>; fallback: TFallback }
-        | { fallback: TFallback; converter?: undefined }
+    options: { converter: ConverterFunction<TFallback | null | undefined>; fallback: TFallback }
 ): EnvaptAccessorDecorator<TFallback>;
+export function Envapt<TFallback extends FallbackOnlyValue | undefined>(
+    key: EnvKeyInput,
+    options: { fallback: TFallback; converter?: undefined }
+): EnvaptAccessorDecorator<FallbackOnlyReturn<TFallback>>;
 
 /**
  * A custom converter function without a fallback. Omit `required` to get `undefined` for a missing

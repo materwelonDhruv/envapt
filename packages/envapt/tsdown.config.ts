@@ -2,8 +2,6 @@ import { defineConfig } from 'tsdown';
 
 import type { UserConfig } from 'tsdown';
 
-// es2022 is required for tree-shaking to work because NodeEnvapter's static block only
-// tree-shakes with the native es2022 emit. unbundle keeps one module per file.
 const shared = {
     unbundle: true,
     dts: true,
@@ -18,7 +16,7 @@ const shared = {
 export default defineConfig([
     {
         ...shared,
-        entry: { index: 'src/index.ts', config: 'src/config.ts', legacy: 'src/legacy.ts' },
+        entry: { index: 'src/index.ts', config: 'src/config.ts', legacy: 'src/legacy.node.ts' },
         format: ['esm'],
         platform: 'node',
         outDir: 'dist/node'

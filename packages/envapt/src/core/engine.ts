@@ -1,5 +1,5 @@
 import { createField } from '../converters';
-import { ENV_KEYS, Environment, firstEnvKeyValue, parseEnvironment } from './Environment';
+import { ENVIRONMENT_KEYS, Environment, firstEnvKeyValue, parseEnvironment } from './Environment';
 import { hasFallback, isMissing } from './missing';
 import { resolveEffectivePaths } from './paths';
 import { cache, state } from './state';
@@ -10,6 +10,7 @@ import { loadDotenv } from '../infra/Dotenv';
 import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
 import { missingValue, missingValues, validationFailed } from '../infra/failures';
 import { recase } from '../infra/recase';
+import { UnboundSource } from '../sources/UnboundSource';
 
 import type { Field, FieldSpec } from '../converters';
 import type { StandardSchemaV1 } from '../infra/StandardSchema';
@@ -160,6 +161,9 @@ export function refreshCache(): void {
     cache.clear();
     state.cacheBuilt = false;
     state.dotenvAddedKeys = new Set<string>();
+    // useSource rebuilds the cache when it binds one
+    if (state.source instanceof UnboundSource) return;
+    // below the unbound check since Debug caches ENVAPT_DEBUG on its first log
     debugVerbose('cache cleared, reloading config');
     ensureLoaded();
 }
@@ -195,7 +199,7 @@ export function setEnvironment(env: string): void {
 export function determineEnvironment(): void {
     const raw = firstEnvKeyValue((key) => readCached(key));
     if (raw === undefined) {
-        debugWarn(`no environment set (looked for ${ENV_KEYS.join(', ')}); defaulting to development`);
+        debugWarn(`no environment set (looked for ${ENVIRONMENT_KEYS.join(', ')}); defaulting to development`);
         state.environment = Environment.Development;
         return;
     }

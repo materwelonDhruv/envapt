@@ -1,6 +1,8 @@
 import { Converters } from '../../../src';
 import { Envapt } from '../../../src/decorators/modern';
 
+declare const maybeUrl: string | undefined;
+
 // every accessor here must compile, including the wider ones
 export class OverloadClean {
     @Envapt('A', { converter: Converters.Number, fallback: 3000 })
@@ -29,4 +31,7 @@ export class OverloadClean {
 
     @Envapt('I', { fallback: undefined })
     static accessor i: string | undefined;
+
+    @Envapt('J', { fallback: maybeUrl })
+    static accessor j: string | undefined;
 }

@@ -2,4 +2,4 @@
 'envapt': major
 ---
 
-**BREAKING:** A custom converter for `getAs` or `@Envapt` now takes only the raw string and runs only when the variable is set, and a result of `undefined` or `null` now returns the fallback. A decorated field with a custom converter and no fallback now needs a `T | undefined` type. `ConverterFunction<T>` now takes only the return type and replaces `CustomElementConverter`, and an array element converter that returns `null` now throws `ArrayElementConversionFailed`.
+**BREAKING:** A custom converter now gets only the raw string, and envapt calls it only when the variable is set. If it returns `undefined` or `null`, you get the fallback, and inside `Converters.array` that throws `ArrayElementConversionFailed`. `ConverterFunction<T>` now takes one type argument and replaces `CustomElementConverter`.

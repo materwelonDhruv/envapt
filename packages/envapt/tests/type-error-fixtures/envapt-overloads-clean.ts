@@ -1,6 +1,8 @@
 import { Converters } from '../../src';
 import { Envapt } from '../../src/legacy';
 
+declare const maybeUrl: string | undefined;
+
 // every field here must compile, including the wider ones
 export class OverloadClean {
     @Envapt('A', { converter: Converters.Number, fallback: 3000 })
@@ -29,4 +31,7 @@ export class OverloadClean {
 
     @Envapt('I', { fallback: undefined })
     static readonly i: string | undefined;
+
+    @Envapt('J', { fallback: maybeUrl })
+    static readonly j: string | undefined;
 }

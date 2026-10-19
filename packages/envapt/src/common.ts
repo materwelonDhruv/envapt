@@ -1,4 +1,4 @@
-export { Environment } from './engine/Envapter';
+export { ENVIRONMENT_KEYS, Environment } from './engine/Envapter';
 export { Converters } from './converters';
 export { PortableSource } from './sources/PortableSource';
 export { merge } from './sources/merge';

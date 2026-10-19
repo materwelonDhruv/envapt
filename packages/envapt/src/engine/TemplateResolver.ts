@@ -4,7 +4,7 @@ import { debugWarn } from '../infra/Debug';
 import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
 
 export class TemplateResolver {
-    private readonly TEMPLATE_REGEX = /\${\w*}/g;
+    private readonly TEMPLATE_REGEX = /\${\w+}/g;
 
     constructor(private readonly getRaw: (key: string) => string | undefined) {}
 
@@ -35,7 +35,7 @@ export class TemplateResolver {
             if (resolved.includes(`\${${key}}`)) return template;
 
             // the nested value still has unresolved placeholders
-            if (resolved === raw && /\$\{[^}]*\}/.test(resolved)) return template;
+            if (resolved === raw && resolved.search(this.TEMPLATE_REGEX) !== -1) return template;
 
             return resolved;
         });
