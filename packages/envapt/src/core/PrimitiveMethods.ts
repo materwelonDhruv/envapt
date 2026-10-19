@@ -19,6 +19,7 @@ export class PrimitiveMethods extends EnvironmentMethods {
 
     /**
      * Get a number environment variable, or `fallback` when it is missing, empty or not a number.
+     * Outside strict mode, a value of only whitespace reads as `0`.
      * Accepts a single key or an ordered array of keys, read until one has a value.
      * @see {@link https://envapt.materwelon.dev/docs/envapter#the-primitive-readers}
      */

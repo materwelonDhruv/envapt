@@ -4,8 +4,10 @@ import { readRuntimeVar, writeRuntimeLine } from './runtime';
 /**
  * Debug log levels for {@link Envapter.debug}. `silent` (default) logs nothing. `warn` logs failed
  * file reads, unresolved templates outside strict mode, an environment that falls back to
- * development, and every read of a missing or empty variable. `verbose` also logs each loaded file
- * and key, the effective `.env` paths, cache rebuilds, and each key whose value failed to convert.
+ * development, a schema that returned a Promise, and a missing or empty variable read through
+ * `get`, a typed getter, `getAs`, or a decorated field without `required`. `verbose` also logs each
+ * loaded file and key, the effective `.env` paths, cache rebuilds, keys mirrored to `process.env`,
+ * and each key whose value failed to convert.
  * @public
  * @see {@link https://envapt.materwelon.dev/docs/errors#debug-logging}
  */

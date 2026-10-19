@@ -34,6 +34,13 @@ describe('Strict mode + required (v5)', () => {
             expect(Envapter.get('WHITESPACE_ONLY', 'default')).to.equal('default');
         });
 
+        it('reads a whitespace-only number as 0 outside strict mode and as the fallback under it', () => {
+            expect(Envapter.getNumber('WHITESPACE_ONLY', 5)).to.equal(0);
+
+            Envapter.strict = true;
+            expect(Envapter.getNumber('WHITESPACE_ONLY', 5)).to.equal(5);
+        });
+
         it('returns undefined for missing keys under strict', () => {
             Envapter.strict = true;
             expect(Envapter.get('NEVER_SET_KEY')).to.equal(undefined);
