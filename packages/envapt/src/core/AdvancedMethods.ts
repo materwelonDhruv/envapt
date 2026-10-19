@@ -9,6 +9,7 @@ import type {
     ConditionalReturn,
     ConverterFunction,
     EnvKeyInput,
+    InferConverterFallbackType,
     InferConverterReturnType,
     InferSpecField,
     KeyCasing,
@@ -16,8 +17,7 @@ import type {
     RequiredConverter,
     RequiredSpec,
     SchemaConstraint,
-    SpecSchemaConstraint,
-    TimeFallback
+    SpecSchemaConstraint
 } from '../types';
 
 export class AdvancedMethods extends PrimitiveMethods {
@@ -33,23 +33,12 @@ export class AdvancedMethods extends PrimitiveMethods {
      * @see {@link https://envapt.materwelon.dev/docs/envapter#other-types-with-getas}
      * @see {@link https://envapt.materwelon.dev/docs/converters#custom-converters}
      */
-    // TypeScript uses the first overload that matches. Keep 'time' above the generic one.
-    static getAs<TFallback extends TimeFallback | undefined = undefined>(
-        key: EnvKeyInput,
-        converter: 'time',
-        fallback?: TFallback
-    ): ConditionalReturn<number, TFallback>;
-    static getAs<TConverter extends BuiltInConverter | ArrayOf, TFallback = undefined>(
-        key: EnvKeyInput,
-        converter: TConverter,
-        fallback?: TFallback
-    ): AdvancedConverterReturn<TConverter, TFallback>;
-    static getAs<TReturn>(key: EnvKeyInput, converter: BuiltInConverter | ArrayOf, fallback: TReturn): TReturn;
-    static getAs<TReturn>(
-        key: EnvKeyInput,
-        converter: BuiltInConverter | ArrayOf,
-        fallback?: TReturn
-    ): TReturn | undefined;
+    static getAs<
+        TConverter extends BuiltInConverter | ArrayOf,
+        TFallback extends InferConverterFallbackType<TConverter> | undefined = undefined
+    >(key: EnvKeyInput, converter: TConverter, fallback?: TFallback): AdvancedConverterReturn<TConverter, TFallback>;
+    static getAs<TReturn>(key: EnvKeyInput, converter: 'json', fallback: TReturn): TReturn;
+    static getAs<TReturn>(key: EnvKeyInput, converter: 'json', fallback?: TReturn): TReturn | undefined;
     // arktype types are callable and would match the function overload below
     static getAs<Schema extends StandardSchemaV1, TFallback extends InferSchemaOutput<Schema> | undefined = undefined>(
         key: EnvKeyInput,
