@@ -1,9 +1,45 @@
 {
-    "mode": "pre",
-    "tag": "next",
-    "initialVersions": {
-        "@envapt/guide": "1.0.0",
-        "envapt": "8.2.4"
-    },
-    "changesets": []
+  "mode": "pre",
+  "tag": "next",
+  "initialVersions": {
+    "@envapt/guide": "1.0.0",
+    "envapt": "8.2.4"
+  },
+  "changesets": [
+    "arktype-decorator-schema",
+    "async-schema-rejection",
+    "bundled-decorator-source",
+    "config-before-value",
+    "empty-template",
+    "environment-keys",
+    "error-codes-object",
+    "esm-only",
+    "fallback-only-types",
+    "get-as",
+    "guide-links",
+    "hover-text",
+    "key-lists",
+    "no-primitive-constructors",
+    "node-22-floor",
+    "one-converter-shape",
+    "optional-schema-reads",
+    "recase-non-strict",
+    "remove-envapt-options",
+    "remove-load",
+    "remove-primitive-readers",
+    "remove-shorthand-decorators",
+    "remove-symbol",
+    "required-invalid-value",
+    "required-json-null",
+    "required-schema",
+    "reset-paths-rename",
+    "schema-as-converter",
+    "schema-issue-paths",
+    "settings-before-bind",
+    "source-readfile-throws",
+    "static-readers-only",
+    "string-environment",
+    "token-renames",
+    "unknown-token-code"
+  ]
 }

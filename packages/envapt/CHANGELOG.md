@@ -1,5 +1,51 @@
 # envapt
 
+## 9.0.0-next.0
+
+### Major Changes
+
+- 0d2ca9d: **BREAKING:** A mistyped converter now throws on every read, as in `getAs('MISSING', 'nmber')` throwing `InvalidBuiltInConverter` where it used to return `undefined`. A malformed time-string fallback now throws even when the variable is set. `get` now throws `FallbackConverterTypeMismatch` for a fallback that isn't a string, as in `get('PORT', 80)`.
+- 51ddeb2: **BREAKING:** `EnvaptErrorCodes` is now a plain object, and `EnvaptErrorCodes[305]` returns `undefined`. Write a type like `EnvaptErrorCodes.MissingEnvValue` as `typeof EnvaptErrorCodes.MissingEnvValue` or `305`.
+- 00a38a3: **BREAKING:** envapt is now ESM only, and `require('envapt')` throws `ERR_PACKAGE_PATH_NOT_EXPORTED`. Load it with `import`, or with `await import('envapt')` from CommonJS, and preload the config entry with `node --import envapt/config` in place of `node -r envapt/config`.
+- de1d920: **BREAKING:** `getUsing`, `getWith`, and `parse` are now one method, `Envapter.getAs`. It takes a converter token, a custom function, or a Standard Schema in the same position, as in `Envapter.getAs('PORT', Converters.Port, 3000)`.
+- fa3b190: **BREAKING:** `String`, `Number`, `Boolean`, `BigInt`, and `Symbol` are no longer converters, and passing one fails to compile and throws `InvalidUserDefinedConfig`. Use `Converters.String`, `Converters.Number`, `Converters.Boolean`, or `Converters.BigInt`. The `PrimitiveCoercionFailed` (205) code is removed.
+- 25a25c9: **BREAKING:** envapt now requires Node 22.23.3 or later, since Node 20 reached end of life in April 2026.
+- ec75ad3: **BREAKING:** A custom converter now gets only the raw string, and envapt calls it only when the variable is set. If it returns `undefined` or `null`, you get the fallback, and inside `Converters.array` that throws `ArrayElementConversionFailed`. `ConverterFunction<T>` now takes one type argument and replaces `CustomElementConverter`.
+- ec75ad3: **BREAKING:** A schema read through `getAs` or `@Envapt({ schema })` without a fallback now returns `undefined` for a missing value, where `parse` and the decorator used to throw `MissingEnvValue`. Use `getRequired` or `required: true` to keep the throw, or type the decorated field as `T | undefined`.
+- 59c92ed: **BREAKING:** The `EnvaptOptions` type is removed. Pass the options object to `@Envapt` inline.
+- e0e872e: **BREAKING:** `Envapter.load()` is removed. Delete the call, since binding a source already loads the cache.
+- a8c4803: **BREAKING:** `getNumber`, `getBoolean`, and `getBigInt` are removed. Read the value through `getAs` with the matching converter, as in `Envapter.getAs('DEBUG', Converters.Boolean, false)`, or `Converters.Port` for a port.
+- a8c4803: **BREAKING:** `@EnvStr`, `@EnvNum`, `@EnvBool`, `@EnvTime`, and `@EnvUrl` are removed from `envapt` and `envapt/legacy`. Use `@Envapt` with a converter, as in `@Envapt('CACHE_TTL', { converter: Converters.Time, fallback: '15m' })`.
+- 9d7eb16: **BREAKING:** `getSymbol` and `Converters.Symbol` are removed, and a symbol fallback with no converter now fails to compile and throws `FallbackConverterTypeMismatch`. Read the string and call `Symbol.for()` yourself, as in `Symbol.for(Envapter.get('CACHE_NAMESPACE', 'default'))`.
+- de1d920: **BREAKING:** `getRequired`, `getRequiredAll`, and `@Envapt` with `required: true` now throw the new `InvalidEnvValue` (210) when a value is set but can't be used. They used to throw `MissingEnvValue`, and the decorator used to return `undefined`. Each failure, including a bad array element, a schema error, or an error your converter threw, is now an entry in `error.issues` with the env key first in its `path`.
+- 51ddeb2: **BREAKING:** `Envapter.resetProfiles()` is renamed to `Envapter.resetPaths()`, since it clears `envPaths` along with the profiles.
+- a970a77: **BREAKING:** Passing a Standard Schema as the `converter` on `@Envapt`, or as `of` in `Converters.array`, now fails to compile and throws. An arktype type used to run there as a plain function and return its `ArkErrors` object for a bad value. Pass the schema to `@Envapt` as `schema`.
+- a970a77: **BREAKING:** Each issue on a `SchemaValidationFailed` from `getAs` or `@Envapt({ schema })` now has the env key first in its `path`. The error message now lists only the key, as in `Validation failed for PORT.`, and leaves out the schema's message.
+- a970a77: **BREAKING:** Fixed envapt catching an error that a custom source's `readFile` throws while loading `.env` files. The error now reaches your code, where envapt used to skip that file and every one after it.
+- ec75ad3: **BREAKING:** The instance methods and the instance `environment`, `isProduction`, `isStaging`, `isDevelopment`, and `isTest` getters on `Envapter` are removed, and `getRaw` is now static. Replace `new Envapter().get(key)` with `Envapter.get(key)`, and `this.get(key)` in a subclass with `Config.get(key)` on that subclass.
+- 51ddeb2: **BREAKING:** `Envapter.environment` now returns the environment's name, like `'production'`, where it used to return a number. Setting it to anything but a string now throws `InvalidUserDefinedConfig`. A type annotation like `Environment.Test` becomes `'test'`.
+- de1d920: **BREAKING:** `Converters.Bigint` and `Converters.Regexp` are now `Converters.BigInt` and `Converters.RegExp`, matching the JavaScript globals.
+- f902921: **BREAKING:** A mistyped converter token like `'nmber'` now throws `InvalidBuiltInConverter` (202) with the list of valid tokens, where it used to throw `InvalidCustomConverter` (203). The unused `InvalidFallbackType` (102) and `InvalidConverterType` (204) codes are removed.
+
+### Minor Changes
+
+- 506d36a: Added `ENVIRONMENT_KEYS`, the variables envapt reads to detect the environment, in precedence order.
+- de1d920: Each argument to `Envapter.require` and each placeholder in `Envapter.resolve` now takes an ordered key list and uses the first key with a value, as in `Envapter.require(['READONLY_URL', 'DATABASE_URL'], 'API_KEY')`.
+- ec75ad3: `getRequired` and `getRequiredAll` now take a synchronous Standard Schema, as in `Envapter.getRequired('PORT', z.coerce.number())`. A missing value throws `MissingEnvValue`, and a value the schema rejects throws `InvalidEnvValue` with the schema's issues.
+
+### Patch Changes
+
+- a970a77: Fixed `@Envapt({ schema })` throwing `InvalidUserDefinedConfig` for an arktype schema.
+- de1d920: Fixed Node crashing with an unhandled rejection when a zod `.transform` or `.refine` threw during a read. With `Envapter.debug = 'warn'`, envapt now logs that error.
+- 506d36a: Fixed a bundled Node app that reads config only through `@Envapt` throwing `NoSourceBound` on the first read. The bundle now reads `process.env` and your `.env` files even when your code never imports `Envapter`.
+- 506d36a: Fixed a value containing an empty `${}` throwing `InvalidKeyInput` when read. The `${}` now stays in the value as text.
+- 506d36a: Fixed `@Envapt('KEY', { fallback })` with an object or array fallback and no converter compiling, then throwing `FallbackConverterTypeMismatch` on the first read. That call is now a compile error.
+- 2c95e53: Fixed editor hovers that linked to guide pages that moved.
+- 2c95e53: Fixed editor hover text that described several APIs wrongly, such as `getAs`, `has`, and `resetPaths`.
+- a8c4803: Fixed `getRequiredAll` typing its keys as camelCase when you pass no casing in a project with `strict` off, such as the `tsconfig` Next.js generates.
+- 506d36a: Fixed `getRequired`, `getRequiredAll`, and a required decorated field rejecting a `Converters.Json` value of `null`. They now return `null`, the same as `getAs`.
+- 506d36a: Fixed setting `Envapter.strict` or `Envapter.environment` before `useSource` throwing `NoSourceBound` on Workers, the browser, and edge runtimes. The setting now applies when you bind the source.
+
 ## 8.2.4
 
 ### Patch Changes
