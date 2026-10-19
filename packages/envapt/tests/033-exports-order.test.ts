@@ -1,8 +1,6 @@
-import { readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
-
 import { describe, expect, it } from 'vitest';
+
+import pkg from '../package.json' with { type: 'json' };
 
 interface ConditionTarget {
     types: string;
@@ -11,16 +9,6 @@ interface ConditionTarget {
 interface NodeTarget {
     import: ConditionTarget;
 }
-type SubpathMap = Record<string, ConditionTarget | NodeTarget>;
-interface PackageManifest {
-    exports: Record<string, SubpathMap | string>;
-    sideEffects: string[];
-}
-
-// justified: reading the repo's own package.json, the shape is fixed here
-const pkg = JSON.parse(
-    readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'package.json'), 'utf8')
-) as PackageManifest;
 
 const PORTABLE_CONDITIONS = ['workerd', 'edge-light', 'fastly', 'worker', 'browser', 'react-native'];
 // deno routes to the node build but lists before node so Deno resolves it first
@@ -39,9 +27,8 @@ function nodeTarget(kind: 'index' | 'legacy'): NodeTarget {
 }
 
 describe('package exports map (v8)', () => {
-    // justified: only './package.json' uses the string form
-    const dot = pkg.exports['.'] as SubpathMap;
-    const legacy = pkg.exports['./legacy'] as SubpathMap;
+    const dot: Record<string, unknown> = pkg.exports['.'];
+    const legacy: Record<string, unknown> = pkg.exports['./legacy'];
 
     it('orders "." portable-first, then deno, node, default', () => {
         expect(Object.keys(dot)).toEqual(EXPECTED_KEY_ORDER);
@@ -77,9 +64,5 @@ describe('package exports map (v8)', () => {
 
     it('exposes ./package.json', () => {
         expect(pkg.exports['./package.json']).toBe('./package.json');
-    });
-
-    it('scopes sideEffects to the node config entry and the node source bind', () => {
-        expect(pkg.sideEffects).toEqual(['./dist/node/config.mjs', '**/bindNodeDefaults.*']);
     });
 });

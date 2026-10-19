@@ -12,6 +12,7 @@
                 "scripts/*.ts",
                 "tests/integration/modern-decorator-check.ts",
                 "tests/integration/config-entry/print.mjs",
+                "tests/tree-shaking/node-bind.entry.mjs",
                 "tests/*-emit/fixture.mts",
                 "tests/*-emit/load.mjs"
             ],
@@ -23,8 +24,7 @@
         },
         "apps/guide": {
             "entry": ["app/**/{page,layout,route,not-found}.{ts,tsx}", "mdx-components.tsx"],
-            "project": ["app/**/*.{ts,tsx,css}", "components/**/*.{ts,tsx}", "lib/**/*.{ts,tsx}", "content/**/*.mdx"],
-            "ignoreDependencies": ["envapt"]
+            "project": ["app/**/*.{ts,tsx,css}", "components/**/*.{ts,tsx}", "lib/**/*.{ts,tsx}", "content/**/*.mdx"]
         }
     }
 }

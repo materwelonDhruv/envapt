@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
+import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import * as esbuild from 'esbuild';
 
+import pkg from '../../package.json' with { type: 'json' };
 import { createGate } from '../_guard.mjs';
 
 const resolveDir = dirname(fileURLToPath(import.meta.url));
@@ -75,13 +75,11 @@ try {
 }
 
 // every node entry keeps the FileSource bind when it is the only import
-const pkg = JSON.parse(readFileSync(resolve(resolveDir, '../../package.json'), 'utf8'));
 const nodeSubpaths = Object.keys(pkg.exports).filter((subpath) => pkg.exports[subpath].node);
 
 for (const subpath of nodeSubpaths) {
     const specifier = subpath === '.' ? 'envapt' : `envapt/${subpath.slice(2)}`;
-    // esbuild drops a bare `import 'envapt'` because index.mjs has no side effects of its own
-    const entryProgram = `import * as entry from '${specifier}';globalThis.__envapt = entry;`;
+    const entryProgram = `import '${specifier}';`;
     try {
         const result = await esbuild.build({
             stdin: { contents: entryProgram, resolveDir, loader: 'js' },

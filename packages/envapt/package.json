@@ -103,6 +103,8 @@
     },
     "sideEffects": [
         "./dist/node/config.mjs",
+        "./dist/node/index.mjs",
+        "./dist/node/legacy.mjs",
         "**/bindNodeDefaults.*"
     ],
     "files": [
@@ -201,6 +203,7 @@
         "playwright": "1.63.0",
         "typescript7": "npm:typescript@7.0.2",
         "valibot": "^1.5.0",
+        "webpack": "^5.112.0",
         "zod": "catalog:dev"
     }
 }

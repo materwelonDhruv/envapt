@@ -1,8 +1,13 @@
 import assert from 'node:assert/strict';
-import { dirname } from 'node:path';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { createRequire } from 'node:module';
+import { tmpdir } from 'node:os';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { EnvaptErrorCodes } from 'envapt';
 import * as esbuild from 'esbuild';
+import webpack from 'webpack';
 
 import { createGate } from '../_guard.mjs';
 
@@ -47,4 +52,36 @@ for (const testCase of cases) {
     }
 }
 
-gate.done('every portable leaf import tree-shakes the Envapter graph');
+// webpack and Next's Turbopack skip a side-effect-free barrel and import its re-exports directly.
+// That skips the barrel's bare import of bindNodeDefaults. esbuild runs the import either way.
+function bundleWithWebpack(outDir) {
+    return new Promise((resolve, reject) => {
+        webpack(
+            {
+                mode: 'production',
+                target: 'node',
+                entry: join(resolveDir, 'node-bind.entry.mjs'),
+                output: { path: outDir, filename: 'bundle.cjs' }
+            },
+            (err, stats) => {
+                if (err) reject(err);
+                else if (stats.hasErrors()) reject(new Error(stats.toString('errors-only')));
+                else resolve(join(outDir, 'bundle.cjs'));
+            }
+        );
+    });
+}
+
+const outDir = mkdtempSync(join(tmpdir(), 'envapt-webpack-'));
+try {
+    const bundle = await bundleWithWebpack(outDir);
+    createRequire(import.meta.url)(bundle);
+    // NoSourceBound means the bundle skipped the FileSource bind
+    gate.check('webpack node bundle binds FileSource', globalThis.__envaptCode, EnvaptErrorCodes.MissingEnvValue);
+} catch (err) {
+    gate.fail(`webpack node bundle: ${err instanceof Error ? err.message : String(err)}`);
+} finally {
+    rmSync(outDir, { recursive: true, force: true });
+}
+
+gate.done('every portable leaf import tree-shakes the Envapter graph, and a bundled node import binds FileSource');

@@ -1,10 +1,10 @@
 // an editor offers one auto-import per name only when each public name has one declaration
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import pkg from '../../package.json' with { type: 'json' };
 import { createGate } from '../_guard.mjs';
 
 const require = createRequire(import.meta.url);
@@ -12,7 +12,6 @@ const ts = require('typescript');
 
 const here = dirname(fileURLToPath(import.meta.url));
 const pkgDir = resolve(here, '..', '..');
-const pkg = JSON.parse(readFileSync(join(pkgDir, 'package.json'), 'utf8'));
 
 // Envapter is the one exception because its Node (NodeEnvapter) and portable surfaces deliberately differ
 const ALLOWED_TO_DIFFER = new Set(['Envapter']);

@@ -1,5 +1,4 @@
-import { readFileSync } from 'node:fs';
-
+import envaptPkg from 'envapt/package.json' with { type: 'json' };
 import { createMDX } from 'fumadocs-mdx/next';
 
 import { SITE_URL, npmTagForSite } from './lib/site';
@@ -8,9 +7,7 @@ import type { NextConfig } from 'next';
 
 const withMDX = createMDX();
 
-const { version: localVersion } = JSON.parse(
-    readFileSync(new URL('../../packages/envapt/package.json', import.meta.url), 'utf8')
-) as { version: string };
+const localVersion = envaptPkg.version;
 
 // baked at build time
 async function badgeVersion(): Promise<string> {

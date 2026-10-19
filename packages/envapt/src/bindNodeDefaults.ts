@@ -4,6 +4,6 @@ import { Envapter } from './engine/Envapter';
 import { setRuntimeSink } from './infra/runtime';
 import { FileSource } from './sources/FileSource';
 
-// keep this file in package.json sideEffects. a decorators-only bundle drops it otherwise
+// list this file and every node entry that imports it in package.json sideEffects. webpack skips this import inside an unlisted entry
 setRuntimeSink((line) => process.stderr.write(`${line}\n`));
 Envapter.useSource(new FileSource());
