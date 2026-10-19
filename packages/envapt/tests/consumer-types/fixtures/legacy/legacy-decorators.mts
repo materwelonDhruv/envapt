@@ -1,7 +1,7 @@
 import { Converters } from 'envapt';
 import { Envapt } from 'envapt/legacy';
 
-import { levelSchema } from './schemas.mjs';
+import { levelSchema } from '../schemas.mjs';
 
 import type { EnvaptFieldDecorator } from 'envapt/legacy';
 

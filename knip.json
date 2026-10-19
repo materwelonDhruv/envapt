@@ -15,7 +15,7 @@
                 "tests/tree-shaking/node-bind.entry.mjs",
                 "tests/*-emit/fixture.mts",
                 "tests/*-emit/load.mjs",
-                "tests/consumer-types/fixtures/*.mts",
+                "tests/consumer-types/fixtures/**/*.mts",
                 "tests/*.types-test.ts"
             ],
             "vitest": {

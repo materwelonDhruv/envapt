@@ -23,7 +23,7 @@ const BASE = {
 };
 
 const NODE_FILES = ['readers.mts', 'modern-decorators.mts'];
-const LEGACY_FILES = ['readers.mts', 'legacy-decorators.mts'];
+const LEGACY_FILES = ['readers.mts', 'legacy/legacy-decorators.mts'];
 const PORTABLE_FILES = ['portable.mts'];
 
 const STRICT_FAMILY = [
