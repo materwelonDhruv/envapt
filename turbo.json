@@ -31,6 +31,10 @@
         "test": {
             "inputs": ["$TURBO_DEFAULT$", "jest.config.*", "vitest.config.*", "src/**", "tests/**"]
         },
+        "@envapt/guide#test": {
+            "dependsOn": ["^build"],
+            "inputs": ["$TURBO_DEFAULT$", "jest.config.*", "vitest.config.*", "src/**", "tests/**"]
+        },
         "build:verify": {
             "dependsOn": ["build"],
             "outputs": []
