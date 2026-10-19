@@ -56,10 +56,8 @@ class Config {
   @Envapt('PORT', { fallback: 3000 })
   static accessor port: number;
 
-  @Envapt('CACHE_TTL', {
-    converter: Converters.Time,
-    fallback: '15m' })
-  static accessor cacheTtl: number;
+  @Envapt('API_URL', { converter: Converters.Url })
+  static accessor apiUrl: URL | undefined;
 }`
     },
     converters: {
