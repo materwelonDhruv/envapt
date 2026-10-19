@@ -91,6 +91,14 @@ describe('TS error message verification (compiler API)', () => {
         });
     });
 
+    it('keeps getRequiredAll keys as-is with no casing when strict is off', { timeout: FIXTURE_TIMEOUT_MS }, () => {
+        const diagnostics = compileFixture(
+            'non-strict/required-all-keys.ts',
+            resolve(FIXTURE_DIR, 'non-strict/tsconfig.json')
+        );
+        expect(diagnostics, joinedMessages(diagnostics)).to.have.lengthOf(0);
+    });
+
     describe('modern accessor decorator constrains the declared field type to the converter output', () => {
         const MODERN_CONFIG = resolve(FIXTURE_DIR, 'modern/tsconfig.json');
 
