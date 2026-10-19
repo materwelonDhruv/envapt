@@ -1,39 +1,85 @@
 # envapt
 
+## 9.0.0
+
+### 💥 Breaking
+
+- A mistyped converter now throws on every read, as in `getAs('MISSING', 'nmber')` throwing `InvalidBuiltInConverter` where it used to return `undefined`. A malformed time-string fallback now throws even when the variable is set. `get` now throws `FallbackConverterTypeMismatch` for a fallback that isn't a string, as in `get('PORT', 80)`. ([`0d2ca9d`](https://github.com/materwelonDhruv/envapt/commit/0d2ca9dcbebc138b049a7ae7a498c274097f399d))
+- `EnvaptErrorCodes` is now a plain object, and `EnvaptErrorCodes[305]` returns `undefined`. Write a type like `EnvaptErrorCodes.MissingEnvValue` as `typeof EnvaptErrorCodes.MissingEnvValue` or `305`. ([#166](https://github.com/materwelonDhruv/envapt/pull/166))
+- envapt is now ESM only, and `require('envapt')` throws `ERR_PACKAGE_PATH_NOT_EXPORTED`. Load it with `import`, or with `await import('envapt')` from CommonJS, and preload the config entry with `node --import envapt/config` in place of `node -r envapt/config`. ([`00a38a3`](https://github.com/materwelonDhruv/envapt/commit/00a38a30812678bbfa944dcf8056fa08f8d57449))
+- `getUsing`, `getWith`, and `parse` are now one method, `Envapter.getAs`. It takes a converter token, a custom function, or a Standard Schema in the same position, as in `Envapter.getAs('PORT', Converters.Port, 3000)`. ([`de1d920`](https://github.com/materwelonDhruv/envapt/commit/de1d9205adba7aefce90e28b6d51c5227cd58c68))
+- `String`, `Number`, `Boolean`, `BigInt`, and `Symbol` are no longer converters, and passing one fails to compile and throws `InvalidUserDefinedConfig`. Use `Converters.String`, `Converters.Number`, `Converters.Boolean`, or `Converters.BigInt`. The `PrimitiveCoercionFailed` (205) code is removed. ([`fa3b190`](https://github.com/materwelonDhruv/envapt/commit/fa3b1909f185cd5b4af1ecd515a6c66469d25b70))
+- envapt now requires Node 22.23.3 or later, since Node 20 reached end of life in April 2026. ([`25a25c9`](https://github.com/materwelonDhruv/envapt/commit/25a25c91f3914b0a19bfeaaffd7ea7285a521fa7))
+- A custom converter now gets only the raw string, and envapt calls it only when the variable is set. If it returns `undefined` or `null`, you get the fallback, and inside `Converters.array` that throws `ArrayElementConversionFailed`. `ConverterFunction<T>` now takes one type argument and replaces `CustomElementConverter`. ([#167](https://github.com/materwelonDhruv/envapt/pull/167))
+- A schema read through `getAs` or `@Envapt({ schema })` without a fallback now returns `undefined` for a missing value, where `parse` and the decorator used to throw `MissingEnvValue`. Use `getRequired` or `required: true` to keep the throw, or type the decorated field as `T | undefined`. ([#167](https://github.com/materwelonDhruv/envapt/pull/167))
+- The `EnvaptOptions` type is removed. Pass the options object to `@Envapt` inline. ([`59c92ed`](https://github.com/materwelonDhruv/envapt/commit/59c92edf0336dfbd0919a8570a4edb2b57d8fbb1))
+- `Envapter.load()` is removed. Delete the call, since binding a source already loads the cache. ([`e0e872e`](https://github.com/materwelonDhruv/envapt/commit/e0e872e934938896ac1e5b6433c2d134ee3b4958))
+- `getNumber`, `getBoolean`, and `getBigInt` are removed. Read the value through `getAs` with the matching converter, as in `Envapter.getAs('DEBUG', Converters.Boolean, false)`, or `Converters.Port` for a port. ([#170](https://github.com/materwelonDhruv/envapt/pull/170))
+- `@EnvStr`, `@EnvNum`, `@EnvBool`, `@EnvTime`, and `@EnvUrl` are removed from `envapt` and `envapt/legacy`. Use `@Envapt` with a converter, as in `@Envapt('CACHE_TTL', { converter: Converters.Time, fallback: '15m' })`. ([#170](https://github.com/materwelonDhruv/envapt/pull/170))
+- `getSymbol` and `Converters.Symbol` are removed, and a symbol fallback with no converter now fails to compile and throws `FallbackConverterTypeMismatch`. Read the string and call `Symbol.for()` yourself, as in `Symbol.for(Envapter.get('CACHE_NAMESPACE', 'default'))`. ([`9d7eb16`](https://github.com/materwelonDhruv/envapt/commit/9d7eb16abce2ce2a92c9676fd39e3d0604bca28f))
+- `getRequired`, `getRequiredAll`, and `@Envapt` with `required: true` now throw the new `InvalidEnvValue` (210) when a value is set but can't be used. They used to throw `MissingEnvValue`, and the decorator used to return `undefined`. Each failure, including a bad array element, a schema error, or an error your converter threw, is now an entry in `error.issues` with the env key first in its `path`. ([`de1d920`](https://github.com/materwelonDhruv/envapt/commit/de1d9205adba7aefce90e28b6d51c5227cd58c68))
+- `Envapter.resetProfiles()` is renamed to `Envapter.resetPaths()`, since it clears `envPaths` along with the profiles. ([#166](https://github.com/materwelonDhruv/envapt/pull/166))
+- Passing a Standard Schema as the `converter` on `@Envapt`, or as `of` in `Converters.array`, now fails to compile and throws. An arktype type used to run there as a plain function and return its `ArkErrors` object for a bad value. Pass the schema to `@Envapt` as `schema`. ([#164](https://github.com/materwelonDhruv/envapt/pull/164))
+- Each issue on a `SchemaValidationFailed` from `getAs` or `@Envapt({ schema })` now has the env key first in its `path`. The error message now lists only the key, as in `Validation failed for PORT.`, and leaves out the schema's message. ([#164](https://github.com/materwelonDhruv/envapt/pull/164))
+- Fixed envapt catching an error that a custom source's `readFile` throws while loading `.env` files. The error now reaches your code, where envapt used to skip that file and every one after it. ([#164](https://github.com/materwelonDhruv/envapt/pull/164))
+- The instance methods and the instance `environment`, `isProduction`, `isStaging`, `isDevelopment`, and `isTest` getters on `Envapter` are removed, and `getRaw` is now static. Replace `new Envapter().get(key)` with `Envapter.get(key)`, and `this.get(key)` in a subclass with `Config.get(key)` on that subclass. ([#167](https://github.com/materwelonDhruv/envapt/pull/167))
+- `Envapter.environment` now returns the environment's name, like `'production'`, where it used to return a number. Setting it to anything but a string now throws `InvalidUserDefinedConfig`. A type annotation like `Environment.Test` becomes `'test'`. ([#166](https://github.com/materwelonDhruv/envapt/pull/166))
+- `Converters.Bigint` and `Converters.Regexp` are now `Converters.BigInt` and `Converters.RegExp`, matching the JavaScript globals. ([`de1d920`](https://github.com/materwelonDhruv/envapt/commit/de1d9205adba7aefce90e28b6d51c5227cd58c68))
+- A mistyped converter token like `'nmber'` now throws `InvalidBuiltInConverter` (202) with the list of valid tokens, where it used to throw `InvalidCustomConverter` (203). The unused `InvalidFallbackType` (102) and `InvalidConverterType` (204) codes are removed. ([`f902921`](https://github.com/materwelonDhruv/envapt/commit/f902921aa6cadbd7ff967bd21415ada53864932e))
+
+### ✨ Minor
+
+- Added `ENVIRONMENT_KEYS`, the variables envapt reads to detect the environment, in precedence order. ([#168](https://github.com/materwelonDhruv/envapt/pull/168))
+- Each argument to `Envapter.require` and each placeholder in `Envapter.resolve` now takes an ordered key list and uses the first key with a value, as in `Envapter.require(['READONLY_URL', 'DATABASE_URL'], 'API_KEY')`. ([`de1d920`](https://github.com/materwelonDhruv/envapt/commit/de1d9205adba7aefce90e28b6d51c5227cd58c68))
+- `getRequired` and `getRequiredAll` now take a synchronous Standard Schema, as in `Envapter.getRequired('PORT', z.coerce.number())`. A missing value throws `MissingEnvValue`, and a value the schema rejects throws `InvalidEnvValue` with the schema's issues. ([#167](https://github.com/materwelonDhruv/envapt/pull/167))
+
+### 🩹 Patch
+
+- Fixed `@Envapt({ schema })` throwing `InvalidUserDefinedConfig` for an arktype schema. ([#164](https://github.com/materwelonDhruv/envapt/pull/164))
+- Fixed Node crashing with an unhandled rejection when a zod `.transform` or `.refine` threw during a read. With `Envapter.debug = 'warn'`, envapt now logs that error. ([`de1d920`](https://github.com/materwelonDhruv/envapt/commit/de1d9205adba7aefce90e28b6d51c5227cd58c68))
+- Fixed a bundled Node app that reads config only through `@Envapt` throwing `NoSourceBound` on the first read. The bundle now reads `process.env` and your `.env` files even when your code never imports `Envapter`. ([#168](https://github.com/materwelonDhruv/envapt/pull/168))
+- Fixed a value containing an empty `${}` throwing `InvalidKeyInput` when read. The `${}` now stays in the value as text. ([#168](https://github.com/materwelonDhruv/envapt/pull/168))
+- Fixed `@Envapt('KEY', { fallback })` with an object or array fallback and no converter compiling, then throwing `FallbackConverterTypeMismatch` on the first read. That call is now a compile error. ([#168](https://github.com/materwelonDhruv/envapt/pull/168))
+- Fixed editor hovers that linked to guide pages that moved. ([#169](https://github.com/materwelonDhruv/envapt/pull/169))
+- Fixed editor hover text that described several APIs wrongly, such as `getAs`, `has`, and `resetPaths`. ([#169](https://github.com/materwelonDhruv/envapt/pull/169))
+- Fixed `getRequiredAll` typing its keys as camelCase when you pass no casing in a project with `strict` off, such as the `tsconfig` Next.js generates. ([#170](https://github.com/materwelonDhruv/envapt/pull/170))
+- Fixed `getRequired`, `getRequiredAll`, and a required decorated field rejecting a `Converters.Json` value of `null`. They now return `null`, the same as `getAs`. ([#168](https://github.com/materwelonDhruv/envapt/pull/168))
+- Fixed setting `Envapter.strict` or `Envapter.environment` before `useSource` throwing `NoSourceBound` on Workers, the browser, and edge runtimes. The setting now applies when you bind the source. ([#168](https://github.com/materwelonDhruv/envapt/pull/168))
+
 ## 8.2.4
 
-### Patch Changes
+### 🩹 Patch
 
 - 30897bf: Fixed reads after `Envapter.environment = 'production'` still returning values from `.env.development` on Node. The setter now reloads the `.env` files for the new environment the way `baseDir` and `envPaths` already did.
 
 ## 8.2.3
 
-### Patch Changes
+### 🩹 Patch
 
 - Shorten the package desc
 
 ## 8.2.2
 
-### Patch Changes
+### 🩹 Patch
 
 - ff56deb: Fixed a legacy decorator throwing `Cannot redefine property` under a Babel-based loader. The decorator now returns the descriptor it installed, and Babel reapplies that one.
 
 ## 8.2.1
 
-### Patch Changes
+### 🩹 Patch
 
 - ed74814: Remove unused internal re-exports.
 - 3df9da4: Updated comments.
 
 ## 8.2.0
 
-### Minor Changes
+### ✨ Minor
 
 - Raise the bun engine floor to 1.3.11. They finally fixed the decorator bug.
 
 ## 8.1.1
 
-### Patch Changes
+### 🩹 Patch
 
 - 0213f74: Use a better example in the README and update docs to use the correct converters in some places
 
@@ -41,13 +87,13 @@
 
 ## 8.1.0
 
-### Minor Changes
+### ✨ Minor
 
 - 8d99963: Add `Envapter.has(key)`, a boolean presence check that mirrors `getRequired`'s missing semantics, true exactly when a required read of the same key finds a value. Templates resolve first, empty counts as missing, and whitespace-only counts as missing only under strict mode.
 
 ## 8.0.0
 
-### Major Changes
+### 💥 Breaking
 
 - Add `getRequired(key, converter)` and `getRequiredAll(spec, casing?)` for typed required reads. `getRequired` takes the converter positionally, returns the non-undefined value, and throws `MissingEnvValue` on a missing, empty, or unconvertible value. `getRequiredAll` reads a group in one call and returns a typed record, throwing once listing every missing key. Its spec values can be tokens, `array()` tokens, or custom parser functions, and an optional `casing` (`'camelCase'`, `'PascalCase'`, or `'kebab-case'`) renames the record keys.
 
@@ -55,7 +101,7 @@
 
 - Return `undefined` for a missing read with no fallback across every reader, including the decorators and converter dispatch that returned `null` before. No-fallback decorator field types drop `| null`, so retype such fields to `| undefined`. `getWith` now runs its custom converter on a missing key with `raw` as `undefined`. An explicit `undefined` fallback counts as no fallback everywhere, so `Envapter.parse(key, schema, undefined)` throws `MissingEnvValue`.
 - Move the engine's mutable state and read cache into a module that the `exports` map does not include. They are no longer fields on the class and have no import path, so outside code cannot read or write them through an `as`-cast or a subclass. Drop the internal `TimeUnit` type and `isStrict()` method from the public exports.
-- **BREAKING:** Tighten the `Integer` and `Float` converters.
+- Tighten the `Integer` and `Float` converters.
 
     `Converters.Integer` parses with `Number` and requires `Number.isSafeInteger`, so trailing characters (`42abc`), non-integers (`3.9`), and values past 2^53 now fall back. `Converters.Float` parses with `Number`, so trailing characters (`3.14xyz`) now fall back. `Float` still accepts `Infinity`.
 
@@ -80,7 +126,7 @@
 
 - A built-in converter fallback must now be a value the converter would accept. One of the correct type but an invalid value throws `FallbackConverterTypeMismatch`: an out-of-range `Port`, a `NaN` `Number` or `Float`, a non-safe-integer `Integer`, an `Invalid Date`, or an `Email` that is not a valid address. Pass a valid fallback or omit it.
 
-### Minor Changes
+### ✨ Minor
 
 - Add the `Email` and `Port` converters.
 
@@ -90,7 +136,7 @@
 
     `useSource` and `merge` also accept a reader function `(key) => string | undefined` as a source, for a runtime that reads one key at a time and cannot list its keys. envapt calls the reader on a cache miss and caches the result.
 
-### Patch Changes
+### 🩹 Patch
 
 - Under `Envapter.debug = 'verbose'`, log when a present value cannot be parsed by a built-in converter and the read falls back to its default. This surfaces a malformed value (for example a non-numeric `PORT`) that would otherwise fall back silently.
 - Fix the read cache rebuilding on every access when a bound source and the `.env` cascade resolve to no keys. It now builds once per `useSource`, matching a non-empty source.
@@ -99,25 +145,25 @@
 
 ## 7.1.0
 
-### Minor Changes
+### ✨ Minor
 
 - Add `PortableSource` and the `Source` type, the v8 names for the no-filesystem source class and the general source type. `PortableSource` replaces both `ManualEnvSource` and `WorkerEnvSource`, which are now deprecated subclasses of it, so migrate `new ManualEnvSource(obj)` and `new WorkerEnvSource(env)` to `new PortableSource(...)`. `Source` replaces the now-deprecated `EnvSource` type. `PortableSource`'s constructor accepts any `object`, so a Cloudflare `Env` binding (an interface with no index signature) can be passed directly without a cast. Every deprecated name still works and is removed or renamed in v8.
 
 ## 7.0.3
 
-### Patch Changes
+### 🩹 Patch
 
 - deprecate the envapt/workerd and envapt/browser subpaths. both still work but now log a deprecation warning on import. import directly from `envapt` instead. removed in v8.
 
 ## 7.0.2
 
-### Patch Changes
+### 🩹 Patch
 
 - 2cf58a0: fix malformed CJS output (tsdown shim banner leaked ESM syntax into every .cjs)
 
 ## 7.0.1
 
-### Patch Changes
+### 🩹 Patch
 
 - 8f4cac8: Fixed: `syncProcessEnv` and `import 'envapt/config'` now mirror template-resolved values to `process.env`, matching `Envapter.get`.
 
@@ -127,7 +173,7 @@
 
 ## 7.0.0
 
-### Major Changes
+### 💥 Breaking
 
 - da55055: **BREAKING:** This should have been done long ago, but all the legacy decorators (`@Envapt` and the sugar decorators) now correctly typecheck the field they are decorating. Say, for example you had `@EnvNum(PORT)` on a field, but the field was typed as `number`, you would now get an error that says `'{ '[envapt] field type must hold the converter output': number | null; }'` because without a fallback, the field would be assigned a `null` value if the environment variable is not set. And of course, this also means completely incorrectly typed fields will also not compile anymore. This was the intended behavior so it should be a minor, but because of how many of my own tests it broke, I'm releasing it as a major.
 - da55055: **BREAKING.** Modern (TC39 Stage 3) decorators are now the default.
@@ -136,11 +182,11 @@
 
     The legacy (experimentalDecorators) decorators move to a subpath. Change `import { Envapt } from 'envapt'` to `import { Envapt } from 'envapt/legacy'` to keep the old `static readonly` / `declare readonly` form, which still requires `experimentalDecorators: true`. Everything else (`Envapter`, `Converters`, sources, and types) stays on `envapt`.
 
-### Minor Changes
+### ✨ Minor
 
 - da55055: **BREAKING:** Legacy decorated properties now throw a clear error when you assign to them. `@Envapt` and the sugar decorators (from `envapt/legacy`) install a setter that throws `EnvaptError` with code `InvalidUserDefinedConfig`, because the value resolves from the environment and is read-only. Before, the property had only a getter, so an assignment was a silent no-op in sloppy mode and a native `TypeError` in strict mode. The modern decorators on `envapt` behave the same way.
 
-### Patch Changes
+### 🩹 Patch
 
 - 54c8ecc: Bump dev dependencies.
 - da55055: Fix decorator value caching so a resolved `undefined` (from `fallback: undefined` or a converter that returns `undefined`) is cached once instead of re-resolving on every property access. The modern accessor decorator now throws `EnvaptError` when the runtime's Stage 3 transform does not provide the accessor name, rather than collapsing every accessor to one cache key.
@@ -149,19 +195,19 @@
 
 ## 6.0.2
 
-### Patch Changes
+### 🩹 Patch
 
 - 7a97ce3: Fix the documented static decorator convention. A `@Envapt` (or sugar `@EnvNum`/`@EnvStr`/...) field declared as `declare static readonly` reads `undefined` when the consumer compiles with tsc, because tsc emits the decorator against the prototype where a static read never reaches the getter. Static decorated fields now use a plain `static readonly` (no `declare`), and instance fields keep `declare readonly`. The docstrings, README, and examples ship the corrected forms, and a tsc compile-and-run test guards both forms.
 
 ## 6.0.1
 
-### Patch Changes
+### 🩹 Patch
 
 - 40c3e4b: Reword the package description to lead with typed config from any source rather than .env loading, because that's what envapt is about and the .env cascade is just one feature of the default Node source.
 
 ## 6.0.0
 
-### Major Changes
+### 💥 Breaking
 
 - 140826e: Remove the deprecated positional `@Envapt('KEY', fallback, converter)` form. Pass an options object instead, like `@Envapt('KEY', { converter, fallback })`. The no-argument `@Envapt('KEY')` form is unchanged. A second argument that is not an options object now throws `EnvaptError` with `InvalidUserDefinedConfig`, and the internal `InferPrimitiveFallbackType` type is removed.
 
@@ -169,7 +215,7 @@
 
 ## 5.2.0
 
-### Minor Changes
+### ✨ Minor
 
 - e506a6d: `Envapter` now detects the test environment and reads Vite's `MODE`.
     - `Environment.Test` and `Envapter.isTest` are added. `NODE_ENV=test` (and Vite's `MODE=test`) now resolve to `Environment.Test`, where they previously fell through to `Development`. As a result, `isDevelopment` is no longer `true` under a test runner that sets `NODE_ENV=test`.
@@ -201,7 +247,7 @@
 
     On Node, the `.env` cascade now loads when envapt is first imported rather than on the first variable read.
 
-### Patch Changes
+### 🩹 Patch
 
 - bad5f6b: update package.json desc and engines/os
 - e506a6d: `Converters.Time` string fallbacks now accept decimals, matching raw env values.
@@ -212,37 +258,37 @@
 
 ## 5.1.1
 
-### Patch Changes
+### 🩹 Patch
 
 - Embed the README into the published npm manifest so it renders on the package page. pnpm leaves the README out of the manifest by default, which left npmjs.com showing no README on every prior release.
 
 ## 5.1.0
 
-### Minor Changes
+### ✨ Minor
 
 - Emit one output module per source file (`unbundle`) so bundlers can tree-shake standalone imports: importing only `EnvaptError` or `Converters` now drops roughly 92-98% of gzip size, while the full `Envapter` path is unchanged.
 
 ## 5.0.3
 
-### Patch Changes
+### 🩹 Patch
 
 - Update homepage in package.json
 
 ## 5.0.2
 
-### Patch Changes
+### 🩹 Patch
 
 - 1ac6429: Tighten README positioning and claims.
 
 ## 5.0.1
 
-### Patch Changes
+### 🩹 Patch
 
 - Replace the README hero table with a borderless side-by-side layout so GitHub and npm no longer draw table chrome (or the heading underline) around it, and drop the rule between the hero and the intro.
 
 ## 5.0.0
 
-### Major Changes
+### 💥 Breaking
 
 - 9711554: **BREAKING:** array converters now use a phantom-branded `Converters.array({ of?, delimiter? })` builder instead of the `{ delimiter, type }` config object. inference survives variable indirection and union-widening, and bad element values in the raw env value throw `EnvaptError` (`ArrayElementConversionFailed`, code 206) instead of silently substituting the raw string into a wrong-typed array.
 
@@ -294,7 +340,7 @@
     - New `Envapter.require(...keys)` existence-check helper. Variadic rest signature, always returns `void`. At least one key required (compile-time error via `[string, ...string[]]` tuple if zero args). Collects every missing key into a single error instead of failing one at a time. Resolves templates before checking.
     - New error codes: `EmptyArrayElement (207)` for strict-mode array empties; `MissingEnvValue (305)` for required-key absences, `require()` failures, and strict-mode unresolved templates.
 
-### Minor Changes
+### ✨ Minor
 
 - 9711554: Add `Envapter.baseDir` to anchor `.env` resolution to a directory instead of `process.cwd()`. The auto-cascade, `configureProfiles` paths, and relative `envPaths` resolve against it; absolute paths bypass it. It accepts a directory path or a module location: `import.meta.url` / `import.meta.dirname` (ESM) or `__dirname` (CJS). Left unset, paths resolve against `process.cwd()` as before.
 
@@ -335,7 +381,7 @@
 
     malformed time-string fallbacks (like `'1.5h'` or `'1500'`, where the runtime expects an integer with an explicit unit) now throw `EnvaptErrorCodes.MalformedTimeFallback` instead of the generic `FallbackConverterTypeMismatch`. number fallbacks keep working the same way.
 
-### Patch Changes
+### 🩹 Patch
 
 - 9711554: Add cross-runtime integration test layer under `packages/envapt/tests/integration/`.
     - Hand-rolled `node:assert`-based smoke (6 portable suites + 1 Deno-only suite, ~30 assertions): basic get, every built-in converter, fallbacks, missing-file recovery, the `@Envapt` decorator's runtime install path, the v5 features (strict, debug, syncProcessEnv, require), and `@Envapt` syntax compiled by the host runtime's TS transpiler.
@@ -355,66 +401,66 @@
 
 ## 4.1.1
 
-### Patch Changes
+### 🩹 Patch
 
 - 1244fb1: bump deps
 
 ## 4.1.0
 
-### Minor Changes
+### ✨ Minor
 
 - a87c8e5: allow passing a list of env as the first arg to Envapt or Envapter methods. envapt will look for the env left-to-right and pick the first available one. passing a string still works and everything that worked before will work the same right now
 
 ## 4.0.2
 
-### Patch Changes
+### 🩹 Patch
 
 - 9c7b728: bump versions
 - 9c7b728: add examples for each overload of the Envapt decorator
 
 ## 4.0.1
 
-### Patch Changes
+### 🩹 Patch
 
 - bump deps
 
 ## 4.0.0
 
-### Major Changes
+### 💥 Breaking
 
-- **BREAKING:** Simplify exports and type definitions for ESM and CJS. Replaced the nested exports map with flat fields import, require, and default. Types are now only at ./dist/index.d.ts. Removed the build step that renamed index.d.cts to index.d.mts.
+- Simplify exports and type definitions for ESM and CJS. Replaced the nested exports map with flat fields import, require, and default. Types are now only at ./dist/index.d.ts. Removed the build step that renamed index.d.cts to index.d.mts.
 
 ## 3.0.2
 
-### Patch Changes
+### 🩹 Patch
 
 - 063703c: bump deps
 
 ## 3.0.1
 
-### Patch Changes
+### 🩹 Patch
 
 - bump deps and refactor regexes to use String.raw and RegExp obj in BuiltInConverters to avoid disabling eslint rules
 
 ## 3.0.0
 
-### Major Changes
+### 💥 Breaking
 
 - 482eb6d: **BREAKING:** Custom Converters will now execute even if an env variable is not present in the source env file(s). This allows for using `@Envapt` to validate the existence of variables by throwing errors inside the user-defined Custom Converters
 
-### Patch Changes
+### 🩹 Patch
 
 - 5d1df34: update README to include new things and better navigation
 
 ## 2.2.10
 
-### Patch Changes
+### 🩹 Patch
 
 - remove codecov config
 
 ## 2.2.9
 
-### Patch Changes
+### 🩹 Patch
 
 - b263044: Ensure expected behavior to reject non ISO strings for Date converters
 - 953bcb2: Improve test coverage by ignoring unreachable defensive programming blocks
@@ -425,32 +471,32 @@
 
 ## 2.2.8
 
-### Patch Changes
+### 🩹 Patch
 
 - e9e359e: Port tests to vitest
 
 ## 2.2.7
 
-### Patch Changes
+### 🩹 Patch
 
 - Fix readme badge for tests CI and make file ext consistent in workflows dir
 
 ## 2.2.6
 
-### Patch Changes
+### 🩹 Patch
 
 - 01b1ba0: Fix deno missing mocha types error by explicitly importing mocha types in test files
 - 0be2af4: Better test names and some badge formatting in README. Also condensed NOTICE and the other license file into one NOTICE.md file.
 
 ## 2.2.5
 
-### Patch Changes
+### 🩹 Patch
 
 - 7bb1923: Fixing types and removing `Error.captureStackTrace` to follow ECMAScript specifications
 
 ## 2.2.4
 
-### Patch Changes
+### 🩹 Patch
 
 - 435a738: Add jsr publishing support and a test for the previous version's type-error patch
 - f17ca67: Bump deps: @types/node
@@ -459,30 +505,30 @@
 
 ## 2.2.3
 
-### Patch Changes
+### 🩹 Patch
 
 - 73162d8: `undefined` as fallback causing type errors when provided with a BuiltIn or Array Converter
 - d56fe89: Fix incorrect example in the README for URL converter and add some comments for `@Envapt` overloads
 
 ## 2.2.2
 
-### Patch Changes
+### 🩹 Patch
 
 - 6c1caaa: Fix grammar mistake in README
 
 ## 2.2.1
 
-### Patch Changes
+### 🩹 Patch
 
 - f1c81cc: Make clear that Envapt can be used with JavaScript too
 
 ## 2.2.0
 
-### Minor Changes
+### ✨ Minor
 
 - a74e97d: Tagged Template resolver for a easily "one-lining" multiple parsed envs in a string literal. It also supports template variables like `${VAR}`! Check README for usage and examples.
 
-### Patch Changes
+### 🩹 Patch
 
 - c479505: Missing export for `EnvaptError`
 - f15ddc9: Fix cache collisions on Envapt used on a static property in one class, and an instance property in another class with the property name being the same for both
@@ -490,19 +536,19 @@
 
 ## 2.1.1
 
-### Patch Changes
+### 🩹 Patch
 
 - "boilerplate of parsing" → "boilerplate of transforming parsed" in README
 
 ## 2.1.0
 
-### Minor Changes
+### ✨ Minor
 
 - Fix missing `.mjs` build
 
 ## 2.0.0
 
-### Major Changes
+### 💥 Breaking
 
 - 7e3a440: Strict Runtime Validation
     - **BREAKING:** Runtime type validation between converter return types and fallback values exists now... and it's strict!
@@ -524,7 +570,7 @@
 
     Decorators don't exactly set the value they return to the property they decorate, so the inferred type you see on hover for `@Envapt` will be the type of the converter rather than the type of the property it'll set. Although, for the functional API, the type will be the type of the property it'll set.
 
-### Minor Changes
+### ✨ Minor
 
 - 7e3a440: Enums for Built-in Converters
     - Added `Converters` enum because they look better than string literals and provide better DX
@@ -542,7 +588,7 @@
     - Added `getWith()` method for using custom converter functions functionally
     - Functional API actually knows that a value won't be undefined if you pass a fallback value now
 
-### Patch Changes
+### 🩹 Patch
 
 - 7e3a440: Dev and Testing Improvements
     - Coverage for codecov

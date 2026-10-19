@@ -1,7 +1,7 @@
 {
     "name": "envapt",
     "type": "module",
-    "version": "8.2.4",
+    "version": "9.0.0",
     "description": "Typed, validated config from process.env, .env files, or any object. One API on Node, Bun, Deno, Cloudflare Workers, and the browser.",
     "types": "./dist/types/index.d.mts",
     "exports": {
