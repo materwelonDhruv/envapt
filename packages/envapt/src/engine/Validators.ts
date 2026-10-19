@@ -47,6 +47,11 @@ export class Validator {
         Validator.rejectConstructor(converter);
     }
 
+    static rejectUndefinedConverter(converter: unknown): void {
+        if (converter !== undefined) return;
+        throw new EnvaptError(EnvaptErrorCodes.InvalidCustomConverter, 'The converter is undefined.');
+    }
+
     static rejectConstructor(converter: unknown): void {
         // Symbol(raw) returns a new symbol on every call
         if (converter === Symbol) {
@@ -67,6 +72,7 @@ export class Validator {
     static customConvertor<TFallback>(
         converter: EnvaptConverter<TFallback>
     ): asserts converter is ConverterFunction<TFallback> {
+        Validator.rejectUndefinedConverter(converter);
         Validator.rejectNonConverter(converter);
         if (typeof converter === 'string') {
             throw new EnvaptError(

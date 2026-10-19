@@ -41,6 +41,23 @@ describe('Runtime Validation', () => {
                 .to.throw(EnvaptError)
                 .with.property('code', EnvaptErrorCodes.InvalidCustomConverter);
         });
+
+        it('throws InvalidCustomConverter for an undefined converter', () => {
+            // cast past the type to reach the runtime check
+            const removedToken = undefined as never;
+            for (const read of [
+                () => Envapter.getAs('VAR_IN_EXTRA_FILE', removedToken),
+                () => {
+                    class RemovedTokenField {
+                        @Envapt('VAR_IN_EXTRA_FILE', { converter: removedToken })
+                        static readonly value: unknown;
+                    }
+                    return RemovedTokenField.value;
+                }
+            ]) {
+                expect(read).to.throw(EnvaptError).with.property('code', EnvaptErrorCodes.InvalidCustomConverter);
+            }
+        });
     });
 
     describe('ArrayOf validation (brand-based)', () => {

@@ -59,7 +59,7 @@ export function findPresent(keyInput: EnvKeyInput): PresentValue | undefined {
     return value === undefined ? undefined : { key, value };
 }
 
-export function readOptional(keyInput: EnvKeyInput, spec: FieldSpec | undefined, fallback: unknown): unknown {
+export function readOptional(keyInput: EnvKeyInput, spec: FieldSpec, fallback: unknown): unknown {
     const field = createField(spec, fallback);
     const { key, value } = lookup(keyInput);
     if (value === undefined) {
@@ -69,7 +69,7 @@ export function readOptional(keyInput: EnvKeyInput, spec: FieldSpec | undefined,
     return field.convert({ key, value });
 }
 
-export function readRequired(keyInput: EnvKeyInput, spec: FieldSpec | undefined): unknown {
+export function readRequired(keyInput: EnvKeyInput, spec: FieldSpec): unknown {
     const field = createField(spec);
     const present = findPresent(keyInput);
     if (present === undefined) throw missingValue(keyInput);
