@@ -3,11 +3,11 @@ title: Building on envapt
 description: Read config from a library, framework, or CLI that depends on envapt, so the source, environment, and .env files the app sets up reach your reads.
 ---
 
-Your package reads a variable or two, and the app that installs it decides where config comes from. The app may bind a source with `useSource`, pin the environment, or point envapt at another folder for its `.env` files, and it often does that after it imports your package. This page covers how your code sees those choices. seedcord, a Discord framework built on envapt, follows each pattern here.
+Your package reads a variable or two, and the app that installs it decides where config comes from. The app may bind a source with `useSource`, pin the environment, or point envapt at another folder for its `.env` files, and it often does that after it imports your package. seedcord, a Discord framework built on envapt, follows each pattern here.
 
 ## Declare envapt as a peer dependency
 
-envapt keeps its source, its environment, and its cache in module state. Each installed copy has its own, so if your package brings a copy of its own, the app's `useSource` call never reaches your reads. List envapt under `peerDependencies`, and the package manager installs one copy for both:
+envapt keeps its source, its environment, and its cache in module state. Each installed copy keeps its own. If your package installs a second copy, the app's `useSource` call binds the app's copy, and your reads go through the other one. List envapt under `peerDependencies`, and the package manager installs one copy for both:
 
 ```json title="package.json"
 {
@@ -31,7 +31,7 @@ export function apiBaseUrl(): string {
 
 If the app binds a [`PortableSource`](/docs/sources#the-sources-envapt-ships) after importing your package, `apiBaseUrl()` reads from it. The same read at module scope ran first, against the default source, and keeps that answer.
 
-Branch on the environment the same way. A check like `Envapter.isProduction` inside a function sees the environment the app pinned, while a module-scope constant holds the one detected at import.
+Branch on the environment the same way. A check like `Envapter.isProduction` inside a function reads the environment the app pinned, while a module-scope constant holds the one detected at import.
 
 ## Throw your own error for a missing key
 
@@ -69,7 +69,7 @@ The assignment reloads the `.env` files on Node, so `.env.production` loads even
 
 ## Set defaults the app can override
 
-If your package knows where the app's `.env` files live, set `Envapter.baseDir` when your entry module loads:
+If your package already has the path to the app's `.env` files, set `Envapter.baseDir` when your entry module loads:
 
 ```ts twoslash title="src/index.ts"
 import { Envapter } from 'envapt';

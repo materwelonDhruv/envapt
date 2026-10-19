@@ -97,7 +97,7 @@ next start (NODE_ENV=production)
 └─ .env
 ```
 
-In Next.js, `.env.local` wins over `.env.production`. [envapt's own order](/docs/env-files#which-files-load) puts them the other way. `next dev` reads the `.env.development` files in place of the `.env.production` ones.
+`.env.local` wins over `.env.production` here, the reverse of [envapt's own order](/docs/env-files#which-files-load). `next dev` reads the `.env.development` files in place of the `.env.production` ones.
 
 `NODE_ENV` also sets [`Envapter.environment`](/docs/environment) when `ENVIRONMENT` and `ENV` are unset. `next build` and `next start` set it to `production`, and `next dev` sets `development`.
 

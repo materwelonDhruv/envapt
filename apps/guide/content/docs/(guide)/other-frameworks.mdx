@@ -29,9 +29,9 @@ NODE_ENV=production node dist/server/entry.mjs     # Astro with @astrojs/node
 NODE_ENV=production node .output/server/index.mjs  # Nuxt
 ```
 
-Nuxt's build hides this. It replaces each `process.env.NODE_ENV` in your server code with the string `"production"`, so a check in your own code says production. envapt reads `process.env` at runtime, where `NODE_ENV` is still unset.
+Nuxt makes this easy to miss. Its build replaces each `process.env.NODE_ENV` in your server code with the string `"production"`, so a check in your own code says production. envapt reads `process.env` at runtime, where `NODE_ENV` is still unset.
 
-None of the three servers copies your `.env` files into `process.env`. envapt reads the files itself, in its own order, and `ENVIRONMENT=staging` in the start command makes it read `.env.staging` too.
+None of these servers copies your `.env` files into `process.env`. envapt reads the files itself, in its own order, and `ENVIRONMENT=staging` in the start command makes it read `.env.staging` too.
 
 ## SvelteKit
 
