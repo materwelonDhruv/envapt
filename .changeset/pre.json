@@ -3,7 +3,7 @@
     "tag": "next",
     "initialVersions": {
         "@envapt/guide": "1.0.0",
-        "envapt": "9.0.0"
+        "envapt": "9.1.0"
     },
     "changesets": []
 }

@@ -90,14 +90,16 @@ describe('Required reads (v8)', () => {
             expect(e.issues?.[0]?.path).to.deep.equal(['SET_VALUE']);
         });
 
-        it('reports an error thrown by a custom parser as an issue carrying its message', () => {
+        it('reports an error thrown by a custom parser as an issue, keeping the error as the cause', () => {
+            const outOfRange = new RangeError('out of range');
             const e = thrownBy(() =>
                 Envapter.getRequired('SET_VALUE', () => {
-                    throw new RangeError('out of range');
+                    throw outOfRange;
                 })
             );
             expect(e.code).to.equal(EnvaptErrorCodes.InvalidEnvValue);
-            expect(e.issues).to.deep.equal([{ message: 'out of range', path: ['SET_VALUE'] }]);
+            expect(e.issues).to.deep.equal([{ message: 'out of range', path: ['SET_VALUE'], cause: outOfRange }]);
+            expect(e.cause).to.equal(outOfRange);
         });
 
         it('returns the schema output for a present value', () => {
@@ -111,19 +113,23 @@ describe('Required reads (v8)', () => {
             expect(e.issues?.[0]?.path?.[0]).to.equal('SET_VALUE');
         });
 
-        it('reports a schema that throws as an issue carrying its message', () => {
+        it('reports a schema that throws as an issue, keeping the error as the cause', () => {
+            const notLoaded = new Error('lookup table not loaded');
             const crashing: StandardSchemaV1<unknown, string> = {
                 '~standard': {
                     version: 1,
                     vendor: 'envapt-test',
                     validate: () => {
-                        throw new Error('lookup table not loaded');
+                        throw notLoaded;
                     }
                 }
             };
             const e = thrownBy(() => Envapter.getRequired('SET_VALUE', crashing));
             expect(e.code).to.equal(EnvaptErrorCodes.InvalidEnvValue);
-            expect(e.issues).to.deep.equal([{ message: 'lookup table not loaded', path: ['SET_VALUE'] }]);
+            expect(e.issues).to.deep.equal([
+                { message: 'lookup table not loaded', path: ['SET_VALUE'], cause: notLoaded }
+            ]);
+            expect(e.cause).to.equal(notLoaded);
         });
 
         it('reports a bad array element as InvalidEnvValue', () => {
@@ -295,24 +301,45 @@ describe('Required reads (v8)', () => {
                 throw 'not a semver';
             };
             const e = thrownBy(() => Envapter.getRequiredAll({ SET_VALUE: parseSemver }));
-            expect(e.issues).to.deep.equal([{ message: 'not a semver', path: ['SET_VALUE'] }]);
+            expect(e.issues).to.deep.equal([{ message: 'not a semver', path: ['SET_VALUE'], cause: 'not a semver' }]);
         });
 
-        it('reports an EnvaptError thrown by a custom parser as an issue', () => {
+        it('keeps the error a custom parser throws as the cause when it is the only thrown one', () => {
+            const unknownFlag = new EnvaptError(EnvaptErrorCodes.InvalidFallback, 'unknown flag');
             const e = thrownBy(() =>
                 Envapter.getRequiredAll({
                     // eslint-disable-next-line @typescript-eslint/naming-convention -- a function-valued env-name key reads as an object method to the naming rule
                     SET_VALUE: () => {
-                        throw new EnvaptError(EnvaptErrorCodes.InvalidFallback, 'unknown flag');
+                        throw unknownFlag;
                     },
                     SAMPLE_REPO: Converters.Number
                 })
             );
             expect(e.code).to.equal(EnvaptErrorCodes.InvalidEnvValue);
             expect(e.issues).to.deep.equal([
-                { message: 'unknown flag', path: ['SET_VALUE'] },
+                { message: 'unknown flag', path: ['SET_VALUE'], cause: unknownFlag },
                 { message: 'could not be converted', path: ['SAMPLE_REPO'] }
             ]);
+            expect(e.cause).to.equal(unknownFlag);
+        });
+
+        it('leaves each thrown error on its own issue when two parsers throw', () => {
+            const badHost = new Error('bad host');
+            const badRepo = new Error('bad repo');
+            const e = thrownBy(() =>
+                Envapter.getRequiredAll({
+                    // eslint-disable-next-line @typescript-eslint/naming-convention -- a function-valued env-name key reads as an object method to the naming rule
+                    SET_VALUE: () => {
+                        throw badHost;
+                    },
+                    // eslint-disable-next-line @typescript-eslint/naming-convention -- a function-valued env-name key reads as an object method to the naming rule
+                    SAMPLE_REPO: () => {
+                        throw badRepo;
+                    }
+                })
+            );
+            expect(e.issues?.map((issue) => issue.cause)).to.deep.equal([badHost, badRepo]);
+            expect(e.cause).to.equal(undefined);
         });
 
         // zod returns a rejecting Promise when a refine throws

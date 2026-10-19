@@ -71,8 +71,13 @@ export const EnvaptErrorCodes = {
  */
 export type EnvaptErrorCodes = (typeof EnvaptErrorCodes)[keyof typeof EnvaptErrorCodes];
 
+export interface EnvaptIssue extends StandardSchemaV1.Issue {
+    /** The value a custom parser or schema threw. Unset when the value failed without a throw. */
+    readonly cause?: unknown;
+}
+
 interface EnvaptErrorOptions {
-    issues?: readonly StandardSchemaV1.Issue[];
+    issues?: readonly EnvaptIssue[];
     cause?: unknown;
 }
 
@@ -99,8 +104,11 @@ export class EnvaptError extends Error {
     /**
      * Populated only for {@link EnvaptErrorCodes.SchemaValidationFailed} (208) and
      * {@link EnvaptErrorCodes.InvalidEnvValue} (210). For every other code this is `undefined`.
+     *
+     * If a custom parser or schema throws during a required read, the issue for that key keeps the thrown
+     * value as `cause`. If exactly one issue has a `cause`, the error's own `cause` is that value too.
      */
-    public readonly issues: readonly StandardSchemaV1.Issue[] | undefined;
+    public readonly issues: readonly EnvaptIssue[] | undefined;
 
     constructor(code: EnvaptErrorCodes, message: string, options?: EnvaptErrorOptions) {
         super(message, options?.cause !== undefined ? { cause: options.cause } : undefined);

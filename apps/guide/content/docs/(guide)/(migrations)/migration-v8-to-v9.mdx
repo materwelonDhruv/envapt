@@ -56,7 +56,7 @@ class Config extends Envapter {
 
 For `PORT="80a"`, v8 gave `Config.port` the value `undefined`, even though the field is typed `number`. v9 throws `InvalidEnvValue` the first time you read it.
 
-A required read also turns its other failures into issues on the `InvalidEnvValue` it throws. A bad array element used to throw `ArrayElementConversionFailed` or `EmptyArrayElement`. An error from your own parser reached your `catch` unchanged. A schema on a required decorator threw `SchemaValidationFailed` or `SchemaThrew`. Now each becomes an issue that carries the original message. The error object itself is gone, so a `catch` on your parser's error class stops matching. Check for `InvalidEnvValue` there and read `error.issues`.
+A required read also turns its other failures into issues on the `InvalidEnvValue` it throws. A bad array element used to throw `ArrayElementConversionFailed` or `EmptyArrayElement`. An error from your own parser reached your `catch` unchanged. A schema on a required decorator threw `SchemaValidationFailed` or `SchemaThrew`. Now each becomes an issue that carries the original message, and an error your parser or schema threw stays on that issue as `cause`. A `catch` on your parser's error class stops matching, so check for `InvalidEnvValue` there and read `error.issues`.
 
 ### A bad converter throws earlier, with a different code
 
