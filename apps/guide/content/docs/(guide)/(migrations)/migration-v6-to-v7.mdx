@@ -1,6 +1,6 @@
 ---
 title: Migration (v6 to v7)
-description: Moving from envapt v6 to v7. The default decorators are now TC39 Stage 3 accessors, and the legacy decorators move to envapt/legacy.
+description: Upgrade from envapt v6 to v7, where the default decorators become TC39 Stage 3 accessors and the legacy ones move to envapt/legacy.
 ---
 
 v7 changes the decorators. Everything else (the `Envapter` readers, converters, sources, and types) is unchanged and stays on `envapt`.
@@ -49,7 +49,7 @@ Only the decorators move. In v7, a module that imports decorators only from `env
 
 ## Decorated properties are read-only
 
-Assigning to a decorated property now throws `EnvaptError` with `InvalidUserDefinedConfig`. Before v7 the legacy decorator installed only a getter, so an assignment did nothing in sloppy mode and threw a native `TypeError` in strict mode. Both the accessor and legacy forms throw the clearer error in v7.
+Assigning to a decorated property now throws `EnvaptError` with `InvalidUserDefinedConfig`. Before v7 the legacy decorator installed only a getter, so an assignment did nothing in sloppy mode and threw a native `TypeError` in strict mode. Both the accessor and legacy forms throw `EnvaptError` in v7.
 
 ## Decorated fields are typechecked
 

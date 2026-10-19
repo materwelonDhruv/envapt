@@ -3,7 +3,7 @@ title: Browser
 description: Bind Vite's import.meta.env to envapt once, then read each VITE_ string in your bundle as the URL or boolean your app code expects.
 ---
 
-A browser has no `process.env`. When Vite builds the bundle, it replaces `import.meta.env` with an object holding your variables, and every `VITE_` value in it is a string. Read directly, `VITE_ENABLE_BETA` holds `'false'` when the flag is off. That string is truthy, so an `if` on it runs the wrong branch. This page uses Vite, and another bundler hands you its own injected object that you bind the same way.
+A browser has no `process.env`. When Vite builds the bundle, it replaces `import.meta.env` with an object holding your variables, and every `VITE_` value in it is a string. Read directly, `VITE_ENABLE_BETA` holds `'false'` when the flag is off. That string is truthy, so an `if` on it runs the wrong branch. This page uses Vite. Another bundler hands you its own injected object, which you bind the same way.
 
 If you bind `import.meta.env` to envapt, envapt converts each value you read. Bind it before the first read, because a read with no [source](/docs/sources) bound throws `NoSourceBound`.
 

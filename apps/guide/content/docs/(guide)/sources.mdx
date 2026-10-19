@@ -37,7 +37,7 @@ Imports run before the module body. If a module reads at load time, it can run b
 
 `FileSource` is exported by the node build only, so the samples below that import it are for Node, Bun, and Deno.
 
-`PortableSource` copies the object when you construct it, so changing the object afterwards doesn't reach envapt. To change a value, bind a new `PortableSource`. It JSON-stringifies any value that isn't a string, so a Worker `vars` entry holding an object reaches [`Converters.Json`](/docs/converters#json) as JSON text. A `null` becomes the string `'null'`, and a function or `undefined` is skipped. A `BigInt` or a circular object makes the constructor throw a `TypeError`.
+`PortableSource` copies the object when you construct it, so a later change to the object leaves envapt's copy as it was. To change a value, bind a new `PortableSource`. It JSON-stringifies any value that isn't a string, so a Worker `vars` entry holding an object reaches [`Converters.Json`](/docs/converters#json) as JSON text. A `null` becomes the string `'null'`, and a function or `undefined` is skipped. A `BigInt` or a circular object makes the constructor throw a `TypeError`.
 
 ```ts twoslash
 import { Envapter, PortableSource, Converters } from 'envapt';

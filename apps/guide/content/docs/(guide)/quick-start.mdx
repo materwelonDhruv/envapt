@@ -28,7 +28,7 @@ On Node, Bun, and Deno, envapt binds `process.env` as its source and loads your 
 <Tabs items={['Node, Bun, Deno', 'Workers', 'Browser']} groupId="runtime" persist>
 <Tab value="Node, Bun, Deno">
 
-envapt looks for the `.env` files in your working directory. This step reads `CACHE_TTL` from the file below. The startup check further down reads the other three keys.
+envapt loads the `.env` files from your working directory. This step reads `CACHE_TTL` from the file below. The startup check further down reads the other three keys.
 
 ```dotenv title=".env"
 PORT=8080

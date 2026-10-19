@@ -2,7 +2,7 @@ import { formatDate } from '@/lib/date';
 import { markdownBody } from '@/lib/get-llm-text';
 import { OG } from '@/lib/og/theme';
 import { canonicalUrl, JSR_URL, markdownUrl, NPM_URL, REPO_REF, REPO_URL, SITE_NAME, SITE_TAGLINE } from '@/lib/site';
-import { source } from '@/lib/source';
+import { isApiPage, source } from '@/lib/source';
 
 import type { BlogPage, DocsPage } from '@/lib/source';
 import type { PreviewCardProps, PreviewLink } from '@/components/PreviewCard';
@@ -69,12 +69,9 @@ async function firstParagraph(page: DocsPage): Promise<string | undefined> {
 }
 
 export async function docsPreview(page: DocsPage): Promise<PreviewCardProps> {
-    const isApi = page.slugs[0] === 'api';
-    // a bare ) in the path would end the markdown link early
-    const sourcePath = page.path.replaceAll('(', '%28').replaceAll(')', '%29');
     const markdown: PreviewLink = { label: 'Markdown', url: markdownUrl(page.url) };
 
-    if (isApi) {
+    if (isApiPage(page)) {
         return {
             accent: ACCENT.api,
             breadcrumb: ['api', ...page.slugs.slice(2, -1)],
@@ -84,6 +81,8 @@ export async function docsPreview(page: DocsPage): Promise<PreviewCardProps> {
         };
     }
 
+    // a bare ) in the path would end the markdown link early
+    const sourcePath = page.path.replaceAll('(', '%28').replaceAll(')', '%29');
     return {
         accent: ACCENT.guide,
         breadcrumb: ['guide', ...(sidebarTrail(source.getPageTree().children, page.url) ?? [])],

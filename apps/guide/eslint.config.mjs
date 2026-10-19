@@ -39,6 +39,16 @@ export default createConfig({
             settings: { 'mdx/code-blocks': false }
         },
 
-        { ignores: ['.next/**', 'out/**', 'build/**', '.source/**', 'next-env.d.ts', 'content/docs/api/reference/**'] }
+        {
+            ignores: [
+                '.next/**',
+                'out/**',
+                'build/**',
+                '.source/**',
+                '.wrangler/**',
+                'next-env.d.ts',
+                'content/docs/api/reference/**'
+            ]
+        }
     ]
 });

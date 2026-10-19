@@ -97,7 +97,7 @@ Before the first read, bind a source built from the object or function the platf
 
 {/* prettier-ignore-end */}
 
-Keep `'warn'` when one config module loads on both builds. With `'warn'`, setting `envPaths` does nothing on Workers and still loads files on Node. Choose `'throw'` if a file API call on the portable build is a mistake you want to stop the app. The error message says which API you called.
+Keep `'warn'` when one config module loads on both builds. With `'warn'`, setting `envPaths` does nothing on Workers and still loads files on Node. Choose `'throw'` if you want a file API call on the portable build to stop the app. The error message says which API you called.
 
 ```ts twoslash
 import { Envapter } from 'envapt';

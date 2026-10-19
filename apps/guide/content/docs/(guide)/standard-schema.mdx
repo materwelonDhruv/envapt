@@ -71,7 +71,7 @@ Zod types `validate` as returning a result or a Promise of a result, so that typ
 
 ## Fallbacks skip the schema
 
-A missing or empty value returns the fallback, or `undefined` without one. The schema never runs for a missing value, so it never sees the fallback. A default on the schema, like zod's `.default()`, never applies either. TypeScript checks the fallback's type against the schema's output, but nothing checks the value at runtime. A token's fallback is different, because envapt checks it against the [token](/docs/converters).
+A missing or empty value returns the fallback, or `undefined` without one. The schema runs only on a value that is set, so the fallback never goes through it. A default on the schema, like zod's `.default()`, never applies either. TypeScript checks the fallback's type against the schema's output, but nothing checks the value at runtime. A token's fallback is different, because envapt checks it against the [token](/docs/converters).
 
 ```ts twoslash
 import { z } from 'zod/v4';
@@ -97,7 +97,7 @@ const poolSize = Envapter.getAs('DATABASE_POOL_SIZE', z.coerce.number().int().mi
 
 A 208 message lists only the key, because an issue message can quote the value. Valibot's message reads `Received "abc"`, and arktype's ends in `(was "abc")`. A 209 message includes the text of the error your schema threw, which can quote the value too. [Required values](/docs/required-values#reading-the-error-without-leaking-values) shows how to log a failure without the values.
 
-A `${VAR}` [template](/docs/templates) expands before validation, so the schema sees the resolved value.
+A `${VAR}` [template](/docs/templates) expands before validation, so the schema receives the expanded value.
 
 To require the value, or to check a group of variables in one call, pass the schema to `getRequired` or `getRequiredAll`. [Required values](/docs/required-values) covers both. In `getRequired`, `getRequiredAll`, and a decorator with `required: true`, a failing schema throws `InvalidEnvValue` (210), and so does a schema whose `validate` throws, with the message as an issue. A schema that returns a Promise still throws 302.
 

@@ -9,7 +9,7 @@ import { TocControls } from '@/components/TocControls';
 import { docsPreview } from '@/lib/linkPreview';
 import { pageMetadata } from '@/lib/metadata';
 import { docsOgImage } from '@/lib/og/images';
-import { source } from '@/lib/source';
+import { isApiPage, source } from '@/lib/source';
 import { docsJsonLd } from '@/lib/structuredData';
 import { getMDXComponents } from '@/mdx-components';
 
@@ -26,7 +26,7 @@ export default async function Page(props: { params: Promise<{ slug?: string[] }>
 
     const MDXContent = page.data.body;
     const preview = await docsPreview(page);
-    const toc = page.slugs[0] === 'api' ? page.data.toc.filter((item) => item.depth <= API_TOC_DEPTH) : page.data.toc;
+    const toc = isApiPage(page) ? page.data.toc.filter((item) => item.depth <= API_TOC_DEPTH) : page.data.toc;
 
     return (
         <DocsPage toc={toc} full={page.data.full} tableOfContent={{ header: <TocControls /> }}>

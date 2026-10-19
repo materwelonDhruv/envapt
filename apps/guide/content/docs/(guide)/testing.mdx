@@ -141,7 +141,7 @@ it('uses the port from the later source', () => {
 </Tab>
 <Tab value="Fixture .env files">
 
-To test the [cascade](/docs/env-files#which-files-load) itself, point envapt at a folder of fixture files and [pin the environment](/docs/environment#pinning-the-environment) by assigning `Envapter.environment`. Without the pin, vitest's `NODE_ENV=test` makes envapt look for `.env.test`.
+To test the [cascade](/docs/env-files#which-files-load) itself, point envapt at a folder of fixture files and [pin the environment](/docs/environment#pinning-the-environment) by assigning `Envapter.environment`. Without the pin, vitest's `NODE_ENV=test` makes envapt load `.env.test`.
 
 <Files>
     <Folder name="tests" defaultOpen>
@@ -289,7 +289,7 @@ export function getPort(): number {
 }
 ```
 
-Under vitest, `port` holds whatever the real source gave when the module loaded, so every test sees that same number. `getPort()` reads when a test calls it. If a test needs to vary a constant, turn it into a function like `getPort`.
+Under vitest, `port` holds whatever the real source gave when the module loaded, so every test reads that same number. `getPort()` reads when a test calls it. If a test needs to vary a constant, turn it into a function like `getPort`.
 
 If no test varies it, module scope is fine, as long as the values exist when the module loads. [Required values](/docs/required-values#where-to-put-the-check) recommends calling `getRequiredAll` at the top level of a config module. That module reads when the test file imports it. Bind the test values in a setup file, because vitest runs `setupFiles` before it imports each test file:
 

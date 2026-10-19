@@ -206,7 +206,7 @@ const upstreams = Envapter.getAs('UPSTREAMS', Converters.array({ of: toUpstream 
 
 <Callout type="warn">
 
-Unlike a single token, an array read doesn't fall back when an element fails. It throws, even if you passed a fallback. An element that fails its token throws [`ArrayElementConversionFailed`](/docs/errors) (206). If your function returns `undefined` or `null` for an element, that throws the same code. Under [strict mode](/docs/required-values#strict-mode), a trailing comma in a deployed `.env` throws [`EmptyArrayElement`](/docs/errors) (207) at read time, which can stop startup. A required read reports each of these as an issue on one `InvalidEnvValue`.
+An array read throws when an element fails, even if you passed a fallback. An element that fails its token throws [`ArrayElementConversionFailed`](/docs/errors) (206). If your function returns `undefined` or `null` for an element, that throws the same code. Under [strict mode](/docs/required-values#strict-mode), a trailing comma in a deployed `.env` throws [`EmptyArrayElement`](/docs/errors) (207) at read time, which can stop startup. A required read reports each of these as an issue on one `InvalidEnvValue`.
 
 </Callout>
 

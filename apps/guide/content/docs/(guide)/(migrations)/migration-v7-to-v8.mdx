@@ -208,7 +208,7 @@ You only need a change here if you typed a no-fallback decorator field as `| nul
 
 ## `getWith` passes the raw value to your converter
 
-`getWith` calls your custom converter with the raw value on every read. For a missing key the converter receives `raw === undefined`. v7 returned the fallback for a missing key without running the converter. The converter already received the fallback as the second argument, so you can still return it when `raw` is missing. Your converter now decides whether to return it.
+`getWith` calls your custom converter with the raw value on every read. For a missing key the converter receives `raw === undefined`. v7 returned the fallback for a missing key without running the converter. The converter already received the fallback as the second argument, so you can still return it when `raw` is missing.
 
 ```ts
 const name = Envapter.getWith('NAME', (raw, fallback) => raw?.toUpperCase(), 'ANON');

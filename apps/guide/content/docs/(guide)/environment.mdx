@@ -19,7 +19,7 @@ The first variable with a value decides, even when its value is unrecognized. Wi
 
 An empty value counts as unset, so envapt checks the next variable. A whitespace-only value counts as unset only in [strict mode](/docs/required-values#strict-mode). `ENVIRONMENT_KEYS`, exported from `envapt`, is a readonly tuple of these variable names in this order, for tools that need to read the same variables.
 
-envapt detects the environment on the first read and keeps the result until the cache rebuilds or you pin one. A test that sets `process.env.NODE_ENV` after something has read `Envapter.environment` still sees the old value until then.
+envapt detects the environment on the first read and keeps the result until the cache rebuilds or you pin one. A test that sets `process.env.NODE_ENV` after something has read `Envapter.environment` still reads the old value until then.
 
 envapt matches the value it found, ignoring case, against these environments:
 
