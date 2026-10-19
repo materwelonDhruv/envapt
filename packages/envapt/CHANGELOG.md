@@ -1,5 +1,11 @@
 # envapt
 
+## 9.1.0
+
+### ✨ Minor
+
+- When your parser or schema throws in `getRequired`, `getRequiredAll`, or a `required` decorator field, the `InvalidEnvValue` issue for that key now keeps the thrown error as `cause`. ([`4589997`](https://github.com/materwelonDhruv/envapt/commit/45899970260e79726b790342320e05bbaacb8577))
+
 ## 9.0.0
 
 ### 💥 Breaking
