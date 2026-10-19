@@ -28,11 +28,8 @@ describe('Envapter', () => {
             expect(TestEnvapter.varInExtraFile).to.be.true;
         });
 
-        it('should find envs for primitive getters using static method', () => {
+        it('reads through the static readers a subclass inherits', () => {
             expect(TestEnvapter.get('GETTER_STRING')).to.equal('primitiveString');
-            expect(TestEnvapter.getNumber('GETTER_NUMBER')).to.equal(12345);
-            expect(TestEnvapter.getBoolean('GETTER_BOOLEAN')).to.equal(true);
-            expect(TestEnvapter.getBigInt('GETTER_BIGINT')).to.equal(123456789012345678901234567890n);
         });
     });
 

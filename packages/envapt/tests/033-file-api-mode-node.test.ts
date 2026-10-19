@@ -2,7 +2,7 @@ import { resolve } from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { Envapter, EnvaptError, EnvaptErrorCodes, PortableSource, FileSource } from '../src';
+import { Converters, Envapter, EnvaptError, EnvaptErrorCodes, PortableSource, FileSource } from '../src';
 
 import type { FileApiMode } from '../src';
 
@@ -38,7 +38,7 @@ describe('Envapter.fileApiMode (node build)', () => {
             Envapter.fileApiMode = mode;
             Envapter.envPaths = extraFixture;
             expect(Envapter.envPaths).toEqual([extraFixture]);
-            expect(Envapter.getBoolean('VAR_IN_EXTRA_FILE')).toBe(true);
+            expect(Envapter.getAs('VAR_IN_EXTRA_FILE', Converters.Boolean)).toBe(true);
         }
     });
 

@@ -43,7 +43,7 @@ The expensive failure here is a confident sentence about how two modules connect
 Inside `packages/envapt/src`:
 
 - `index.ts` is the Node/Bun/Deno entry. `index.portable.ts` is the build the `browser`, `workerd`, and `edge-light` conditions resolve to. `common.ts` holds what both share. `legacy.ts` is `envapt/legacy`. `config.ts` is the `envapt/config` side-effect entry.
-- `core/` is the reader mixin chain, `EnvapterBase` → `EnvironmentMethods` → `PrimitiveMethods` → `AdvancedMethods`, plus module state and the cache.
+- `core/` is the reader mixin chain, `EnvapterBase` → `EnvironmentMethods` → `ReaderMethods`, plus module state and the cache.
 - `engine/` holds the exported `Envapter` classes, `TemplateResolver`, and `Validators`.
 - `sources/` holds the `Source` layer (`FileSource`, `PortableSource`, `merge`).
 - `converters/`, `decorators/` (`modern/` and `legacy/`), `infra/` (dotenv, debug, errors, the inlined Standard Schema), and `types/`.

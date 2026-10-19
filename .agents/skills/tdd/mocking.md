@@ -23,7 +23,7 @@ Pass the external dependency in rather than constructing it inside. `useSource` 
 ```typescript
 // Easy to substitute
 Envapter.useSource(new PortableSource({ PORT: '8080' }));
-const port = Envapter.getNumber('PORT', 3000);
+const port = Envapter.getAs('PORT', Converters.Port, 3000);
 
 // Hard to substitute, reads process.env directly
 const port = Number(process.env.PORT ?? 3000);

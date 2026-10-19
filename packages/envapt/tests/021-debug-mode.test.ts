@@ -227,7 +227,7 @@ describe('Debug mode (v5)', () => {
             Envapter.debug = 'verbose';
             const capture = captureStderr();
             try {
-                expect(Envapter.getNumber('PORT', 8080)).to.equal(8080);
+                expect(Envapter.getAs('PORT', Converters.Number, 8080)).to.equal(8080);
                 expect(Envapter.getAs('RETRIES', Converters.Integer, 3)).to.equal(3);
 
                 expect(capture.lines.some((l) => l.includes('could not convert PORT as number'))).to.equal(true);
@@ -247,7 +247,7 @@ describe('Debug mode (v5)', () => {
             Envapter.debug = 'verbose';
             const capture = captureStderr();
             try {
-                expect(Envapter.getNumber('PORT')).to.be.undefined;
+                expect(Envapter.getAs('PORT', Converters.Number)).to.be.undefined;
                 const line = capture.lines.find((l) => l.includes('could not convert') && l.includes('PORT'));
                 expect(line, 'expected a convert-failure line').to.exist;
                 expect(line).to.not.include('using the fallback');
@@ -262,7 +262,7 @@ describe('Debug mode (v5)', () => {
             Envapter.debug = 'verbose';
             const capture = captureStderr();
             try {
-                Envapter.getNumber('ABSENT', 5);
+                Envapter.getAs('ABSENT', Converters.Number, 5);
                 expect(capture.lines.some((l) => l.includes('could not convert'))).to.equal(false);
             } finally {
                 capture.restore();

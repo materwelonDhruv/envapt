@@ -74,7 +74,7 @@ describe('a reader source reads one key at a time', () => {
     it('selects the cascade environment from a reader member of a file merge', () => {
         Envapter.useSource(merge(new FileSource(), (key) => (key === 'ENVIRONMENT' ? 'production' : undefined)));
         Envapter.baseDir = import.meta.dirname;
-        Envapter.configureProfiles({ [Environment.Production]: { paths: '.env.039-prod' } });
+        Envapter.configureProfiles({ [Environment.Production]: { paths: '.env.038-prod' } });
 
         expect(Envapter.get('READER_CASCADE_FOO')).to.equal('prod');
     });
@@ -96,7 +96,7 @@ describe('a reader source reads one key at a time', () => {
             })
         ).to.not.throw();
 
-        expect(Envapter.getNumber('PORT')).to.equal(8080);
+        expect(Envapter.get('PORT')).to.equal('8080');
         expect(Envapter.debug).to.equal('silent');
     });
 });

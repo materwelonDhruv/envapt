@@ -8,7 +8,7 @@ import { Envapt } from '../src/legacy';
 // a loose leading-number parse of the fixtures would never produce the fallbacks 99 and 1.5
 describe('Numeric converter strictness (v8)', () => {
     beforeAll(() => {
-        Envapter.envPaths = resolve(import.meta.dirname, '.env.036-numeric-strictness');
+        Envapter.envPaths = resolve(import.meta.dirname, '.env.035-numeric-strictness');
     });
 
     describe('integer', () => {

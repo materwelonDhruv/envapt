@@ -5,7 +5,7 @@ export default createConfig({
     registerUnicornPlugin: false,
     userConfigs: [
         {
-            files: ['src/core/AdvancedMethods.ts'],
+            files: ['src/core/ReaderMethods.ts'],
             rules: { 'no-restricted-syntax': 'off' }
         },
         {

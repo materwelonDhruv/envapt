@@ -9,8 +9,8 @@ afterEach(() => {
 describe('converters on workerd', () => {
     it('coerces non-string bindings and reads them back typed', () => {
         Envapter.useSource(new PortableSource({ PORT: 8080, ENABLED: true, CFG: { a: 1 } }));
-        expect(Envapter.getNumber('PORT')).toBe(8080);
-        expect(Envapter.getBoolean('ENABLED')).toBe(true);
+        expect(Envapter.getAs('PORT', Converters.Port)).toBe(8080);
+        expect(Envapter.getAs('ENABLED', Converters.Boolean)).toBe(true);
         expect(Envapter.getAs('CFG', Converters.Json)).toEqual({ a: 1 });
     });
 

@@ -10,8 +10,6 @@ describe('PortableSource on workerd', () => {
 
     it('reads typed values from the Worker env binding', () => {
         expect(Envapter.get('APP_NAME')).toBe('envapt');
-        expect(Envapter.getNumber('PORT')).toBe(8787);
-        expect(Envapter.getBoolean('DEBUG')).toBe(true);
         expect(Envapter.getAs('API_URL', Converters.Url)?.href).toBe('https://api.example.com/v1');
     });
 

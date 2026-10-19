@@ -1,5 +1,5 @@
 import { readOptional, readRequired, readRequiredAll } from './engine';
-import { PrimitiveMethods } from './PrimitiveMethods';
+import { EnvironmentMethods } from './EnvironmentMethods';
 
 import type { ArrayOf } from '../converters';
 import type { InferSchemaOutput, StandardSchemaV1 } from '../infra/StandardSchema';
@@ -20,7 +20,21 @@ import type {
     SpecSchemaConstraint
 } from '../types';
 
-export class AdvancedMethods extends PrimitiveMethods {
+export class ReaderMethods extends EnvironmentMethods {
+    /**
+     * Get a string environment variable, or `fallback` when it is missing or empty. Expands
+     * `${VAR}` templates in the value. Accepts a single key or an ordered array of keys, read until
+     * one has a value. Read any other type with `getAs` and a converter.
+     * @see {@link https://envapt.materwelon.dev/docs/envapter#the-raw-string}
+     */
+    static get<Default extends string | undefined = undefined>(
+        key: EnvKeyInput,
+        fallback?: Default
+    ): ConditionalReturn<string, Default>;
+    static get(key: EnvKeyInput, fallback?: string): unknown {
+        return readOptional(key, 'string', fallback);
+    }
+
     /**
      * Get an environment variable through a converter: a built-in token such as `Converters.Number`,
      * an `ArrayOf` token from `Converters.array(...)`, a custom `(raw: string) => T` function, or a

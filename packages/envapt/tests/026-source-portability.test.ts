@@ -73,7 +73,7 @@ describe('Source portability (v5.2)', () => {
                 new PortableSource({ VITE_API_URL: 'https://api.example.com', DEV: true, MODE: 'production' })
             );
             expect(Envapter.getAs('VITE_API_URL', Converters.Url)?.href).to.equal('https://api.example.com/');
-            expect(Envapter.getBoolean('DEV')).to.equal(true);
+            expect(Envapter.getAs('DEV', Converters.Boolean)).to.equal(true);
             expect(Envapter.get('MODE')).to.equal('production');
         });
 
@@ -86,8 +86,6 @@ describe('Source portability (v5.2)', () => {
         it('accepts an interface-typed binding with no index signature (a Cloudflare Env)', () => {
             const binding: CloudflareLikeEnv = { APP_NAME: 'envapt', PORT: '3000' };
             Envapter.useSource(new PortableSource(binding));
-            expect(Envapter.get('APP_NAME')).to.equal('envapt');
-            expect(Envapter.getNumber('PORT')).to.equal(3000);
-        });
+            expect(Envapter.get('APP_NAME')).to.equal('envapt');        });
     });
 });

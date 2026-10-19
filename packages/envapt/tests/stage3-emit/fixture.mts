@@ -1,7 +1,7 @@
 import process from 'node:process';
 
 import { type as ark } from 'arktype';
-import { Converters, Envapt, EnvBool, EnvNum, EnvStr, EnvTime, EnvUrl } from 'envapt';
+import { Converters, Envapt } from 'envapt';
 
 import type { StandardSchemaV1 } from 'envapt';
 
@@ -18,20 +18,11 @@ const numberSchema: StandardSchemaV1<string, number> = {
 
 // tsc emits Stage 3 accessor decorators because this tsconfig turns experimentalDecorators off
 class Config {
-    @EnvNum('S3_PORT', 3000)
+    @Envapt('S3_PORT', { fallback: 3000 })
     static accessor port: number;
 
-    @EnvStr('S3_REGION', 'us-east-1')
+    @Envapt('S3_REGION', { fallback: 'us-east-1' })
     accessor region!: string;
-
-    @EnvBool('S3_DEBUG', false)
-    static accessor debug: boolean;
-
-    @EnvUrl('S3_URL', new URL('http://localhost'))
-    static accessor url: URL;
-
-    @EnvTime('S3_TTL', '1s')
-    static accessor ttl: number;
 
     @Envapt('S3_BIG', { converter: Converters.BigInt, fallback: 0n })
     static accessor big: bigint;
@@ -39,13 +30,13 @@ class Config {
     @Envapt('S3_TAGS', { converter: Converters.array({ of: Converters.String }), fallback: [] })
     static accessor tags: string[];
 
-    @EnvNum('S3_MISSING', 1234)
+    @Envapt('S3_MISSING', { fallback: 1234 })
     static accessor fallbackValue: number;
 
-    @EnvNum(['S3_ABSENT', 'S3_PORT'])
+    @Envapt(['S3_ABSENT', 'S3_PORT'], { converter: Converters.Number })
     static accessor multiKey: number | undefined;
 
-    @EnvStr('S3_GREETING')
+    @Envapt('S3_GREETING')
     static accessor greeting: string | undefined;
 
     @Envapt('S3_PORT', { schema: numberSchema })
@@ -55,13 +46,13 @@ class Config {
     @Envapt('S3_PORT', { schema: ark('string.integer.parse') })
     static accessor arkPort: number | undefined;
 
-    @EnvNum('S3_ABSENT')
+    @Envapt('S3_ABSENT', { converter: Converters.Number })
     static accessor noFallback: number | undefined;
 }
 
 // a subclass reads the inherited instance accessor
 class Base {
-    @EnvStr('S3_REGION')
+    @Envapt('S3_REGION')
     accessor region!: string | undefined;
 }
 class Sub extends Base {}
@@ -70,14 +61,14 @@ const inheritedRegion = new Sub().region;
 // Two classes sharing a name must not collide in the cache (the class-identity key).
 function makeA(): typeof Config {
     class Local {
-        @EnvNum('S3_PORT', 1)
+        @Envapt('S3_PORT', { fallback: 1 })
         static accessor value: number;
     }
     return Local as unknown as typeof Config;
 }
 function makeB(): typeof Config {
     class Local {
-        @EnvNum('S3_MISSING', 4321)
+        @Envapt('S3_MISSING', { fallback: 4321 })
         static accessor value: number;
     }
     return Local as unknown as typeof Config;
@@ -108,9 +99,6 @@ process.stdout.write(
     JSON.stringify({
         port: Config.port,
         region: new Config().region,
-        debug: Config.debug,
-        url: Config.url.href,
-        ttl: Config.ttl,
         big: String(Config.big),
         tags: Config.tags,
         fallbackValue: Config.fallbackValue,

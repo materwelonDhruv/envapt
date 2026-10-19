@@ -35,13 +35,6 @@ describe('Runtime Validation', () => {
             }
         });
 
-        it('throws FallbackConverterTypeMismatch for a primitive reader given the wrong fallback type', () => {
-            // cast past the type to reach the runtime check that JS callers hit
-            expect(() => Envapter.getNumber('NEVER_SET_KEY', 'eighty' as never))
-                .to.throw(EnvaptError)
-                .with.property('code', EnvaptErrorCodes.FallbackConverterTypeMismatch);
-        });
-
         it('throws InvalidCustomConverter for a converter that is neither a token nor a function', () => {
             // cast past the type to reach the runtime check
             expect(() => Envapter.getAs('VAR_IN_EXTRA_FILE', 42 as never))

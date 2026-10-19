@@ -1,4 +1,4 @@
-import { AdvancedMethods } from '../core';
+import { ReaderMethods } from '../core';
 import { findPresent } from '../core/engine';
 import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
 import { formatKeyForError, missingValues } from '../infra/failures';
@@ -10,7 +10,7 @@ export { ENVIRONMENT_KEYS, Environment } from '../core';
 /**
  * Reads typed environment variables through static methods. It also expands `${VAR}` templates
  * and detects the environment. A class that extends it inherits every reader as a static, as in
- * `Config.getBoolean('MAINTENANCE_MODE')`.
+ * `Config.getAs('MAINTENANCE_MODE', Converters.Boolean)`.
  *
  * @example
  * ```ts
@@ -21,7 +21,7 @@ export { ENVIRONMENT_KEYS, Environment } from '../core';
  *
  * @public
  */
-export class Envapter extends AdvancedMethods {
+export class Envapter extends ReaderMethods {
     /**
      * Tagged template literal for resolving environment variables in template strings. A missing
      * value resolves to an empty string. In strict mode an empty or whitespace-only value throws

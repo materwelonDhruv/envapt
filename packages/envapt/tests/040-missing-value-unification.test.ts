@@ -5,7 +5,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { Converters, Envapter } from '../src';
 
 describe('missing-value return unification (v8)', () => {
-    beforeAll(() => (Envapter.envPaths = resolve(import.meta.dirname, '.env.041')));
+    beforeAll(() => (Envapter.envPaths = resolve(import.meta.dirname, '.env.040')));
 
     describe('a read with no fallback resolves to undefined', () => {
         it('getAs returns undefined for a present but unconvertible value', () => {
