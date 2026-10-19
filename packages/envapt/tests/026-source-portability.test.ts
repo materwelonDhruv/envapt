@@ -86,6 +86,7 @@ describe('Source portability (v5.2)', () => {
         it('accepts an interface-typed binding with no index signature (a Cloudflare Env)', () => {
             const binding: CloudflareLikeEnv = { APP_NAME: 'envapt', PORT: '3000' };
             Envapter.useSource(new PortableSource(binding));
-            expect(Envapter.get('APP_NAME')).to.equal('envapt');        });
+            expect(Envapter.get('APP_NAME')).to.equal('envapt');
+        });
     });
 });

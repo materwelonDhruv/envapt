@@ -9,5 +9,6 @@ describe('Missing .env file handling', () => {
             public static readonly nonexistentVar: string;
         }
 
-        expect(TestEnvWithoutFile.nonexistentVar).to.equal('fallback-value');    });
+        expect(TestEnvWithoutFile.nonexistentVar).to.equal('fallback-value');
+    });
 });

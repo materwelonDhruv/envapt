@@ -67,9 +67,9 @@ A mistyped token also throws on every read now. v8 skipped the check for an unse
 Two fallback checks now run on every read:
 
 - A malformed time-string fallback, like `'10 seconds'` on `Converters.Time`, throws `MalformedTimeFallback` (105) even when the variable is set. v8 threw only when it used the fallback.
-- `get`, `getNumber`, `getBoolean`, and `getBigInt` check their fallback's type, which v8 never did. `getNumber('PORT', '80')` throws `FallbackConverterTypeMismatch` (104).
+- `get` checks that its fallback is a string, which v8 never did. `get('PORT', 80)` throws `FallbackConverterTypeMismatch` (104).
 
-TypeScript rejects a mistyped token. It also rejects a fallback of the wrong type on those four readers. This section mostly matters to JavaScript callers and to anything that branches on the error's `code`.
+TypeScript rejects a mistyped token. It also rejects a fallback of the wrong type on `get`, and on `getAs` with a token. This section mostly matters to JavaScript callers and to anything that branches on the error's `code`.
 
 ### A schema read with no fallback returns `undefined`
 
@@ -127,6 +127,11 @@ TypeScript reports each of these in v9, so you can work through them from the co
 | [`Envapter.getUsing(key, token, fallback?)`](/docs/envapter#other-types-with-getas) | [`Envapter.getAs(key, token, fallback?)`](/docs/envapter#other-types-with-getas) |
 | `Envapter.getWith(key, fn, fallback?)` | `Envapter.getAs(key, fn, fallback?)`, with the [new converter shape](#custom-converters-get-a-string) |
 | `Envapter.parse(key, schema, fallback?)` | `Envapter.getAs(key, schema, fallback?)` |
+| `Envapter.getNumber(key, fallback?)` | `Envapter.getAs(key, Converters.Number, fallback?)`, or `Converters.Port` and `Converters.Integer` for a port or a count |
+| `Envapter.getBoolean(key, fallback?)` | `Envapter.getAs(key, Converters.Boolean, fallback?)` |
+| `Envapter.getBigInt(key, fallback?)` | `Envapter.getAs(key, Converters.BigInt, fallback?)` |
+| `@EnvStr(key, fallback?)`, from `envapt` or `envapt/legacy` | [`@Envapt(key, { fallback })`](/docs/decorators) from the same entry |
+| `@EnvNum`, `@EnvBool`, `@EnvTime`, `@EnvUrl`, from `envapt` or `envapt/legacy` | `@Envapt(key, { converter, fallback })` with `Converters.Number`, `Boolean`, `Time`, or `Url` |
 | `Converters.Bigint` | [`Converters.BigInt`](/docs/converters#built-in-tokens) |
 | `Converters.Regexp` | `Converters.RegExp` |
 | `String`, `Number`, `Boolean`, `BigInt` as a converter | `Converters.String`, `Converters.Number`, `Converters.Boolean`, `Converters.BigInt` |
@@ -145,7 +150,7 @@ TypeScript reports each of these in v9, so you can work through them from the co
 
 Without TypeScript, two of these show up as runtime errors. Passing `String` or `Number` as a converter throws `InvalidUserDefinedConfig` (302), with a message pointing to `Converters.String` or `Converters.Number`. A symbol fallback throws `FallbackConverterTypeMismatch` (104).
 
-`getAs` accepts a token, a function, or a schema. `Converters.BigInt` and `Converters.RegExp` are now spelled like the JavaScript globals, the same as `getBigInt` was.
+`getAs` accepts a token, a function, or a schema. `Converters.BigInt` and `Converters.RegExp` are now spelled like the JavaScript globals.
 
 On Node, envapt binds `FileSource` when you import it, and binding a source loads the `.env` files, so `load()` already did nothing in v8. `resetProfiles()` became `resetPaths()` because it clears `envPaths` along with the profiles.
 

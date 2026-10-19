@@ -31,7 +31,8 @@ describe('profiles — Envapter.configureProfiles overrides', () => {
             [Environment.Staging]: { paths: resolve(fixtureDir, '.env.staging') }
         });
 
-        expect(Envapter.get('PROFILE_NAME')).to.equal('staging-profile');    });
+        expect(Envapter.get('PROFILE_NAME')).to.equal('staging-profile');
+    });
 
     it('falls through to cascade for environments not in configureProfiles', () => {
         process.chdir(resolve(import.meta.dirname, 'cascade-fixtures', 'all-layers'));

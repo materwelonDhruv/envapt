@@ -70,7 +70,7 @@ An issue's `message` can quote the value it rejected. [Reading the error without
 | --- | --- | --- |
 | 101 | `InvalidFallback` | A fallback for an array converter isn't an array. |
 | 103 | `ArrayFallbackElementTypeMismatch` | An array fallback mixes element types, or its elements don't match the converter. |
-| 104 | `FallbackConverterTypeMismatch` | The fallback has the wrong type for the converter, such as `'80'` for [`getNumber`](/docs/envapter). This throws even when the variable is set. |
+| 104 | `FallbackConverterTypeMismatch` | The fallback has the wrong type for the converter, such as `'80'` for `Converters.Number` in [`getAs`](/docs/envapter). This throws even when the variable is set. |
 | 105 | `MalformedTimeFallback` | A time-string fallback isn't `<number><unit>`, such as `'5'` when you meant `'5m'`. [Converters](/docs/converters) lists the units. |
 
 {/* prettier-ignore-end */}

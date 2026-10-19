@@ -1,6 +1,6 @@
 ---
 name: envapt
-description: Reads typed, validated config from process.env, .env files, or any bound source for TypeScript and JavaScript with the envapt library, on Node, Bun, Deno, Cloudflare Workers, and the browser. Use when the project imports from 'envapt' or 'envapt/config', when the user mentions envapt, Envapter, @Envapt, or the @EnvNum/@EnvStr/@EnvBool/@EnvUrl/@EnvTime sugar decorators, or when the task involves reading typed environment variables, loading .env files, validating env with zod/valibot/arktype, binding config on Cloudflare Workers or in the browser, or migrating off dotenv or the removed 'envapt/workerd' / 'envapt/browser' subpaths.
+description: Reads typed, validated config from process.env, .env files, or any bound source for TypeScript and JavaScript with the envapt library, on Node, Bun, Deno, Cloudflare Workers, and the browser. Use when the project imports from 'envapt' or 'envapt/config', when the user mentions envapt, Envapter, or @Envapt, or when the task involves reading typed environment variables, loading .env files, validating env with zod/valibot/arktype, binding config on Cloudflare Workers or in the browser, or migrating off dotenv or the removed 'envapt/workerd' / 'envapt/browser' subpaths.
 ---
 
 # envapt
@@ -25,9 +25,9 @@ import { z } from 'zod/v4';
 
 Envapter.get('API_KEY'); // string | undefined
 Envapter.get('API_KEY', 'dev-key'); // string
-Envapter.getNumber('MAX_RETRIES', 3); // number
-Envapter.getBoolean('DEBUG', false); // boolean. true set: 1/yes/true/on, false set: 0/no/false/off
-Envapter.getBigInt('MAX', 0n); // bigint
+Envapter.getAs('MAX_RETRIES', Converters.Integer, 3); // number
+Envapter.getAs('DEBUG', Converters.Boolean, false); // boolean. true set: 1/yes/true/on, false set: 0/no/false/off
+Envapter.getAs('MAX', Converters.BigInt, 0n); // bigint
 Envapter.get(['CANARY_URL', 'APP_URL']); // ordered fallback
 
 // Presence check, true exactly when a required read of the same key finds a value
@@ -84,21 +84,6 @@ The legacy form (`envapt/legacy`) differs. Static fields use a plain `static rea
 ### Options object
 
 `@Envapt(key, options)` accepts: `{ fallback }`, `{ converter, fallback }`, `{ converter }`, `{ converter, required: true }`, `{ required: true }` (raw string, throws on missing), `{ schema }` (`undefined` on missing), `{ schema, fallback }`, and `{ schema, required: true }`. `required` and `fallback` are mutually exclusive, and so are `schema` and `converter`. Passing a Standard Schema as `converter` throws `InvalidUserDefinedConfig`, so give it to `schema`. With `required: true`, a present value the converter can't convert throws `InvalidEnvValue`. A bad combination throws `EnvaptError` when the decorator is applied, before any access.
-
-### Shorthand decorators
-
-`@EnvNum`, `@EnvStr`, `@EnvBool`, `@EnvUrl`, `@EnvTime` wrap `@Envapt` with a fixed converter. The call site is the key plus an optional fallback (typed to the converter). They take a fallback only. For `required`, a `schema`, an array, or a custom function, use `@Envapt` with the options object.
-
-```ts
-import { EnvNum, EnvBool, EnvUrl, EnvTime } from 'envapt';
-
-class Config {
-    @EnvNum('MAX_RETRIES', 3) static accessor maxRetries: number;
-    @EnvBool('DEBUG', false) static accessor debug: boolean;
-    @EnvUrl('APP_URL', new URL('http://localhost:3000')) static accessor url: URL; // fallback is a URL instance
-    @EnvTime('CACHE_TTL', '15m') static accessor cacheTtl: number; // resolves to milliseconds
-}
-```
 
 ## Converters
 
@@ -222,7 +207,7 @@ envapt loads `.env` **and** returns typed, validated values from one API, with n
 | `-r dotenv/config` | `--import envapt/config` |
 | `process.env.API_KEY` | `Envapter.get('API_KEY')` / `Envapter.require('API_KEY')` |
 | `Number(process.env.PORT) \|\| 3000` | `Envapter.getAs('PORT', Converters.Port, 3000)` |
-| `process.env.DEBUG === 'true'` | `Envapter.getBoolean('DEBUG', false)` |
+| `process.env.DEBUG === 'true'` | `Envapter.getAs('DEBUG', Converters.Boolean, false)` |
 
 <!--prettier-ignore-end-->
 
@@ -233,9 +218,9 @@ envapt loads `.env` **and** returns typed, validated values from one API, with n
 | Gotcha | Rule |
 | --- | --- |
 | Wrong decorator field form | Modern uses `static accessor x: T` / `accessor x!: T`. Legacy (`envapt/legacy`) uses `static readonly x: T` / `declare readonly x: T`, both no initializer |
-| `@EnvUrl` fallback | Pass a `URL` instance: `new URL('...')` |
-| Reading a port | Use `Converters.Port`, which range-checks `0-65535`. `getNumber` accepts `-1` and `99999` |
-| `Time` / `@EnvTime` | Resolves to milliseconds. Fallback is a ms number or a time string (`'15m'`) |
+| `Converters.Url` fallback | Pass a `URL` instance: `new URL('...')` |
+| Reading a port | Use `Converters.Port`, which range-checks `0-65535`. `Converters.Number` accepts `-1` and `99999` |
+| `Converters.Time` | Resolves to milliseconds. Fallback is a ms number or a time string (`'15m'`) |
 | Schema fallback | A fallback is returned as-is. Only present env values pass through the schema |
 | `required` + `fallback` | Mutually exclusive, and so are `schema` + `converter` |
 | Cascade order | Most-specific-wins: `.env.<env>.local` > `.env.<env>` > `.env.local` > `.env` |

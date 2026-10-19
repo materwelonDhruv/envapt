@@ -1,36 +1,25 @@
 ---
 title: Reading values
-description: Read one environment variable as a string, number, boolean, bigint, or converted type, with a fallback, and see what each reader returns for a bad value.
+description: Read one environment variable as a string or through a converter, with a fallback, and see what each reader returns for a bad value.
 ---
 
 A reader is an `Envapter` method that takes a key, finds the variable, converts it to a type, and returns it. You call every reader on `Envapter` itself, so you construct nothing. Most readers return the value, or `undefined` when it is missing. The [required readers](/docs/required-values) throw. On Workers, the browser, and edge runtimes, every reader throws [`NoSourceBound`](/docs/errors) until you bind a [source](/docs/sources) with `useSource`.
 
-## The primitive readers
+## Strings and typed values
 
-Without a reader you write the truthy list for flags yourself, and you remember that an empty string means unset. `getBoolean` includes that truthy list. Every primitive reader treats an empty string as unset. Each one takes a key and an optional fallback.
-
-{/* prettier-ignore-start */}
-
-| Reader | Returns | Raw values it accepts |
-| --- | --- | --- |
-| `get` | `string` | any value |
-| `getNumber` | `number` | what `Number()` parses, such as `8080`, `1.5`, `1e3`, or `0x10` |
-| `getBoolean` | `boolean` | `1`, `yes`, `true`, `on` as true and `0`, `no`, `false`, `off` as false, in any case |
-| `getBigInt` | `bigint` | whole numbers that `BigInt()` parses |
-
-{/* prettier-ignore-end */}
+Without a reader you write the truthy list for flags yourself, and you remember that an empty string means unset. `getAs` with `Converters.Boolean` reads `1`, `yes`, `true`, and `on` as true and `0`, `no`, `false`, and `off` as false, in any case. `get` returns the value as a string, and `getAs` returns the type its [converter](/docs/converters) produces. Both take a key and an optional fallback.
 
 ```ts twoslash
-import { Envapter } from 'envapt';
+import { Converters, Envapter } from 'envapt';
 // ---cut---
 const appName = Envapter.get('APP_NAME', 'envapt');
-const sampleRate = Envapter.getNumber('SAMPLE_RATE', 0.25);
-const debug = Envapter.getBoolean('DEBUG', false);
-const maxUploadBytes = Envapter.getBigInt('MAX_UPLOAD_BYTES', 0n);
+const sampleRate = Envapter.getAs('SAMPLE_RATE', Converters.Number, 0.25);
+const debug = Envapter.getAs('DEBUG', Converters.Boolean, false);
+const maxUploadBytes = Envapter.getAs('MAX_UPLOAD_BYTES', Converters.BigInt, 0n);
 //    ^?
 ```
 
-`0n` is the fallback, so `maxUploadBytes` is a plain `bigint`. Read a port, an integer count, or a duration through `getAs` with the matching [converter](/docs/converters), because `getNumber` accepts any number, including `3.5` for a port.
+`0n` is the fallback, so `maxUploadBytes` is a plain `bigint`. `sampleRate` uses `Converters.Number` because `0.25` is a fraction. That converter also accepts `3.5` or `99999` as a port. `Converters.Port` takes only whole numbers from 0 to 65535, and `Converters.Integer` takes only whole numbers. [Converters](/docs/converters) lists the rest.
 
 ## Fallbacks and missing values
 
@@ -48,7 +37,7 @@ const noFallback = Envapter.get('API_URL');
 
 `withFallback` is a `string` because `'http://localhost'` covers the missing case. `noFallback` can be `undefined`.
 
-A variable is missing when it is unset or empty. `get`, `getNumber`, `getBoolean`, `getBigInt`, and `getAs` return the fallback for a missing variable, or `undefined` when you gave none. In strict mode (`Envapter.strict = true`) a value of only spaces is missing too. With strict mode off, it counts as a value, so `getNumber` reads it as `0` ([Required values](/docs/required-values#strict-mode) covers strict mode).
+A variable is missing when it is unset or empty. In strict mode (`Envapter.strict = true`) a value of only spaces is missing too. With strict mode off, it counts as a value, so `Converters.Number` reads it as `0` ([Required values](/docs/required-values#strict-mode) covers strict mode).
 
 The readers differ when a value is set but can't convert.
 
@@ -56,7 +45,7 @@ The readers differ when a value is set but can't convert.
 
 | Reader | Value it can't convert |
 | --- | --- |
-| `get`, `getNumber`, `getBoolean`, `getBigInt`, and `getAs` with a built-in [converter](/docs/converters) | the fallback, or `undefined` without one |
+| `getAs` with a built-in [converter](/docs/converters) | the fallback, or `undefined` without one |
 | `getAs` with [`Converters.array`](/docs/converters#arrays) | throws [`ArrayElementConversionFailed`](/docs/errors) for a bad element, even with a fallback. In strict mode an empty element throws [`EmptyArrayElement`](/docs/errors) |
 | `getAs` with your own function | if the function returns `undefined` or `null`, the fallback, or `undefined` without one. An error it throws reaches your code unchanged |
 | `getAs` with a [schema](/docs/standard-schema) | throws a schema error such as [`SchemaValidationFailed`](/docs/errors), and the fallback is not used |
@@ -64,9 +53,9 @@ The readers differ when a value is set but can't convert.
 
 {/* prettier-ignore-end */}
 
-A fallback can hide a typo. `getNumber('SAMPLE_RATE', 0.25)` reads `SAMPLE_RATE=high` as `0.25`. Nothing reports it unless you set `Envapter.debug = 'verbose'` ([debug logging](/docs/errors#debug-logging)).
+A fallback can hide a typo. `getAs('SAMPLE_RATE', Converters.Number, 0.25)` reads `SAMPLE_RATE=high` as `0.25`. Nothing reports it unless you set `Envapter.debug = 'verbose'` ([debug logging](/docs/errors#debug-logging)).
 
-If a fallback has the wrong type for its reader, every call throws a fallback error such as `FallbackConverterTypeMismatch`, even when the variable is set. On `get`, `getNumber`, `getBoolean`, and `getBigInt`, TypeScript flags a fallback of the wrong type before you run the code. `getAs` with a token checks the fallback only at runtime, so `Envapter.getAs('PORT', Converters.Port, 'abc')` compiles. A malformed time string like `'5'` also throws `MalformedTimeFallback` only at runtime ([Errors and debugging](/docs/errors) lists the codes).
+If a fallback has the wrong type for its converter, TypeScript reports it before you run the code, as with `'abc'` for `Converters.Port`. A time fallback is milliseconds or a string like `'15m'`, so `'5'` is an error too. In plain JavaScript, or with a fallback typed as a plain `string`, the call throws instead. The error is `FallbackConverterTypeMismatch` or `MalformedTimeFallback`, and it throws even when the variable is set. [Errors and debugging](/docs/errors) has every code.
 
 ## Ordered keys
 
@@ -92,7 +81,7 @@ const keys = ['DATABASE_URL', 'LEGACY_DATABASE_URL'] as const;
 
 ## Other types with getAs
 
-`getAs(key, converter, fallback?)` reads any type the primitives don't cover. Without it you call `new URL(raw)` yourself, which throws on a bad value. The converter can be:
+Without `getAs` you call `new URL(raw)` yourself, which throws on a bad value. The converter in `getAs(key, converter, fallback?)` can be:
 
 - a built-in converter such as `Converters.Url` or `Converters.Time`. [Converters](/docs/converters) covers them all.
 - `Converters.array(...)`, which splits a value into a typed list.

@@ -53,10 +53,12 @@ const level = Envapter.isProduction
         lang: 'ts',
         code: `// Decorators:bind env vars to typed fields
 class Config {
-  @EnvUrl('DATABASE_URL')
-  static accessor db: URL;
+  @Envapt('PORT', { fallback: 3000 })
+  static accessor port: number;
 
-  @EnvTime('CACHE_TTL', '15m')
+  @Envapt('CACHE_TTL', {
+    converter: Converters.Time,
+    fallback: '15m' })
   static accessor cacheTtl: number;
 }`
     },

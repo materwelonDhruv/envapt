@@ -18,13 +18,13 @@ The field splits into two jobs. Loaders like the dotenv family read a `.env` fil
 
 **Converter breadth without a validator.** number, int, float, boolean, bigint, JSON, URL, RegExp, Date, durations like `5m`, and typed arrays, none of which needs a schema library. env-var has comparable breadth. Most of the others expect you to bring a schema for anything past string, number, and boolean.
 
-**A fallback that tells missing from zero.** `Envapter.getNumber('PORT', 3000)` returns the fallback only when `PORT` is missing or unparseable. A `PORT=0` comes back as `0`. envalid and convict treat a default as always present, so that distinction never comes up there.
+**A fallback that tells missing from zero.** `Envapter.getAs('PORT', Converters.Port, 3000)` returns the fallback only when `PORT` is missing or unparseable. A `PORT=0` comes back as `0`. envalid and convict treat a default as always present, so that distinction never comes up there.
 
 **Built-in templating.** envapt expands `${VAR}` references inside values as it loads them, with circular-reference detection, so `DATABASE_URL=postgres://${DB_HOST}/${DB_NAME}` resolves on its own. This is the thing people add a second library (`dotenv-expand`) for. Among the others only some loaders do it (env-schema, dotenvx, dotenv-flow expand variables), and they hand you the result as an untyped string. envapt expands it and then types it.
 
 **A formal pluggable source.** envapt reads through a `Source` interface, so the same API runs over `process.env`, `import.meta.env`, a Workers binding, or a store you fetched at boot. Several others (env-var, t3-env, znv, envin) also accept a custom object you build. What envapt adds is one typed interface for all of them.
 
-**Decorators or a functional API.** The functional API (`get`, `getNumber`, `getAs`, `getRequired`) is the floor and needs nothing special. The decorators come in two forms, the modern TC39 accessor decorators (the default, `@Envapt`, `@EnvNum`) and a legacy `experimentalDecorators` form at `envapt/legacy`, so you can pick whichever your bundler handles. No other tool here ships a decorator API at all.
+**Decorators or a functional API.** The functional API (`get`, `getAs`, `getRequired`) is the floor and needs nothing special. The decorators come in two forms, the modern TC39 accessor decorator (the default `@Envapt`) and a legacy `experimentalDecorators` form at `envapt/legacy`, so you can pick whichever your bundler handles. No other tool here ships a decorator API at all.
 
 **Per-field binding.** Each variable is declared on the field that uses it. Adding or removing one touches one field.
 

@@ -25,7 +25,7 @@ export class ReaderMethods extends EnvironmentMethods {
      * Get a string environment variable, or `fallback` when it is missing or empty. Expands
      * `${VAR}` templates in the value. Accepts a single key or an ordered array of keys, read until
      * one has a value. Read any other type with `getAs` and a converter.
-     * @see {@link https://envapt.materwelon.dev/docs/envapter#the-raw-string}
+     * @see {@link https://envapt.materwelon.dev/docs/envapter#strings-and-typed-values}
      */
     static get<Default extends string | undefined = undefined>(
         key: EnvKeyInput,

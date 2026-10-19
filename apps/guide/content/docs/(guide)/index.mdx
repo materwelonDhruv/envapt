@@ -13,20 +13,20 @@ const databaseUrl = process.env.DATABASE_URL;
 //    ^?
 ```
 
-envapt parses the value and applies the default inside the read. [`Envapter`](/docs/envapter) has a reader per primitive type, such as `getBoolean`, plus `getAs`, which takes a converter for any other type. Each one takes the key first and a fallback last, if you want one.
+envapt parses the value and applies the default inside the read. [`Envapter`](/docs/envapter) has `get` for a string and `getAs`, which takes a converter for any other type. Both take the key first and a fallback last, if you want one.
 
 ```ts twoslash
 import { Envapter, Converters } from 'envapt';
 // ---cut---
 const port = Envapter.getAs('PORT', Converters.Port, 3000);
 //    ^?
-const debug = Envapter.getBoolean('DEBUG', false);
+const debug = Envapter.getAs('DEBUG', Converters.Boolean, false);
 const cacheTtl = Envapter.getAs('CACHE_TTL', Converters.Time, '1m');
 const databaseUrl = Envapter.getAs('DATABASE_URL', Converters.Url);
 //    ^?
 ```
 
-The `port` call has a fallback, so its type is `number`. `databaseUrl` has none, so its type is `URL | undefined`. You handle the missing case yourself. [`getBoolean`](/docs/envapter#the-primitive-readers) reads `1`, `yes`, `true`, and `on` as true, so `DEBUG=1` returns `true`. [`Converters.Time`](/docs/converters) turns `CACHE_TTL=10m` into `600000` milliseconds.
+The `port` call has a fallback, so its type is `number`. `databaseUrl` has none, so its type is `URL | undefined`. You handle the missing case yourself. [`Converters.Boolean`](/docs/converters) reads `1`, `yes`, `true`, and `on` as true, so `DEBUG=1` returns `true`. [`Converters.Time`](/docs/converters) turns `CACHE_TTL=10m` into `600000` milliseconds.
 
 The fallback is the value a reader returns when the variable is missing (unset or empty), or when a token or function can't convert its value. `PORT=80a` and `PORT=99999` both return `3000`, so the fallback also hides a typo like `80a`. A bad array element and a value a schema rejects throw even with a fallback ([the full table](/docs/envapter#fallbacks-and-missing-values)). For a value the app can't run without, call [`getRequired` or `getRequiredAll`](/docs/required-values), which throw.
 
@@ -34,16 +34,16 @@ Reading through envapt is optional, and code that reads `process.env` directly k
 
 ## Functions or decorators
 
-[`Envapter`](/docs/envapter) reads one value per call, as above. The [`@Envapt`](/docs/decorators) decorator, and shorthands such as `@EnvUrl`, read a variable into a class field. A decorated field reads on first access and keeps that value until the cache is rebuilt, for example by a `useSource` call ([When values are read](/docs/sources#when-values-are-read)). A reader call converts again each time.
+[`Envapter`](/docs/envapter) reads one value per call, as above. The [`@Envapt`](/docs/decorators) decorator reads a variable into a class field. A decorated field reads on first access and keeps that value until the cache is rebuilt, for example by a `useSource` call ([When values are read](/docs/sources#when-values-are-read)). A reader call converts again each time.
 
 ```ts twoslash
-import { Converters, Envapt, EnvUrl } from 'envapt';
+import { Converters, Envapt } from 'envapt';
 // ---cut---
 class Config {
     @Envapt('PORT', { converter: Converters.Port, fallback: 3000 })
     static accessor port: number;
 
-    @EnvUrl('REDIS_URL', new URL('redis://localhost:6379'))
+    @Envapt('REDIS_URL', { converter: Converters.Url, fallback: new URL('redis://localhost:6379') })
     static accessor redisUrl: URL;
 }
 ```
