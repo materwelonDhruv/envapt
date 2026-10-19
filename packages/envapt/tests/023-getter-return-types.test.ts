@@ -6,6 +6,10 @@ interface FeatureFlags {
     beta: boolean;
 }
 
+function optionalFlags(): FeatureFlags | undefined {
+    return undefined;
+}
+
 describe('getter return-type narrowing (compile-time)', () => {
     describe('get (string)', () => {
         it('no fallback => string | undefined', () => {
@@ -53,6 +57,11 @@ describe('getter return-type narrowing (compile-time)', () => {
             expectTypeOf(
                 Envapter.getAs<FeatureFlags>('KEY', Converters.Json, { beta: false })
             ).toEqualTypeOf<FeatureFlags>();
+        });
+        it('fallback that can be undefined => T | undefined', () => {
+            expectTypeOf(Envapter.getAs<FeatureFlags>('KEY', Converters.Json, optionalFlags())).toEqualTypeOf<
+                FeatureFlags | undefined
+            >();
         });
     });
 });

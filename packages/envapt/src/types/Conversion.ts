@@ -67,7 +67,9 @@ type TokenForFallback<TFallback extends FallbackOnlyValue> = TFallback extends s
           : never;
 
 // widens a literal fallback such as '/var/log/app.log' to string
-type FallbackOnlyReturn<TFallback extends FallbackOnlyValue> = ConverterMap[TokenForFallback<TFallback>];
+type FallbackOnlyReturn<TFallback extends FallbackOnlyValue | undefined> =
+    | ConverterMap[TokenForFallback<Exclude<TFallback, undefined>>]
+    | (undefined extends TFallback ? string | undefined : never);
 
 type ReturnValuesOfConverterFunctions = ConverterMap[BuiltInConverter];
 

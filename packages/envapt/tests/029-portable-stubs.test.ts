@@ -65,6 +65,20 @@ describe('portable file-API behavior', () => {
         expect(Portable.environment).toBe('production');
     });
 
+    it('reads ENVAPT_DEBUG from the first bound source when strict was set before the bind', async () => {
+        vi.resetModules();
+        const { Envapter: Portable, PortableSource } = await import('../src/index.portable');
+        const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+        Portable.strict = true;
+        Portable.useSource(new PortableSource({ ENVAPT_DEBUG: 'verbose' }));
+        Portable.get('UNSET_KEY');
+
+        const lines = spy.mock.calls.map((call) => String(call[0])).filter((line) => line.includes('[envapt]'));
+        spy.mockRestore();
+        expect(lines).not.toHaveLength(0);
+    });
+
     it('still throws NoSourceBound on first read under warn mode', async () => {
         vi.resetModules();
         const {

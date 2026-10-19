@@ -16,6 +16,10 @@
             "dependsOn": ["^build"],
             "inputs": ["$TURBO_DEFAULT$", ".eslintrc*", "eslint.config.*"]
         },
+        "envapt#lint": {
+            "dependsOn": ["build"],
+            "inputs": ["$TURBO_DEFAULT$", ".eslintrc*", "eslint.config.*"]
+        },
         "lint:fix": {
             "inputs": ["$TURBO_DEFAULT$", ".eslintrc*", "eslint.config.*"],
             "cache": false

@@ -161,9 +161,10 @@ export function refreshCache(): void {
     cache.clear();
     state.cacheBuilt = false;
     state.dotenvAddedKeys = new Set<string>();
-    debugVerbose('cache cleared, reloading config');
     // useSource rebuilds the cache when it binds one
     if (state.source instanceof UnboundSource) return;
+    // below the unbound check since Debug caches ENVAPT_DEBUG on its first log
+    debugVerbose('cache cleared, reloading config');
     ensureLoaded();
 }
 

@@ -40,7 +40,7 @@ export function Envapt<TFallback>(
     key: EnvKeyInput,
     options: { converter: ConverterFunction<TFallback | null | undefined>; fallback: TFallback }
 ): EnvaptAccessorDecorator<TFallback>;
-export function Envapt<TFallback extends FallbackOnlyValue>(
+export function Envapt<TFallback extends FallbackOnlyValue | undefined>(
     key: EnvKeyInput,
     options: { fallback: TFallback; converter?: undefined }
 ): EnvaptAccessorDecorator<FallbackOnlyReturn<TFallback>>;
