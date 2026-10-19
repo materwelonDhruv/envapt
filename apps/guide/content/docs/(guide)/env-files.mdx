@@ -1,0 +1,203 @@
+---
+title: .env files on Node
+description: Get per-environment .env files loading in the right order on Node, Bun, and Deno, and replace dotenv's config import with envapt's.
+---
+
+dotenv loads the `.env` file you point it at. Once the app has a production setup and a development one, you have to choose the right file yourself, and decide which file wins when two define the same key.
+
+On Node, Bun, and Deno, envapt chooses the file for you. It builds a list of files from the current [environment](/docs/environment) and layers them, most specific first. That list is the **cascade**. A **profile** is the list of extra paths you give one environment. Those paths take priority over the cascade files.
+
+Reading files is a node-build feature (see [Sources](/docs/sources) for the builds). On the portable build, the file APIs on this page (`envPaths`, `baseDir`, `envFileOptions`, `configureProfiles`, `resetPaths`) warn once and do nothing, or throw `FileApiUnsupported` if [`Envapter.fileApiMode`](/docs/compatibility#file-apis-and-fileapimode) is `'throw'`. `syncProcessEnv` does nothing on the portable build and doesn't warn. There, bind a source with `Envapter.useSource`. `envapt/config` always loads the node build, so leave it out of a Worker or browser bundle.
+
+## Which files load
+
+For the current environment, envapt reads these files, highest priority first.
+
+```txt
+NODE_ENV=production
+├─ .env.production.local    wins over everything below
+├─ .env.production
+├─ .env.local
+└─ .env                     lowest priority of the files
+```
+
+A file that doesn't exist is skipped. By default, a variable already set in the shell wins over every file, so `PORT=7 node app.js` keeps 7 no matter what the files set.
+
+<Files>
+    <Folder name="my-app" defaultOpen>
+        <File name=".env" />
+        <File name=".env.local" />
+        <File name=".env.production" />
+        <File name="package.json" />
+    </Folder>
+</Files>
+
+With those files on disk, each environment reads:
+
+{/* prettier-ignore-start */}
+
+| Environment | Files read, highest priority first |
+| --- | --- |
+| `production` | `.env.production`, `.env.local`, `.env` |
+| `development`, `staging`, `test` | `.env.local`, `.env` |
+
+{/* prettier-ignore-end */}
+
+envapt reads the files when you import it, from the working directory ([`baseDir`](#reading-from-a-fixed-directory) changes that). [When values are read](/docs/sources#when-values-are-read) explains when a later change takes effect.
+
+<Callout type="warn">
+
+Set `NODE_ENV` in the shell. envapt picks the files before it reads any of them, from the variables the bound source already holds. With the default [`FileSource`](/docs/sources#the-sources-envapt-ships), those are the shell's variables. A `NODE_ENV=production` line inside `.env` makes `Envapter.environment` return `'production'` but doesn't load `.env.production`. To select the files from code, [pin the environment](/docs/environment#pinning-the-environment).
+
+</Callout>
+
+To see which files loaded and which keys came from each, start the process with `ENVAPT_DEBUG=verbose`. An `Envapter.debug = 'verbose'` line in your code runs after the first load, so it logs only later rebuilds. [Errors and debugging](/docs/errors) lists the levels.
+
+## Coming from dotenv
+
+If your app starts with `import 'dotenv/config'`, replace it with envapt's `envapt/config`. It loads the cascade as soon as it is imported and writes the loaded keys into `process.env`, so code that reads `process.env.PORT` keeps working.
+
+```ts tab="Import"
+// before: import 'dotenv/config';
+import 'envapt/config';
+```
+
+```bash tab="Node flag"
+# before: node -r dotenv/config dist/app.js
+node --import envapt/config dist/app.js
+```
+
+The flag is Node's. On Bun and Deno, use the import line. envapt ships [ESM only](/docs/compatibility#module-format-and-typescript), and `envapt/config` has no `require` entry, so `require('envapt/config')` throws even on a Node that can `require()` ESM. A CommonJS app uses the flag.
+
+These things differ from dotenv.
+
+1. **More files load.** dotenv reads `.env`. envapt also reads `.env.local`, `.env.<environment>`, and `.env.<environment>.local`, so a leftover `.env.local` or `.env.production` in your repo now loads.
+2. **Values are expanded.** envapt expands a `${VAR}` reference when you read the value, and `envapt/config` writes the expanded value into `process.env`. An unresolved reference follows the rules on [Templates](/docs/templates).
+3. **The parser is envapt's own.** It skips a key with `.` or `-` in it. [.env file syntax](/docs/env-file-syntax) has the full rules.
+
+These `dotenv.config()` options have counterparts:
+
+{/* prettier-ignore-start */}
+
+| dotenv | envapt |
+| --- | --- |
+| `path` | [`Envapter.envPaths`](#replacing-the-cascade), which throws at the assignment if a file is missing |
+| `encoding`, `override` | [`Envapter.envFileOptions`](#file-options), with both set in one object |
+| `debug` | `ENVAPT_DEBUG=verbose` in the shell, see [Errors and debugging](/docs/errors) |
+
+{/* prettier-ignore-end */}
+
+Without `envapt/config`, envapt leaves `process.env` alone and keeps the loaded values in its own cache. Only reads through envapt, including decorated fields, use them. If another library reads `process.env` directly, import `envapt/config` or turn on `syncProcessEnv`.
+
+```ts twoslash
+import { Envapter } from 'envapt';
+// ---cut---
+Envapter.syncProcessEnv = true;
+```
+
+`syncProcessEnv` is `false` by default. Turned on, it writes the keys envapt loaded from files into `process.env`. A key already set in the shell is skipped, unless [`override`](#file-options) is on. Turning it back to `false` doesn't remove keys already written.
+
+Prefer the import. The `syncProcessEnv` line runs in your module body, after the imports have run, so a library that reads `process.env` while it loads finds no keys. `import 'envapt/config'` writes the keys during the import.
+
+## Choosing the files yourself
+
+### Reading from a fixed directory
+
+Relative paths resolve against the working directory. In a monorepo the process often starts at the repository root, so envapt doesn't find a `.env` inside a package folder. Set `Envapter.baseDir` to the folder relative paths start from. `baseDir` applies to the cascade, profile paths, and relative `envPaths`. Absolute paths stay unchanged.
+
+```ts twoslash
+import { Envapter } from 'envapt';
+// ---cut---
+Envapter.baseDir = import.meta.url;
+```
+
+`baseDir` takes a directory path, `import.meta.dirname`, a `URL`, or `import.meta.url`. envapt treats a `file:` URL as the folder containing that module, so `import.meta.url` makes `baseDir` the folder of the file that sets it. Assign `undefined` to go back to `process.cwd()`.
+
+After `import 'envapt/config'`, a later `baseDir`, `envPaths`, `configureProfiles`, or pinned environment can't undo the first load. The loaded keys are in `process.env` by then, and variables in `process.env` win over files. Start the process in the folder that holds your `.env` files when you use the import.
+
+### Replacing the cascade
+
+Set `envPaths` to load an exact list of files in place of the cascade, such as a file whose name the cascade can't produce. It also takes a single path as a string. Earlier paths win.
+
+```ts twoslash
+import { Envapter } from 'envapt';
+// ---cut---
+Envapter.baseDir = import.meta.url;
+Envapter.envPaths = ['config/app.env', '.env'];
+```
+
+Assigning `envPaths` disables the cascade and any profiles. The assignment checks the files immediately, against the folder `baseDir` holds at that moment, so set `baseDir` first. Reading `Envapter.envPaths` returns the list you assigned, or `['.env']` if you never assigned one, so it doesn't show which cascade files loaded (see the debug tip above).
+
+#### Environment file not found at path
+
+Every path in `envPaths` has to exist, which catches a typo in the list. A missing file throws `EnvaptError` with code `EnvFilesNotFound` (303) at the assignment. In the cascade, a missing file is skipped.
+
+### Profiles
+
+Use `configureProfiles` when one environment stores its files somewhere else, such as a mounted secrets folder. It takes a `ProfilesConfig`, and each environment's entry is an `EnvProfile` with a `paths` string or array. Those paths take priority over the cascade files for that environment, and earlier paths win.
+
+```ts twoslash
+import { Envapter } from 'envapt';
+// ---cut---
+Envapter.configureProfiles({
+    production: { paths: ['config/prod.env', 'secrets/prod.env'] },
+    staging: { paths: 'config/staging.env' }
+});
+```
+
+To load no cascade files at all, add `useDefaults: false` beside the environment names. `useDefaults` is a boolean and defaults to `true`. envapt loads only the profile paths.
+
+```ts twoslash
+import { Envapter } from 'envapt';
+// ---cut---
+Envapter.configureProfiles({
+    production: { paths: 'config/prod.env' },
+    useDefaults: false
+});
+```
+
+With that call, envapt reads only `config/prod.env` in production and no files in the other environments.
+
+envapt checks only the active environment's profile paths. If production becomes the active environment and its file is missing, envapt throws `EnvFilesNotFound`.
+
+```ts twoslash
+import { Envapter } from 'envapt';
+// ---cut---
+Envapter.environment = 'development';
+Envapter.configureProfiles({
+    development: { paths: 'config/dev.env' }, // throws here if this file is missing
+    production: { paths: 'config/prod.env' } // not checked yet
+});
+
+Envapter.environment = 'production'; // throws here if config/prod.env is missing
+```
+
+`resetPaths()` undoes `envPaths`, profiles, and a pinned environment, and reloads the cascade right away. It keeps `baseDir` and `envFileOptions`.
+
+## File options
+
+Set `envFileOptions` when a file isn't UTF-8, or when a file value should replace one set earlier. It takes an `EnvFileOptions`.
+
+<TypeTable
+    type={{
+        override: { type: 'boolean', description: 'A later file replaces a key an earlier file set, and a file value replaces a shell variable in what envapt reads.', default: 'false' },
+        encoding: { type: 'string', description: 'The encoding used to read each file.', default: "'utf8'" }
+    }}
+/>
+
+```ts twoslash
+import { Envapter } from 'envapt';
+// ---cut---
+Envapter.envPaths = ['config/app.env'];
+Envapter.envFileOptions = { override: true };
+```
+
+Assigning `envFileOptions` replaces the whole object, so a key you omit goes back to its default.
+
+<Callout type="warn">
+
+`override: true` reverses the priority order of the cascade. envapt reads the most specific file first, and `override` makes each later file replace earlier values, so `.env` takes priority over `.env.production`. It also makes file values replace shell variables in what envapt reads. A single file from `envPaths`, as in the sample above, is safe because one file has no order to reverse.
+
+</Callout>
+
+Each file follows the rules on [.env file syntax](/docs/env-file-syntax), including quotes and values that span lines.

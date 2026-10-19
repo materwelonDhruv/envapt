@@ -8,20 +8,20 @@ import type { EnvFileOptions } from '../infra/Dotenv';
 import type { ProfilesConfig } from '../types';
 
 /**
- * The Node/Bun/Deno facade: {@link Envapter} plus the filesystem-only configuration APIs (`.env`
- * path selection, base directory, dotenv options, and per-environment profiles). On the portable
- * build (Workers, the browser, edge) these same APIs warn once and no-op by default, controlled by
- * `Envapter.fileApiMode`.
+ * Reads typed environment variables on Node, Bun, and Deno. It adds the filesystem-only configuration
+ * APIs: `.env` path selection, base directory, dotenv options, and per-environment profiles. On the
+ * portable build (Workers, the browser, edge) these same APIs warn once and do nothing, unless
+ * `Envapter.fileApiMode` is `'throw'`.
  * @public
  */
 export class NodeEnvapter extends Envapter {
     /**
-     * Set custom .env file paths. Accepts either a single path or array of paths.
-     * Setting new paths clears the cache and reloads environment variables.
+     * Set custom .env file paths. Setting new paths clears the cache and reloads environment
+     * variables. Throws `EnvFilesNotFound` when a path does not exist.
      *
-     * When set, this takes absolute precedence. The dotenv-flow auto-cascade and any
-     * `Envapter.configureProfiles` configuration are ignored.
-     * @see {@link https://envapt.materwelon.dev/docs/configuration#which-files-load}
+     * Once set, these paths replace the dotenv-flow auto-cascade and any `Envapter.configureProfiles`
+     * paths.
+     * @see {@link https://envapt.materwelon.dev/docs/env-files#choosing-the-files-yourself}
      */
     static set envPaths(paths: string[] | string) {
         assertFileApiSupported('envPaths', state.source);
@@ -37,8 +37,8 @@ export class NodeEnvapter extends Envapter {
     }
 
     /**
-     * Get currently configured .env file paths
-     * @see {@link https://envapt.materwelon.dev/docs/configuration#which-files-load}
+     * The configured .env file paths.
+     * @see {@link https://envapt.materwelon.dev/docs/env-files#choosing-the-files-yourself}
      */
     static get envPaths(): string[] {
         return state.envPaths;
@@ -52,7 +52,7 @@ export class NodeEnvapter extends Envapter {
      *
      * Set this before `envPaths` so relative `envPaths` validate against the right directory.
      * Setting `undefined` restores `process.cwd()` resolution.
-     * @see {@link https://envapt.materwelon.dev/docs/configuration#reading-from-a-fixed-directory}
+     * @see {@link https://envapt.materwelon.dev/docs/env-files#reading-from-a-fixed-directory}
      */
     static set baseDir(value: string | URL | undefined) {
         const source = state.source;
@@ -63,15 +63,16 @@ export class NodeEnvapter extends Envapter {
 
     /**
      * The configured base directory, or `undefined` when relative paths resolve against the working directory.
-     * @see {@link https://envapt.materwelon.dev/docs/configuration#reading-from-a-fixed-directory}
+     * @see {@link https://envapt.materwelon.dev/docs/env-files#reading-from-a-fixed-directory}
      */
     static get baseDir(): string | undefined {
         return state.baseDir;
     }
 
     /**
-     * Set the env file loader options (`encoding`, `override`). Refreshes the cache.
-     * @see {@link https://envapt.materwelon.dev/docs/configuration#which-files-load}
+     * Set the env file loader options (`encoding`, `override`). Refreshes the cache. Any other key
+     * throws `InvalidUserDefinedConfig`.
+     * @see {@link https://envapt.materwelon.dev/docs/env-files#file-options}
      */
     static set envFileOptions(config: EnvFileOptions) {
         Validator.validateEnvFileOptions(config);
@@ -80,8 +81,8 @@ export class NodeEnvapter extends Envapter {
     }
 
     /**
-     * Get current env file loader options
-     * @see {@link https://envapt.materwelon.dev/docs/configuration#which-files-load}
+     * The env file loader options.
+     * @see {@link https://envapt.materwelon.dev/docs/env-files#file-options}
      */
     static get envFileOptions(): EnvFileOptions {
         return state.userDefinedEnvFileOptions;
@@ -90,8 +91,9 @@ export class NodeEnvapter extends Envapter {
     /**
      * Configure per-environment `.env` path overrides on top of the dotenv-flow auto-cascade.
      *
-     * When set, each `Environment` key's `paths` are loaded at higher precedence than the
-     * cascade for that environment. Unspecified environments still use the cascade as-is.
+     * When set, each `Environment` key's `paths` load ahead of the cascade for that environment and
+     * win over it, unless `envFileOptions.override` is `true`. Unspecified environments still use the
+     * cascade as-is.
      * Set `useDefaults: false` to disable the cascade entirely (load only the configured paths).
      *
      * Setting an explicit `Envapter.envPaths` value at any point overrides this configuration.
@@ -103,7 +105,7 @@ export class NodeEnvapter extends Envapter {
      *   production: { paths: ['config/prod.env', 'secrets/prod.env'] }
      * });
      * ```
-     * @see {@link https://envapt.materwelon.dev/docs/environment#custom-profiles}
+     * @see {@link https://envapt.materwelon.dev/docs/env-files#profiles}
      */
     static configureProfiles(config: ProfilesConfig): void {
         assertFileApiSupported('configureProfiles', state.source);
@@ -113,9 +115,10 @@ export class NodeEnvapter extends Envapter {
 
     /**
      * Clears any `Envapter.configureProfiles` call, any explicit `Envapter.envPaths` assignment, and any
-     * environment set through `Envapter.environment`. `Envapter.baseDir` keeps its value. The next read detects
-     * the environment from the env vars again and loads the pure dotenv-flow cascade.
-     * @see {@link https://envapt.materwelon.dev/docs/environment#custom-profiles}
+     * environment set through `Envapter.environment`. `Envapter.baseDir` keeps its value. The call
+     * reloads the dotenv-flow cascade right away, choosing the files from the environment set in your
+     * env vars.
+     * @see {@link https://envapt.materwelon.dev/docs/env-files#profiles}
      */
     static resetPaths(): void {
         state.profiles = undefined;

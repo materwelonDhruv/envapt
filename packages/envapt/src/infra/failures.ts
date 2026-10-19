@@ -23,7 +23,7 @@ export function missingValues(keys: readonly EnvKeyInput[]): EnvaptError {
 
 export type ValidationCode = typeof EnvaptErrorCodes.SchemaValidationFailed | typeof EnvaptErrorCodes.InvalidEnvValue;
 
-// issue messages can quote a secret value
+// the message leaves out the issue text because it can quote a secret value
 export function validationFailed(
     code: ValidationCode,
     keys: readonly EnvKeyInput[],

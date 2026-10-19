@@ -46,24 +46,24 @@ describe('profiles: dotenv-flow auto-cascade', () => {
         Envapter.environment = Environment.Development;
         Envapter.resetPaths();
 
-        // .env.development.local wins where it sets a key
+        // .env.development.local overrides every other layer
         expect(Envapter.get('CASCADE_KEY')).to.equal('dev-local');
-        // Each layer's unique key surfaces
+        // a key set in only one layer still loads
         expect(Envapter.get('ONLY_BASE')).to.equal('base');
         expect(Envapter.get('ONLY_LOCAL')).to.equal('local');
         expect(Envapter.get('ONLY_DEV')).to.equal('dev');
         expect(Envapter.get('ONLY_DEV_LOCAL')).to.equal('dev-local');
-        // .env.local beats .env
+        // .env.local overrides .env
         expect(Envapter.get('SHARED_BASE_LOCAL')).to.equal('local');
-        // .env.${env} beats .env
+        // .env.${env} overrides .env
         expect(Envapter.get('SHARED_BASE_ENV')).to.equal('dev');
-        // .env.${env}.local beats .env
+        // .env.${env}.local overrides .env
         expect(Envapter.get('SHARED_BASE_ENV_LOCAL')).to.equal('dev-local');
-        // .env.${env} beats .env.local
+        // .env.${env} overrides .env.local
         expect(Envapter.get('SHARED_LOCAL_ENV')).to.equal('dev');
-        // .env.${env}.local beats .env.local
+        // .env.${env}.local overrides .env.local
         expect(Envapter.get('SHARED_LOCAL_ENV_LOCAL')).to.equal('dev-local');
-        // .env.${env}.local beats .env.${env}
+        // .env.${env}.local overrides .env.${env}
         expect(Envapter.get('SHARED_DEV_DEV_LOCAL')).to.equal('dev-local');
     });
 
@@ -72,13 +72,13 @@ describe('profiles: dotenv-flow auto-cascade', () => {
 
         process.env.NODE_ENV = 'development';
         Envapter.resetPaths();
-        expect(Envapter.get('CASCADE_KEY')).to.equal('dev-local'); // hits .env.development.local
+        expect(Envapter.get('CASCADE_KEY')).to.equal('dev-local'); // from .env.development.local
 
         process.env.NODE_ENV = 'production';
         Envapter.resetPaths();
-        expect(Envapter.get('CASCADE_KEY')).to.equal('prod'); // hits .env.production (no .local for prod)
+        expect(Envapter.get('CASCADE_KEY')).to.equal('prod'); // from .env.production, since the fixture has no .env.production.local
         expect(Envapter.get('ONLY_PROD')).to.equal('prod');
-        expect(Envapter.get('ONLY_DEV')).to.be.undefined; // dev file not in cascade for prod
+        expect(Envapter.get('ONLY_DEV')).to.be.undefined; // the prod cascade skips .env.development
     });
 
     it('loads the new environment files when Envapter.environment is set after the cache is built', () => {

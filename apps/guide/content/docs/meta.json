@@ -1,27 +1,3 @@
 {
-    "pages": [
-        "index",
-        "quick-start",
-        "---Core---",
-        "envapter",
-        "environment",
-        "decorators",
-        "converters",
-        "templates",
-        "standard-schema",
-        "strict-mode",
-        "errors",
-        "---Configuration---",
-        "configuration",
-        "secret-stores",
-        "env-file-syntax",
-        "---Runtimes---",
-        "compatibility",
-        "sources",
-        "workers",
-        "edge-runtimes",
-        "browser",
-        "---Reference---",
-        "migrations"
-    ]
+    "pages": ["(guide)", "api"]
 }

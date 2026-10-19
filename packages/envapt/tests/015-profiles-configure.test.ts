@@ -26,7 +26,6 @@ describe('profiles — Envapter.configureProfiles overrides', () => {
         // the default fixture has no staging cascade files
         process.chdir(resolve(import.meta.dirname, 'cascade-fixtures', 'default'));
 
-        // set env before configureProfiles, so its refresh runs under the right env
         Envapter.environment = Environment.Staging;
         Envapter.configureProfiles({
             [Environment.Staging]: { paths: resolve(fixtureDir, '.env.staging') }
@@ -39,14 +38,12 @@ describe('profiles — Envapter.configureProfiles overrides', () => {
     it('falls through to cascade for environments not in configureProfiles', () => {
         process.chdir(resolve(import.meta.dirname, 'cascade-fixtures', 'all-layers'));
 
-        // only production is overridden, so development still reads the cascade
         Envapter.environment = Environment.Development;
         Envapter.configureProfiles({
             [Environment.Production]: { paths: resolve(fixtureDir, '.env.production') }
         });
         expect(Envapter.get('CASCADE_KEY')).to.equal('dev-local');
 
-        // setting env alone doesn't refresh, so re-call configureProfiles under the new env
         Envapter.environment = Environment.Production;
         Envapter.configureProfiles({
             [Environment.Production]: { paths: resolve(fixtureDir, '.env.production') }
@@ -62,7 +59,6 @@ describe('profiles — Envapter.configureProfiles overrides', () => {
         });
         Envapter.environment = Environment.Development;
 
-        // configured profile keys win where they overlap cascade keys
         expect(Envapter.get('PROFILE_NAME')).to.equal('dev-profile'); // from the configured override
         expect(Envapter.get('CASCADE_KEY')).to.equal('dev-local'); // from the cascade, no overlap
     });
@@ -91,13 +87,11 @@ describe('profiles — Envapter.configureProfiles overrides', () => {
         Envapter.environment = Environment.Development;
 
         expect(Envapter.get('PROFILE_NAME')).to.equal('dev-profile');
-        // useDefaults:false disabled the cascade, so its keys never load
         expect(Envapter.get('CASCADE_KEY')).to.be.undefined;
         expect(Envapter.get('ONLY_BASE')).to.be.undefined;
     });
 
     it('throws EnvFilesNotFound at configure-time when an active-env profile path does not exist', () => {
-        // bad config throws at configure() time, before any data access
         expect(() => {
             Envapter.configureProfiles({
                 [Environment.Development]: { paths: '/does/not/exist/anywhere.env' }
@@ -108,7 +102,6 @@ describe('profiles — Envapter.configureProfiles overrides', () => {
     });
 
     it('does NOT throw for non-active envs with missing paths (lazy per-env validation)', () => {
-        // the missing prod path is not the active env, so it isn't validated yet
         Envapter.configureProfiles({
             [Environment.Production]: { paths: '/does/not/exist/anywhere.env' }
         });
@@ -135,7 +128,6 @@ describe('profiles — Envapter.configureProfiles overrides', () => {
         Envapter.envPaths = resolve(fixtureDir, '.env.production');
         Envapter.environment = Environment.Development;
 
-        // envPaths outranks profiles, so a dev env still reads the prod file
         expect(Envapter.get('PROFILE_NAME')).to.equal('production-profile');
     });
 });

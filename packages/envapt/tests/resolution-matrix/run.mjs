@@ -59,11 +59,11 @@ for (const [name, resolution] of Object.entries(TYPE_RESOLUTIONS)) {
     gate.check(`types ${name} legacy [deno]`, typesTarget('envapt/legacy', resolution, ['deno']), 'legacy.d.mts');
     gate.check(`types ${name} legacy []`, typesTarget('envapt/legacy', resolution, []), 'legacy.d.mts');
 }
-// Node10 predates the exports map, so it always falls back to the top-level types field.
+// Node10 ignores the exports map and reads the top-level types field
 gate.check('types Node10 envapt []', typesTarget('envapt', ts.ModuleResolutionKind.Node10, []), 'index.d.mts');
 
-// platform 'node' externalizes node:* builtins so the node-build cells bundle. Portable conditions
-// still resolve the portable build because their keys precede `node` in the exports map (order wins).
+// platform 'node' externalizes node:* builtins for the node-build cells. portable conditions still
+// pick the portable build because their keys come before `node` in the exports map.
 async function buildDir(specifier, named, conditions) {
     const result = await esbuild.build({
         stdin: {

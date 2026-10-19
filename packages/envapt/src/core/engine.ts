@@ -37,16 +37,15 @@ function toKeyList(keyInput: EnvKeyInput): readonly string[] {
 export function resolveKeyInput(keyInput: EnvKeyInput): { key: string; value: string | undefined } {
     const normalizedKeys = toKeyList(keyInput);
 
-    // an empty value falls through to the next key and only comes back when every key is empty
-    let firstPresent: { key: string; value: string } | undefined;
+    let firstEmpty: { key: string; value: string } | undefined;
     for (const candidate of normalizedKeys) {
         const value = readCached(candidate);
         if (value === undefined) continue;
         if (!isMissing(value)) return { key: candidate, value };
-        firstPresent ??= { key: candidate, value };
+        firstEmpty ??= { key: candidate, value };
     }
 
-    return firstPresent ?? { key: normalizedKeys[0] as string, value: undefined };
+    return firstEmpty ?? { key: normalizedKeys[0] as string, value: undefined };
 }
 
 function lookup(keyInput: EnvKeyInput): { key: string; value: string | undefined } {
@@ -150,7 +149,6 @@ function readCached(key: string): string | undefined {
     const source = state.source;
     if (typeof source.readVar !== 'function') return undefined;
     const value = source.readVar(key);
-    // caches misses too
     c.set(key, value);
     return value;
 }
@@ -171,7 +169,7 @@ export function refreshCache(): void {
 export function mirrorToProcessEnv(): void {
     if (state.dotenvAddedKeys.size === 0) return;
     const source = state.source;
-    /* v8 ignore next -- @preserve dotenv keys only accumulate under a file source, so the delta implies supportsFiles here */
+    /* v8 ignore next -- @preserve dotenv keys only accumulate under a file source */
     if (!source.supportsFiles) return;
     const mirrored: Record<string, string> = {};
     for (const key of state.dotenvAddedKeys) {

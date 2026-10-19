@@ -1,33 +1,37 @@
 import type { StandardSchemaV1 } from './StandardSchema';
 
 /**
- * Numeric codes carried by {@link EnvaptError.code}, grouped by fallback (1xx), converter (2xx),
- * and configuration (3xx) failures.
+ * Numeric codes carried by {@link EnvaptError.code}. The hundreds digit groups them by failure:
+ * 1xx for fallbacks, 2xx for conversion and validation, 3xx for configuration and lookup.
  * @see {@link https://envapt.materwelon.dev/docs/errors#codes}
  */
 export const EnvaptErrorCodes = {
-    // Fallback related errors
-    /** Thrown when an invalid fallback value is provided */
+    /** Thrown when an array converter gets a fallback that is not an array. */
     InvalidFallback: 101,
-    /** Thrown when array fallback contains elements of wrong type */
+    /**
+     * Thrown when an array fallback mixes element types, or its elements do not match the array's
+     * element converter.
+     */
     ArrayFallbackElementTypeMismatch: 103,
-    /** Thrown when fallback type doesn't match the specified converter */
+    /** Thrown when a fallback does not match the type its built-in converter returns. */
     FallbackConverterTypeMismatch: 104,
-    /** Thrown when a time-string fallback is malformed (does not match the required `<number><unit>` format) */
+    /** Thrown when a time-string fallback does not match the `<number><unit>` format. */
     MalformedTimeFallback: 105,
 
-    // Converter related errors
-    /** Thrown when invalid array converter configuration is provided */
+    /**
+     * Thrown when an array converter is not a `Converters.array()` token, or its `of` is neither a
+     * built-in scalar nor a function.
+     */
     InvalidArrayConverterType: 201,
-    /** Thrown when a converter string is not one of the built-in tokens */
+    /** Thrown when a converter string is not one of the built-in tokens. */
     InvalidBuiltInConverter: 202,
-    /** Thrown when a converter is neither a built-in token nor a function */
+    /** Thrown when a converter is neither a built-in token nor a function. */
     InvalidCustomConverter: 203,
-    /** Thrown when an array element fails to convert to the configured element type */
+    /** Thrown when an array element fails to convert to the array's element type. */
     ArrayElementConversionFailed: 206,
-    /** Thrown under strict mode when an array element is empty or whitespace only */
+    /** Thrown in strict mode when an array element is empty or whitespace only. */
     EmptyArrayElement: 207,
-    /** Thrown when `getAs` or `@Envapt({ schema })` without `required` gets a value its Standard Schema rejects */
+    /** Thrown when `getAs` or `@Envapt({ schema })` without `required` reads a value its Standard Schema rejects. */
     SchemaValidationFailed: 208,
     /**
      * Thrown when a Standard Schema's `validate` throws in `getAs` or `@Envapt({ schema })` without `required`.
@@ -40,22 +44,24 @@ export const EnvaptErrorCodes = {
      */
     InvalidEnvValue: 210,
 
-    // Other errors
-    /** Thrown when delimiter is missing in array converter configuration */
+    /** Thrown when an array converter's delimiter is missing or an empty string. */
     MissingDelimiter: 301,
-    /** Thrown when invalid user-defined configuration is provided */
+    /** Thrown when an option or setting has an invalid value, or combines options that cannot go together. */
     InvalidUserDefinedConfig: 302,
-    /** Thrown when specified environment files don't exist */
+    /** Thrown when a listed env file does not exist. */
     EnvFilesNotFound: 303,
-    /** Thrown when no valid environment key is provided */
+    /** Thrown when the key list is empty, or a key is not a string or is blank. */
     InvalidKeyInput: 304,
-    /** Thrown when a required environment value is missing or empty */
+    /** Thrown when a required value is missing or empty, or in strict mode when a `${VAR}` can't resolve. */
     MissingEnvValue: 305,
-    /** Thrown when a file-based API (envPaths, baseDir, configureProfiles) is used on a source without filesystem support */
+    /**
+     * Thrown when a file API such as `envPaths` or `baseDir` runs on a source without files, or on the
+     * portable build with `fileApiMode = 'throw'`.
+     */
     FileApiUnsupported: 306,
-    /** Thrown when an environment value is read before a source is bound via Envapter.useSource */
+    /** Thrown when an environment value is read before a source is bound with `Envapter.useSource`. */
     NoSourceBound: 307,
-    /** Thrown when `merge` is called with no members, or with more than one filesystem-backed source */
+    /** Thrown when `merge` is called with no members, or with more than one filesystem-backed source. */
     InvalidMergedSource: 308
 } as const;
 
@@ -75,7 +81,15 @@ interface EnvaptErrorOptions {
  *
  * @example
  * ```ts
- * throw new EnvaptError(EnvaptErrorCodes.InvalidFallback, "Invalid fallback value provided for environment variable.");
+ * try {
+ *   Envapter.require('DATABASE_URL', 'SESSION_SECRET');
+ * } catch (error) {
+ *   if (error instanceof EnvaptError && error.code === EnvaptErrorCodes.MissingEnvValue) {
+ *     console.error(error.message);
+ *     process.exit(1);
+ *   }
+ *   throw error;
+ * }
  * ```
  * @see {@link https://envapt.materwelon.dev/docs/errors#the-error-shape}
  */
@@ -85,12 +99,9 @@ export class EnvaptError extends Error {
     /**
      * Populated only for {@link EnvaptErrorCodes.SchemaValidationFailed} (208) and
      * {@link EnvaptErrorCodes.InvalidEnvValue} (210). For every other code this is `undefined`.
-     * Lets callers do `if (err.code === 210) err.issues?.forEach(...)`
-     * without a type cast.
      */
     public readonly issues: readonly StandardSchemaV1.Issue[] | undefined;
 
-    /** Create an error carrying an {@link EnvaptErrorCodes} code, a message, and optional `cause` / `issues`. */
     constructor(code: EnvaptErrorCodes, message: string, options?: EnvaptErrorOptions) {
         super(message, options?.cause !== undefined ? { cause: options.cause } : undefined);
         this.name = `EnvaptError [${code}]`;

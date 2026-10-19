@@ -25,11 +25,12 @@ export class AdvancedMethods extends PrimitiveMethods {
      * Get an environment variable through a converter: a built-in token such as `Converters.Number`,
      * an `ArrayOf` token from `Converters.array(...)`, a custom `(raw: string) => T` function, or a
      * synchronous Standard Schema (zod, valibot, arktype). A missing value returns the fallback, or
-     * `undefined` without one. A token or a function that can't convert the value returns the fallback
-     * too. A schema that rejects the value throws `SchemaValidationFailed`. The schema never sees the
-     * fallback. The key can be a single name or an ordered list. The first present value wins.
+     * `undefined` without one. A scalar token or a function that can't convert the value returns the
+     * fallback too. A bad array element throws `ArrayElementConversionFailed`. A schema that rejects
+     * the value throws `SchemaValidationFailed`. envapt never runs the schema on the fallback. The key
+     * can be a single name or an ordered list, read until one key has a value.
      * A bad converter or fallback throws even when the value is missing.
-     * @see {@link https://envapt.materwelon.dev/docs/envapter#converters}
+     * @see {@link https://envapt.materwelon.dev/docs/envapter#other-types-with-getas}
      * @see {@link https://envapt.materwelon.dev/docs/converters#custom-converters}
      */
     // TypeScript uses the first overload that matches. Keep 'time' above the generic one.
@@ -75,8 +76,7 @@ export class AdvancedMethods extends PrimitiveMethods {
      * own issues all become issues on that error. Accepts a built-in or `ArrayOf` token, a custom
      * parser function, or a synchronous Standard Schema. The key can be a single name or an ordered list.
      * A bad converter throws before `MissingEnvValue`.
-     * @see {@link https://envapt.materwelon.dev/docs/envapter#fail-fast-on-missing-values}
-     * @see {@link https://envapt.materwelon.dev/docs/converters#require-a-converted-value}
+     * @see {@link https://envapt.materwelon.dev/docs/required-values#getrequired-require-and-has}
      */
     static getRequired<TConverter extends BuiltInConverter | ArrayOf>(
         key: EnvKeyInput,
@@ -101,9 +101,9 @@ export class AdvancedMethods extends PrimitiveMethods {
      * never undefined. A schema field holds whatever its schema returns.
      *
      * A bad converter in `spec` throws first. envapt then collects every missing or empty key and
-     * throws one `MissingEnvValue` listing them all.
-     * envapt never runs the schema for a missing key. A schema default such as zod's `.default()`
-     * does not apply here. envapt then reads every field and throws one `InvalidEnvValue` for all
+     * throws one `MissingEnvValue` listing them all. envapt never runs the schema for a missing key,
+     * so a schema default such as zod's `.default()` does not apply here.
+     * If no key is missing, envapt reads every field and throws one `InvalidEnvValue` for all
      * the bad values, schema fields included. Its `issues` hold every failed field's issues, each
      * with its env key first in `path`. A converter that cannot convert adds the issue
      * `could not be converted`. A bad array element and an error a custom parser or schema throws
@@ -113,8 +113,7 @@ export class AdvancedMethods extends PrimitiveMethods {
      * Pass a `casing` (`'camelCase'`, `'PascalCase'`, or `'kebab-case'`) to rename the record keys.
      * The rename splits each key on underscores, as in SCREAMING_SNAKE env-var names. With no casing
      * the keys stay as-is.
-     * @see {@link https://envapt.materwelon.dev/docs/envapter#fail-fast-on-missing-values}
-     * @see {@link https://envapt.materwelon.dev/docs/standard-schema#validate-a-group-of-required-variables}
+     * @see {@link https://envapt.materwelon.dev/docs/required-values}
      */
     static getRequiredAll<Spec extends RequiredSpec, Casing extends KeyCasing | undefined = undefined>(
         spec: Spec & SpecSchemaConstraint<Spec>,

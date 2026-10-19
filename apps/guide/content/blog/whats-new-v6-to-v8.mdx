@@ -10,7 +10,7 @@ Every change in envapt's last three majors started the same way. I hit something
 
 The biggest one is v8, and it came from [seedcord](https://github.com/seedcord/seedcord), a bot framework I maintain. seedcord lets you build Discord bots that run on gateway, server, and edge. You develop locally on Node with full HMR, then deploy straight to Cloudflare Workers. So its config gets read off a filesystem in dev and off a Workers binding in production. That split used to need more wiring than it should have. v8 makes it one import. Here is how v6 and v7 got there, and why v8 looks the way it does.
 
-## v6 dropped the positional decorator arguments
+## v6 removed the positional decorator arguments
 
 The old decorator took its fallback and converter by position.
 
@@ -21,7 +21,7 @@ The old decorator took its fallback and converter by position.
 static readonly maxRetries: number;
 ```
 
-I wrote that line across a few services and got the order wrong often enough to stop trusting it. There is no good reason a reader should have to remember whether the fallback or the converter comes second. So v6 removed the positional form and kept the one that names its arguments. And, to keep things simple, envapt shipped [sugar-decorators](/docs/decorators) for the most common converters which only have 2 arguments.
+I wrote that line across a few services and got the order wrong often enough to stop trusting it. There is no good reason a reader should have to remember whether the fallback or the converter comes second. So v6 removed the positional form and kept the one that takes its arguments by name. And, to keep things simple, envapt shipped [sugar-decorators](/docs/decorators) for the most common converters which only have 2 arguments.
 
 ```ts
 // now
@@ -55,7 +55,7 @@ const port = Envapter.getUsing('PORT', Converters.Port, 3000);
 
 So if your toolchain is not ready for Stage 3 decorators yet, you skip them and lose nothing but the syntax sugar.
 
-Two smaller v7 changes came out of the same dogfooding. The legacy decorators now typecheck the field against what the converter returns, so a field typed `number` with no fallback no longer compiles, because the converter can return `null`.
+One smaller v7 change came out of the same dogfooding. The legacy decorators now typecheck the field against what the converter returns, so a field typed `number` with no fallback no longer compiles, because the converter can return `null`.
 
 The [v6-to-v7 migration guide](/docs/migration-v6-to-v7) has the full list.
 
@@ -71,7 +71,7 @@ v8 collapses all of that into the bare import.
 import { Envapter } from 'envapt';
 ```
 
-The package export conditions resolve the right build per runtime. Workers, the browser, edge, and react-native get the portable build. Node, Bun, and Deno get the Node build. The edge runtimes that used to fall through now resolve the portable build on purpose. And seedcord wires in the Workers env binding as the source in the build step without the user needing to do anything. So envapt turned out to help build a framework itself, well beyond reading config in an app.
+The package export conditions resolve the right build per runtime. Workers, the browser, edge, and react-native get the portable build. Node, Bun, and Deno get the Node build. The edge runtimes that used to fall through now resolve the portable build on purpose. And seedcord wires in the Workers env binding as the source in the build step without the user needing to do anything.
 
 The file-only APIs changed too. Off Node they now warn once and do nothing by default. Before, they threw. So a config module that layers `.env` files in local dev and reads a Workers binding in production compiles and runs in both places, with no per-runtime branch in your code. In seedcord that turned the whole cross-runtime config story into the bare import plus one `useSource` in the Worker entry, and nothing else.
 
@@ -81,7 +81,7 @@ Oh, and I finally added `Converters.Email`. It was about time envapt had that...
 
 The [v7-to-v8 migration guide](/docs/migration-v7-to-v8) covers all eleven breaking changes.
 
-## That is the throughline
+## Looking back
 
 Three releases, each one a thing that annoyed me while using envapt in my own projects. v6 took out a footgun, v7 made the decorators run everywhere they should and kept the functional API as the floor, and v8 made one import read config the same on my laptop and on the edge.
 

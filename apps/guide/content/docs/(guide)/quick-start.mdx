@@ -1,0 +1,165 @@
+---
+title: Quick Start
+description: Install envapt and read typed config on Node, Workers, or the browser, binding the platform's env object first outside Node, Bun, and Deno.
+---
+
+<Callout type="warn">
+
+envapt is ESM only. Node throws `ERR_PACKAGE_PATH_NOT_EXPORTED` on `require('envapt')`. In a CommonJS project, load it with `await import('envapt')` inside an async function. [Compatibility](/docs/compatibility) lists the runtime versions.
+
+</Callout>
+
+<Steps>
+<Step>
+
+### Install
+
+```package-install
+npm install envapt
+```
+
+</Step>
+<Step>
+
+### Read a value
+
+On Node, Bun, and Deno, envapt binds `process.env` as its source and loads your `.env` files when you import it, so you need no setup there. Workers and Vite hand config over as an object with no global to read, so on those and [other edge runtimes](/docs/edge-runtimes) envapt starts with no source. The Workers and Browser tabs bind that object with [`useSource`](/docs/sources) before the first read. [`PortableSource`](/docs/sources#the-sources-envapt-ships) copies the object when you create it. If you change the object later, reads still return the values it had when you created the source.
+
+<Tabs items={['Node, Bun, Deno', 'Workers', 'Browser']} groupId="runtime" persist>
+<Tab value="Node, Bun, Deno">
+
+envapt loads the `.env` files from your working directory. This step reads `CACHE_TTL` from the file below. The startup check further down reads the other three keys.
+
+```dotenv title=".env"
+PORT=8080
+DATABASE_URL=postgres://app:secret@localhost:5432/app
+CACHE_TTL=10m
+ALLOWED_ORIGINS=https://app.example.com,https://admin.example.com
+```
+
+```ts twoslash title="src/config.ts"
+import { Envapter, Converters } from 'envapt';
+// ---cut---
+const cacheTtl = Envapter.getAs('CACHE_TTL', Converters.Time, '1m');
+//    ^?
+```
+
+Through plain `process.env`, filled by your shell or dotenv, `CACHE_TTL` is the string `'10m'`. An empty `CACHE_TTL=` is `''`, which a `??` fallback doesn't replace. [`getAs`](/docs/envapter#other-types-with-getas) turns `10m` into `600000` milliseconds, and the `'1m'` fallback applies if the variable is missing, empty, or isn't a duration. Coming from dotenv? [.env files on Node](/docs/env-files#coming-from-dotenv) has the `envapt/config` import that replaces `dotenv/config`.
+
+</Tab>
+<Tab value="Workers">
+
+A Worker's bindings arrive on the `env` object it imports from `cloudflare:workers`, so bind that object at the top of a config module, before the first read.
+
+```ts twoslash title="src/config.ts"
+// @lib: esnext
+/// <reference types="@cloudflare/workers-types" />
+// ---cut---
+import { env } from 'cloudflare:workers';
+import { Envapter, PortableSource } from 'envapt';
+
+Envapter.useSource(new PortableSource(env));
+
+const maintenanceMode = Envapter.getBoolean('MAINTENANCE_MODE', false);
+//    ^?
+```
+
+A `vars` entry in your Wrangler config can be a boolean or an object. `PortableSource` turns each value in `env` that isn't a string into JSON text, so a boolean `MAINTENANCE_MODE` arrives as `'true'` and `getBoolean` reads it. If a read runs before the `useSource` line, it throws [`NoSourceBound`](/docs/sources#no-environment-source-is-bound). Local dev and secrets are on the [Cloudflare Workers](/docs/workers) page.
+
+</Tab>
+<Tab value="Browser">
+
+A bundler writes your config into the client code at build time. Vite exposes that config as `import.meta.env`, so bind that object before the first read.
+
+```ts title="src/config.ts"
+import { Envapter, PortableSource } from 'envapt';
+
+Envapter.useSource(new PortableSource(import.meta.env));
+
+const betaEnabled = Envapter.getBoolean('VITE_ENABLE_BETA', false);
+```
+
+The sample passes the whole `import.meta.env` object to `PortableSource`. Then `getBoolean` reads `VITE_ENABLE_BETA` from it like any other key. If a read runs before the `useSource` line, it throws [`NoSourceBound`](/docs/sources#no-environment-source-is-bound). Vite puts every variable it exposes into the client bundle, so expose public values only. [Browser](/docs/browser) explains the `VITE_` prefix.
+
+</Tab>
+</Tabs>
+
+[Reading values](/docs/envapter) covers the other readers. [Converters](/docs/converters) has the full set of converters, including URLs, durations, and arrays. To check a value against a schema from a library such as zod, valibot, or arktype, see [Validating with a schema](/docs/standard-schema).
+
+</Step>
+<Step>
+
+### Check required config at startup
+
+A fallback hides a bad value. If the app can't run without a setting, read it with [`getRequired`](/docs/required-values#getrequired-require-and-has), which throws when the value is missing or can't convert. For a group of settings, call [`getRequiredAll`](/docs/required-values). If any keys are missing, it throws one `MissingEnvValue` error that lists them all. If every key is present but some values can't convert, it throws one `InvalidEnvValue` error that lists those keys.
+
+<Tabs items={['Node, Bun, Deno', 'Workers', 'Browser']} groupId="runtime" persist>
+<Tab value="Node, Bun, Deno">
+
+```ts twoslash title="src/config.ts"
+import { Envapter, Converters } from 'envapt';
+// ---cut---
+export const config = Envapter.getRequiredAll(
+    {
+        PORT: Converters.Port,
+        DATABASE_URL: Converters.Url,
+        ALLOWED_ORIGINS: Converters.array()
+    },
+    'camelCase'
+);
+
+config;
+// ^?
+```
+
+</Tab>
+<Tab value="Workers">
+
+Add this below the `useSource` line in the same module.
+
+```ts twoslash title="src/config.ts"
+import { Envapter, Converters } from 'envapt';
+// ---cut---
+export const config = Envapter.getRequiredAll(
+    {
+        API_BASE_URL: Converters.Url,
+        API_TOKEN: Converters.String
+    },
+    'camelCase'
+);
+
+config;
+// ^?
+```
+
+</Tab>
+<Tab value="Browser">
+
+Add this below the `useSource` line in the same module.
+
+```ts twoslash title="src/config.ts"
+import { Envapter, Converters } from 'envapt';
+// ---cut---
+export const config = Envapter.getRequiredAll(
+    {
+        VITE_API_URL: Converters.Url,
+        VITE_STRIPE_PUBLISHABLE_KEY: Converters.String
+    },
+    'camelCase'
+);
+
+config;
+// ^?
+```
+
+</Tab>
+</Tabs>
+
+The result is typed from the object you pass. The optional second argument, `'camelCase'`, renames each key. Without it, the keys stay as you wrote them. With it, a key like `DATABASE_URL` becomes `config.databaseUrl`. A key read with `Converters.Url` is a `URL`, and one read with `Converters.array()` is a `string[]` split on commas. [Required values](/docs/required-values) describes the other casings and the error codes.
+
+Import `config` from your app's entry point. The module throws when it loads, so a missing or bad value stops the app at startup. If a value can't convert and nothing catches the error, Node prints the error's `issues` too. An issue can quote a secret, such as the password in `DATABASE_URL`. [Required values](/docs/required-values#reading-the-error-without-leaking-values) shows the `catch` block that logs only the keys.
+
+</Step>
+</Steps>
+
+Prefer class fields? The [`@Envapt` decorator](/docs/decorators) declares the same settings on a class.

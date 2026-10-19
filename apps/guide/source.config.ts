@@ -5,13 +5,13 @@ import lastModified from 'fumadocs-mdx/plugins/last-modified';
 import { transformerTwoslash } from 'fumadocs-twoslash';
 import { z } from 'zod';
 
+import { MARKDOWN_COPY_OPTIONS, remarkPlainTwoslash } from './lib/markdownSource';
 import { createSaltedTypesCache } from './lib/twoslash-cache';
 
 export const docs = defineDocs({
     dir: 'content/docs',
     docs: {
-        // enables page.data.getText('processed'), consumed by llms-full.txt
-        postprocess: { includeProcessedMarkdown: true }
+        postprocess: { includeProcessedMarkdown: MARKDOWN_COPY_OPTIONS }
     }
 });
 
@@ -28,9 +28,7 @@ export const blogPosts = defineDocs({
 
 // Twoslash's first compile per process builds a full TS env (~a minute against envapt's generics);
 // every later edit reuses it and is sub-second. Always on for builds; opt out in dev with
-// `TWOSLASH=0 pnpm dev` when iterating on layout rather than code samples.
-// No typesCache: it does not invalidate when the in-repo `envapt` types are rebuilt, so it would
-// serve stale hovers for the very library these docs describe.
+// `TWOSLASH=0 pnpm dev` when iterating on layout.
 const twoslashEnabled = process.env.TWOSLASH !== '0';
 
 const PACKAGE_MANAGERS = [
@@ -44,7 +42,10 @@ const PACKAGE_MANAGERS = [
 export default defineConfig({
     plugins: [lastModified()],
     mdxOptions: {
-        remarkPlugins: [[remarkNpm, { persist: { id: 'package-manager' }, packageManagers: PACKAGE_MANAGERS }]],
+        remarkPlugins: [
+            remarkPlainTwoslash,
+            [remarkNpm, { persist: { id: 'package-manager' }, packageManagers: PACKAGE_MANAGERS }]
+        ],
         rehypeCodeOptions: {
             themes: { light: 'gruvbox-light-hard', dark: 'ayu-dark' },
             transformers: [

@@ -12,7 +12,7 @@ describe('Strict mode + required (v5)', () => {
     });
 
     afterEach(() => {
-        // reset strict so it doesn't leak into the next file and change get* semantics globally
+        // reset strict so it doesn't carry into the next test file
         Envapter.strict = false;
     });
 
@@ -32,6 +32,13 @@ describe('Strict mode + required (v5)', () => {
         it('uses the fallback when the value is whitespace-only', () => {
             Envapter.strict = true;
             expect(Envapter.get('WHITESPACE_ONLY', 'default')).to.equal('default');
+        });
+
+        it('reads a whitespace-only number as 0 outside strict mode and as the fallback under it', () => {
+            expect(Envapter.getNumber('WHITESPACE_ONLY', 5)).to.equal(0);
+
+            Envapter.strict = true;
+            expect(Envapter.getNumber('WHITESPACE_ONLY', 5)).to.equal(5);
         });
 
         it('returns undefined for missing keys under strict', () => {

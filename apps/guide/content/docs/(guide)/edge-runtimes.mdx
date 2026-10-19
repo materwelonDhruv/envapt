@@ -1,0 +1,119 @@
+---
+title: Edge runtimes
+description: Pass envapt the config that Vercel Edge, Fastly Compute, or Expo gives you, then read typed values with the same API you use on Node.
+---
+
+Vercel Edge gives you `process.env` as an object. Fastly Compute gives you a function that returns one value per call. Expo replaces each `process.env.EXPO_PUBLIC_*` reference with its value when it builds, and it can also hand you an `extra` object. On each of them you call `Envapter.useSource` before the first read, because the portable build they load [starts with no source](/docs/sources). Any other runtime on the portable build works the same way. [Compatibility](/docs/compatibility#portable-build-you-bind-a-source) lists the export condition each runtime resolves to.
+
+## Vercel Edge
+
+Vercel's bundler resolves the portable build through the `edge-light` condition. Vercel [recommends migrating to the Node.js runtime](https://vercel.com/docs/functions/runtimes/edge), but if you still use Edge, bind `process.env`.
+
+```ts twoslash title="lib/config.ts"
+import { Converters, Envapter, PortableSource } from 'envapt';
+// ---cut---
+Envapter.useSource(new PortableSource(process.env));
+
+export const config = Envapter.getRequiredAll(
+    {
+        API_BASE_URL: Converters.Url,
+        CACHE_TTL: Converters.Time
+    },
+    'camelCase'
+);
+```
+
+[`PortableSource`](/docs/sources#the-sources-envapt-ships) copies `process.env` when you construct it, so a variable you set after that isn't in the source. `config.cacheTtl` is a `number` of milliseconds, as `Converters.Time` always returns it.
+
+Vercel's Node.js functions load the node build, which binds `FileSource` on import and needs no `useSource` call.
+
+## Fastly Compute
+
+Fastly gives your code a function, `env` from `fastly:env`, that takes one name and returns its value. Pass that function to `useSource`. envapt calls it the first time you read each key and [caches the answer](/docs/sources#a-function-can-be-a-source). Add the `fastly` condition to your bundler's resolve conditions. Without it, an import from `envapt` resolves to the node build, which imports `node:*` modules.
+
+Fastly's types say `env()` works only while a request is being handled, and `useSource` calls `env('ENVAPT_DEBUG')` as it binds. If you bind at module scope, that call runs during initialization, so envapt never reads your `ENVAPT_DEBUG` setting. Bind inside the handler, once, and read there too.
+
+```ts twoslash title="src/index.ts"
+// @filename: fastly-env.d.ts
+declare module 'fastly:env' {
+    export function env(name: string): string | undefined;
+}
+interface FetchEvent extends Event {
+    readonly request: Request;
+    respondWith(response: Response | Promise<Response>): void;
+}
+declare function addEventListener(type: 'fetch', listener: (event: FetchEvent) => void): void;
+// @filename: index.ts
+import { env } from 'fastly:env';
+import { Converters, Envapter } from 'envapt';
+// ---cut---
+let bound = false;
+
+export function handle(request: Request): Response {
+    if (!bound) {
+        Envapter.useSource(env);
+        bound = true;
+    }
+    const { originUrl } = Envapter.getRequiredAll({ ORIGIN_URL: Converters.Url }, 'camelCase');
+    const target = new URL(new URL(request.url).pathname, originUrl);
+    return new Response(null, { status: 302, headers: { location: target.href } });
+}
+
+addEventListener('fetch', (event) => event.respondWith(handle(event.request)));
+```
+
+The `bound` flag keeps `handle` from rebuilding envapt's cache on every request. A missing `ORIGIN_URL` throws on the first request that reads it, since nothing reads before then.
+
+Set custom variables when you build, by passing `--env` to the `js-compute-runtime` command in your `build` script:
+
+```sh
+js-compute-runtime --env ORIGIN_URL=https://origin.example.com src/index.js bin/main.wasm
+```
+
+Fastly's [environment variables](https://www.fastly.com/documentation/reference/compute/ecp-env/) docs list the built-in ones, and none of them is `NODE_ENV`. Until you pass one of the [detection keys](/docs/environment#detecting-the-environment) with `--env`, `Envapter.environment` is `'development'`.
+
+## Expo and React Native
+
+Metro 0.82 and later read package exports by default and resolve the `react-native` condition, which selects the portable build.
+
+Expo recommends referencing `process.env.EXPO_PUBLIC_*` variables directly in your code ([Expo's environment variables](https://docs.expo.dev/guides/environment-variables/)). Expo replaces each reference that uses dot notation with its string when it builds the bundle. Bracket access, as in `process.env['EXPO_PUBLIC_API_URL']`, and destructuring aren't replaced. Metro defines `process.env` at runtime with only `NODE_ENV` in it, so `new PortableSource(process.env)` binds that one key. Reference each variable by name instead. Add `NODE_ENV` to the object too, because `Envapter.environment` reads it from the source.
+
+```ts twoslash title="src/config.ts"
+import { Converters, Envapter, PortableSource } from 'envapt';
+// ---cut---
+Envapter.useSource(
+    new PortableSource({
+        NODE_ENV: process.env.NODE_ENV,
+        API_URL: process.env.EXPO_PUBLIC_API_URL,
+        FEATURE_BETA: process.env.EXPO_PUBLIC_FEATURE_BETA
+    })
+);
+
+export const apiUrl = Envapter.getRequired('API_URL', Converters.Url);
+export const betaEnabled = Envapter.getBoolean('FEATURE_BETA', false);
+```
+
+A variable that is unset when you build is `undefined` here, and `PortableSource` leaves it out. `getBoolean` then returns its fallback, and `getRequired` throws.
+
+If your config already comes from `app.config.js`, put it under `extra`. `expo-constants` returns that object at runtime, so you bind the whole object.
+
+```ts twoslash title="src/config.ts"
+// @filename: expo-constants.d.ts
+declare module 'expo-constants' {
+    const Constants: { expoConfig: { extra?: Record<string, unknown> } | null };
+    export default Constants;
+}
+// @filename: config.ts
+import Constants from 'expo-constants';
+import { Converters, Envapter, PortableSource } from 'envapt';
+// ---cut---
+Envapter.useSource(new PortableSource(Constants.expoConfig?.extra ?? {}));
+
+export const apiUrl = Envapter.getRequired('API_URL', Converters.Url);
+```
+
+<Callout type="warn">
+
+Expo puts both the `extra` object and every `EXPO_PUBLIC_` value inside your app. Anyone who downloads the app can read them, so keep secrets and server-side keys out of both.
+
+</Callout>

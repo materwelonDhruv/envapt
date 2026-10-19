@@ -12,7 +12,7 @@ describe('Converters.Time — time-string fallbacks', () => {
 
     describe('valid time-string fallbacks', () => {
         class Strings extends Envapter {
-            // every TEST_TIME_STRING_FALLBACK_* key is absent from the fixture, so each read takes the string-fallback path
+            // every TEST_TIME_STRING_FALLBACK_* key is absent from the fixture
             @Envapt('TEST_TIME_STRING_FALLBACK_D', { converter: Converters.Time, fallback: '1d' })
             static readonly d: number;
 
@@ -25,13 +25,13 @@ describe('Converters.Time — time-string fallbacks', () => {
 
         it('parses d', () => expect(Strings.d).to.equal(24 * 60 * 60 * 1000));
         it('parses w', () => expect(Strings.w).to.equal(7 * 24 * 60 * 60 * 1000));
-        // a string fallback only has to name its unit
+        // a decimal works as long as the string has a unit
         it('parses a decimal value', () => expect(Strings.decimal).to.equal(1.5 * 60 * 60 * 1000));
     });
 
     describe('absent fallback', () => {
         class NoFallback extends Envapter {
-            // TEST_TIME_INVALID=5x in the fixture, and there is no fallback
+            // TEST_TIME_INVALID=5x in the fixture
             @Envapt('TEST_TIME_INVALID', { converter: Converters.Time })
             static readonly noFallback: number | undefined;
         }

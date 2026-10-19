@@ -23,8 +23,9 @@
             "ignoreDependencies": ["cloudflare"]
         },
         "apps/guide": {
-            "entry": ["app/**/{page,layout,route,not-found}.{ts,tsx}", "mdx-components.tsx"],
-            "project": ["app/**/*.{ts,tsx,css}", "components/**/*.{ts,tsx}", "lib/**/*.{ts,tsx}", "content/**/*.mdx"]
+            "entry": ["app/**/{page,layout,route,not-found}.{ts,tsx}", "mdx-components.tsx", "lib/typedoc-fumadocs.ts"],
+            "project": ["app/**/*.{ts,tsx,css}", "components/**/*.{ts,tsx}", "lib/**/*.{ts,tsx}", "content/**/*.mdx"],
+            "ignoreDependencies": ["typedoc-plugin-frontmatter"]
         }
     }
 }

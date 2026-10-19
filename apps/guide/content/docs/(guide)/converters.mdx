@@ -1,0 +1,233 @@
+---
+title: Converters
+description: Turn a raw environment string into a number, URL, duration, list, or any type you need, with a built-in token or your own function.
+---
+
+`process.env.CACHE_TTL` is the string `15m`. Turning it into milliseconds took a parser you wrote yourself. A flag and a [comma-separated list](#arrays) each took one too. A converter does that step. Pass one to `getAs`, or set it as the `converter` option on the [`@Envapt`](/docs/decorators) decorator, to make the read return the converted type. Without a converter, `Envapter.get` returns the string as it is.
+
+```ts twoslash
+import { Envapter, Converters } from 'envapt';
+// ---cut---
+const timeout = Envapter.getAs('REQUEST_TIMEOUT', Converters.Time, '30s');
+//    ^?
+
+const adminEmails = Envapter.getAs('ADMIN_EMAILS', (raw) => new Set(raw.split(',')));
+//    ^?
+```
+
+The third argument is the fallback, which the read returns when the variable is unset or its value can't convert. An [array](#arrays) read throws on a bad element. `timeout` is a `number` of milliseconds because `Converters.Time` converts `30s`. The fallback removes `undefined` from the type. `adminEmails` is a `Set` built by a function you wrote. It has no fallback, so it can be `undefined`. On Workers, the browser, and edge runtimes, every read needs a bound [source](/docs/sources) first.
+
+## Built-in tokens
+
+A token is one of the built-in converters on the `Converters` object. Each token in the table is a plain string underneath (`Converters.Port` is `'port'`). A mistyped string throws [`InvalidBuiltInConverter`](/docs/errors) (202) with the list of valid tokens. Use `Converters`, which gives you autocomplete and catches the typo before you run.
+
+{/* prettier-ignore-start */}
+
+| Token | Returns | Accepts |
+| --- | --- | --- |
+| `Converters.String` | `string` | any value, unchanged |
+| [`Converters.Number`](#number-integer-and-float) | `number` | what `Number(raw)` reads. `NaN` can't convert |
+| [`Converters.Integer`](#number-integer-and-float) | `number` | a safe integer |
+| [`Converters.Float`](#number-integer-and-float) | `number` | what `Number(raw)` reads, except a whitespace-only value. `NaN` can't convert |
+| `Converters.Boolean` | `boolean` | `1`/`yes`/`true`/`on` and `0`/`no`/`false`/`off`, in any case |
+| `Converters.BigInt` | `bigint` | what `BigInt(raw)` reads |
+| [`Converters.Json`](#json) | `JsonValue` | what `JSON.parse(raw)` reads |
+| [`Converters.Url`](#url) | `URL` | an absolute URL |
+| [`Converters.RegExp`](#regexp) | `RegExp` | `/pattern/flags`, or a whole string used as the pattern |
+| [`Converters.Date`](#date) | `Date` | a millisecond timestamp or a UTC ISO 8601 string |
+| [`Converters.Time`](#time-and-durations) | `number` | a duration like `30s`, returned as milliseconds |
+| `Converters.Port` | `number` | an integer from `0` to `65535` |
+| `Converters.Email` | `string` | an address matching the WHATWG email pattern, so `user@localhost` passes |
+
+{/* prettier-ignore-end */}
+
+```ts twoslash
+import { Envapter, Converters } from 'envapt';
+// ---cut---
+const port = Envapter.getAs('PORT', Converters.Port, 3000);
+//    ^?
+const apiUrl = Envapter.getAs('API_URL', Converters.Url);
+//    ^?
+```
+
+`port` has a fallback, so its type is `number`. `apiUrl` has none, so it's `URL | undefined`. The fallback has to be a valid value for its token, such as a real email, an in-range port, or a non-`NaN` number. An invalid one throws [`FallbackConverterTypeMismatch`](/docs/errors) (104) on every read of that key, whether the variable is set or not.
+
+### Number, Integer, and Float
+
+`Number` reads whatever JavaScript's `Number()` reads, including decimals, `0x` hex, and scientific notation. `Integer` accepts the same forms but requires a safe integer, so `3.9` and values larger than 2^53 - 1 can't convert. `Float` matches `Number` except for a whitespace-only value. `Number` reads it as `0`, while `Float`, `Integer`, and `Port` can't convert it, so pick `Float` for a decimal that a blank value must not turn into `0`. Read a count, a retry limit, or a pool size with `Integer`, because `Number` accepts `3.9`.
+
+```ts twoslash
+import { Envapter, Converters } from 'envapt';
+// ---cut---
+// MAX_CONNECTIONS=100
+const maxConnections = Envapter.getAs('MAX_CONNECTIONS', Converters.Integer); // 100
+
+// RETRIES="8abc" is not a clean integer, so the read returns the fallback
+const retries = Envapter.getAs('RETRIES', Converters.Integer, 3); // 3
+const sampleRate = Envapter.getAs('SAMPLE_RATE', Converters.Float, 1.0);
+```
+
+### JSON
+
+`Json` runs `JSON.parse`. The return type is `JsonValue`, the recursive union of every JSON-representable value, so every read needs narrowing before use. `null` is valid JSON, so `FEATURE_FLAGS=null` returns `null`, and a required read returns it too. To type the result yourself, pass the type as a generic. A [schema](/docs/standard-schema) is the other route, and it also checks the shape.
+
+```ts twoslash
+import { Envapter, Converters } from 'envapt';
+// ---cut---
+interface FeatureFlags {
+    beta?: boolean;
+}
+
+// FEATURE_FLAGS={"beta":true}
+const raw = Envapter.getAs('FEATURE_FLAGS', Converters.Json, {});
+//    ^?
+
+const flags = Envapter.getAs<FeatureFlags>('FEATURE_FLAGS', Converters.Json, {});
+//    ^?
+```
+
+`flags` is typed from your `FeatureFlags` interface, though envapt doesn't check that the JSON matches it. Without the `{}` fallback, the type is `FeatureFlags | undefined`, because an unset variable returns `undefined`.
+
+### URL
+
+`Url` builds a `URL`, which needs an absolute value. A relative path makes the constructor throw, but the read catches that and returns the fallback.
+
+### RegExp
+
+`RegExp` reads a `/pattern/flags` literal with flags from `g i m s u v y`. A value without the surrounding slashes becomes the whole pattern, with no flags.
+
+### Date
+
+`Date` accepts two forms. Any other string can't convert.
+
+```ts twoslash
+import { Envapter, Converters } from 'envapt';
+// ---cut---
+// RELEASED_AT=2024-01-15T10:30:00Z
+const released = Envapter.getAs('RELEASED_AT', Converters.Date);
+//    ^?
+
+// TRIAL_ENDS_AT=1705314600000
+const trialEnds = Envapter.getAs('TRIAL_ENDS_AT', Converters.Date);
+```
+
+`RELEASED_AT` uses the UTC ISO 8601 form, which must end in `Z` and may carry `.mmm` milliseconds. `TRIAL_ENDS_AT` uses the other form, an all-digit millisecond timestamp. A date-only string, a local time, and an offset like `+02:00` can't convert, so store dates in UTC.
+
+### Time and durations
+
+`Time` reads a duration and returns **milliseconds**. The raw value is a number with an optional unit. Without a unit, the number is milliseconds. The units are `ms`, `s`, `m` (minutes), `h`, `d`, and `w` (weeks). Decimals work too, as in `1.5h`.
+
+```ts twoslash
+import { Envapter, Converters } from 'envapt';
+// ---cut---
+// CACHE_TTL=15m
+const ttl = Envapter.getAs('CACHE_TTL', Converters.Time); // 900000
+const grace = Envapter.getAs('GRACE_PERIOD', Converters.Time, '1.5h');
+//    ^?
+const retryDelay = Envapter.getAs('RETRY_DELAY', Converters.Time, 5000);
+```
+
+The fallback is a number in milliseconds, like `5000` in `retryDelay`, or a time string with a unit, like `'1.5h'`. The exported `TimeFallback` type accepts both. A time string without a unit, such as `'90'`, throws [`MalformedTimeFallback`](/docs/errors) (105), though `CACHE_TTL=90` in the variable reads as 90 milliseconds. Pass the number `90` for that.
+
+## When a value can't convert
+
+If a token can't convert the value, the read returns the fallback, or `undefined` without one. If a custom function returns `undefined` or `null`, the read returns the fallback too. Neither case throws. Set `Envapter.debug = 'verbose'` to log which key fell back, as [Errors](/docs/errors) describes.
+
+```ts twoslash
+import { Envapter, Converters } from 'envapt';
+// ---cut---
+// PORT=80a
+const port = Envapter.getAs('PORT', Converters.Port, 3000); // 3000
+```
+
+`PORT=80a` isn't a port, yet the app starts on 3000. That suits a value the app can run without. For a value the app can't run without, a [required read](/docs/required-values) throws and reports the key.
+
+Some failures throw whether [strict mode](/docs/required-values#strict-mode) is on or off. Among them are a fallback that doesn't fit its token (104), a mistyped token string (202), and a failing [array element](#arrays) (206). An error thrown inside your own converter function propagates out of `getAs` unchanged. A required read reports it as an [issue](/docs/required-values#reading-the-error-without-leaking-values) on its error.
+
+## Arrays
+
+Without `Converters.array` you split the value, trim each piece, and skip the empty ones by hand. `Converters.array` splits the value on a delimiter and converts each element. Both options have defaults, so `Converters.array()` splits on commas and returns `string[]`.
+
+<TypeTable
+    type={{
+        of: {
+            type: 'token | (raw: string) => T',
+            description:
+                'Converts each element. Any token except Converters.Json and Converters.RegExp, or a function of your own.',
+            default: 'Converters.String'
+        },
+        delimiter: {
+            type: 'string',
+            description: 'The text to split the value on. An empty string throws MissingDelimiter (301).',
+            default: "','"
+        }
+    }}
+/>
+
+```ts twoslash
+import { Envapter, Converters } from 'envapt';
+// ---cut---
+// FEATURE_TAGS=beta, checkout, dark-mode
+const tags = Envapter.getAs('FEATURE_TAGS', Converters.array());
+//    ^?
+
+// PLUGIN_DIRS=/opt/app/plugins;/usr/local/share/app/plugins
+const pluginDirs = Envapter.getAs('PLUGIN_DIRS', Converters.array({ delimiter: ';' }));
+
+// CORS_ORIGINS=https://a.example.com,https://b.example.com
+const origins = Envapter.getAs('CORS_ORIGINS', Converters.array({ of: Converters.Url }));
+//    ^?
+
+// WORKER_PORTS=3000 3001 3002
+const ports = Envapter.getAs('WORKER_PORTS', Converters.array({ of: Converters.Port, delimiter: ' ' }));
+//    ^?
+```
+
+With strict mode off, envapt trims every element and skips the empty ones, so `FEATURE_TAGS` above yields three tags even with spaces after the commas. A value of only separators or spaces returns `[]`, and the fallback stays unused.
+
+An array fallback must be an array. If it isn't one, the read throws [`InvalidFallback`](/docs/errors) (101). If its elements have the wrong type, it throws [`ArrayFallbackElementTypeMismatch`](/docs/errors) (103). With `of: Converters.Time`, the elements must be all time strings with units or all numbers of milliseconds.
+
+The `of` option also takes a function, for an element shape the tokens can't produce:
+
+```ts twoslash
+import { Envapter, Converters } from 'envapt';
+// ---cut---
+const toUpstream = (raw: string) => {
+    const [host, port] = raw.split(':');
+    return { host, port: Number(port) };
+};
+
+// UPSTREAMS=10.0.0.1:8080,10.0.0.2:8080
+const upstreams = Envapter.getAs('UPSTREAMS', Converters.array({ of: toUpstream }));
+//    ^?
+```
+
+`toUpstream` gets one trimmed, non-empty element at a time.
+
+<Callout type="warn">
+
+An array read throws when an element fails, even if you passed a fallback. An element that fails its token throws [`ArrayElementConversionFailed`](/docs/errors) (206). If your function returns `undefined` or `null` for an element, that throws the same code. Under [strict mode](/docs/required-values#strict-mode), a trailing comma in a deployed `.env` throws [`EmptyArrayElement`](/docs/errors) (207) at read time, which can stop startup. A required read reports each of these as an issue on one `InvalidEnvValue`.
+
+</Callout>
+
+## Custom converters
+
+When no token fits, pass a `(raw: string) => T` function to `getAs`. envapt calls it only when the variable is set, with `${VAR}` [templates](/docs/templates) already expanded. A missing variable returns the fallback, or `undefined` without one.
+
+```ts twoslash
+import { Envapter } from 'envapt';
+// ---cut---
+const toSemver = (raw: string) => {
+    const match = /^(\d+)\.(\d+)\.(\d+)$/.exec(raw);
+    if (!match) return undefined;
+    return { major: Number(match[1]), minor: Number(match[2]), patch: Number(match[3]) };
+};
+
+// APP_VERSION=2.4.1
+const version = Envapter.getAs('APP_VERSION', toSemver);
+//    ^?
+```
+
+For a value like `2.4`, `toSemver` returns `undefined`. This read passes no fallback, so `version` is `undefined`. Returning `null` works the same way. The exported `ConverterFunction<T>` type describes such a function, for a converter you keep in its own file.
+
+A function that checks a rule, like a minimum version, returns `undefined` without saying which rule failed. A [schema](/docs/standard-schema) reports the failed rule.

@@ -1,29 +1,24 @@
 import Link from 'next/link';
 
 import { formatDate } from '@/lib/date';
-import { canonicalUrl, DEFAULT_OG_IMAGE, SITE_NAME } from '@/lib/site';
-import { blog } from '@/lib/source';
+import { pageMetadata } from '@/lib/metadata';
+import { DEFAULT_OG } from '@/lib/og/images';
+import { SITE_NAME } from '@/lib/site';
+import { blogPostsNewestFirst } from '@/lib/source';
 
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 
-// Next.js replaces the root layout's openGraph when a route sets its own, so the whole block is
-// redeclared here to keep og:url on /blog.
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
     title: 'Blog',
     description: `Release notes and tutorials from the ${SITE_NAME} project.`,
-    alternates: { canonical: canonicalUrl('/blog') },
-    openGraph: {
-        type: 'website',
-        siteName: SITE_NAME,
-        url: canonicalUrl('/blog'),
-        locale: 'en_US',
-        images: DEFAULT_OG_IMAGE
-    }
-};
+    path: '/blog',
+    image: DEFAULT_OG,
+    type: 'website'
+});
 
 export default function BlogIndex(): ReactNode {
-    const posts = blog.getPages().toSorted((a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime());
+    const posts = blogPostsNewestFirst();
 
     return (
         <main className="mx-auto w-full max-w-3xl px-4 py-16">

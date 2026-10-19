@@ -24,8 +24,8 @@ import type {
  * @example
  * ```ts
  * class Config {
- *   \@Envapt('ALLOWED_HOSTS', { fallback: ['localhost'], converter: (raw) => raw.split(' ') })
- *   static accessor allowedHosts: string[];
+ *   \@Envapt('ADMIN_EMAILS', { fallback: new Set<string>(), converter: (raw) => new Set(raw.split(',')) })
+ *   static accessor adminEmails: Set<string>;
  *
  *   \@Envapt('LOG_FILE', { fallback: '/var/log/app.log' })
  *   static accessor logFile: string;
@@ -55,8 +55,8 @@ export function Envapt<TFallback extends FallbackOnlyValue | undefined>(
  * @example
  * ```ts
  * class Config {
- *   \@Envapt('FEATURE_FLAGS', { converter: (raw) => raw.split('|').map((flag) => flag.trim()) })
- *   static accessor featureFlags: string[] | undefined;
+ *   \@Envapt('MAINTENANCE_UNTIL', { converter: (raw) => new Date(raw) })
+ *   static accessor maintenanceUntil: Date | undefined;
  *
  *   \@Envapt('JWT_SECRET', { converter: (raw) => Buffer.from(raw, 'base64'), required: true })
  *   static accessor jwtSecret: Buffer;
@@ -73,9 +73,9 @@ export function Envapt<TReturnType>(
 ): EnvaptAccessorDecorator<NonNullable<TReturnType>>;
 
 /**
- * A built-in or array converter with a fallback, or `required: true`. The fallback type tracks
- * the converter, so `Converters.Time` takes a number or time-string and `Converters.Url` takes
- * a `URL` instance.
+ * A built-in or array converter with a fallback, or `required: true`. The converter sets the
+ * fallback type, for example a number or time-string for `Converters.Time` and a `URL` instance
+ * for `Converters.Url`.
  *
  * @param key - Environment variable name(s) to load
  * @param options - Configuration options
@@ -85,10 +85,9 @@ export function Envapt<TReturnType>(
  * import { Converters } from 'envapt';
  *
  * class Config {
- *   \@Envapt('APP_PORT', { converter: Converters.Number, fallback: 3000 })
+ *   \@Envapt('APP_PORT', { converter: Converters.Port, fallback: 3000 })
  *   static accessor port: number;
  *
- *   // the Url fallback is a URL instance
  *   \@Envapt('APP_URL', { converter: Converters.Url, fallback: new URL('http://localhost:3000') })
  *   static accessor url: URL;
  *
@@ -125,7 +124,7 @@ export function Envapt<TConverter extends BuiltInConverter | ArrayOf>(
 /**
  * Required, no converter (raw string). Throws `MissingEnvValue` on first access when the env
  * value is missing or empty. Pairing `required: true` with `fallback` matches no overload at
- * compile time, and a call that bypasses the types throws `InvalidUserDefinedConfig` at runtime.
+ * compile time. A call that bypasses the types throws `InvalidUserDefinedConfig` at runtime.
  *
  * @param key - Environment variable name(s) to load
  * @param options - `{ required: true }`
@@ -141,10 +140,10 @@ export function Envapt<TConverter extends BuiltInConverter | ArrayOf>(
 export function Envapt(key: EnvKeyInput, options: { required: true }): EnvaptAccessorDecorator<string>;
 
 /**
- * A Standard Schema v1 adapter (zod, valibot, arktype, hand-rolled). Synchronous schemas only.
+ * A Standard Schema v1 schema (zod, valibot, arktype, or hand-written). Synchronous schemas only.
  * A `validate` that returns a Promise throws `InvalidUserDefinedConfig` at runtime. Pairing
- * `schema` with `converter` matches no overload at compile time, and a call that bypasses the
- * types throws `InvalidUserDefinedConfig` at runtime.
+ * `schema` with `converter` matches no overload at compile time. A call that bypasses the types
+ * throws `InvalidUserDefinedConfig` at runtime.
  * @public
  */
 export function Envapt<Schema extends StandardSchemaV1>(
@@ -160,8 +159,8 @@ export function Envapt<Schema extends StandardSchemaV1>(
 
 /**
  * Modern (TC39 Stage 3) accessor decorator that loads and converts an environment variable. The
- * decorated property uses the `accessor` keyword and needs no `experimentalDecorators` flag.
- * Instance accessors need the definite-assignment `!`. Static accessors do not.
+ * decorated property uses the `accessor` keyword and compiles without the `experimentalDecorators`
+ * flag. Instance accessors require the definite-assignment `!`. Static accessors do not.
  *
  * @param key - Environment variable name(s) to load
  * @param options - Converter, fallback, `required`, or `schema`. See the overloads.
@@ -171,7 +170,7 @@ export function Envapt<Schema extends StandardSchemaV1>(
  * import { Envapt, Converters } from 'envapt';
  *
  * class Config {
- *   \@Envapt('APP_PORT', { converter: Converters.Number, fallback: 3000 })
+ *   \@Envapt('APP_PORT', { converter: Converters.Port, fallback: 3000 })
  *   static accessor port: number;
  *
  *   \@Envapt('DATABASE_URL', { converter: Converters.Url, required: true })

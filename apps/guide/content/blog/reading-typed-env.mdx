@@ -10,7 +10,7 @@ updated: '2026-07-31'
 
 That line shows up in a lot of config files, and it has two bugs hiding in it.
 
-Misspell `PORT` in your `.env` and you don't get an error, you get `3000`, and you find out in production. Want to set `PORT=0` on purpose? You can't: `Number('0') || 3000` is `3000` too. The `|| fallback` can't tell "missing" from "zero," and `process.env` hands you `string | undefined` regardless, so every read sits one coercion away from a quiet bug.
+Misspell `PORT` in your `.env` and you get `3000` with no error, and you find out in production. Want to set `PORT=0` on purpose? You can't, because `Number('0') || 3000` is `3000` too. The `||` can't tell "missing" from "zero". And `process.env` types every value as `string | undefined` anyway, so you end up parsing each read yourself.
 
 I got tired of writing that coercion by hand and keeping it correct, so I built envapt. It reads from whatever source you bind. On Node, Bun, and Deno that is `process.env` and your `.env` files, bound on import. Off Node the source is pluggable, so the same reads work on Cloudflare Workers, in the browser, or over a secrets object you fetched at boot.
 
@@ -89,7 +89,7 @@ const port = Envapter.getRequired('PORT', z.coerce.number().int().min(1024));
 
 t3-env and znv do this job too, and do it well, but they're built on zod, where the validator is the dependency. envapt uses the Standard Schema interface, so which validator you bring is your call, and envapt itself adds nothing to your lockfile.
 
-`getRequired` runs the value through the schema and returns whatever the schema outputs, typed. A bad `PORT` throws on the `getRequired` line, with the validator's issues on the error. The hand-written version gives you a `NaN` that some later arithmetic turns into garbage. For an optional value, `getAs` takes the same schema plus a fallback, returned as-is on a missing value, so it has to already satisfy the type because the schema never sees it:
+`getRequired` runs the value through the schema and returns whatever the schema outputs, typed. A bad `PORT` throws on the `getRequired` line, with the validator's issues on the error. The hand-written version gives you a `NaN` that some later arithmetic turns into garbage. For an optional value, `getAs` takes the same schema plus a fallback, returned as-is on a missing value, so it has to already satisfy the type because the schema never runs on it:
 
 ```ts twoslash
 import { z } from 'zod/v4';
@@ -148,7 +148,7 @@ class Bot {
 }
 ```
 
-t3-env centralizes: you declare every variable up front in one `createEnv` call, validated once at startup. envapt puts the check on the field that uses the value. Centralizing is the right call when one app owns all its env. seedcord's config is spread across independently-built pieces (the `Bot` owns the token, a webhook subscriber owns its URL), so each piece validates its own variable where it belongs, and a malformed token throws the moment that field resolves. A central config module would surface the same error three files away from the code that cares.
+t3-env puts every variable in one `createEnv` call up front, validated once at startup. envapt puts the check on the field that uses the value. One central call is the right pick when a single app reads all its env. seedcord's config is spread across separately built pieces (the `Bot` reads the token, a webhook subscriber reads its URL), so each piece validates its own variable, and a malformed token throws the moment that field is read. A central config module would throw the same error three files away from the code that reads the token.
 
 On Node, Bun, and Deno, envapt reads `process.env` and the `.env` cascade with no setup. On Cloudflare Workers and in the browser there is no filesystem, so you bind the source yourself, a `PortableSource` over the Worker `env` binding or the config your bundler injects in the browser. The typed reads, converters, and validators are identical across all of them. The `.env` cascade and the file-only config APIs are the part that stays on Node.
 
@@ -169,8 +169,8 @@ That import reads the cascade and mirrors the result into `process.env`, the sam
 .env
 ```
 
-`${VAR}` references expand while the file is parsed, so `DATABASE_URL=postgres://${DB_HOST}/${DB_NAME}` resolves on its own. You don't strictly need that import, either. Drop it and the typed reads still work, reading the cascade directly. The import is only there for the libraries that read `process.env` straight, before envapt does.
+`${VAR}` references expand when you read the value, so `DATABASE_URL=postgres://${DB_HOST}/${DB_NAME}` resolves on its own. You don't strictly need that import, either. Remove it and the typed reads still work, reading the cascade directly. The import is only there for the libraries that read `process.env` straight, before envapt does.
 
-## So, finally
+## Try it
 
-What envapt gives you is typed reads from any source (`process.env`, a Worker binding, a browser bundle, or a secrets object you supply), a fallback that narrows the type and tells missing from zero, converters for the shapes that aren't strings, and validation through the schema you already wrote. It's on [npm](https://www.npmjs.com/package/envapt) and [JSR](https://jsr.io/@materwelon/envapt), and the source is on [GitHub](https://github.com/materwelonDhruv/envapt). Please feel free to ask questions, report bugs, or suggest features in the repo! I'm always open to feedback and contributions.
+So that's typed reads from any source (`process.env`, a Worker binding, a browser bundle, or a secrets object you supply), a fallback that narrows the type and tells missing from zero, converters for the shapes that aren't strings, and validation through the schema you already wrote. It's on [npm](https://www.npmjs.com/package/envapt) and [JSR](https://jsr.io/@materwelon/envapt), and the source is on [GitHub](https://github.com/materwelonDhruv/envapt). If something's missing or broken, open an issue there.

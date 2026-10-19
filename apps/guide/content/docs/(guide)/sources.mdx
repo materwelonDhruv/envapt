@@ -1,0 +1,179 @@
+---
+title: Sources
+description: Pass your platform's config object to envapt with useSource so typed reads work on Workers, the browser, and edge runtimes.
+---
+
+Node, Bun, and Deno keep config in a global, `process.env`, so envapt can read it the moment you import it. Other platforms, such as a Cloudflare Worker, a browser bundle, or an edge function, give your code an object instead (the Worker `env`, Vite's `import.meta.env`). envapt can't reach that object, so you pass it to `useSource`.
+
+A **source** is what envapt reads variables from: an object with a `readVars()` method, a function that looks up one key, or the result of `merge`. To **bind** one, call `Envapter.useSource(source)` before your first read. The cost is one line per app. The binding is process-wide, so every read after it, in every module, uses that source.
+
+{/* prettier-ignore-start */}
+
+| Build | Runs on | At import | `.env` file APIs |
+| --- | --- | --- | --- |
+| **Node build** | Node, Bun, Deno | binds a `FileSource` | work, see [.env files on Node](/docs/env-files) |
+| **Portable build** | [Workers](/docs/workers), [edge runtimes](/docs/edge-runtimes), the [browser](/docs/browser), React Native | binds nothing | warn once and do nothing, or throw when `fileApiMode` is `'throw'` |
+
+{/* prettier-ignore-end */}
+
+The `exports` conditions in `package.json` pick the build, and [Compatibility](/docs/compatibility) lists which build each runtime gets. The portable build starts with an unbound source whose `readVars()` throws, because envapt has no object to read on those platforms until you pass one. On the node build, call `useSource` only to replace the default source. On the portable build, call it once, in the module that exports your values.
+
+## No environment source is bound
+
+A read on the portable build before `useSource` throws `EnvaptError` with code `NoSourceBound` (307). Reading `Envapter.environment` counts as a read. Setting `Envapter.strict` or pinning `Envapter.environment` before binding works, and `useSource` applies the setting when it builds the [cache](#when-values-are-read).
+
+Imports run before the module body. If a module reads at load time, it can run before your `useSource` call. Put the bind in the module that exports your values, and import that module wherever you read.
+
+## The sources envapt ships
+
+{/* prettier-ignore-start */}
+
+| Source | Reads | Files | Where |
+| --- | --- | --- | --- |
+| `FileSource` | a copy of `process.env`, plus the [`.env` cascade](/docs/env-files#which-files-load) (the shell wins by default) | yes | node build only, bound for you |
+| `PortableSource` | the object you pass | no | every runtime |
+
+{/* prettier-ignore-end */}
+
+`FileSource` is exported by the node build only, so the samples below that import it are for Node, Bun, and Deno.
+
+`PortableSource` copies the object when you construct it, so a later change to the object leaves envapt's copy as it was. To change a value, bind a new `PortableSource`. It JSON-stringifies any value that isn't a string, so a Worker `vars` entry holding an object reaches [`Converters.Json`](/docs/converters#json) as JSON text. A `null` becomes the string `'null'`, and a function or `undefined` is skipped. A `BigInt` or a circular object makes the constructor throw a `TypeError`.
+
+```ts twoslash
+import { Envapter, PortableSource, Converters } from 'envapt';
+// ---cut---
+declare const env: Record<string, unknown>; // the object the platform hands you
+Envapter.useSource(new PortableSource(env));
+
+const upstream = Envapter.getAs('UPSTREAM_URL', Converters.Url);
+//    ^?
+const cacheTtl = Envapter.getAs('CACHE_TTL', Converters.Time, '5m');
+//    ^?
+```
+
+`upstream` is `URL | undefined` because the call has no fallback. `cacheTtl` is a `number` of milliseconds because `Converters.Time` converts the fallback `'5m'`.
+
+## Any object can be a source
+
+A source is anything with a `readVars()` method that returns the variables as strings. That covers a secrets payload or an RPC response, with no new class to write. To fetch such a payload from a secrets manager, see [Secret stores](/docs/secret-stores).
+
+```ts twoslash
+import { Envapter, Converters } from 'envapt';
+
+import type { Source } from 'envapt';
+// ---cut---
+declare const secrets: Record<string, string>; // fetched from your secrets manager
+const source: Source = { readVars: () => secrets };
+Envapter.useSource(source);
+
+const apiBase = Envapter.getAs('API_BASE_URL', Converters.Url);
+const poolSize = Envapter.getAs('DB_POOL_SIZE', Converters.Integer, 10);
+```
+
+<TypeTable
+    type={{
+        readVars: { type: '() => Record<string, string>', description: 'The variables envapt copies when it builds its cache.', required: true },
+        readVar: { type: '(key: string) => string | undefined', description: 'Looks up one key that readVars() did not return.' },
+        supportsFiles: { type: 'boolean', description: 'Set true, together with the four file members below, to make envapt load the .env cascade. Default false.' },
+        readFile: { type: '(path: string, encoding: string) => string | undefined', description: 'With supportsFiles: true. Returns the file text, or undefined when it is missing.' },
+        resolvePath: { type: '(baseDir: string, candidate: string) => string', description: 'With supportsFiles: true. Joins a relative .env path onto baseDir.' },
+        normalizeBaseDir: { type: '(value: string | URL) => string', description: 'With supportsFiles: true. Turns a directory path or module URL into a directory path.' },
+        writeVars: { type: '(vars: Record<string, string>) => void', description: 'With supportsFiles: true. Receives the keys that syncProcessEnv writes out.' }
+    }}
+/>
+
+Only `readVars` is required. Set `supportsFiles: true` when your runtime has files envapt should read, and supply `readFile`, `resolvePath`, `normalizeBaseDir`, and `writeVars`. Of the sources envapt ships, `FileSource` sets it.
+
+### A function can be a source
+
+Some stores return one key at a time and can't list their keys. Pass a `(key) => string | undefined` function to `useSource` to have envapt call it the first time you read each key. A function is shorthand for a source whose `readVars()` returns `{}` and whose `readVar` is your function.
+
+```ts twoslash
+import { Envapter, Converters } from 'envapt';
+// ---cut---
+declare const store: { get(key: string): string | undefined }; // a keyed config store
+Envapter.useSource((key) => store.get(key));
+
+const region = Envapter.getRequired('REGION', Converters.String);
+```
+
+If the store has no `REGION` on the first read, `getRequired` throws `MissingEnvValue` (305). Adding `REGION` to the store afterwards changes nothing until the cache rebuilds, because envapt stores the miss in its cache (see [When values are read](#when-values-are-read)).
+
+## Combining sources
+
+`useSource` binds one source. Without `merge`, layering fetched secrets over the `.env` files meant writing the secrets into `process.env` first. `merge` joins several sources into one. If several sources return the same key from `readVars()`, the last source wins.
+
+```ts twoslash
+import { Envapter, FileSource, PortableSource, merge, Converters } from 'envapt';
+// ---cut---
+declare const secrets: Record<string, string>; // fetched and awaited
+Envapter.useSource(merge(new FileSource(), new PortableSource(secrets)));
+
+const dbUrl = Envapter.getAs('DATABASE_URL', Converters.Url);
+```
+
+Here `merge(new FileSource(), ...)` keeps the `.env` cascade and makes the secrets win over it, without writing to `process.env`. A `DATABASE_URL` in `secrets` wins over the same key in `process.env` and in every `.env` file, as long as `override` stays off (see [File options](/docs/env-files#file-options)).
+
+`FileSource` exists only on the node build. On Workers, the browser, and edge runtimes, merge two `PortableSource`s:
+
+```ts twoslash
+import { Envapter, PortableSource, merge, Converters } from 'envapt';
+// ---cut---
+declare const env: Record<string, unknown>; // the Worker env
+declare const secrets: Record<string, string>; // fetched and awaited
+Envapter.useSource(merge(new PortableSource(env), new PortableSource(secrets)));
+
+const apiKey = Envapter.getRequired('API_KEY', Converters.String);
+```
+
+A member can also be a `(key) => string | undefined` function. Wherever it appears in the list, it supplies a value only for keys that no other member's `readVars()` returned.
+
+```ts twoslash
+import { Envapter, FileSource, merge, Converters } from 'envapt';
+// ---cut---
+declare const store: { get(key: string): string | undefined };
+Envapter.useSource(merge(new FileSource(), (key) => store.get(key)));
+
+const redisUrl = Envapter.getAs('REDIS_URL', Converters.Url);
+```
+
+`merge` throws `InvalidMergedSource` (308) if you pass no members, or if two members set `supportsFiles: true`, because the cascade has to come from one place.
+
+## When values are read
+
+If a test setup sets `process.env.API_URL` after envapt was imported, the next read still returns the old value. envapt keeps a **cache**, the variables it builds from the bound source and holds until the next rebuild. If the cache lacks a key, envapt calls the source's `readVar` once for that key.
+
+Binding builds the cache, and each read goes through it:
+
+```txt
+Envapter.useSource(source), or importing envapt on Node
+├─ source.readVars() .......... copied into the cache
+└─ .env cascade ............... loaded only when supportsFiles is true
+
+Envapter.getAs('DATABASE_URL', Converters.Url)
+├─ cache lookup .................. or source.readVar('DATABASE_URL') when the cache lacks it
+├─ ${VAR} expansion .............. happens on read, see Templates
+└─ converter or schema ........... gives a URL, or the fallback
+```
+
+These rules decide what the cache holds.
+
+1. **The cache builds when you bind.** `useSource` builds it when you call it, and on the node build importing envapt does the same. The `.env` files are read then.
+2. **`source.readVars()` runs once per cache build.** `FileSource` copies `process.env` at that point, so if code sets `process.env.FEATURE_FLAGS = 'on'` afterwards, the cache keeps the old value. To make envapt read such a change, bind again with `Envapter.useSource(new FileSource())`.
+3. **Some calls rebuild the cache.** The rebuild runs inside the call, so a failing rebuild throws at the assignment.
+
+{/* prettier-ignore-start */}
+
+| Call that rebuilds the cache | On the portable build |
+| --- | --- |
+| `Envapter.useSource(source)` | works |
+| [`Envapter.strict = true`](/docs/required-values#strict-mode) | works. Before a source is bound, it stores the setting and the bind rebuilds |
+| [`Envapter.environment = 'staging'`](/docs/environment#pinning-the-environment) | works. Before a source is bound, it stores the pin and the bind rebuilds |
+| `Envapter.envPaths`, `baseDir`, `envFileOptions` ([file APIs](/docs/env-files)) | warn once, do nothing |
+| `Envapter.configureProfiles(...)`, `resetPaths()` ([file APIs](/docs/env-files)) | warn once, do nothing |
+
+{/* prettier-ignore-end */}
+
+[Compatibility](/docs/compatibility#file-apis-and-fileapimode) covers when the file APIs throw `FileApiUnsupported` (306) in place of the warning. On the node build, if you bind a source that doesn't read files, `envPaths`, `baseDir`, and `configureProfiles` throw `FileApiUnsupported`. `envFileOptions` and `resetPaths` still rebuild the cache.
+
+A rebuild also clears the converted values of [decorated fields](/docs/decorators), because envapt stores them in this cache. After a rebuild, envapt converts the value again the next time you access a field you already read.

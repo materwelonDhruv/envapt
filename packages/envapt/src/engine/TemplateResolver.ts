@@ -15,7 +15,7 @@ export class TemplateResolver {
         const out = value.replace(this.TEMPLATE_REGEX, (template) => {
             const variable = template.slice(2, -1);
 
-            if (stack.has(variable)) return template; // cycle, preserve
+            if (stack.has(variable)) return template; // a cycle keeps the placeholder
 
             const raw = this.getRaw(variable);
             if (raw === undefined || isMissing(raw)) {
@@ -26,7 +26,7 @@ export class TemplateResolver {
                     );
                 }
                 debugWarn(`unresolved template \${${variable}} preserved as literal`);
-                return template; // missing or empty, preserve
+                return template;
             }
 
             const resolved = this.resolveTemplate(variable, raw, new Set(stack));

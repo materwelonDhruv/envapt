@@ -1,0 +1,153 @@
+---
+title: Validating with a schema
+description: Check an environment value against a zod, valibot, or arktype schema and get the schema's output type back, with the failed rule in the error's issues.
+---
+
+A converter that can't convert returns `undefined`, with no reason attached. A rule like "an integer from 1 to 100" became an `if` inside your function, so a `DATABASE_POOL_SIZE` outside the range returned the fallback without saying which rule failed. A schema carries the rule itself. Pass one to [`getAs`](/docs/envapter#other-types-with-getas) to have envapt validate the value, return the schema's output type, and throw with the schema's own issues if the value fails. An issue is one `{ message, path }` entry, and envapt starts every `path` with the env key. [`getRequired`, `getRequiredAll`](/docs/required-values), and the decorator's `schema` option take a schema too.
+
+Zod, valibot, arktype, and others implement [Standard Schema](https://standardschema.dev), a shared interface under the key `~standard`. envapt reads that interface and imports none of them, so the validator is the only package you install. If a token like `Converters.Port` already covers the rule, you don't need a schema.
+
+<Tabs items={['zod', 'valibot', 'arktype']}>
+<Tab value="zod">
+
+```ts twoslash
+import { z } from 'zod/v4';
+import { Envapter } from 'envapt';
+// ---cut---
+const poolSize = Envapter.getAs('DATABASE_POOL_SIZE', z.coerce.number().int().min(1).max(100));
+//    ^?
+```
+
+</Tab>
+<Tab value="valibot">
+
+```ts
+import * as v from 'valibot';
+import { Envapter } from 'envapt';
+
+const poolSize = Envapter.getAs(
+    'DATABASE_POOL_SIZE',
+    v.pipe(v.string(), v.digits(), v.transform(Number), v.minValue(1), v.maxValue(100))
+);
+```
+
+</Tab>
+<Tab value="arktype">
+
+```ts
+import { type } from 'arktype';
+import { Envapter } from 'envapt';
+
+const poolSize = Envapter.getAs('DATABASE_POOL_SIZE', type('string.integer.parse').to('1 <= number.integer <= 100'));
+```
+
+</Tab>
+</Tabs>
+
+`poolSize` is `number | undefined` because an unset `DATABASE_POOL_SIZE` returns `undefined`. A fallback as the third argument removes that case. Your schema receives the value as a string, so each one turns it into a number (`z.coerce.number()`, `v.transform(Number)`, `string.integer.parse`).
+
+## The schema must be synchronous
+
+Every reader returns its value directly, and a decorated field is a getter. Neither can wait on a Promise. If a schema's `validate` returns only a Promise, TypeScript rejects the call. If you bypass the type check, the read throws `InvalidUserDefinedConfig` (302). The cost is that a check needing I/O, like asking a database whether a tenant id exists, can't run in the schema. Run that check in your own code once config has loaded.
+
+```ts twoslash
+// @errors: 2769
+import { Envapter } from 'envapt';
+// ---cut---
+const tenantRule = {
+    '~standard': {
+        version: 1 as const,
+        vendor: 'app',
+        validate: async (value: unknown) => ({ value: String(value) })
+    }
+};
+
+const tenantId = Envapter.getAs('TENANT_ID', tenantRule);
+```
+
+`tenantRule`'s `validate` is `async`, so it returns a Promise. The last line fails to compile.
+
+Zod types `validate` as returning a result or a Promise of a result, so that type passes the check and the failure is the 302 when the read runs. An async `refine` throws 302. A `.transform` that throws does too, because zod returns a rejected Promise for the throw. The 302 doesn't carry your original error. Set `Envapter.debug = 'warn'` to log the error the schema threw.
+
+## Fallbacks skip the schema
+
+A missing or empty value returns the fallback, or `undefined` without one. The schema runs only on a value that is set, so the fallback never goes through it. A default on the schema, like zod's `.default()`, never applies either. TypeScript checks the fallback's type against the schema's output, but nothing checks the value at runtime. A token's fallback is different, because envapt checks it against the [token](/docs/converters).
+
+```ts twoslash
+import { z } from 'zod/v4';
+import { Envapter } from 'envapt';
+// ---cut---
+const poolSize = Envapter.getAs('DATABASE_POOL_SIZE', z.coerce.number().int().min(1).max(100), 500);
+//    ^?
+```
+
+`500` is above the schema's `max(100)`, yet an unset `DATABASE_POOL_SIZE` returns it, so write a fallback that already passes. If a value is set and fails the schema, the read throws `SchemaValidationFailed` (208), even when you pass a fallback.
+
+## What throws
+
+{/* prettier-ignore-start */}
+
+| `getAs` with a schema, when | Code | Carries |
+| --- | --- | --- |
+| the schema reports issues | [`SchemaValidationFailed`](/docs/errors) (208) | the issues |
+| the schema's `validate` throws | [`SchemaThrew`](/docs/errors) (209) | the original error on `.cause` |
+| `validate` returns a Promise | [`InvalidUserDefinedConfig`](/docs/errors) (302) | a message that the schema must be synchronous |
+
+{/* prettier-ignore-end */}
+
+A 208 message lists only the key, because an issue message can quote the value. Valibot's message reads `Received "abc"`, and arktype's ends in `(was "abc")`. A 209 message includes the text of the error your schema threw, which can quote the value too. [Required values](/docs/required-values#reading-the-error-without-leaking-values) shows how to log a failure without the values.
+
+A `${VAR}` [template](/docs/templates) expands before validation, so the schema receives the expanded value.
+
+To require the value, or to check a group of variables in one call, pass the schema to `getRequired` or `getRequiredAll`. [Required values](/docs/required-values) covers both. In `getRequired`, `getRequiredAll`, and a decorator with `required: true`, a failing schema throws `InvalidEnvValue` (210), and so does a schema whose `validate` throws, with the message as an issue. A schema that returns a Promise still throws 302.
+
+## In a decorator
+
+[`@Envapt`](/docs/decorators) takes the schema through its `schema` option. Its `converter` option already accepts functions, and an arktype type is a function, so a schema in `converter` would look like a custom converter. envapt checks for a schema there and throws.
+
+{/* prettier-ignore-start */}
+
+| If you | envapt throws |
+| --- | --- |
+| put a schema in `converter` | [`InvalidUserDefinedConfig`](/docs/errors) (302) |
+| set `converter` and `schema` together | [`InvalidUserDefinedConfig`](/docs/errors) (302) |
+| pass a schema as `Converters.array({ of })`, in a decorator or any reader | [`InvalidArrayConverterType`](/docs/errors) (201) |
+| set `required: true` and the schema rejects the value | [`InvalidEnvValue`](/docs/errors) (210) |
+
+{/* prettier-ignore-end */}
+
+```ts twoslash
+import { z } from 'zod/v4';
+import { Envapt, Envapter } from 'envapt';
+// ---cut---
+class Config extends Envapter {
+    @Envapt('LOG_LEVEL', { schema: z.enum(['debug', 'info', 'warn', 'error']), fallback: 'info' })
+    static accessor logLevel: 'debug' | 'info' | 'warn' | 'error';
+}
+```
+
+## Any conformant validator, or none
+
+Any synchronous validator with a `~standard` interface works, including one you write by hand. A team with its own validation rules can write one by hand, as in the sample below, and get the list of issues that a converter can't produce. Annotate the object as `StandardSchemaV1<Input, Output>` to give the read the output type.
+
+```ts twoslash
+import { Envapter } from 'envapt';
+import type { StandardSchemaV1 } from 'envapt';
+// ---cut---
+const positiveInt: StandardSchemaV1<string, number> = {
+    '~standard': {
+        version: 1,
+        vendor: 'app',
+        validate(value) {
+            const n = Number(value);
+            if (Number.isInteger(n) && n > 0) return { value: n };
+            return { issues: [{ message: 'must be a positive integer' }] };
+        }
+    }
+};
+
+const maxConnections = Envapter.getAs('MAX_CONNECTIONS', positiveInt, 10);
+//    ^?
+```
+
+`validate` returns `{ value }` on success and `{ issues }` on failure. `maxConnections` is a `number` because the schema's output is a `number`.

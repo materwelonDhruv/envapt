@@ -1,0 +1,118 @@
+---
+title: .env file syntax
+description: 'Write .env values with quotes, # characters, or multi-line text so envapt parses each one the way you meant it.'
+---
+
+envapt reads [`.env` files](/docs/env-files) with its own parser. The parser runs whenever the bound source reads files, which on the [node build](/docs/sources) is `FileSource`.
+
+## Keys and values
+
+Each setting is a `KEY=value` line. An optional `export` prefix is allowed because it lets you load the same file in a shell with the `source` command.
+
+```dotenv
+APP_NAME=billing-api
+export PORT=3000
+```
+
+These rules apply to every line:
+
+- A key is letters, digits, and underscores, and doesn't start with a digit.
+- A line with any other key, such as `my-key=1`, is skipped without a warning.
+- Whitespace before the key, around `=`, and after an unquoted value is ignored.
+- If a file repeats a key, the last line wins.
+
+An empty value parses to an empty string, which [`Envapter.get`](/docs/envapter) and the other read methods treat as [missing](/docs/envapter#fallbacks-and-missing-values).
+
+```dotenv
+EMPTY=
+```
+
+The line still sets `EMPTY`, so a file with lower priority can't supply it. A `PORT=` in `.env.local` keeps the `PORT=3000` in `.env` from loading, and the read finds `PORT` missing. Delete the `PORT=` line to let `.env` supply the value.
+
+The parser stores values literally, including `${VAR}`. envapt [expands it](/docs/templates) when you read the value.
+
+## Comments
+
+A line whose first non-whitespace character is `#` is a comment. An inline `#` also starts a comment when it follows whitespace, or when it is the first character of an unquoted value. A `#` in the middle of a value, with no whitespace before it, is kept.
+
+```dotenv
+# full-line comment
+HOST=localhost # inline comment, stripped
+TAG=build#42 # the # in build#42 has no whitespace before it
+COLOR="#ff0000" # quoted, so the # is kept
+```
+
+`TAG` reads as `build#42` and `COLOR` reads as `#ff0000`. Without the quotes, `COLOR=#ff0000` reads as an empty string, because a `#` at the start of an unquoted value starts a comment.
+
+## Quoting
+
+You can write a value inside single quotes, double quotes, or backticks. The quote style decides whether envapt decodes escapes.
+
+{/* prettier-ignore-start */}
+
+| Quote | Escapes | Use it for |
+| --- | --- | --- |
+| `"double"` | decodes `\n` `\r` `\t` `\\` `\"` | values where you want `\n` to become a real newline |
+| `'single'` | none, fully literal | values that should stay exactly as written |
+| `` `backtick` `` | none, fully literal | same as single, when the value contains `'` |
+
+{/* prettier-ignore-end */}
+
+Inside double quotes, any other backslash sequence, such as `\$`, stays as written.
+
+## Multi-line values
+
+A quoted value can span several lines: one opening quote, the content, one closing quote. Use this for a certificate or private key.
+
+```dotenv
+TLS_CERT="-----BEGIN CERTIFICATE-----
+MIIBkTCB+wIJAKHH...
+...more base64...
+-----END CERTIFICATE-----"
+```
+
+You read it back as one string, with its newlines:
+
+```ts twoslash
+import { Envapter } from 'envapt';
+// ---cut---
+const cert = Envapter.get('TLS_CERT');
+//    ^?
+```
+
+`cert` is `string | undefined` because the call has no fallback.
+
+With double quotes you can keep the value on one line and write `\n` between segments to have envapt decode them. With single quotes or backticks the line breaks must be real, because a literal `\n` stays literal.
+
+<Callout type="warn">
+
+A quote with no closing quote takes the following lines into the value. It stops at the next line that contains the same quote character, or at the end of the file if no line does. Take this file:
+
+```dotenv
+A="abc
+B=2
+```
+
+`A` holds both lines, and `B` is never set.
+
+</Callout>
+
+## Unescaped inner quotes
+
+Like dotenv, envapt ends a quoted value at the last matching quote on the line, so inner quotes need no escaping.
+
+```dotenv
+FIREBASE_CONFIG="{"projectId":"billing-api","region":"eu"}"
+```
+
+`FIREBASE_CONFIG` reads as the JSON text from the fence. Use the [`Json` converter](/docs/converters#json) to parse it.
+
+Double quotes also decode `\n` and `\"`, which changes JSON that contains either. Wrap such JSON in single quotes.
+
+This works on a single line only. envapt closes a value at the last matching quote on the first line that has one. If a value spans lines and holds inner quotes, it ends at the last quote on that first line, and the text after it is discarded. A trailing comment that contains the same quote character joins the value. For example:
+
+```dotenv
+A="a" # it's "x"
+```
+
+`A` reads as `a" # it's "x`. A trailing comment without that quote isn't part of the value.

@@ -1,10 +1,16 @@
+import { ComponentEmbed } from 'discord-component-embed/react';
 import { DocsBody } from 'fumadocs-ui/page';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
+import { JsonLd } from '@/components/JsonLd';
+import { PreviewCard } from '@/components/PreviewCard';
 import { formatDate } from '@/lib/date';
-import { canonicalUrl, DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL } from '@/lib/site';
+import { blogPreview } from '@/lib/linkPreview';
+import { pageMetadata } from '@/lib/metadata';
+import { blogOgImage } from '@/lib/og/images';
 import { blog } from '@/lib/source';
+import { blogJsonLd } from '@/lib/structuredData';
 import { getMDXComponents } from '@/mdx-components';
 
 import type { Metadata } from 'next';
@@ -19,25 +25,13 @@ export default async function Page(props: { params: Promise<{ slug: string }> })
     if (!page) notFound();
 
     const MDXContent = page.data.body;
-    const url = canonicalUrl(page.url);
-    const structuredData = {
-        '@context': 'https://schema.org',
-        '@type': 'BlogPosting',
-        headline: page.data.title,
-        description: page.data.description,
-        datePublished: page.data.date,
-        dateModified: page.data.updated,
-        author: { '@type': 'Person', name: page.data.author },
-        url,
-        isPartOf: { '@type': 'WebSite', name: SITE_NAME, url: SITE_URL }
-    };
 
     return (
         <main className="mx-auto w-full max-w-3xl px-4 py-16">
-            <script
-                type="application/ld+json"
-                dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, '\\u003c') }}
-            />
+            <ComponentEmbed>
+                <PreviewCard {...blogPreview(page)} />
+            </ComponentEmbed>
+            <JsonLd data={blogJsonLd(page)} />
             <Link href="/blog" className="font-mono text-sm text-fd-muted-foreground hover:text-fd-foreground">
                 ← Blog
             </Link>
@@ -63,18 +57,11 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
     const { slug } = await props.params;
     const page = blog.getPage([slug]);
     if (!page) notFound();
-    const url = canonicalUrl(page.url);
-    return {
+    return pageMetadata({
         title: page.data.title,
         description: page.data.description,
-        alternates: { canonical: url },
-        openGraph: {
-            type: 'article',
-            siteName: SITE_NAME,
-            url,
-            locale: 'en_US',
-            title: page.data.title,
-            images: DEFAULT_OG_IMAGE
-        }
-    };
+        path: page.url,
+        image: blogOgImage(slug, page.data.title),
+        type: 'article'
+    });
 }

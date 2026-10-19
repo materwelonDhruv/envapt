@@ -1,0 +1,165 @@
+---
+title: Compatibility
+description: Look up the Node, Bun, and Deno versions envapt needs, which build your runtime loads, and the TypeScript settings that let you import it.
+---
+
+envapt is ESM only and has [two builds](/docs/sources). The node build imports `node:*` modules, binds a [`FileSource`](/docs/sources#the-sources-envapt-ships) when you import it, and reads `.env` files. The portable build doesn't import from `node:`, so it runs on Workers and in the browser, but it binds nothing until you call [`useSource`](/docs/sources).
+
+## Engine versions
+
+{/* prettier-ignore-start */}
+
+| Runtime | Minimum | Tested in CI |
+| --- | --- | --- |
+| Node | `22.23.3` | 22, 24, and 26 on Linux. 22 on macOS and Windows |
+| Bun | `1.3.11` | 1.4.x |
+| Deno | `2.5` | 2.9.x |
+| Cloudflare Workers | none set | workerd |
+| Browser | none set | Chromium |
+
+{/* prettier-ignore-end */}
+
+## Install
+
+[Quick Start](/docs/quick-start) has the command for npm, pnpm, yarn, and bun. Deno can install from either registry.
+
+{/* prettier-ignore-start */}
+
+| Registry | Deno command | Entries |
+| --- | --- | --- |
+| npm | `deno add npm:envapt` | `envapt`, `envapt/legacy`, `envapt/config` |
+| JSR | `deno add jsr:@materwelon/envapt` | `@materwelon/envapt`, `@materwelon/envapt/legacy` |
+
+{/* prettier-ignore-end */}
+
+JSR doesn't have export conditions, and its `@materwelon/envapt` entry is the node build. It also doesn't have the `config` entry. For Workers or the browser, install from npm so the conditions can select the portable build.
+
+## Binding by runtime
+
+The `exports` conditions in `package.json` select the build, so you import from `envapt` on every npm install.
+
+### Node build, binds automatically
+
+The node build's `FileSource` reads `process.env` plus the [`.env` cascade](/docs/env-files), so the first read works with no setup.
+
+{/* prettier-ignore-start */}
+
+| Runtime | Condition | Reads | Note |
+| --- | --- | --- | --- |
+| Node and Bun | `node` | `process.env` and the `.env` cascade | |
+| Deno | `deno` | `process.env` and the `.env` cascade | |
+| Deno Deploy | `deno` | dashboard variables, which Deno also puts on `process.env` | no `.env` files on disk |
+
+{/* prettier-ignore-end */}
+
+### Portable build, you bind a source
+
+Before the first read, bind a source built from the object or function the platform gives you. If you read before then, envapt throws [`NoSourceBound`](/docs/errors) (307), whatever `fileApiMode` is.
+
+{/* prettier-ignore-start */}
+
+| Runtime | Condition | Config comes from | Note |
+| --- | --- | --- | --- |
+| [Cloudflare Workers](/docs/workers) | `workerd` | the `env` object | bind once at module load |
+| [Vercel Edge](/docs/edge-runtimes) | `edge-light` | `process.env`, which holds your variables at runtime there | Vercel's Node.js runtime uses the node build |
+| [Fastly Compute](/docs/edge-runtimes) | `fastly` | `env()`, one key at a time | pass `env` to `useSource`, and add `fastly` to your bundler's conditions |
+| [Expo and React Native](/docs/edge-runtimes) | `react-native` | `process.env.EXPO_PUBLIC_*` references Expo replaces at build time, or `Constants.expoConfig.extra` | at runtime `process.env` holds only `NODE_ENV`. Metro must have package exports on, which it does by default from Metro 0.82 |
+| [Browser](/docs/browser) | `browser` | the object your bundler injects, such as `import.meta.env` | the values ship in the client bundle, so bind only public ones |
+| Web workers | `worker` | an object you pass to `new PortableSource(...)` | no `process.env` to read |
+
+{/* prettier-ignore-end */}
+
+### Which condition selects which build
+
+{/* prettier-ignore-start */}
+
+| Conditions your tool sets | Build |
+| --- | --- |
+| any of `workerd`, `edge-light`, `fastly`, `worker`, `browser`, `react-native` | portable |
+| `deno`, `node`, or none of the above | node |
+
+{/* prettier-ignore-end */}
+
+- The portable conditions come first in the `exports` map, so the first one your tool sets wins. If your bundler sets both `browser` and `node`, you get the portable build.
+- Only the node build exports `FileSource`. Under a portable condition, importing `FileSource` from `envapt` fails.
+- `envapt/legacy` follows the same conditions. `envapt/config` exists only in the node build, so use it on Node, Bun, and Deno.
+
+### File APIs and `fileApiMode`
+
+[`Envapter`](/docs/envapter)'s `envPaths`, `baseDir`, `envFileOptions`, `configureProfiles`, and `resetPaths` read the filesystem ([.env files on Node](/docs/env-files)). On the portable build they have nothing to read. `Envapter.fileApiMode` takes a `FileApiMode` and sets what each call does there.
+
+{/* prettier-ignore-start */}
+
+| `fileApiMode` | On the portable build | On the node build |
+| --- | --- | --- |
+| `'warn'` (default) | each API warns once and does nothing. The `envPaths`, `baseDir`, and `envFileOptions` getters return `[]`, `undefined`, and `{}` | runs normally |
+| `'throw'` | throws [`FileApiUnsupported`](/docs/errors) (306) | runs normally |
+
+{/* prettier-ignore-end */}
+
+Keep `'warn'` when one config module loads on both builds. With `'warn'`, setting `envPaths` does nothing on Workers and still loads files on Node. Choose `'throw'` if you want a file API call on the portable build to stop the app. The error message says which API you called.
+
+```ts twoslash
+import { Envapter } from 'envapt';
+// ---cut---
+Envapter.fileApiMode = 'throw';
+```
+
+On the node build this line has no effect. If you bind a [`PortableSource`](/docs/sources#the-sources-envapt-ships) on Node, the source has no files. Then setting `envPaths` or `baseDir`, or calling `configureProfiles`, throws `FileApiUnsupported` in either mode.
+
+## Module format and TypeScript
+
+`require('envapt')` throws `ERR_PACKAGE_PATH_NOT_EXPORTED`, because the entries Node matches (`node` and `default`) are import-only. In a CommonJS project, load the package with `await import('envapt')` inside an async function. Load the config entry with `node --import envapt/config`.
+
+```ts twoslash
+export async function main(): Promise<number> {
+    const { Converters, Envapter } = await import('envapt');
+    return Envapter.getAs('PORT', Converters.Port, 3000);
+}
+```
+
+`main` loads the package at call time, so a CommonJS file can reach envapt without `require`.
+
+### ERR_PACKAGE_PATH_NOT_EXPORTED from compiled code
+
+With `"module": "commonjs"`, `tsc` rewrites `import('envapt')` into `require('envapt')`. The compiled file then throws the error you were avoiding. `"module": "node16"` or `"nodenext"` keeps the `import()` call, so the same sample runs.
+
+### Cannot find module 'envapt' or its corresponding type declarations
+
+TypeScript finds `envapt` through the `exports` map only under some module settings. These combinations were tested with TypeScript 6.0.3:
+
+{/* prettier-ignore-start */}
+
+| Compiler options | `envapt` | `envapt/legacy` |
+| --- | --- | --- |
+| `module: "nodenext"` in a package with `"type": "module"` | resolves | resolves |
+| `module: "esnext"` or `"preserve"` with `moduleResolution: "bundler"` | resolves | resolves |
+| `module: "node16"` or `"nodenext"` in a CommonJS package | fails on `import`, resolves on `import()` | fails on `import`, resolves on `import()` |
+| `module: "commonjs"` with `moduleResolution: "bundler"` | fails | fails |
+| `moduleResolution: "node10"`, which needs `ignoreDeprecations: "6.0"` in TypeScript 6 | resolves through the top-level `types` field | fails, because `node10` ignores the `exports` map |
+
+{/* prettier-ignore-end */}
+
+Use `"type": "module"` with `module: "nodenext"` if you run the compiled output on Node, since `nodenext` in a CommonJS package rejects a static `import` of envapt. Use `moduleResolution: "bundler"` if a bundler builds your app.
+
+## Decorators per runtime
+
+`@Envapt` from `envapt` is a TC39 Stage 3 accessor decorator, and with TypeScript 5.0 or later it needs no compiler flag. The older form in `envapt/legacy` needs `experimentalDecorators`. The read methods like `Envapter.getAs` need neither. [Decorators](/docs/decorators) explains both forms.
+
+{/* prettier-ignore-start */}
+
+| Where the code runs | Modern `@Envapt` | Legacy `@Envapt` |
+| --- | --- | --- |
+| Node | compile first, because `node app.ts` fails with a `SyntaxError` | compile first, with `experimentalDecorators` in `tsconfig.json` |
+| Bun | runs a `.ts` file directly, `bun test` included | `experimentalDecorators` in `tsconfig.json` |
+| Deno | runs a `.ts` file directly | `experimentalDecorators` in `deno.json` |
+| vitest | fails with the same `SyntaxError`, see [Testing](/docs/testing#syntaxerror-invalid-or-unexpected-token) | loads with `experimentalDecorators` on |
+| Workers, browser, edge | your bundler has to compile them. Wrangler does by default, see [Workers](/docs/workers#decorators) and [Browser](/docs/browser#decorators) | your bundler, with `experimentalDecorators` on |
+
+{/* prettier-ignore-end */}
+
+```json title="tsconfig.json or deno.json"
+{ "compilerOptions": { "experimentalDecorators": true } }
+```
+
+The Bun minimum is 1.3.11 because earlier versions emit Stage 3 decorators even with `experimentalDecorators` set, which makes a legacy `@Envapt` field throw a `TypeError` ([bun#27575](https://github.com/oven-sh/bun/issues/27575)).

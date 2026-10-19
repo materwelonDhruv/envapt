@@ -1,0 +1,233 @@
+---
+title: Migration (v7 to v8)
+description: Upgrade from envapt v7 to v8, where the source classes get shorter names and one envapt import replaces the workerd and browser subpaths.
+---
+
+v8 has these breaking changes:
+
+1. The source classes are renamed.
+2. The `envapt/workerd` and `envapt/browser` subpaths are removed.
+3. On the portable build, the filesystem-only config APIs warn once and do nothing by default.
+4. The public type exports are trimmed.
+5. The required form of `getUsing` and `getWith` moves to `getRequired`.
+6. The `Integer` and `Float` converters reject malformed values.
+7. One rule decides when a value is missing, so ordered reads skip an empty key and whitespace-only values follow `strict`.
+8. Built-in converter fallbacks are checked by value.
+9. A missing read with no fallback resolves to `undefined` on every reader.
+10. `getWith` passes the raw value to its custom converter.
+11. An explicit `undefined` fallback counts as no fallback.
+
+Most upgrades touch only the first two. The rest apply only if you imported an internal type by name, typed a decorator field as `| null`, or relied on loose parsing, and each section says when it affects you.
+
+## Source and type renames
+
+The source class names lose the `Env` infix. `PortableSource` is the source for any runtime where envapt can't read files, and it replaces both `ManualEnvSource` and `WorkerEnvSource`, which were the same class. `FileSource` replaces `NodeEnvSource`, and the `Source` type replaces `EnvSource`.
+
+{/* prettier-ignore-start */}
+
+| v7 | v8 |
+| --- | --- |
+| `ManualEnvSource`, `WorkerEnvSource` | `PortableSource` |
+| `NodeEnvSource` | `FileSource` |
+| `EnvSource` (type) | `Source` |
+
+{/* prettier-ignore-end */}
+
+```ts
+// v7
+import { Envapter, ManualEnvSource } from 'envapt';
+
+Envapter.useSource(new ManualEnvSource(config));
+
+// v8
+import { Envapter, PortableSource } from 'envapt';
+
+Envapter.useSource(new PortableSource(config));
+```
+
+In v7.1, `PortableSource` and `Source` already existed, and `ManualEnvSource` / `WorkerEnvSource` / `EnvSource` were deprecated aliases. If you were already on v7.1, v8 only removes those aliases. `NodeEnvSource` is renamed to `FileSource` in v8.
+
+## One universal `envapt` import
+
+The `envapt/workerd` and `envapt/browser` subpaths are gone. Import the main API from `envapt` on every runtime. The package export conditions resolve the portable build on Workers, edge runtimes, the browser, and react-native, and the node build on Node, Bun, and Deno.
+
+```ts
+// v7
+import { Envapter, WorkerEnvSource } from 'envapt/workerd';
+import { Envapter, ManualEnvSource } from 'envapt/browser';
+
+// v8
+import { Envapter, PortableSource } from 'envapt';
+```
+
+The edge runtimes that used to load the node build now resolve the portable build through the `edge-light`, `fastly`, and `worker` conditions. Vercel Edge and Cloudflare Workers set their conditions without any setup. On Fastly Compute, add the `fastly` condition to your bundler's resolve conditions. `envapt/config` and `envapt/legacy` are unchanged.
+
+## File-only APIs warn and do nothing
+
+On the portable build, the filesystem-only config APIs (`envPaths`, `baseDir`, `envFileOptions`, `configureProfiles`, `resetProfiles`) used to throw `FileApiUnsupported`. They now warn once and do nothing by default, so a config module that touches them can be written once and run on both Node and the portable runtimes. To restore the v7 behavior, set `Envapter.fileApiMode = 'throw'`.
+
+```ts
+// v7: calling a file API on the portable build threw FileApiUnsupported
+
+// v8: it warns once and does nothing by default
+Envapter.envPaths = ['.env']; // warns once, then does nothing on Workers
+
+// opt back into throwing
+Envapter.fileApiMode = 'throw';
+Envapter.envPaths = ['.env']; // throws FileApiUnsupported again
+```
+
+A read with no bound source still throws `NoSourceBound` on the first access, whatever `fileApiMode` is, so a Worker that never binds a source throws before it serves any config. `fileApiMode` affects only the file APIs on the portable build. On the node build, binding a non-filesystem source and then calling a file API still throws `FileApiUnsupported`.
+
+## The portable types now include the file APIs
+
+Before v8 the portable build's types omitted the five file APIs, so calling one was a compile error. v8 adds them to the portable types, so a config module shared between your Node dev setup and a Workers deploy type-checks the same in both places. At runtime each call warns once and does nothing, as above, or throws under `fileApiMode = 'throw'`.
+
+## Required reads move to `getRequired`
+
+The `{ required: true }` options-object form of `getUsing` and `getWith` is removed. A required read is now `getRequired(key, converter)`, which takes the converter as its second argument, returns a value that's never `undefined`, and throws `MissingEnvValue` when the key is missing or empty. New in v8, `getRequiredAll(spec)` reads a group of required values in one call and returns a typed record, throwing once with every missing key.
+
+```ts
+// v7
+const url = Envapter.getUsing('DATABASE_URL', { converter: Converters.Url, required: true });
+const upper = Envapter.getWith('NAME', { converter: (raw) => (raw ?? '').toUpperCase(), required: true });
+
+// v8
+const url = Envapter.getRequired('DATABASE_URL', Converters.Url);
+const upper = Envapter.getRequired('NAME', (raw) => raw.toUpperCase());
+
+// v8, several at once
+const { DATABASE_URL: db, PORT: port } = Envapter.getRequiredAll({
+    DATABASE_URL: Converters.Url,
+    PORT: Converters.Port
+});
+```
+
+`getUsing` and `getWith` keep their positional fallback forms unchanged. The `@Envapt` decorator keeps its `{ required: true }` option. Only the functional readers lost the options object.
+
+## Trimmed public type exports
+
+v8 exports 15 types, down from 36. These internal types that v7 exported are gone:
+
+- the source shape interfaces (`BareEnvSource` / `FileEnvSource`)
+- the decorator return types
+- the schema brands
+- the converter and inference helper types
+- `EnvKeyInput`
+- `ArrayOf` / `ArrayElement`
+- the `InferSchemaInput` / `InferSchemaOutput` aliases
+
+Inference on the readers and decorators is unchanged, since those types resolve at the call site.
+
+This affects you only if you imported one of these by name.
+
+- If you typed a custom source against `BareEnvSource` / `FileEnvSource`, type it against the `Source` union.
+- Replace `InferSchemaOutput<typeof schema>` with your validator's own inference (`z.infer`, valibot's `InferOutput`, arktype's `.infer`) or `StandardSchemaV1.InferOutput`.
+
+## Stricter `Integer` and `Float` converters
+
+`Converters.Integer` and `Converters.Float` used to parse with `parseInt` and `parseFloat`, which read a leading number and ignored the rest. `42abc` became `42`, `3.9` became `3` under `Integer`, and a value larger than 2^53 lost precision. v8 parses both with `Number` and checks the result. If `Number` rejects a value, the read returns the fallback, or throws under `getRequired`.
+
+`Integer` requires `Number.isSafeInteger`, so `42abc`, `3.9`, and values larger than 2^53 in magnitude all fall back. `Float` rejects trailing characters like `3.14xyz`. `Float` still accepts `Infinity`, matching the `number` converter and `getNumber`.
+
+```ts
+import { Converters, Envapter } from 'envapt';
+
+// with PORT="8080abc"
+Envapter.getRequired('PORT', Converters.Integer);
+// v7: 8080 (parseInt read the leading number)
+// v8: throws MissingEnvValue (Number rejects it)
+// v9: throws InvalidEnvValue (210)
+```
+
+Change something here only if your app relied on the loose parse. A value that's already a clean integer or float reads the same.
+
+## The missing-value rule is unified
+
+envapt uses one rule for when a value counts as missing, across ordered-key reads, `getRequired` / `getRequiredAll`, `Envapter.require`, the `@Envapt({ required: true })` decorator, environment detection, and templates. A value is missing if it's unset or an empty string. Under `Envapter.strict = true`, a whitespace-only value is missing too. Two v7 behaviors change.
+
+**Ordered reads skip a present-but-empty key.** An ordered read (`get`, `getNumber`, the decorators, or an array of keys) skips a key set to an empty string, the same as an unset key. v7 stopped at the first present key even when its value was blank.
+
+```ts
+import { Envapter } from 'envapt';
+
+// with PRIMARY="" and FALLBACK="value"
+Envapter.get(['PRIMARY', 'FALLBACK'], 'default');
+// v7: "default" (stopped at the empty PRIMARY)
+// v8: "value" (falls through to FALLBACK)
+```
+
+**Whitespace-only values follow `strict`.** `Envapter.require` and the `@Envapt({ required: true })` decorator keep a whitespace-only value in the default non-strict mode. v7 treated it as missing. Set `Envapter.strict = true` to treat it as missing again. Environment detection skips a whitespace-only key only under strict mode. v7 used the key in every mode.
+
+```ts
+// with NAME="   " (whitespace only)
+Envapter.require('NAME');
+// v7: throws MissingEnvValue
+// v8 (non-strict): passes
+// v8 (strict): throws MissingEnvValue
+```
+
+`getRequired` and `getRequiredAll` are new in v8 and use this rule from the start, so nothing changes for them.
+
+## Built-in converter fallbacks are validated by value
+
+v7 checked only a fallback's type (a `number` for `Number`, a `Date` for `Date`). v8 also checks the value. A fallback the converter rejects now throws `FallbackConverterTypeMismatch`, even where v7 accepted it. That covers a `NaN` `Number` or `Float` fallback, a non-safe-integer `Integer` fallback, and an `Invalid Date` fallback. The new `Port` and `Email` converters require a valid fallback too.
+
+```ts
+import { Converters, Envapter } from 'envapt';
+
+// with SAMPLE_RATE unset
+Envapter.getUsing('SAMPLE_RATE', Converters.Float, NaN);
+// v7: returned NaN
+// v8: throws FallbackConverterTypeMismatch
+```
+
+This matters only if you passed a placeholder fallback such as `NaN` that isn't a real value. Pass a valid fallback, or omit it to get `T | undefined`.
+
+## A missing read with no fallback resolves to `undefined`
+
+A read of a missing key with no fallback resolves to `undefined` everywhere. The functional readers (`get`, `getNumber`, `getUsing`, `getWith`, `getRaw`) already returned `undefined`. The decorators returned `null` on this path. v8 returns `undefined` from the decorators too, so one value marks an absent read across the whole API.
+
+A decorator field with no fallback is now typed `T | undefined`. A field typed `T | null` stops type-checking. Retype it to `T | undefined`.
+
+```ts
+// v7
+class Config {
+    @Envapt('OPTIONAL_TOKEN') static accessor token: string | null;
+}
+// Config.token is null when OPTIONAL_TOKEN is unset
+
+// v8
+class Config {
+    @Envapt('OPTIONAL_TOKEN') static accessor token: string | undefined;
+}
+// Config.token is undefined when OPTIONAL_TOKEN is unset
+```
+
+You only need a change here if you typed a no-fallback decorator field as `| null`, or branched on a decorator read with `=== null`. Nullish handling (`?? fallback`, `== null`) keeps working.
+
+## `getWith` passes the raw value to your converter
+
+`getWith` calls your custom converter with the raw value on every read. For a missing key the converter receives `raw === undefined`. v7 returned the fallback for a missing key without running the converter. The converter already received the fallback as the second argument, so you can still return it when `raw` is missing.
+
+```ts
+const name = Envapter.getWith('NAME', (raw, fallback) => raw?.toUpperCase(), 'ANON');
+// with NAME unset
+// v7: 'ANON' (the converter never ran)
+// v8: undefined (the converter ran with raw === undefined)
+```
+
+A converter that reads `raw` without a guard now runs on a missing key. Guard it with `raw ?? ''` or an early `if (!raw) return fallback`. In v8, the `ConverterFunction` type declared `raw` as `string | undefined` and the fallback as the second parameter. The `@Envapt` custom-converter decorator already ran the converter on a missing key, so v8 makes `getWith` behave the same way.
+
+## An explicit `undefined` fallback counts as no fallback
+
+Passing `undefined` as the fallback argument counts as no fallback, across every reader and the `@Envapt` options. `Envapter.parse` previously read an explicit `undefined` as a provided fallback and returned it for a missing key. It now throws `MissingEnvValue`.
+
+```ts
+// with API_URL unset
+Envapter.parse('API_URL', schema, undefined);
+// v7: undefined
+// v8: throws MissingEnvValue
+```
+
+You only need a change here if you passed `undefined` to `parse` to make a key optional. Pass a real fallback, or guard the read with `getRaw` before parsing.

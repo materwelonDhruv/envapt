@@ -203,7 +203,7 @@ function inclusionProof(): void {
     );
 }
 
-// grepGate only scans dist/portable, and portable consumers also load dist/types
+// grepGate skips dist/types, but portable consumers load it too
 function typesNodeFreeProof(): void {
     const violations: string[] = [];
     for (const file of walk(join(DIST, 'types'))) {

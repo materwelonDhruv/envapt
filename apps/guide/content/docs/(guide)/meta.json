@@ -1,0 +1,31 @@
+{
+    "title": "Guide",
+    "root": true,
+    "pages": [
+        "index",
+        "quick-start",
+        "app-config",
+        "---Reading config---",
+        "envapter",
+        "converters",
+        "standard-schema",
+        "required-values",
+        "templates",
+        "decorators",
+        "---Loading config---",
+        "sources",
+        "environment",
+        "env-files",
+        "env-file-syntax",
+        "secret-stores",
+        "testing",
+        "---Runtimes---",
+        "compatibility",
+        "workers",
+        "edge-runtimes",
+        "browser",
+        "---Reference---",
+        "errors",
+        "(migrations)"
+    ]
+}

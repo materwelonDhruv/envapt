@@ -52,7 +52,7 @@ function assertReads(reads, runtime) {
     assert.equal(reads.requiredThrew, true, `${runtime}: required throws when the value is absent`);
 }
 
-// bun and deno are optional. a missing binary skips, and any other failure fails the suite.
+// bun and deno are optional. a missing binary skips that runtime. any other failure fails the suite.
 const optional = ['bun', 'deno'];
 const reads = JSON.parse(execFileSync('node', [out], { env }).toString());
 assertReads(reads, 'node');

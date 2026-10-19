@@ -4,7 +4,7 @@ import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
 import type { BareSource, FileCapableSource, Source } from '../types';
 
 /**
- * Compose several sources into one, read last-wins. A later member's `readVars()` value overrides an
+ * Combine several sources into one. A later member's `readVars()` value overrides an
  * earlier member's for the same key. A member may be a `(key) => string | undefined` reader for a
  * source that reads one key at a time, and it fills a key missing from every snapshot. Bind the result
  * with `Envapter.useSource`. Throws {@link EnvaptErrorCodes.InvalidMergedSource} with no members or with

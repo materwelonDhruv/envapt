@@ -11,3 +11,15 @@ export const blog = loader({
     baseUrl: '/blog',
     source: blogPosts.toFumadocsSource()
 });
+
+export type DocsPage = (typeof source)['$inferPage'];
+export type BlogPage = (typeof blog)['$inferPage'];
+
+export function isApiPage(page: DocsPage): boolean {
+    return page.slugs[0] === 'api';
+}
+
+// post dates are YYYY-MM-DD strings
+export function blogPostsNewestFirst(): BlogPage[] {
+    return blog.getPages().toSorted((a, b) => b.data.date.localeCompare(a.data.date));
+}

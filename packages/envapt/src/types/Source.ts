@@ -18,8 +18,8 @@ interface FileCapableSource {
 
 /**
  * A pluggable source of environment variables. The default {@link FileSource} reads `process.env` plus
- * the `.env` cascade. A {@link PortableSource} lets the same engine run where there is no ambient
- * environment (an injected object on the browser, the Cloudflare `env` binding on Workers). Bind one
+ * the `.env` cascade. A {@link PortableSource} reads from an object you pass, such as the
+ * config a bundler injects into a browser build or the Cloudflare `env` binding on Workers. Bind one
  * with `Envapter.useSource`.
  * @public
  * @see {@link https://envapt.materwelon.dev/docs/sources#any-object-can-be-a-source}

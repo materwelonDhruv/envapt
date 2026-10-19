@@ -5,7 +5,7 @@ import { state } from './state';
 
 export class EnvironmentMethods extends EnvapterBase {
     /**
-     * Get the current application environment
+     * The current application environment, detected on first read unless you set it.
      * @see {@link https://envapt.materwelon.dev/docs/environment#detecting-the-environment}
      */
     static get environment(): Environment {
@@ -27,7 +27,7 @@ export class EnvironmentMethods extends EnvapterBase {
     }
 
     /**
-     * Check if the current environment is production
+     * Whether the current environment is production.
      * @see {@link https://envapt.materwelon.dev/docs/environment#branching-on-the-environment}
      */
     static get isProduction(): boolean {
@@ -35,7 +35,7 @@ export class EnvironmentMethods extends EnvapterBase {
     }
 
     /**
-     * Check if the current environment is staging
+     * Whether the current environment is staging.
      * @see {@link https://envapt.materwelon.dev/docs/environment#branching-on-the-environment}
      */
     static get isStaging(): boolean {
@@ -43,7 +43,7 @@ export class EnvironmentMethods extends EnvapterBase {
     }
 
     /**
-     * Check if the current environment is development
+     * Whether the current environment is development.
      * @see {@link https://envapt.materwelon.dev/docs/environment#branching-on-the-environment}
      */
     static get isDevelopment(): boolean {
@@ -51,7 +51,7 @@ export class EnvironmentMethods extends EnvapterBase {
     }
 
     /**
-     * Check if the current environment is test
+     * Whether the current environment is test.
      * @see {@link https://envapt.materwelon.dev/docs/environment#branching-on-the-environment}
      */
     static get isTest(): boolean {

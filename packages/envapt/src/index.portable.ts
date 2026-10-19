@@ -1,7 +1,7 @@
 /**
- * The portable surface for Workers, the browser, and edge runtimes. Re-exports the same public API as
- * the Node entry, with {@link Envapter} as a portable class whose filesystem-only config APIs warn once
- * and no-op by default (`Envapter.fileApiMode = 'throw'` restores `FileApiUnsupported`). Bind a source
+ * The portable build for Workers, the browser, and edge runtimes. It exports the Node entry's API
+ * except `FileSource`. {@link Envapter}'s filesystem-only config APIs warn once and do nothing by
+ * default. Set `Envapter.fileApiMode = 'throw'` to make them throw `FileApiUnsupported`. Bind a source
  * with `Envapter.useSource` before reading. Reading before that throws `NoSourceBound`.
  *
  * @module

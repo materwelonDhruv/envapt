@@ -6,14 +6,17 @@ import type { ReactNode } from 'react';
 
 const HERO_CODE = `import { Envapter, Converters } from 'envapt';
 
-// numbers, with a fallback
-const port = Envapter.getNumber('PORT', 3000);
+// a port, with a fallback
+const port = Envapter.getAs('PORT', Converters.Port, 3000);
 
 // ordered keys, first defined wins
-const url = Envapter.get(['DATABASE_URL', 'DB_URL']);
+const db = Envapter.getAs(
+  ['DATABASE_URL', 'DB_URL'],
+  Converters.Url
+);
 
 // typed lists
-const cors = Envapter.getAs('CORS',
+const origins = Envapter.getAs('CORS_ORIGINS',
   Converters.array({ of: Converters.Url })
 );`;
 
@@ -33,8 +36,8 @@ export function Hero(): ReactNode {
                     </h1>
                     <p className="mb-7 max-w-110 text-lg/relaxed text-fd-muted-foreground">
                         Read config as real types from <code className="font-mono text-[0.92em]">process.env</code>, a
-                        Workers binding, a browser bundle, or any object you bind. Zero runtime dependencies.
-                        Zod/Valibot/Arktype validation.
+                        Workers binding, a browser bundle, or any object you bind. It has no runtime dependencies, and
+                        it accepts zod, valibot, and arktype schemas.
                     </p>
                     <div className="flex flex-wrap gap-3">
                         <BaseButton href="/docs/quick-start" variant="solid">
@@ -52,7 +55,7 @@ export function Hero(): ReactNode {
                     </div>
                     <div className="mt-6 flex flex-wrap items-center gap-2 font-mono text-xs text-fd-muted-foreground">
                         <span className="rounded-full border border-fd-border px-2.5 py-1.5 leading-none">
-                            Node <span className="text-(--ev-teal)">20+</span>
+                            Node <span className="text-(--ev-teal)">22+</span>
                         </span>
                         <span className="rounded-full border border-fd-border px-2.5 py-1.5 leading-none">
                             Bun <span className="text-(--ev-teal)">1.3+</span>
@@ -63,7 +66,7 @@ export function Hero(): ReactNode {
                         <span className="rounded-full border border-fd-border px-2.5 py-1.5 leading-none">Workers</span>
                         <span className="rounded-full border border-fd-border px-2.5 py-1.5 leading-none">Browser</span>
                         <span className="rounded-full border border-fd-border px-2.5 py-1.5 leading-none">
-                            ESM + CJS
+                            ESM only
                         </span>
                         <span className="rounded-full border border-fd-border px-2.5 py-1.5 leading-none">
                             <span className="text-(--ev-teal)">0</span> dependencies

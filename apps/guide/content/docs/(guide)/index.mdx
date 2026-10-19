@@ -1,0 +1,67 @@
+---
+title: Introduction
+description: Read environment config as typed values with a fallback, in place of process.env parsed by hand, on Node, Bun, Deno, Workers, and the browser.
+---
+
+You've written `Number(process.env.PORT ?? 3000)` before. It works until `PORT` holds something that isn't a port. `PORT=80a` gives `NaN`. `PORT=` gives `0`, because its value is an empty string, which `??` leaves alone. If you check a flag with `=== 'true'`, `DEBUG=1` counts as off. The type says only `string | undefined`, so every file that reads `DATABASE_URL` adds its own parse and its own default by hand.
+
+```ts twoslash
+const port = Number(process.env.PORT ?? 3000);
+const debug = process.env.DEBUG === 'true';
+const cacheTtl = Number(process.env.CACHE_TTL ?? 60_000);
+const databaseUrl = process.env.DATABASE_URL;
+//    ^?
+```
+
+envapt parses the value and applies the default inside the read. [`Envapter`](/docs/envapter) has a reader per primitive type, such as `getBoolean`, plus `getAs`, which takes a converter for any other type. Each one takes the key first and a fallback last, if you want one.
+
+```ts twoslash
+import { Envapter, Converters } from 'envapt';
+// ---cut---
+const port = Envapter.getAs('PORT', Converters.Port, 3000);
+//    ^?
+const debug = Envapter.getBoolean('DEBUG', false);
+const cacheTtl = Envapter.getAs('CACHE_TTL', Converters.Time, '1m');
+const databaseUrl = Envapter.getAs('DATABASE_URL', Converters.Url);
+//    ^?
+```
+
+The `port` call has a fallback, so its type is `number`. `databaseUrl` has none, so its type is `URL | undefined`. You handle the missing case yourself. [`getBoolean`](/docs/envapter#the-primitive-readers) reads `1`, `yes`, `true`, and `on` as true, so `DEBUG=1` returns `true`. [`Converters.Time`](/docs/converters) turns `CACHE_TTL=10m` into `600000` milliseconds.
+
+The fallback is the value a reader returns when the variable is missing (unset or empty), or when a token or function can't convert its value. `PORT=80a` and `PORT=99999` both return `3000`, so the fallback also hides a typo like `80a`. A bad array element and a value a schema rejects throw even with a fallback ([the full table](/docs/envapter#fallbacks-and-missing-values)). For a value the app can't run without, call [`getRequired` or `getRequiredAll`](/docs/required-values), which throw.
+
+Reading through envapt is optional, and code that reads `process.env` directly keeps working. Each read costs an import and a call. Values set only in a `.env` file reach envapt's readers. They reach `process.env` too if you import `envapt/config` ([.env files on Node](/docs/env-files#coming-from-dotenv)). A script that reads one string can keep reading `process.env`. envapt helps most once several files read config, because each read gives you the type, the default, and the parse in one call. The compiler also checks every use.
+
+## Functions or decorators
+
+[`Envapter`](/docs/envapter) reads one value per call, as above. The [`@Envapt`](/docs/decorators) decorator, and shorthands such as `@EnvUrl`, read a variable into a class field. A decorated field reads on first access and keeps that value until the cache is rebuilt, for example by a `useSource` call ([When values are read](/docs/sources#when-values-are-read)). A reader call converts again each time.
+
+```ts twoslash
+import { Converters, Envapt, EnvUrl } from 'envapt';
+// ---cut---
+class Config {
+    @Envapt('PORT', { converter: Converters.Port, fallback: 3000 })
+    static accessor port: number;
+
+    @EnvUrl('REDIS_URL', new URL('redis://localhost:6379'))
+    static accessor redisUrl: URL;
+}
+```
+
+Use a decorator for settings that many files read, since the class declares each one once and `Config.port` works anywhere. Use a reader for a one-off read, or for a check that has to run at startup, since a decorated field reads only when something first accesses it. The cost is the `accessor` keyword on every field, which [Decorators](/docs/decorators) explains. Both forms share the same [converters](/docs/converters) and accept a [Standard Schema](/docs/standard-schema) validator such as zod, valibot, or arktype. A decorator takes the schema through its `schema` option.
+
+## Where values come from
+
+A source is the object envapt reads values from. On Node, Bun, and Deno the source is `process.env` plus your `.env` files. It binds when you import `envapt`, so the first read works with no setup.
+
+On Workers, in the browser, and on edge runtimes, envapt reads nothing until you bind a source. Your config arrives there as an object, such as the Workers `env` or `import.meta.env` in a bundler like Vite. Wrap that object in a [`PortableSource`](/docs/sources#the-sources-envapt-ships) and pass it to `Envapter.useSource` once, before the first read. If a read runs before that, it throws `NoSourceBound`. [Sources](/docs/sources) shows the full setup.
+
+## Where to start
+
+<Cards>
+    <Card title="Node, Bun, and Deno" href="/docs/quick-start" description="Install envapt and read a typed value from your .env file." />
+    <Card title="Cloudflare Workers" href="/docs/workers" description="Bind the Worker env object once and read typed config." />
+    <Card title="Browser" href="/docs/browser" description="Read typed values from the config your bundler injects." />
+    <Card title="Edge runtimes" href="/docs/edge-runtimes" description="Bind the platform's config object on Vercel Edge, Fastly, and similar." />
+    <Card title="Upgrading from v8" href="/docs/migrations" description="What changed in v9 and how to upgrade." />
+</Cards>

@@ -11,7 +11,7 @@ import { Envapt } from '../src/legacy';
 
 import type { StandardSchemaV1 } from '../src/infra/StandardSchema';
 
-// hand-rolled to prove the adapter needs no schema library
+// hand-rolled to prove the adapter works without a schema library
 const handRolledUpper: StandardSchemaV1<string, string> = {
     '~standard': {
         version: 1,
@@ -25,7 +25,7 @@ const handRolledUpper: StandardSchemaV1<string, string> = {
     }
 };
 
-// drives the SchemaThrew (209) path
+// throws from validate to reach the SchemaThrew (209) path
 const handRolledThrower: StandardSchemaV1<string, string> = {
     '~standard': {
         version: 1,
@@ -36,7 +36,7 @@ const handRolledThrower: StandardSchemaV1<string, string> = {
     }
 };
 
-// the spec expects at least one issue, and the `readonly Issue[]` type still allows an empty array
+// the spec asks for at least one issue. the `readonly Issue[]` type still allows an empty array
 const handRolledEmptyIssues: StandardSchemaV1<string, string> = {
     '~standard': {
         version: 1,

@@ -1,0 +1,360 @@
+---
+title: Testing
+description: Give each vitest test its own config instead of your machine's, then restore the real source after each test.
+---
+
+Without a source of your own, a test that reads config reads the machine it runs on. On Node, envapt reads a copy of `process.env` from [`FileSource`](/docs/sources#the-sources-envapt-ships) and loads the `.env` files in the working directory, `.env.local` included. Your laptop has a `.env.local` and CI doesn't, so the same test can pass in one place and fail in the other.
+
+If you assign `process.env.PORT = '4000'` inside the test, nothing changes until the cache rebuilds. `FileSource` takes its copy when the cache is built, so a later assignment isn't in it (see [When values are read](/docs/sources#when-values-are-read)).
+
+To give a test its own values, bind a source with [`Envapter.useSource`](/docs/sources#the-sources-envapt-ships). It rebuilds the cache as soon as you call it, so the next read uses your values. The cost is that the binding is process-wide. Tests that run concurrently in one file share it, so run these sequentially.
+
+The examples use vitest. In another runner that loads ESM, such as `bun test`, the envapt calls stay the same and only the hook and stub names change.
+
+## Where a test's values come from
+
+<Tabs items={['Fixture object', 'Shell variables', 'A few keys over the real files', 'Fixture .env files']} groupId="test-values" persist>
+<Tab value="Fixture object">
+
+Bind a [`PortableSource`](/docs/sources#the-sources-envapt-ships) built from a plain object. You control every key, so no shell variable or `.env` file reaches envapt.
+
+```ts twoslash
+// @filename: config.ts
+import { Converters, Envapter } from 'envapt';
+
+export function loadConfig() {
+    return Envapter.getRequiredAll(
+        { DATABASE_URL: Converters.Url, PORT: Converters.Port, CACHE_TTL: Converters.Time },
+        'camelCase'
+    );
+}
+// @filename: config.test.ts
+// ---cut---
+import { afterEach, expect, it } from 'vitest';
+import { Envapter, EnvaptErrorCodes, FileSource, PortableSource } from 'envapt';
+
+import { loadConfig } from './config';
+
+afterEach(() => {
+    Envapter.useSource(new FileSource());
+});
+
+it('converts the values it is given', () => {
+    Envapter.useSource(
+        new PortableSource({
+            ENVIRONMENT: 'test',
+            DATABASE_URL: 'postgres://app@localhost:5432/app',
+            PORT: '4000',
+            CACHE_TTL: '30s'
+        })
+    );
+
+    expect(loadConfig().cacheTtl).toBe(30_000);
+    expect(Envapter.isTest).toBe(true);
+});
+
+it('stops when a value is missing', () => {
+    Envapter.useSource(new PortableSource({}));
+
+    expect(() => loadConfig()).toThrow(expect.objectContaining({ code: EnvaptErrorCodes.MissingEnvValue }));
+});
+```
+
+`loadConfig` is `getRequiredAll` over the three keys in `config.ts`. vitest sets `NODE_ENV=test`, but the fixture is the only thing envapt reads now. Without `ENVIRONMENT: 'test'`, [`Envapter.environment`](/docs/environment) would be `'development'` and the `isTest` check in the first test would fail. The second test binds an empty fixture to check the `MissingEnvValue` failure that [Required values](/docs/required-values) describes. After each test, `afterEach` binds a fresh `FileSource`, which reads `process.env` and the files again.
+
+</Tab>
+<Tab value="Shell variables">
+
+When the code under test also reads `process.env` itself, stub the variables with `vi.stubEnv`, then rebind a `FileSource` to make envapt copy the stubbed values.
+
+```ts twoslash
+// @filename: config.ts
+import { Converters, Envapter } from 'envapt';
+
+export function loadConfig() {
+    return Envapter.getRequiredAll(
+        { DATABASE_URL: Converters.Url, PORT: Converters.Port, CACHE_TTL: Converters.Time },
+        'camelCase'
+    );
+}
+// @filename: config.test.ts
+// ---cut---
+import { afterEach, expect, it, vi } from 'vitest';
+import { Envapter, FileSource } from 'envapt';
+
+import { loadConfig } from './config';
+
+function setShellVars(vars: Record<string, string>): void {
+    for (const [key, value] of Object.entries(vars)) vi.stubEnv(key, value);
+    Envapter.useSource(new FileSource());
+}
+
+afterEach(() => {
+    vi.unstubAllEnvs();
+    Envapter.useSource(new FileSource());
+});
+
+it('reads the stubbed shell variables', () => {
+    setShellVars({ DATABASE_URL: 'postgres://app@localhost:5432/app', PORT: '4000', CACHE_TTL: '30s' });
+
+    expect(loadConfig().port).toBe(4000);
+});
+```
+
+`setShellVars` stubs all three keys and rebinds, and `afterEach` calls `vi.unstubAllEnvs()` before it rebinds again. The `.env` files in the working directory still load, and a shell variable wins over the same key in a file ([.env files on Node](/docs/env-files#which-files-load)). A stub therefore wins over your `.env.local`, though a key you don't stub still comes from the shell or the files.
+
+</Tab>
+<Tab value="A few keys over the real files">
+
+To change one or two keys and keep everything else, pass a `FileSource` and then a `PortableSource` to [`merge`](/docs/sources#combining-sources). The later source wins, so your values replace the same keys from the shell or the files. `process.env` stays untouched.
+
+```ts twoslash
+// @filename: config.ts
+import { Converters, Envapter } from 'envapt';
+
+export function loadConfig() {
+    return Envapter.getRequiredAll(
+        { DATABASE_URL: Converters.Url, PORT: Converters.Port, CACHE_TTL: Converters.Time },
+        'camelCase'
+    );
+}
+// @filename: config.test.ts
+// ---cut---
+import { afterEach, expect, it } from 'vitest';
+import { Envapter, FileSource, PortableSource, merge } from 'envapt';
+
+import { loadConfig } from './config';
+
+afterEach(() => {
+    Envapter.useSource(new FileSource());
+});
+
+it('uses the port from the later source', () => {
+    Envapter.useSource(merge(new FileSource(), new PortableSource({ PORT: '4000' })));
+
+    expect(loadConfig().port).toBe(4000);
+});
+```
+
+`loadConfig` also requires `DATABASE_URL` and `CACHE_TTL`. Those two still come from your shell or your real `.env` files here, so this test needs them on every machine that runs it. If the test shouldn't need them, use the fixture object.
+
+</Tab>
+<Tab value="Fixture .env files">
+
+To test the [cascade](/docs/env-files#which-files-load) itself, point envapt at a folder of fixture files and [pin the environment](/docs/environment#pinning-the-environment) by assigning `Envapter.environment`. Without the pin, vitest's `NODE_ENV=test` makes envapt load `.env.test`.
+
+<Files>
+    <Folder name="tests" defaultOpen>
+        <Folder name="fixtures" defaultOpen>
+            <File name=".env" />
+            <File name=".env.production" />
+        </Folder>
+        <File name="config.test.ts" />
+    </Folder>
+</Files>
+
+```dotenv title="tests/fixtures/.env"
+DATABASE_URL=postgres://app@localhost:5432/app
+PORT=3000
+CACHE_TTL=10m
+```
+
+```dotenv title="tests/fixtures/.env.production"
+PORT=8443
+```
+
+```ts twoslash
+// @filename: config.ts
+import { Converters, Envapter } from 'envapt';
+
+export function loadConfig() {
+    return Envapter.getRequiredAll(
+        { DATABASE_URL: Converters.Url, PORT: Converters.Port, CACHE_TTL: Converters.Time },
+        'camelCase'
+    );
+}
+// @filename: config.test.ts
+// ---cut---
+import { join } from 'node:path';
+
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import { Envapter, FileSource } from 'envapt';
+
+import { loadConfig } from './config';
+
+beforeEach(() => {
+    for (const key of ['DATABASE_URL', 'PORT', 'CACHE_TTL']) vi.stubEnv(key, undefined);
+    Envapter.useSource(new FileSource());
+    Envapter.baseDir = join(import.meta.dirname, 'fixtures');
+    Envapter.environment = 'production';
+});
+
+afterEach(() => {
+    vi.unstubAllEnvs();
+    Envapter.resetPaths();
+    Envapter.baseDir = undefined;
+});
+
+it('layers .env.production over .env', () => {
+    expect(loadConfig().port).toBe(8443);
+});
+```
+
+`beforeEach` removes the three keys from `process.env` first, since an exported `PORT` would win over both files and make the test read your shell. It then binds a `FileSource` because `baseDir` throws `FileApiUnsupported` while a `PortableSource` is bound. [`resetPaths`](/docs/env-files#profiles) clears the pinned environment but keeps `baseDir`, so `afterEach` also sets `Envapter.baseDir = undefined`. [Choosing the files yourself](/docs/env-files#choosing-the-files-yourself) covers both settings.
+
+</Tab>
+</Tabs>
+
+## Put the real config back
+
+If you leave a source bound, it stays bound for the later tests in the same file. vitest runs each test file in isolation by default, so a bound source doesn't carry over to the next file. These settings keep their value after `useSource`, so each one you change needs its own line in your cleanup.
+
+{/* prettier-ignore-start */}
+
+| You changed | Undo it with | Note |
+| --- | --- | --- |
+| [`Envapter.useSource(source)`](/docs/sources) | `Envapter.useSource(new FileSource())` | rebuilds the cache from `process.env` and the files |
+| [`Envapter.environment = '...'`](/docs/environment#pinning-the-environment) | `Envapter.resetPaths()` | the pin survives `useSource`. `resetPaths` also clears `envPaths` and profiles |
+| [`Envapter.baseDir = '...'`](/docs/env-files#reading-from-a-fixed-directory) | `Envapter.baseDir = undefined` | `resetPaths` keeps `baseDir`, and a file source has to be bound first |
+| [`Envapter.strict = true`](/docs/required-values#strict-mode) | `Envapter.strict = false` | `useSource` leaves it as it was |
+| [`Envapter.envFileOptions = {...}`](/docs/env-files#file-options) | `Envapter.envFileOptions = {}` | `resetPaths` keeps it |
+| [`Envapter.debug = 'verbose'`](/docs/errors#debug-logging) | `Envapter.debug = 'silent'` | `useSource` leaves it as it was |
+| [`Envapter.fileApiMode = 'throw'`](/docs/compatibility#file-apis-and-fileapimode) | `Envapter.fileApiMode = 'warn'` | `useSource` leaves it as it was |
+
+{/* prettier-ignore-end */}
+
+Leave [`Envapter.syncProcessEnv`](/docs/env-files#coming-from-dotenv) off in tests, which is its default. When it's on, envapt writes the keys it loaded from `.env` files into `process.env`. Turning it off again doesn't remove keys already written, so they stay in `process.env` until the process exits.
+
+Put the cleanup lines you use in one `afterEach` inside a setup file, so no test file repeats them. vitest runs a setup file's hooks around every test in every file.
+
+```ts title="tests/setup.ts"
+import { afterEach } from 'vitest';
+import { Envapter, FileSource } from 'envapt';
+
+afterEach(() => {
+    Envapter.useSource(new FileSource());
+    Envapter.resetPaths();
+    Envapter.baseDir = undefined;
+    Envapter.strict = false;
+});
+```
+
+`useSource` comes first because `baseDir` throws `FileApiUnsupported` unless a file source is bound. List the file under `setupFiles` in your vitest config:
+
+```ts title="vitest.config.ts"
+import { defineConfig } from 'vitest/config';
+
+export default defineConfig({
+    test: { setupFiles: ['./tests/setup.ts'] }
+});
+```
+
+`tests/setup.ts` imports `FileSource`, so it can't run on a Workers or browser test runner. Those runners resolve the [portable build](/docs/compatibility#binding-by-runtime), which exports no `FileSource`. Restore by binding the platform's object again, such as `new PortableSource(env)` in a Worker test ([Cloudflare Workers](/docs/workers)) or `new PortableSource(import.meta.env)` in a browser test ([Browser](/docs/browser)). On the portable build, `resetPaths`, `baseDir`, `envPaths`, `envFileOptions`, and `configureProfiles` warn and do nothing under the default [`fileApiMode`](/docs/compatibility#file-apis-and-fileapimode) of `'warn'`, and throw `FileApiUnsupported` under `'throw'`. A pinned environment therefore stays pinned. Put `ENVIRONMENT` in the fixture there and skip the pin.
+
+### With isolate turned off
+
+If you set vitest's `isolate: false`, test files that run in one worker share their modules, including envapt and its state. A source, a `strict` setting, or a pinned environment set in one file is still there when the next file starts. If a setup file calls `vi.resetModules()`, each file gets fresh modules, but only for modules that vitest loads itself. Envapt isn't one of those, because Node loads packages from `node_modules` without passing them through vitest. List envapt under `server.deps.inline` so vitest loads it:
+
+```ts title="vitest.config.ts"
+import { defineConfig } from 'vitest/config';
+
+export default defineConfig({
+    test: {
+        isolate: false,
+        setupFiles: ['./tests/fresh-modules.ts', './tests/setup.ts'],
+        server: { deps: { inline: ['envapt'] } }
+    }
+});
+```
+
+```ts title="tests/fresh-modules.ts"
+import { vi } from 'vitest';
+
+vi.resetModules();
+```
+
+`fresh-modules.ts` comes first in `setupFiles`. If `setup.ts` ran first, it would bind its source on a copy of envapt that the reset then discards. The test file would import a fresh copy, which binds `FileSource` on import and reads your machine's values.
+
+## Reads at module scope run before the test
+
+If you read a value outside a function, the read runs when its module first loads, before any `beforeEach`. A fixture bound later can't change it.
+
+```ts twoslash
+import { Converters, Envapter } from 'envapt';
+// ---cut---
+export const port = Envapter.getAs('PORT', Converters.Port, 3000);
+
+export function getPort(): number {
+    return Envapter.getAs('PORT', Converters.Port, 3000);
+}
+```
+
+Under vitest, `port` holds whatever the real source gave when the module loaded, so every test reads that same number. `getPort()` reads when a test calls it. If a test needs to vary a constant, turn it into a function like `getPort`.
+
+If no test varies it, module scope is fine, as long as the values exist when the module loads. [Required values](/docs/required-values#where-to-put-the-check) recommends calling `getRequiredAll` at the top level of a config module. That module reads when the test file imports it. Bind the test values in a setup file, because vitest runs `setupFiles` before it imports each test file:
+
+```ts title="tests/setup.ts"
+import { afterEach } from 'vitest';
+import { Envapter, PortableSource } from 'envapt';
+
+const testEnv = new PortableSource({
+    ENVIRONMENT: 'test',
+    DATABASE_URL: 'postgres://app@localhost:5432/app',
+    PORT: '4000',
+    CACHE_TTL: '30s'
+});
+
+Envapter.useSource(testEnv);
+
+afterEach(() => {
+    Envapter.useSource(testEnv);
+    Envapter.strict = false;
+});
+```
+
+The config module reads `testEnv` once, when the test file imports it, so every test in that file gets the same values. This `tests/setup.ts` replaces the one in [Put the real config back](#put-the-real-config-back). Its `afterEach` binds `testEnv` again, because binding `FileSource` there would make the next test read your machine's values. It leaves out the `baseDir` line because `baseDir` throws `FileApiUnsupported` while a `PortableSource` is bound, so a test that pins `environment` has to call `Envapter.resetPaths()` itself.
+
+## Decorated classes
+
+A decorated field throws `EnvaptError` with code `InvalidUserDefinedConfig` (302) when you assign to it, so a test binds a source to change it. A decorated field stores the first value it reads. `useSource` clears that stored value, so the next read of the field converts the value from the new source. If you leave a source bound, a field you read in one test keeps that value in the tests after it. These samples use the `envapt/legacy` decorators, because vitest's default transform can't load the modern ones ([the error below](#syntaxerror-invalid-or-unexpected-token)).
+
+```ts
+// config.ts
+import { Converters } from 'envapt';
+import { Envapt } from 'envapt/legacy';
+
+export class Config {
+    @Envapt('CACHE_TTL', { converter: Converters.Time, fallback: '5m' })
+    static readonly cacheTtl: number;
+}
+```
+
+```ts
+// config.test.ts
+import { afterEach, expect, it } from 'vitest';
+import { Envapter, FileSource, PortableSource } from 'envapt';
+
+import { Config } from './config';
+
+afterEach(() => {
+    Envapter.useSource(new FileSource());
+});
+
+it('reads the field again after the source changes', () => {
+    Envapter.useSource(new PortableSource({ CACHE_TTL: '30s' }));
+    expect(Config.cacheTtl).toBe(30_000);
+
+    Envapter.useSource(new PortableSource({ CACHE_TTL: '1m' }));
+    expect(Config.cacheTtl).toBe(60_000);
+});
+```
+
+The second `Config.cacheTtl` read converts `'1m'` because the second `useSource` call cleared the first value. `afterEach` binds `FileSource` again, so the next test reads `Config.cacheTtl` from your real config.
+
+### SyntaxError: Invalid or unexpected token
+
+<Callout type="warn">
+
+With vitest's default transform, if a test file imports a class that uses `@Envapt` on a `static accessor` field, the file fails to load with this error. Node can't parse the decorator syntax, and vitest leaves it unchanged. The `envapt/legacy` decorators load when `experimentalDecorators` is on in `tsconfig.json`. They import from `envapt/legacy` and declare fields as `static readonly` ([Decorators](/docs/decorators)). Bun (`bun test` included) and Deno run the modern form directly ([Compatibility](/docs/compatibility#decorators-per-runtime)).
+
+</Callout>

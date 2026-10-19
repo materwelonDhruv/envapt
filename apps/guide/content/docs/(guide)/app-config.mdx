@@ -1,0 +1,166 @@
+---
+title: Structuring your config
+description: Read your app's variables once, in one typed config module that throws at boot on a bad deploy, then import the values from every other file.
+---
+
+You've read `process.env.DATABASE_URL` in whichever file needed it. Each file parsed the string its own way and picked its own default. If the variable was missing, the first request to touch the database crashed. And a test ran against whatever your laptop's `.env.local` held.
+
+A config module puts every read in one file that runs when the app starts. [`Envapter`](/docs/envapter) does the parsing there, since each [converter](/docs/converters) returns a typed value, and [`getRequiredAll`](/docs/required-values) checks every required key before it throws. The other files import the typed result.
+
+## One module reads your variables
+
+```ts twoslash title="src/config.ts"
+import { Converters, Envapter } from 'envapt';
+
+const env = Envapter.getRequiredAll(
+    {
+        DATABASE_URL: Converters.Url,
+        PORT: Converters.Port,
+        SESSION_SECRET: Converters.String
+    },
+    'camelCase'
+);
+
+export const config = {
+    ...env,
+    cacheTtl: Envapter.getAs('CACHE_TTL', Converters.Time, '5m'),
+    allowedOrigins: Envapter.getAs('ALLOWED_ORIGINS', Converters.array(), []),
+    isProduction: Envapter.isProduction
+};
+
+export type Config = typeof config;
+//          ^?
+```
+
+`Config` shows what the rest of the app gets. `port` is a `number`, `databaseUrl` is a `URL`, and `cacheTtl` is a number of milliseconds, so no other file parses them again. The `'camelCase'` argument turns `DATABASE_URL` into `databaseUrl`. Without it, the keys stay as you wrote them.
+
+If any of the three required keys are missing, `getRequiredAll` throws one `MissingEnvValue` error that lists them all. If they're set but one can't convert, such as `PORT=abc`, it throws one `InvalidEnvValue` that lists every bad key.
+
+`cacheTtl` and `allowedOrigins` take a fallback, the value the read returns when the variable is unset. A fallback also replaces a value that can't convert, without an error, so `CACHE_TTL=5 minutes` reads as the `'5m'` fallback. Give a variable a fallback when the app has a sensible value to run on without it. If a typo in it should stop the app, list it in `getRequiredAll` instead. `ALLOWED_ORIGINS` is split on commas, and [`isProduction`](/docs/environment#branching-on-the-environment) reads `ENVIRONMENT`, `ENV`, `NODE_ENV`, or `MODE`.
+
+The module has a cost. Any script, test, or tool that imports `config.ts` needs every required variable set first. A script that reads one or two values can call `Envapter` directly and skip the module.
+
+## Import it from your entry file
+
+```ts title="src/index.ts"
+import { config } from './config';
+import { createServer } from './server';
+
+createServer().listen(config.port);
+```
+
+`config.ts` runs before any module that imports it. Listing `./config` first in the entry file also covers modules that do work when they load without importing `config`, such as one that opens a connection pool. Imports run in order, so a missing `SESSION_SECRET` throws before that module runs, and the process exits before anything opens a port.
+
+If a value is set but can't convert, the uncaught error also prints its `issues`, and an issue can quote the bad value. [Reading the error without leaking values](/docs/required-values#reading-the-error-without-leaking-values) has the `catch` block that logs only the keys.
+
+## Import `config` in every other file
+
+```ts title="src/db.ts"
+import { config } from './config';
+
+export function connectionOptions() {
+    return { connectionString: config.databaseUrl.href, ssl: config.isProduction };
+}
+```
+
+`config.databaseUrl` arrives as a `URL`, with no parsing and no default in `db.ts`. Nothing stops a file from reading `process.env` or calling `Envapter.get` itself, so this is a habit to keep. A file that reads on its own parses the string again and picks its own default, and the two can drift apart. To read a different variable later, you change `config.ts`, then set the new name in each environment and in your test setup.
+
+## Grouping settings
+
+Once several keys share a prefix, such as `DATABASE_` and `REDIS_`, nested objects read better than one long list. Keep one `getRequiredAll` call, and group its keys when you build `config`:
+
+```ts twoslash title="src/config.ts"
+import { Converters, Envapter } from 'envapt';
+// ---cut---
+const env = Envapter.getRequiredAll(
+    {
+        DATABASE_URL: Converters.Url,
+        DATABASE_POOL_SIZE: Converters.Integer,
+        REDIS_URL: Converters.Url,
+        PORT: Converters.Port
+    },
+    'camelCase'
+);
+
+export const config = {
+    db: { url: env.databaseUrl, poolSize: env.databasePoolSize },
+    redis: { url: env.redisUrl },
+    http: { port: env.port }
+};
+```
+
+Two `getRequiredAll` calls, one per group, throw separately. If `DATABASE_URL` and `REDIS_URL` are both missing, the first call throws, its error lists only `DATABASE_URL`, and you find `REDIS_URL` on the next deploy.
+
+## A config class instead
+
+If your code is written around classes, declare each setting as a typed field with the [`@Envapt` decorator](/docs/decorators):
+
+```ts twoslash title="src/Config.ts"
+import { Converters, Envapt, EnvTime } from 'envapt';
+// ---cut---
+export class Config {
+    @Envapt('DATABASE_URL', { converter: Converters.Url, required: true })
+    static accessor databaseUrl: URL;
+
+    @EnvTime('CACHE_TTL', '5m')
+    static accessor cacheTtl: number;
+}
+```
+
+`@EnvTime` is the [shorthand](/docs/decorators#shorthand-decorators) for a duration with a fallback. The shorthands take only a key and a fallback, so `databaseUrl` uses the full `@Envapt` form to set `required: true`. Each field needs the `accessor` keyword, which [Decorators](/docs/decorators#declaring-decorated-fields) explains. If your project sets `experimentalDecorators`, import from `envapt/legacy` and declare `static readonly` fields instead. A decorated field reads its variable the first time something accesses it. A missing `DATABASE_URL` then throws during the first request that touches `Config.databaseUrl`, which brings back the crash from the top of this page, and missing fields show up one at a time. The `getRequiredAll` module checks every required key when the app starts.
+
+The class has one thing the module lacks. If something binds a new source after startup, such as a secrets refresh, a field reads its variable again on its next access. `config` keeps the values it read at load. Pick the class when you need that, and start with the module otherwise.
+
+## Tests
+
+`config.ts` reads its variables when a test file first imports it, so the test values have to be bound before that. Bind them in a setup file:
+
+```ts twoslash title="tests/setup.ts"
+import { Envapter, PortableSource } from 'envapt';
+
+Envapter.useSource(
+    new PortableSource({
+        ENVIRONMENT: 'test',
+        DATABASE_URL: 'postgres://app@localhost:5432/app',
+        PORT: '4000',
+        SESSION_SECRET: 'test-secret'
+    })
+);
+```
+
+```ts title="vitest.config.ts"
+import { defineConfig } from 'vitest/config';
+
+export default defineConfig({ test: { setupFiles: ['./tests/setup.ts'] } });
+```
+
+vitest runs each file in `setupFiles` before it imports a test file. [`PortableSource`](/docs/sources#the-sources-envapt-ships) replaces the default source, so your shell and `.env` files stay out of the test. `PORT: '4000'` is a string, the same as a real environment variable, and `config.port` still comes out as the number `4000`. To change one value in a single test, see [Testing](/docs/testing#reads-at-module-scope-run-before-the-test).
+
+## On Workers and in the browser
+
+On these runtimes envapt reads nothing until you bind the object the platform gives you, so the bind goes at the top of `config.ts`, before the first read:
+
+```ts twoslash title="src/config.ts"
+// @lib: esnext
+/// <reference types="@cloudflare/workers-types" />
+// ---cut---
+import { env as workerEnv } from 'cloudflare:workers';
+import { Converters, Envapter, PortableSource } from 'envapt';
+
+Envapter.useSource(new PortableSource(workerEnv));
+
+export const config = Envapter.getRequiredAll(
+    { API_BASE_URL: Converters.Url, API_TOKEN: Converters.String },
+    'camelCase'
+);
+```
+
+A module that reads a value before the `useSource` line runs throws [`NoSourceBound`](/docs/sources#no-environment-source-is-bound), which is one more reason every file reads through `config`. On Workers, Cloudflare runs this module when you deploy, so a missing `API_TOKEN` fails the deploy. [Cloudflare Workers](/docs/workers) covers that and the per-environment `vars`. In the browser the bind takes Vite's `import.meta.env` ([Browser](/docs/browser)), and other edge runtimes follow the [edge runtimes](/docs/edge-runtimes) page.
+
+## Different values per environment
+
+The keys stay the same in every environment, and the values come from wherever the source reads:
+
+- On Node, Bun, and Deno, [`.env.production`](/docs/env-files#which-files-load) loads in production on top of `.env`, and a variable set in the shell wins over both.
+- Secrets can come from a [secrets manager](/docs/secret-stores), fetched at boot and bound with your `.env` files.
+- On Workers, each Wrangler environment sets its own `vars` and secrets.

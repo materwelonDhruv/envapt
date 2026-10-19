@@ -6,19 +6,19 @@ import { fileURLToPath } from 'node:url';
 import type { FileCapableSource } from '../types';
 
 /**
- * Default environment source on Node, Bun, and Deno: a snapshot of `process.env`. Its
- * `supportsFiles` is `true`, so the engine also layers the `.env` cascade on top, resolves
- * `baseDir`, and can mirror loaded keys back to `process.env`.
+ * Default environment source on Node, Bun, and Deno: a snapshot of `process.env`. Because
+ * `supportsFiles` is `true`, envapt also loads the `.env` cascade and resolves `baseDir`.
+ * A key set in `process.env` wins over the same key in a file unless `envFileOptions.override` is
+ * `true`. `Envapter.syncProcessEnv` can copy loaded keys back to `process.env`.
  * @public
- * @see {@link https://envapt.materwelon.dev/docs/sources#the-providers}
+ * @see {@link https://envapt.materwelon.dev/docs/sources#the-sources-envapt-ships}
  */
 export class FileSource implements FileCapableSource {
-    /** Always `true`. The engine layers the `.env` cascade and `baseDir` on top of `process.env`. */
+    /** Always `true`. */
     readonly supportsFiles = true;
 
-    /** Returns a snapshot clone of `process.env` as plain strings. */
+    /** Returns a copy of `process.env`. */
     readVars(): Record<string, string> {
-        // the loader writes into the returned object
         return { ...(process.env as Record<string, string>) };
     }
 
@@ -49,7 +49,7 @@ export class FileSource implements FileCapableSource {
         return join(baseDir, candidate);
     }
 
-    /** Writes each key to `process.env`, backing `Envapter.syncProcessEnv`. */
+    /** Writes each key to `process.env`. `Envapter.syncProcessEnv` calls it. */
     writeVars(vars: Record<string, string>): void {
         for (const [key, value] of Object.entries(vars)) {
             process.env[key] = value;

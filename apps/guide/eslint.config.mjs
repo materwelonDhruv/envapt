@@ -15,7 +15,7 @@ export default createConfig({
     tailwindEntryPoint: path.resolve(import.meta.dirname, 'app/global.css'),
     tailwindCalleeFunctions: ['cn', 'clsx', 'twMerge'],
     userConfigs: [
-        // registers react, react-hooks, import, jsx-a11y, and @next
+        // registers react, react-hooks, import, jsx-a11y and @next
         ...nextVitals,
 
         reactCompiler.configs.recommended,
@@ -32,13 +32,23 @@ export default createConfig({
             }
         },
 
-        // twoslash samples carry `---cut---`, `^?`, and `@errors` markers that plain TS rejects
+        // plain TS rejects the twoslash markers in code samples (`---cut---`/`^?`/`@errors`)
         {
             ...mdx.flat,
             files: ['**/*.mdx'],
             settings: { 'mdx/code-blocks': false }
         },
 
-        { ignores: ['.next/**', 'out/**', 'build/**', '.source/**', 'next-env.d.ts'] }
+        {
+            ignores: [
+                '.next/**',
+                'out/**',
+                'build/**',
+                '.source/**',
+                '.wrangler/**',
+                'next-env.d.ts',
+                'content/docs/api/reference/**'
+            ]
+        }
     ]
 });

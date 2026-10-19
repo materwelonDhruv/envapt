@@ -1,0 +1,201 @@
+---
+title: Migration (v8 to v9)
+description: Move a v8 app to envapt v9, which requires Node 22.23.3 and ESM, and find the behavior changes TypeScript won't point out for you.
+---
+
+v9 requires Node 22.23.3 or newer, and it ships as ESM only. Most of its other changes are renames and removals. TypeScript reports each one once you bump the version. A few changes keep compiling but behave differently at runtime.
+
+## Before you upgrade
+
+Node 20 reached end of life in April 2026, so v9 raises the minimum Node version from 20 to 22.23.3. Bun `>=1.3.11` and Deno `>=2.5` haven't changed.
+
+envapt also stopped shipping a CommonJS build. The entries Node matches in its [package exports](/docs/compatibility#module-format-and-typescript) only list `import`, which makes `require('envapt')` throw `ERR_PACKAGE_PATH_NOT_EXPORTED`.
+
+{/* prettier-ignore-start */}
+
+| v8 | v9 |
+| --- | --- |
+| `const { Envapter } = require('envapt')` | `const { Envapter } = await import('envapt')` |
+| `node -r envapt/config app.js` | `node --import envapt/config app.js` |
+
+{/* prettier-ignore-end */}
+
+CommonJS has no top-level `await`, so put the `import()` inside the async function that starts your app.
+
+## What TypeScript won't catch
+
+Most of the code these sections describe still compiles in v9, so search your project for each one.
+
+### Required reads throw `InvalidEnvValue`
+
+In v8, a [required read](/docs/required-values) threw `MissingEnvValue` (305) both for an unset key and for a value it couldn't convert. A `catch` had no way to tell a missing `PORT` from a mistyped one. v9 keeps 305 for the unset key and throws the new [`InvalidEnvValue`](/docs/errors#converter-and-schema) (210) for a value that's set but bad. That covers `getRequired`, `getRequiredAll`, and `@Envapt` with `required: true`.
+
+```ts twoslash
+import { Converters, Envapter, EnvaptError, EnvaptErrorCodes } from 'envapt';
+// ---cut---
+// with PORT="80a"
+try {
+    Envapter.getRequired('PORT', Converters.Port);
+} catch (error) {
+    if (error instanceof EnvaptError && error.code === EnvaptErrorCodes.InvalidEnvValue) {
+        console.error(error.issues?.map((issue) => issue.path));
+    }
+}
+```
+
+That prints `[['PORT']]`. Each failure is an entry in `issues`, with the env key first in its `path`. `getRequiredAll` throws one `InvalidEnvValue` holding every bad value. v8 stopped at the first one. If a key is also unset, `getRequiredAll` throws `MissingEnvValue` for the unset keys first.
+
+With the decorator, v8 didn't throw at all:
+
+```ts
+class Config extends Envapter {
+    @Envapt('PORT', { converter: Converters.Port, required: true })
+    static accessor port: number;
+}
+```
+
+For `PORT="80a"`, v8 gave `Config.port` the value `undefined`, even though the field is typed `number`. v9 throws `InvalidEnvValue` the first time you read it.
+
+A required read also turns its other failures into issues on the `InvalidEnvValue` it throws. A bad array element used to throw `ArrayElementConversionFailed` or `EmptyArrayElement`. An error from your own parser reached your `catch` unchanged. A schema on a required decorator threw `SchemaValidationFailed` or `SchemaThrew`. Now each becomes an issue that carries the original message. The error object itself is gone, so a `catch` on your parser's error class stops matching. Check for `InvalidEnvValue` there and read `error.issues`.
+
+### A bad converter throws earlier, with a different code
+
+A [converter token](/docs/converters#built-in-tokens) with a typo, like `'nmber'`, now throws `InvalidBuiltInConverter` (202) and lists the valid tokens. v8 threw `InvalidCustomConverter` (203).
+
+A mistyped token also throws on every read now. v8 skipped the check for an unset key with no fallback, so `getUsing('CACHE_TTL', 'nmber')` returned `undefined` for as long as `CACHE_TTL` stayed unset. A required read throws that error before it checks whether the key is set.
+
+Two fallback checks now run on every read:
+
+- A malformed time-string fallback, like `'10 seconds'` on `Converters.Time`, throws `MalformedTimeFallback` (105) even when the variable is set. v8 threw only when it used the fallback.
+- `get`, `getNumber`, `getBoolean`, and `getBigInt` check their fallback's type, which v8 never did. `getNumber('PORT', '80')` throws `FallbackConverterTypeMismatch` (104).
+
+TypeScript rejects a mistyped token. It also rejects a fallback of the wrong type on those four readers. This section mostly matters to JavaScript callers and to anything that branches on the error's `code`.
+
+### A schema read with no fallback returns `undefined`
+
+`Envapter.parse` threw `MissingEnvValue` for an unset key when you passed no fallback. Its replacement, `getAs`, returns `undefined` for that key, like every other optional read. `@Envapt({ schema })` returns `undefined` too.
+
+If you relied on the throw, move the read to `getRequired`, which now takes a [Standard Schema](/docs/standard-schema):
+
+```ts twoslash
+import { z } from 'zod/v4';
+import { Envapter } from 'envapt';
+// ---cut---
+const port = Envapter.getRequired('PORT', z.coerce.number().int().min(1024));
+//    ^?
+```
+
+`port` is a `number`, and an unset `PORT` throws `MissingEnvValue`. On a decorator, add `required: true`. A schema field with neither a fallback nor `required: true` needs a `T | undefined` type. If such a field is still typed `T`, TypeScript reports an error.
+
+### Schema issues carry the env key
+
+Each issue on a `SchemaValidationFailed` from `getAs` or `@Envapt({ schema })` now has the env key first in its `path`, the same as on `InvalidEnvValue`. A zod issue on `PORT` had the path `[]` in v8. It's `['PORT']` now.
+
+The message lists only the key, as in `Validation failed for PORT.`, because an issue message can quote the value and the value can be a secret. v8 added the first issue's message after the key. If you parsed the reason from the message, read `error.issues` now.
+
+### Errors from a custom file source
+
+This only matters if you wrote your own [source](/docs/sources#any-object-can-be-a-source) with `supportsFiles: true`. In v8, an error thrown by its `readFile` was caught while the `.env` files loaded. envapt then skipped that file and every file after it in the cascade.
+
+In v9 envapt doesn't catch it. `Envapter.useSource` throws it, and any later reload of the `.env` files throws it too.
+
+## `Envapter.environment` is a string
+
+[`Envapter.environment`](/docs/environment) returns a string like `'production'` in v9. v8 returned a number, like `2` for production. `Environment` is now a plain object of strings, with `Environment.Production` holding `'production'`, so a comparison like `Envapter.environment === Environment.Production` keeps working.
+
+Code that turned the number back into a name breaks:
+
+```ts
+// v8
+console.log(Environment[Envapter.environment]); // 'Production'
+
+// v9
+console.log(Environment[Envapter.environment]); // undefined
+console.log(Envapter.environment); // 'production'
+```
+
+TypeScript reports the v9 `Environment[...]` line as an error. In JavaScript it logs `undefined`. Setting `Envapter.environment` to a number throws `InvalidUserDefinedConfig`. Rewrite a type annotation like `Environment.Test` as `'test'`.
+
+## Renames and removals
+
+TypeScript reports each of these in v9, so you can work through them from the compiler output.
+
+{/* prettier-ignore-start */}
+
+| v8 | v9 |
+| --- | --- |
+| [`Envapter.getUsing(key, token, fallback?)`](/docs/envapter#other-types-with-getas) | [`Envapter.getAs(key, token, fallback?)`](/docs/envapter#other-types-with-getas) |
+| `Envapter.getWith(key, fn, fallback?)` | `Envapter.getAs(key, fn, fallback?)`, with the [new converter shape](#custom-converters-get-a-string) |
+| `Envapter.parse(key, schema, fallback?)` | `Envapter.getAs(key, schema, fallback?)` |
+| `Converters.Bigint` | [`Converters.BigInt`](/docs/converters#built-in-tokens) |
+| `Converters.Regexp` | `Converters.RegExp` |
+| `String`, `Number`, `Boolean`, `BigInt` as a converter | `Converters.String`, `Converters.Number`, `Converters.Boolean`, `Converters.BigInt` |
+| `Envapter.getSymbol(key, fallback?)`, `Converters.Symbol`, a symbol `fallback` on `@Envapt` | `Symbol.for(Envapter.get(key, fallback))` |
+| `Envapter.resetProfiles()` | [`Envapter.resetPaths()`](/docs/env-files#profiles) |
+| `Envapter.load()` | remove the call |
+| an instance member, like `new Envapter().get(key)` or `config.isProduction` | the static member, like `Envapter.get(key)` or `Envapter.isProduction` |
+| `this.get(key)` in a subclass method | `AppConfig.get(key)`, called on your subclass |
+| `EnvaptOptions` | pass the options object to [`@Envapt`](/docs/decorators) inline |
+| `CustomElementConverter<T>` | `ConverterFunction<T>` |
+| `ConverterFunction<T, string>` | `ConverterFunction<T>` |
+| `EnvaptErrorCodes.MissingEnvValue` as a type | `typeof EnvaptErrorCodes.MissingEnvValue`, or `305` |
+| `getUsing<T>(key, token)` typed as `T` | `getAs<T>(key, token)` typed as `T \| undefined`, or pass a fallback to get `T` |
+
+{/* prettier-ignore-end */}
+
+Without TypeScript, two of these show up as runtime errors. Passing `String` or `Number` as a converter throws `InvalidUserDefinedConfig` (302), with a message pointing to `Converters.String` or `Converters.Number`. A symbol fallback throws `FallbackConverterTypeMismatch` (104).
+
+`getAs` accepts a token, a function, or a schema. `Converters.BigInt` and `Converters.RegExp` are now spelled like the JavaScript globals, the same as `getBigInt` was.
+
+On Node, envapt binds `FileSource` when you import it, and binding a source loads the `.env` files, so `load()` already did nothing in v8. `resetProfiles()` became `resetPaths()` because it clears `envPaths` along with the profiles.
+
+[`EnvaptErrorCodes`](/docs/errors#codes) is a plain object now, like `Environment`, so `EnvaptErrorCodes[305]` returns `undefined`. v9 removed `InvalidFallbackType` (102), `InvalidConverterType` (204), and `PrimitiveCoercionFailed` (205). Every other code kept its number.
+
+## Custom converters get a string
+
+A custom converter passed to `getWith` or `@Envapt` ran on every read in v8. It got `raw` as `string | undefined` and the fallback as a second argument, so each one opened with a check for a missing value. In v9 envapt calls it only when the variable is set, with `raw` as a `string`, and applies the fallback itself.
+
+```ts
+// v8
+const hosts = Envapter.getWith('ALLOWED_HOSTS', (raw, fallback) => (raw ? raw.split(',') : fallback), ['localhost']);
+```
+
+```ts twoslash
+import { Envapter } from 'envapt';
+// ---cut---
+const hosts = Envapter.getAs('ALLOWED_HOSTS', (raw) => raw.split(','), ['localhost']);
+//    ^?
+```
+
+`hosts` is a `string[]`. It's `['localhost']` when `ALLOWED_HOSTS` is unset, and the converter never runs. If your converter returns `undefined` or `null`, envapt returns the fallback, so a custom converter can't return `null` as a real result anymore.
+
+A decorated field with a custom converter and no fallback now needs a `T | undefined` type, because an unset variable gives it `undefined` without calling your function.
+
+In [`Converters.array`](/docs/converters#arrays), envapt throws `ArrayElementConversionFailed` when an element converter returns `null`. v8 kept the `null` in the array.
+
+## Schemas go in `schema`
+
+An arktype type is a function, and it's a Standard Schema too. v8 accepted one as the `converter` on `@Envapt`, or as the `of` in `Converters.array`. envapt called it like any converter and returned arktype's `ArkErrors` object as the value whenever validation failed.
+
+v9 rejects a Standard Schema in both places. Passing one fails to compile. At runtime the decorator throws `InvalidUserDefinedConfig`, and the array throws `InvalidArrayConverterType`. Pass the schema to `@Envapt` as `schema`:
+
+```ts
+import { type } from 'arktype';
+import { Envapt, Envapter } from 'envapt';
+
+class Config extends Envapter {
+    @Envapt('PORT', { schema: type('string.integer.parse'), fallback: 3000 })
+    static accessor port: number;
+}
+```
+
+v8 accepted only an object as `schema`, and an arktype type is a function, so that line threw `InvalidUserDefinedConfig` in v8.
+
+## Also in v9
+
+These don't break existing code:
+
+- `getRequired` and `getRequiredAll` take a synchronous Standard Schema.
+- Each argument to [`Envapter.require`](/docs/required-values#getrequired-require-and-has) can be an ordered key list, which passes when any key in it has a value. Each placeholder in [`Envapter.resolve`](/docs/templates#the-resolve-tagged-template) takes one too and uses the first key with a value.
+- [`ENVIRONMENT_KEYS`](/docs/environment#detecting-the-environment) is exported. It lists the variables envapt checks to detect the environment, in order, for tools that need to read the same ones.
+- If a zod `.transform` or `.refine` throws, zod returns a Promise. The read still throws `InvalidUserDefinedConfig`, and Node no longer crashes on the unhandled rejection. With `Envapter.debug = 'warn'`, envapt logs the original error.
