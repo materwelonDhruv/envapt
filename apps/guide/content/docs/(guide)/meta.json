@@ -24,6 +24,8 @@
         "workers",
         "edge-runtimes",
         "browser",
+        "---Frameworks---",
+        "nextjs",
         "---Reference---",
         "errors",
         "(migrations)"

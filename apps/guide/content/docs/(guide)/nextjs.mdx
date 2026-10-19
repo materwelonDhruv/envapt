@@ -1,0 +1,182 @@
+---
+title: Next.js
+description: Read typed config in a Next.js app from server code, client components, and edge routes, and catch a missing variable at build time or at server start.
+---
+
+Next.js loads your `.env` files into `process.env`, and with plain `process.env` every value is a string. `process.env.MAX_CONNECTIONS` held `'10'`. A typo in `DATABASE_URL` appeared on the first query that used it. Each file that read a variable set its own default.
+
+[`Envapter`](/docs/envapter) reads that same `process.env` and converts each value when you read it. Code on the Node.js runtime loads envapt's node build, which reads `process.env` and your `.env` files with no setup. Client components and edge routes load the [portable build](/docs/compatibility#portable-build-you-bind-a-source), which reads nothing until you pass it a source with [`Envapter.useSource`](/docs/sources).
+
+## Server code
+
+```ts twoslash title="lib/config.ts"
+import { Converters, Envapter } from 'envapt';
+
+export const config = Envapter.getRequiredAll(
+    {
+        DATABASE_URL: Converters.Url,
+        SESSION_TTL: Converters.Time,
+        MAX_CONNECTIONS: Converters.Integer
+    },
+    'camelCase'
+);
+```
+
+[`getRequiredAll`](/docs/required-values) converts each key with its [converter](/docs/converters), and `'camelCase'` turns `MAX_CONNECTIONS` into `config.maxConnections`, a `number`. `config.sessionTtl` is a number of milliseconds and `config.databaseUrl` is a `URL`. If keys are missing, it throws one `MissingEnvValue` error that lists them all. [Structuring your config](/docs/app-config) explains why every read goes through one module.
+
+### Failed to collect page data
+
+`next build` imports every route module while it collects page data, including dynamic routes, so `config` runs during the build too. If a required variable is missing on the build machine, the build stops:
+
+```txt
+Error: Failed to collect page data for /api/orders
+  [cause]: EnvaptError [305]: Missing required environment variables: DATABASE_URL.
+```
+
+305 is `MissingEnvValue`. If the build machine has the same variables as the server, that build failure catches a missing variable before you deploy. If you build somewhere without your secrets, such as a Docker image that gets them when it starts, export a function:
+
+```ts twoslash title="lib/config.ts"
+import { Converters, Envapter } from 'envapt';
+// ---cut---
+export function serverConfig() {
+    return Envapter.getRequiredAll(
+        {
+            DATABASE_URL: Converters.Url,
+            SESSION_TTL: Converters.Time,
+            MAX_CONNECTIONS: Converters.Integer
+        },
+        'camelCase'
+    );
+}
+```
+
+`serverConfig()` reads the variables each time you call it. When Next.js collects page data, it imports the module without calling the function, so the build no longer checks your config. Call `serverConfig()` in `register()` to check it at server start, as [the next section](#checking-config-when-the-server-starts) shows.
+
+### Static pages keep the values from the build
+
+If a page reads nothing from the request, Next.js renders it once during `next build` and serves that HTML. A value it reads through `config` or `Envapter.get` stays at whatever the build machine had until you build again. To read the value on each request, call `connection()` first:
+
+```tsx twoslash title="app/status/page.tsx"
+import { connection } from 'next/server';
+import { Envapter } from 'envapt';
+// ---cut---
+export default async function StatusPage() {
+    await connection();
+    return <p>Serving from {Envapter.get('DEPLOY_REGION', 'local')}</p>;
+}
+```
+
+`DEPLOY_REGION` then comes from the environment the server is running with, and `'local'` is the fallback when it's unset.
+
+## Checking config when the server starts
+
+Without a startup check, a missing variable fails only the first request that imports `config`. That route returns 500 while the others keep working. Next.js calls `register()` in `instrumentation.ts` when the server starts, before it serves a request, so importing `config` there checks the required keys at startup:
+
+```ts title="instrumentation.ts"
+export async function register() {
+    if (process.env.NEXT_RUNTIME === 'nodejs') {
+        await import('./lib/config');
+    }
+}
+```
+
+If your config module exports `serverConfig()`, call it inside the `if` in place of the import. Next.js also runs `register()` on the edge runtime, where `envapt` resolves to the portable build. A read there before `useSource` throws [`NoSourceBound`](/docs/sources#no-environment-source-is-bound), and the `NEXT_RUNTIME` check keeps the import on the Node.js server.
+
+If `register()` throws, Next.js logs "Failed to prepare server", but the process keeps listening. Every request returns 500 with the same error. A health check that only tests whether the port is open still passes, so point it at a route that imports `config`.
+
+## Which .env file wins
+
+Next.js picks its `.env` files by `NODE_ENV` and copies them into `process.env` before any of your code runs. By default, envapt ranks a value already in `process.env` above every file, so for each key that Next.js loads, this order sets the value:
+
+```txt
+next start (NODE_ENV=production)
+├─ the shell               highest priority
+├─ .env.production.local
+├─ .env.local
+├─ .env.production
+└─ .env
+```
+
+In Next.js, `.env.local` wins over `.env.production`. [envapt's own order](/docs/env-files#which-files-load) puts them the other way. `next dev` reads the `.env.development` files in place of the `.env.production` ones.
+
+`NODE_ENV` also sets [`Envapter.environment`](/docs/environment) when `ENVIRONMENT` and `ENV` are unset. `next build` and `next start` set it to `production`, and `next dev` sets `development`.
+
+With `ENVIRONMENT=staging`, `Envapter.environment` is `'staging'`, so envapt reads `.env.staging`, a file Next.js never loads. Next.js still loads `.env.production`, because it picks files only by `NODE_ENV`. If a key is set in both files, envapt reads the `.env.production` value. Keep staging values out of `.env.production`, or set them in your host's environment.
+
+## Client components
+
+A client component runs in the browser. When Next.js builds the bundle, it replaces each `process.env.NEXT_PUBLIC_*` reference that spells out the variable's name with its value, and `process.env.NODE_ENV` too. The client bundle loads the portable build, which reads nothing until you bind a source. Bind an object that spells out each name:
+
+```ts twoslash title="lib/public-config.ts"
+import { Converters, Envapter, PortableSource } from 'envapt';
+// ---cut---
+Envapter.useSource(
+    new PortableSource({
+        NODE_ENV: process.env.NODE_ENV,
+        NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+        NEXT_PUBLIC_BETA: process.env.NEXT_PUBLIC_BETA
+    })
+);
+
+export const apiUrl = Envapter.getRequired('NEXT_PUBLIC_API_URL', Converters.Url);
+export const betaEnabled = Envapter.getAs('NEXT_PUBLIC_BETA', Converters.Boolean, false);
+```
+
+[`PortableSource`](/docs/sources#the-sources-envapt-ships) holds only the keys in that object. A variable you leave out reads as unset, so `getRequired` throws for it and `getAs` returns its fallback. When you add a `NEXT_PUBLIC_` variable, add it to the object too.
+
+`betaEnabled` is a `boolean`, where `process.env.NEXT_PUBLIC_BETA` holds the string `'false'` when the flag is off. `NODE_ENV` is in the object because `Envapter.environment` reads it from the source. Without it, `Envapter.environment` is `'development'` in the browser.
+
+Import `public-config.ts` only from files that start with `'use client'`, for the reason in [the next section](#keep-envapt-out-of-serverexternalpackages). If one component needs one public value, read it in a server component and pass it down as a prop, which keeps envapt out of the client bundle.
+
+### Keep envapt out of serverExternalPackages
+
+Next.js also renders client components on the server, and it bundles a separate copy of envapt for that render. The `useSource` call in `public-config.ts` replaces the source only in that copy, so your server code keeps reading `process.env` and your `.env` files.
+
+If you list `envapt` in `serverExternalPackages`, both renders load one shared copy. The client's `useSource` call then replaces the source your server code reads. `next build` stops with a missing-variable error for server keys like `DATABASE_URL`.
+
+## Edge routes
+
+A route that exports `runtime = 'edge'` loads the portable build. Bind `process.env` before the first read:
+
+```ts twoslash title="app/api/geo/route.ts"
+import { Converters, Envapter, PortableSource } from 'envapt';
+// ---cut---
+export const runtime = 'edge';
+
+Envapter.useSource(new PortableSource(process.env));
+const geoApiUrl = Envapter.getRequired('GEO_API_URL', Converters.Url);
+
+export function GET() {
+    return fetch(geoApiUrl);
+}
+```
+
+`getRequired` comes after `useSource`. If you swap the two lines, the read throws `NoSourceBound` (307). The read runs at module scope, so a missing `GEO_API_URL` stops `next build` the same way a server route does. Outside Next.js, [Vercel's Edge runtime](/docs/edge-runtimes#vercel-edge) binds the same way.
+
+## Decorators
+
+Next.js compiles your TypeScript with SWC. Next.js turns on SWC's decorator support when `tsconfig.json` sets `experimentalDecorators`, and it compiles only legacy decorators. Set the flag, then import `@Envapt` from `envapt/legacy` and declare `static readonly` fields:
+
+```json title="tsconfig.json"
+{ "compilerOptions": { "experimentalDecorators": true } }
+```
+
+```ts twoslash title="lib/AppConfig.ts"
+// @experimentalDecorators: true
+import { Converters } from 'envapt';
+import { Envapt } from 'envapt/legacy';
+
+export class AppConfig {
+    @Envapt('DATABASE_URL', { converter: Converters.Url, required: true })
+    static readonly databaseUrl: URL;
+
+    @Envapt('SESSION_TTL', { converter: Converters.Time, fallback: '15m' })
+    static readonly sessionTtl: number;
+}
+```
+
+`Converters` comes from `envapt`, and only `Envapt` comes from `envapt/legacy`. A decorated field reads its variable the first time you access it, so importing `AppConfig` in `register()` checks nothing. Read `AppConfig.databaseUrl` there to check it at startup. The [legacy decorators](/docs/decorators#legacy-decorators) section has the instance-field form.
+
+### not implemented: ClassMember::AutoAccessor
+
+`next build` stops with this error on a modern `static accessor` field imported from `envapt`. In Next.js 16.4, Turbopack, the bundler `next build` uses by default, can't parse the `accessor` keyword. Switch the field to the `static readonly` form above.
