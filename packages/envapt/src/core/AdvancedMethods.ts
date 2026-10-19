@@ -43,7 +43,8 @@ export class AdvancedMethods extends PrimitiveMethods {
         converter: TConverter,
         fallback?: TFallback
     ): AdvancedConverterReturn<TConverter, TFallback>;
-    static getAs<TReturn>(key: EnvKeyInput, converter: BuiltInConverter | ArrayOf, fallback?: TReturn): TReturn;
+    static getAs<TReturn>(key: EnvKeyInput, converter: BuiltInConverter | ArrayOf, fallback: TReturn): TReturn;
+    static getAs<TReturn>(key: EnvKeyInput, converter: BuiltInConverter | ArrayOf): TReturn | undefined;
     // arktype types are callable and would match the function overload below
     static getAs<Schema extends StandardSchemaV1, TFallback extends InferSchemaOutput<Schema> | undefined = undefined>(
         key: EnvKeyInput,

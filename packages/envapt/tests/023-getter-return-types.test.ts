@@ -1,6 +1,10 @@
 import { describe, expectTypeOf, it } from 'vitest';
 
-import { Envapter } from '../src';
+import { Converters, Envapter } from '../src';
+
+interface FeatureFlags {
+    beta: boolean;
+}
 
 describe('getter return-type narrowing (compile-time)', () => {
     describe('get (string)', () => {
@@ -36,6 +40,19 @@ describe('getter return-type narrowing (compile-time)', () => {
         });
         it('with fallback => bigint', () => {
             expectTypeOf(Envapter.getBigInt('KEY', 0n)).toEqualTypeOf<bigint>();
+        });
+    });
+
+    describe('getAs with an explicit type argument', () => {
+        it('no fallback => T | undefined', () => {
+            expectTypeOf(Envapter.getAs<FeatureFlags>('KEY', Converters.Json)).toEqualTypeOf<
+                FeatureFlags | undefined
+            >();
+        });
+        it('with fallback => T', () => {
+            expectTypeOf(
+                Envapter.getAs<FeatureFlags>('KEY', Converters.Json, { beta: false })
+            ).toEqualTypeOf<FeatureFlags>();
         });
     });
 });
