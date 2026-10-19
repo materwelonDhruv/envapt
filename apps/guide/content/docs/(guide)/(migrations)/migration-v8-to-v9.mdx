@@ -148,7 +148,7 @@ TypeScript reports each of these in v9, so you can work through them from the co
 
 {/* prettier-ignore-end */}
 
-Without TypeScript, two of these show up as runtime errors. Passing `String` or `Number` as a converter throws `InvalidUserDefinedConfig` (302), with a message pointing to `Converters.String` or `Converters.Number`. A symbol fallback throws `FallbackConverterTypeMismatch` (104).
+Without TypeScript, passing `String` or `Number` as a converter throws `InvalidUserDefinedConfig` (302), with a message pointing to `Converters.String` or `Converters.Number`. A symbol fallback throws `FallbackConverterTypeMismatch` (104).
 
 `getAs` accepts a token, a function, or a schema. `Converters.BigInt` and `Converters.RegExp` are now spelled like the JavaScript globals.
 
