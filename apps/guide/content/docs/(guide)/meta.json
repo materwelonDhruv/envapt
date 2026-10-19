@@ -4,6 +4,7 @@
     "pages": [
         "index",
         "quick-start",
+        "app-config",
         "---Reading config---",
         "envapter",
         "converters",
