@@ -7,6 +7,7 @@ import { EnvaptError, EnvaptErrorCodes } from '../infra/Error';
 import { validationFailed } from '../infra/failures';
 
 import type { ArrayOf } from './Converters';
+import type { EnvaptIssue } from '../infra/Error';
 import type { StandardSchemaV1 } from '../infra/StandardSchema';
 import type {
     BuiltInConverter,
@@ -18,12 +19,14 @@ import type {
 
 type SchemaOutcome = StandardSchemaV1.Result<unknown> | Promise<StandardSchemaV1.Result<unknown>>;
 
+type CheckResult = StandardSchemaV1.SuccessResult<unknown> | { readonly issues: readonly EnvaptIssue[] };
+
 export type FieldSpec = RequiredSpec[string];
 
 export interface Field {
     readonly fallback: unknown;
     convert(present: PresentValue): unknown;
-    check(present: PresentValue): StandardSchemaV1.Result<unknown>;
+    check(present: PresentValue): CheckResult;
 }
 
 function errorMessage(error: unknown): string {
@@ -38,6 +41,10 @@ function keyIssues(key: string, outcome: StandardSchemaV1.Result<unknown>): Stan
 
 function keyIssue(key: string, message: string): StandardSchemaV1.Result<unknown> {
     return keyIssues(key, { issues: [{ message }] });
+}
+
+function thrownIssue(key: string, error: unknown): CheckResult {
+    return { issues: [{ message: errorMessage(error), path: [key], cause: error }] };
 }
 
 function timeStringToMs(value: string): unknown {
@@ -64,12 +71,12 @@ abstract class ConverterField implements Field {
         return this.fallback;
     }
 
-    check({ key, value }: PresentValue): StandardSchemaV1.Result<unknown> {
+    check({ key, value }: PresentValue): CheckResult {
         let converted: unknown;
         try {
             converted = this.parse(value);
         } catch (error) {
-            return keyIssue(key, errorMessage(error));
+            return thrownIssue(key, error);
         }
         if (this.couldNotConvert(converted)) return keyIssue(key, 'could not be converted');
         return { value: converted };
@@ -166,9 +173,9 @@ class SchemaField implements Field {
         return run.result.value;
     }
 
-    check(present: PresentValue): StandardSchemaV1.Result<unknown> {
+    check(present: PresentValue): CheckResult {
         const run = this.run(present);
-        return run.threw ? keyIssue(present.key, errorMessage(run.error)) : run.result;
+        return run.threw ? thrownIssue(present.key, run.error) : run.result;
     }
 
     private run({

@@ -27,7 +27,7 @@ try {
 }
 ```
 
-`error.code` is typed `EnvaptErrorCodes`, so comparing it with a member such as `MissingEnvValue` narrows it. A `MissingEnvValue` (305) message lists keys only, so printing it is safe. The `instanceof` check matters because a converter function you wrote can throw its own error, which has no `code`. Inside `getAs` or a decorated field, envapt rethrows that error unchanged. A required read puts it in the `issues` of an `InvalidEnvValue` (210).
+`error.code` is typed `EnvaptErrorCodes`, so comparing it with a member such as `MissingEnvValue` narrows it. A `MissingEnvValue` (305) message lists keys only, so printing it is safe. The `instanceof` check matters because a converter function you wrote can throw its own error, which has no `code`. Inside `getAs` or a decorated field, envapt rethrows that error unchanged. A required read puts its message in the `issues` of an `InvalidEnvValue` (210) and keeps your error as that issue's `cause`.
 
 ## The error shape
 
@@ -47,13 +47,14 @@ try {
                 'A description of the failure. The 208, 210, and 305 messages list keys only. The 206 and 209 messages can carry the element or the error text your schema threw.'
         },
         issues: {
-            type: 'readonly StandardSchemaV1.Issue[] | undefined',
+            type: 'readonly { message, path, cause? }[] | undefined',
             description:
-                'One entry per bad value, each with a message and a path that starts with the env key. Set only for SchemaValidationFailed (208) and InvalidEnvValue (210).'
+                'One entry per bad value, each with a message and a path that starts with the env key. An entry for a parser or schema that threw keeps the thrown value as its cause. Set only for SchemaValidationFailed (208) and InvalidEnvValue (210).'
         },
         cause: {
             type: 'unknown',
-            description: 'The error your schema threw. Set by SchemaThrew (209) and undefined otherwise.'
+            description:
+                'The error your schema threw, for SchemaThrew (209). For InvalidEnvValue (210), the cause of the one issue that has one. Undefined otherwise.'
         }
     }}
 />

@@ -13,7 +13,7 @@ import { recase } from '../infra/recase';
 import { UnboundSource } from '../sources/UnboundSource';
 
 import type { Field, FieldSpec } from '../converters';
-import type { StandardSchemaV1 } from '../infra/StandardSchema';
+import type { EnvaptIssue } from '../infra/Error';
 import type { EnvKeyInput, KeyCasing, PresentValue } from '../types';
 
 function toKeyList(keyInput: EnvKeyInput): readonly string[] {
@@ -96,7 +96,7 @@ export function readRequiredAll(
 
     const result: Record<string, unknown> = {};
     const failedKeys: string[] = [];
-    const issues: StandardSchemaV1.Issue[] = [];
+    const issues: EnvaptIssue[] = [];
     for (const { present, field } of reads) {
         const outcome = field.check(present);
         if (outcome.issues === undefined) {

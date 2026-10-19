@@ -1,6 +1,6 @@
 import { EnvaptError, EnvaptErrorCodes } from './Error';
 
-import type { StandardSchemaV1 } from './StandardSchema';
+import type { EnvaptIssue } from './Error';
 import type { EnvKeyInput } from '../types';
 
 export function formatKeyForError(key: EnvKeyInput): string {
@@ -27,7 +27,15 @@ export type ValidationCode = typeof EnvaptErrorCodes.SchemaValidationFailed | ty
 export function validationFailed(
     code: ValidationCode,
     keys: readonly EnvKeyInput[],
-    issues: readonly StandardSchemaV1.Issue[]
+    issues: readonly EnvaptIssue[]
 ): EnvaptError {
-    return new EnvaptError(code, `Validation failed for ${keys.map(formatKeyForError).join(', ')}.`, { issues });
+    return new EnvaptError(code, `Validation failed for ${keys.map(formatKeyForError).join(', ')}.`, {
+        issues,
+        cause: soleCause(issues)
+    });
+}
+
+function soleCause(issues: readonly EnvaptIssue[]): unknown {
+    const thrown = issues.filter((issue) => 'cause' in issue);
+    return thrown.length === 1 ? thrown[0]?.cause : undefined;
 }
