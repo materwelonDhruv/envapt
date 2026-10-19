@@ -52,7 +52,7 @@
         "@seedcord/tsconfig": "^2.0.3",
         "@types/node": "catalog:dev",
         "@typescript-eslint/parser": "^8.71.2",
-        "@vitest/coverage-v8": "4.1.11",
+        "@vitest/coverage-v8": "5.0.5",
         "envapt": "workspace:*",
         "eslint": "catalog:dev",
         "husky": "^9.1.7",

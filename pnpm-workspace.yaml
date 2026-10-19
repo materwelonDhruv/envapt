@@ -20,7 +20,7 @@ catalogs:
     eslint: 10.10.0
     typescript: 6.0.3
     zod: 4.6.4
-    vitest: 4.1.11
+    vitest: 5.0.5
 
 overrides:
   brace-expansion@<1.1.20: ^1.1.20
