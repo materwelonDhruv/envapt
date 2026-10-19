@@ -14,7 +14,7 @@ const WORDMARK_RATIO = WORDMARK_VIEWBOX_WIDTH / WORDMARK_VIEWBOX_HEIGHT;
 interface BrandLockupProps {
     /** Height of the glyph mark, in px. */
     glyphSize: number;
-    /** Height of the wordmark, in px. Tuned per placement, not a fixed ratio of the glyph. */
+    /** Height of the wordmark, in px. Each placement tunes it by eye. */
     wordmarkHeight: number;
     /** Space between the glyph and the wordmark, in px. */
     gap?: number;
@@ -23,8 +23,7 @@ interface BrandLockupProps {
     style?: CSSProperties;
 }
 
-// Dimensions are px, not Tailwind classes, so this renders identically in the DOM and in Satori
-// (the OG renderer), which ignores `className`. The wordmark sits 1px lower to read as centered.
+// inline styles only. the OG cards render this without app/global.css
 export function BrandLockup({
     glyphSize,
     wordmarkHeight,
@@ -39,6 +38,7 @@ export function BrandLockup({
                 width={wordmarkHeight * WORDMARK_RATIO}
                 height={wordmarkHeight}
                 fill={fill}
+                // 1px lower reads as centered beside the glyph
                 style={{ transform: 'translateY(1px)' }}
             />
         </span>

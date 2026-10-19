@@ -4,6 +4,7 @@ import type { UserConfig } from 'tsdown';
 
 const shared = {
     unbundle: true,
+    // the browser and workers tests type-check against the portable build's dts
     dts: true,
     clean: true,
     treeshake: true,
@@ -12,7 +13,6 @@ const shared = {
     target: 'es2022'
 } as const satisfies UserConfig;
 
-// the browser and workers tests type-check against the dts each build writes next to its JS
 export default defineConfig([
     {
         ...shared,

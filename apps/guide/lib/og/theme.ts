@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-// based on the dark-theme tokens in app/global.css
+// the dark-theme tokens from app/global.css. ogImage renders without that stylesheet
 export const OG = {
     bg: '#13171a',
     panel: '#0d1116',
@@ -15,7 +15,7 @@ export const OG = {
     muted: '#98a2aa',
     url: '#7e8893',
     // alpha picked by eye at link-preview size
-    grid: 'rgba(255,255,255,0.09)',
+    grid: 'rgba(255,255,255,0.04)',
     windowBorder: '#232a31',
     chromeBorder: '#1b222a'
 } as const;

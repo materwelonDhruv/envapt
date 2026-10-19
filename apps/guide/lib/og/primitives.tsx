@@ -27,7 +27,7 @@ export function OgFrame({ children }: { children: ReactNode }): ReactNode {
     );
 }
 
-// the home card's top-right triangle, with its right angle in the corner
+// a top-right triangle, with its right angle in the corner
 export function CornerAccent({ size }: { size: number }): ReactNode {
     return (
         <div

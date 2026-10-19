@@ -101,7 +101,7 @@ html {
     filter: drop-shadow(-1px 1px 1px rgb(0 0 0 / 0.28));
 }
 
-/* shiki's own bg covers CodeCard's panel */
+/* shiki paints its own bg over CodeCard's panel */
 .ev-snippet .shiki {
     margin: 0;
     background: transparent !important;

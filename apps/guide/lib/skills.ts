@@ -4,7 +4,6 @@ import { join } from 'node:path';
 
 import { ENVAPT_SKILL_PATH } from './agentLinks';
 
-// the one copy of the skill, in skills/ at the repo root
 const SKILL_FILE = join(process.cwd(), '../../skills/envapt/SKILL.md');
 
 const AGENT_SKILLS_SCHEMA = 'https://schemas.agentskills.io/discovery/0.2.0/schema.json';

@@ -37,16 +37,15 @@ function toKeyList(keyInput: EnvKeyInput): readonly string[] {
 export function resolveKeyInput(keyInput: EnvKeyInput): { key: string; value: string | undefined } {
     const normalizedKeys = toKeyList(keyInput);
 
-    // an empty value moves on to the next key. the first empty one is returned only when no key has a value
-    let firstPresent: { key: string; value: string } | undefined;
+    let firstEmpty: { key: string; value: string } | undefined;
     for (const candidate of normalizedKeys) {
         const value = readCached(candidate);
         if (value === undefined) continue;
         if (!isMissing(value)) return { key: candidate, value };
-        firstPresent ??= { key: candidate, value };
+        firstEmpty ??= { key: candidate, value };
     }
 
-    return firstPresent ?? { key: normalizedKeys[0] as string, value: undefined };
+    return firstEmpty ?? { key: normalizedKeys[0] as string, value: undefined };
 }
 
 function lookup(keyInput: EnvKeyInput): { key: string; value: string | undefined } {
