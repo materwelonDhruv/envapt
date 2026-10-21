@@ -3,7 +3,7 @@ title: How seedcord uses envapt
 description: seedcord, my Discord bot framework, reads its config through envapt. Here's what that saves it on Node, Workers, and the CLI, and the bugs it took to get there.
 author: Dhruv
 date: '2026-10-18'
-updated: '2026-10-18'
+updated: '2026-10-21'
 ---
 
 [seedcord](https://github.com/seedcord/seedcord) is the Discord bot framework I'm building, and it reads its config through envapt. Its packages read their own keys, the CLI hands the environment to envapt before anything loads, and a bot built for Cloudflare Workers reads config with the same calls it uses on Node.
@@ -95,6 +95,18 @@ Envapter.useSource(new PortableSource(env));
 ```
 
 A bot author never writes that. Their code calls `Envapter.get` the same way it does on Node.
+
+`seedcord dev` needed one more bind. For an edge bot, workerd runs the bot, but the tunnel and the dev lock run in the CLI's own Node process, and they need the bot's token too. A bot can set that token in `.dev.vars`, and the Cloudflare plugin hands that file only to the worker. So for as long as the dev session runs, the CLI merges the worker's values over the normal `FileSource`:
+
+```ts
+// seedcord, cli/seedcord/src/commands/dev/runtime/EdgeDevRuntime.ts
+function bindWorkerEnvToCli(workerEnv: WorkerEnv, stack: AsyncDisposableStack): void {
+    Envapter.useSource(merge(new FileSource(), new PortableSource(workerEnv.values())));
+    stack.defer(() => Envapter.useSource(new FileSource()));
+}
+```
+
+The `defer` line is my favorite part. `stack` is the `AsyncDisposableStack` that closes everything else the session opened, so the restore runs when dev stops, and also when startup throws halfway through. A restart builds a new runtime in the same process. If you switched the config to a server bot in between, that bot reads through a plain `FileSource` again and never sees the old worker's values. [Building on envapt](/docs/building-on-envapt#bind-a-source-for-one-dev-session) has the general version.
 
 Tests use the same call. A test that needs production does `Envapter.useSource(new PortableSource({ ENVIRONMENT: 'production' }))`, and the HTTP tests `merge` `process.env` with a fake public key and token. envapt keeps its state at module level, so seedcord's shared vitest config also inlines it (`server.deps.inline: ['envapt', ...]`) and the tests bind a fresh source in setup.
 
