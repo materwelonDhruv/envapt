@@ -67,6 +67,27 @@ await import(userEntry);
 
 The assignment reloads the `.env` files on Node, so `.env.production` loads even though envapt read the files for `development` when your CLI imported it. Modules the user's entry imports then read the production values.
 
+## Bind a source for one dev session
+
+A dev command runs in Node, and sometimes it needs values that the user's code gets from a file envapt doesn't read, like a platform's local vars file. Layer those values over [`FileSource`](/docs/sources) with [`merge`](/docs/sources#combining-sources). Then put the call that undoes it on the [`AsyncDisposableStack`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncDisposableStack) that closes the rest of the session:
+
+```ts twoslash title="src/dev.ts"
+import { Envapter, FileSource, PortableSource, merge } from 'envapt';
+declare function readDevVars(): Promise<Record<string, string>>;
+// ---cut---
+export async function bindDevVars(stack: AsyncDisposableStack): Promise<void> {
+    const vars = await readDevVars();
+    Envapter.useSource(merge(new FileSource(), new PortableSource(vars)));
+    stack.defer(() => Envapter.useSource(new FileSource()));
+}
+```
+
+`vars` comes second in `merge`, so a key from that file wins over the same key from `FileSource`. The `defer` line binds a fresh `FileSource` when the stack is disposed. That's the same source the node build binds on import. envapt doesn't expose the current source, so you restore it by binding the default again.
+
+The stack runs that line when the session stops. It also runs it if a later startup step throws and your code disposes the stack early. If your tool restarts the session in the same process, or runs more code after it ends, every later read goes through the default source again.
+
+Restoring the default fits a process your tool starts, like a CLI. If the app bound its own source before your code runs, the `defer` line replaces that source with the default.
+
 ## Set defaults the app can override
 
 If your package already has the path to the app's `.env` files, set `Envapter.baseDir` when your entry module loads:
