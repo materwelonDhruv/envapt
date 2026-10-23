@@ -1,6 +1,6 @@
 ---
 title: Cloudflare Workers
-description: Read typed config from a Worker's vars and secrets by binding the Cloudflare env object once, in a config module that runs when the Worker loads.
+description: Read typed config from a Worker's vars and secrets by binding the Cloudflare env object once.
 ---
 
 Every `vars` entry and secret reaches a Worker as a property on `env`. If a handler reads `env.ORIGIN_URL` directly, it gets text and has to parse it into a URL itself. A JSON `vars` entry arrives as an object, and your code never checks its shape. Binding `env` to envapt once gives you typed values instead.

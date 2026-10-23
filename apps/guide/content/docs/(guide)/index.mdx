@@ -1,36 +1,67 @@
 ---
 title: Introduction
-description: Read environment config as typed values with a fallback, in place of process.env parsed by hand, on Node, Bun, Deno, Workers, and the browser.
+description: Read environment variables as typed values, and stop the app at startup when one is missing or malformed.
 ---
 
-You've written `Number(process.env.PORT ?? 3000)` before. It works until `PORT` holds something that isn't a port. `PORT=80a` gives `NaN`. `PORT=` gives `0`, because its value is an empty string, which `??` leaves alone. If you check a flag with `=== 'true'`, `DEBUG=1` counts as off. The type says only `string | undefined`, so every file that reads `DATABASE_URL` adds its own parse and its own default by hand.
+Every value in `process.env` is a string, so you've written lines like these before:
 
 ```ts twoslash
 const port = Number(process.env.PORT ?? 3000);
 const debug = process.env.DEBUG === 'true';
 const cacheTtl = Number(process.env.CACHE_TTL ?? 60_000);
 const databaseUrl = process.env.DATABASE_URL;
-//    ^?
 ```
 
-envapt parses the value and applies the default inside the read. [`Envapter`](/docs/envapter) has `get` for a string and `getAs`, which takes a converter for any other type. Both take the key first and a fallback last, if you want one.
+Each line breaks on a value you didn't expect:
+
+- `port` is `NaN` for `PORT=80a`, and `0` for `PORT=` because `??` keeps an empty string.
+- `debug` is `false` for `DEBUG=1`.
+- `cacheTtl` is `NaN` for `CACHE_TTL=10m`.
+- `databaseUrl` is a `string | undefined`, so you still check it and parse the URL yourself.
+
+None of these stop the app. It starts with the bad value and fails later, somewhere far from the line that read it. Every file that reads one of these variables also carries its own copy of the line.
+
+## Stop at startup on a bad value
+
+[`getRequiredAll`](/docs/required-values) reads a group of variables and converts each one to the type you ask for. If any are missing or can't be converted, it throws one error that lists every bad key:
+
+```ts twoslash title="config.ts"
+import { Envapter, Converters } from 'envapt';
+// ---cut---
+export const config = Envapter.getRequiredAll({
+    DATABASE_URL: Converters.Url,
+    PORT: Converters.Port,
+    CACHE_TTL: Converters.Time
+});
+
+config.CACHE_TTL;
+//     ^?
+```
+
+```txt title="terminal"
+$ PORT=80a CACHE_TTL=soon DATABASE_URL=postgres://db/app node config.ts
+EnvaptError [210]: Validation failed for PORT, CACHE_TTL.
+```
+
+`PORT=80a` and `CACHE_TTL=soon` both show up in that one error, so you fix both before the next deploy. When the values are good, `config.PORT` is a `number`, `config.DATABASE_URL` is a `URL`, and `CACHE_TTL=10m` comes back as `600000` milliseconds. If your entry file imports `config` first, a bad deploy stops before the app serves anything.
+
+## Fall back to a default
+
+Some values have a safe default, like a debug flag or a timeout. [`Envapter.getAs`](/docs/envapter) takes the key, a [converter](/docs/converters), and the default:
 
 ```ts twoslash
 import { Envapter, Converters } from 'envapt';
 // ---cut---
-const port = Envapter.getAs('PORT', Converters.Port, 3000);
-//    ^?
 const debug = Envapter.getAs('DEBUG', Converters.Boolean, false);
-const cacheTtl = Envapter.getAs('CACHE_TTL', Converters.Time, '1m');
-const databaseUrl = Envapter.getAs('DATABASE_URL', Converters.Url);
 //    ^?
+const timeout = Envapter.getAs('REQUEST_TIMEOUT', Converters.Time, '30s');
 ```
 
-The `port` call has a fallback, so its type is `number`. `databaseUrl` has none, so its type is `URL | undefined`. You handle the missing case yourself. [`Converters.Boolean`](/docs/converters) reads `1`, `yes`, `true`, and `on` as true, so `DEBUG=1` returns `true`. [`Converters.Time`](/docs/converters) turns `CACHE_TTL=10m` into `600000` milliseconds.
+`Converters.Boolean` reads `1`, `yes`, `true`, and `on` as true, so `DEBUG=1` gives `true`. `timeout` is `30000` when `REQUEST_TIMEOUT` is unset. A fallback also removes `undefined` from the type, so `debug` is a `boolean`, while a read with no fallback, like `Envapter.getAs('DATABASE_URL', Converters.Url)`, is `URL | undefined` and you handle the missing case yourself.
 
-The fallback is the value a reader returns when the variable is missing (unset or empty), or when a token or function can't convert its value. `PORT=80a` and `PORT=99999` both return `3000`, so the fallback also hides a typo like `80a`. A bad array element and a value a schema rejects throw even with a fallback ([the full table](/docs/envapter#fallbacks-and-missing-values)). For a value the app can't run without, call [`getRequired` or `getRequiredAll`](/docs/required-values), which throw.
+The default also covers a value that can't convert, so `REQUEST_TIMEOUT=soon` gives `30000` with no error. Use `getRequiredAll` for anything where a typo should stop the app. [Fallbacks and missing values](/docs/envapter#fallbacks-and-missing-values) has the exact rules.
 
-Reading through envapt is optional, and code that reads `process.env` directly keeps working. Each read costs an import and a call. Values set only in a `.env` file reach envapt's readers. They reach `process.env` too if you import `envapt/config` ([.env files on Node](/docs/env-files#coming-from-dotenv)). A script that reads one string can keep reading `process.env`. envapt helps most once several files read config, because each read gives you the type, the default, and the parse in one call. The compiler also checks every use.
+Reading through envapt is optional, and code that reads `process.env` directly keeps working. A script that reads one string can stay on `process.env`. envapt helps most once several files read config, since one call gives each read its type, its default, and its check.
 
 ## Functions or decorators
 
@@ -52,7 +83,7 @@ Use a decorator for settings that many files read, since the class declares each
 
 ## Where values come from
 
-A source is the object envapt reads values from. On Node, Bun, and Deno the source is `process.env` plus your `.env` files. It binds when you import `envapt`, so the first read works with no setup.
+A source is the object envapt reads values from. On Node, Bun, and Deno the source is `process.env` plus your `.env` files. It binds when you import `envapt`, so the first read works with no setup. If other code reads `process.env` directly, import `envapt/config` to put your `.env` values there too ([.env files on Node](/docs/env-files#coming-from-dotenv)).
 
 On Workers, in the browser, and on edge runtimes, envapt reads nothing until you bind a source. Your config arrives there as an object, such as the Workers `env` or `import.meta.env` in a bundler like Vite. Wrap that object in a [`PortableSource`](/docs/sources#the-sources-envapt-ships) and pass it to `Envapter.useSource` once, before the first read. If a read runs before that, it throws `NoSourceBound`. [Sources](/docs/sources) shows the full setup.
 

@@ -1,6 +1,6 @@
 ---
 title: Validating with a schema
-description: Check an environment value against a zod, valibot, or arktype schema and get the schema's output type back, with the failed rule in the error's issues.
+description: Check a value against a zod, valibot, or arktype schema and get the schema's output type back.
 ---
 
 A converter that can't convert returns `undefined`, with no reason attached. A rule like "an integer from 1 to 100" became an `if` inside your function, so a `DATABASE_POOL_SIZE` outside the range returned the fallback without saying which rule failed. A schema carries the rule itself. Pass one to [`getAs`](/docs/envapter#other-types-with-getas) to have envapt validate the value, return the schema's output type, and throw with the schema's own issues if the value fails. An issue is one `{ message, path }` entry, and envapt starts every `path` with the env key. [`getRequired`, `getRequiredAll`](/docs/required-values), and the decorator's `schema` option take a schema too.

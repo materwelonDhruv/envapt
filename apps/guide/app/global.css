@@ -191,3 +191,8 @@ html.dark .ev-snippet .shiki span {
 .twoslash-popup-docs-tag-value {
     overflow-wrap: anywhere;
 }
+
+/* fumadocs end-aligns the whole next card */
+a.flex-col.rounded-lg.border > p.text-fd-muted-foreground {
+    @apply line-clamp-2 text-justify hyphens-auto;
+}

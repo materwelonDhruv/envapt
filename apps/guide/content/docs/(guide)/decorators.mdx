@@ -1,6 +1,6 @@
 ---
 title: Decorators
-description: Declare typed config as class fields with @Envapt, using accessor fields by default or the legacy decorators from envapt/legacy.
+description: Declare typed config as class fields with @Envapt, using accessor fields or envapt/legacy.
 ---
 
 Without a config class, every file that reads `PORT` repeats the key, the converter, and the fallback, so the copies can drift apart. `@Envapt` replaces them with one declaration on a class field. Every file reads `Config.port` and gets the same typed value.

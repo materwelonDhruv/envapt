@@ -35,7 +35,7 @@ export default async function Page(props: { params: Promise<{ slug?: string[] }>
             </ComponentEmbed>
             <JsonLd data={docsJsonLd(page)} />
             <DocsTitle>{page.data.title}</DocsTitle>
-            <DocsDescription>{page.data.description}</DocsDescription>
+            <DocsDescription className="text-fd-foreground/80">{page.data.description}</DocsDescription>
             <DocsBody>
                 <MDXContent components={getMDXComponents({ a: createRelativeLink(source, page) })} />
             </DocsBody>

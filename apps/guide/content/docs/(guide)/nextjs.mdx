@@ -1,6 +1,6 @@
 ---
 title: Next.js
-description: Read typed config in a Next.js app from server code, client components, and edge routes, and catch a missing variable at build time or at server start.
+description: Read typed config in Next.js server code, client components, and edge routes, with startup checks.
 ---
 
 Next.js loads your `.env` files into `process.env`, and with plain `process.env` every value is a string. `process.env.MAX_CONNECTIONS` held `'10'`. A typo in `DATABASE_URL` appeared on the first query that used it. Each file that read a variable set its own default.

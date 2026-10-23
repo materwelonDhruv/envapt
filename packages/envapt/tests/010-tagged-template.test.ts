@@ -2,7 +2,7 @@ import { resolve } from 'node:path';
 
 import { beforeAll, describe, expect, it } from 'vitest';
 
-import { Envapter } from '../src';
+import { Envapter, EnvaptError } from '../src';
 
 const taggedTemplatePath = resolve(`${import.meta.dirname}/.env.tagged-template-test`);
 
@@ -37,5 +37,9 @@ describe('Tagged Template Resolver', () => {
     it('should handle consecutive variables', () => {
         const message = Envapter.resolve`${'USERNAME'}${'AGE'}`;
         expect(message).to.equal('john25');
+    });
+
+    it('throws when a slot key is an empty string', () => {
+        expect(() => Envapter.resolve`hello ${''}`).to.throw(EnvaptError, 'Environment keys cannot be empty strings.');
     });
 });

@@ -6,6 +6,20 @@ import type { MarkdownApplication } from 'typedoc-plugin-markdown';
 
 // fumadocs' createRelativeLink resolves only hrefs that start with ./ or ../
 class FumadocsContext extends MarkdownThemeContext {
+    constructor(...args: ConstructorParameters<typeof MarkdownThemeContext>) {
+        super(...args);
+        const { signatureReturns } = this.partials;
+        this.partials = {
+            ...this.partials,
+            // the plugin prints a mapped return type as escaped plain text
+            signatureReturns: (model, options) => {
+                const md = signatureReturns(model, options);
+                if (model.type?.type !== 'mapped') return md;
+                return md.replace(this.helpers.getReturnType(model.type), `\`\`\`ts\n${model.type.toString()}\n\`\`\``);
+            }
+        };
+    }
+
     override urlTo(reflection: Reflection): string {
         const url = super.urlTo(reflection);
         return url === '' || url.startsWith('.') || url.startsWith('#') ? url : `./${url}`;

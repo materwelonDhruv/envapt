@@ -1,6 +1,6 @@
 ---
 title: Environment
-description: Read the environment envapt detects from ENVIRONMENT, ENV, NODE_ENV, or MODE, and pin it yourself when a script or a test needs a fixed one.
+description: Read the environment from ENVIRONMENT, ENV, NODE_ENV, or MODE, and pin one when a test needs it.
 ---
 
 You've written `process.env.NODE_ENV === 'production'` before. It reads one variable and compares one exact spelling, so `PRODUCTION` takes the other branch and logs nothing. It also finds nothing if `NODE_ENV` isn't set, and a Vite build exposes `MODE` instead.

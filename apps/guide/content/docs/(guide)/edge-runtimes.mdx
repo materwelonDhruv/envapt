@@ -1,6 +1,6 @@
 ---
 title: Edge runtimes
-description: Pass envapt the config that Vercel Edge, Fastly Compute, or Expo gives you, then read typed values with the same API you use on Node.
+description: Bind the config from Vercel Edge, Fastly Compute, or Expo, then read typed values as on Node.
 ---
 
 Vercel Edge gives you `process.env` as an object. Fastly Compute gives you a function that returns one value per call. Expo replaces each `process.env.EXPO_PUBLIC_*` reference with its value when it builds, and it can also hand you an `extra` object. On each of them you call `Envapter.useSource` before the first read, because the portable build they load [starts with no source](/docs/sources). Any other runtime on the portable build works the same way. [Compatibility](/docs/compatibility#portable-build-you-bind-a-source) lists the export condition each runtime resolves to.

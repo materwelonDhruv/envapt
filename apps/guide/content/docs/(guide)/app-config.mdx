@@ -1,11 +1,15 @@
 ---
 title: Structuring your config
-description: Read your app's variables once, in one typed config module that throws at boot on a bad deploy, then import the values from every other file.
+description: Read every variable once, in one typed config module that throws at startup.
 ---
 
-You've read `process.env.DATABASE_URL` in whichever file needed it. Each file parsed the string its own way and picked its own default. If the variable was missing, the first request to touch the database crashed. And a test ran against whatever your laptop's `.env.local` held.
+You've read `process.env.DATABASE_URL` in whichever file needed it. That went wrong in three ways:
 
-A config module puts every read in one file that runs when the app starts. [`Envapter`](/docs/envapter) does the parsing there, since each [converter](/docs/converters) returns a typed value, and [`getRequiredAll`](/docs/required-values) checks every required key before it throws. The other files import the typed result.
+- Each file parsed the string its own way and picked its own default.
+- A missing variable crashed the first request that touched it.
+- A test ran against whatever your laptop's `.env.local` held.
+
+A config module puts every read in one file that runs when the app starts. [`Envapter`](/docs/envapter) parses each value there with a [converter](/docs/converters), and [`getRequiredAll`](/docs/required-values) checks every required key before it throws. The other files import the typed result.
 
 ## One module reads your variables
 
@@ -32,11 +36,16 @@ export type Config = typeof config;
 //          ^?
 ```
 
-`Config` shows what the rest of the app gets. `port` is a `number`, `databaseUrl` is a `URL`, and `cacheTtl` is a number of milliseconds, so no other file parses them again. The `'camelCase'` argument turns `DATABASE_URL` into `databaseUrl`. Without it, the keys stay as you wrote them.
+`Config` shows what the rest of the app gets. `port` is a `number`, `databaseUrl` is a `URL`, and `cacheTtl` is a number of milliseconds, so no other file parses them again. The `'camelCase'` argument turns `DATABASE_URL` into `databaseUrl`, and without it the keys stay as you wrote them.
 
-If any of the three required keys are missing, `getRequiredAll` throws one `MissingEnvValue` error that lists them all. If they're set but one can't convert, such as `PORT=abc`, it throws one `InvalidEnvValue` that lists every bad key.
+`getRequiredAll` throws one error that lists every bad key:
 
-`cacheTtl` and `allowedOrigins` take a fallback, the value the read returns when the variable is unset. A fallback also replaces a value that can't convert, without an error, so `CACHE_TTL=5 minutes` reads as the `'5m'` fallback. Give a variable a fallback when the app has a sensible value to run on without it. If a typo in it should stop the app, list it in `getRequiredAll` instead. `ALLOWED_ORIGINS` is split on commas, and [`isProduction`](/docs/environment#branching-on-the-environment) reads `ENVIRONMENT`, `ENV`, `NODE_ENV`, or `MODE`.
+- `MissingEnvValue` lists the required keys that are unset.
+- `InvalidEnvValue` lists the keys that are set but can't convert, such as `PORT=abc`.
+
+`cacheTtl` and `allowedOrigins` take a fallback, the value the read returns when the variable is unset. A fallback also replaces a value that can't convert, without an error, so `CACHE_TTL=5 minutes` reads as the `'5m'` fallback. Give a variable a fallback when the app has a sensible value to run on without it. If a typo in it should stop the app, list it in `getRequiredAll` instead.
+
+`ALLOWED_ORIGINS` splits on commas, and [`isProduction`](/docs/environment#branching-on-the-environment) reads `ENVIRONMENT`, `ENV`, `NODE_ENV`, or `MODE`.
 
 The module has a cost. Any script, test, or tool that imports `config.ts` needs every required variable set first. A script that reads one or two values can call `Envapter` directly and skip the module.
 
@@ -49,9 +58,13 @@ import { createServer } from './server';
 createServer().listen(config.port);
 ```
 
-`config.ts` runs before any module that imports it. Listing `./config` first in the entry file also covers modules that do work when they load without importing `config`, such as one that opens a connection pool. Imports run in order, so a missing `SESSION_SECRET` throws before that module runs, and the process exits before anything opens a port.
+`config.ts` runs before any module that imports it. Imports run in order, so listing `./config` first also covers a module that does work when it loads without importing `config`, such as one that opens a connection pool. A missing `SESSION_SECRET` then throws before that module runs, and the process exits before anything opens a port.
+
+<Callout type="warn">
 
 If a value is set but can't convert, the uncaught error also prints its `issues`, and an issue can quote the bad value. [Reading the error without leaking values](/docs/required-values#reading-the-error-without-leaking-values) has the `catch` block that logs only the keys.
+
+</Callout>
 
 ## Import `config` in every other file
 
@@ -107,9 +120,12 @@ export class Config {
 }
 ```
 
-Each field needs the `accessor` keyword, which [Decorators](/docs/decorators#declaring-decorated-fields) explains. If your project sets `experimentalDecorators`, import from `envapt/legacy` and declare `static readonly` fields instead. A decorated field reads its variable the first time something accesses it. A missing `DATABASE_URL` then throws during the first request that touches `Config.databaseUrl`, which brings back the crash from the top of this page, and missing fields show up one at a time. The `getRequiredAll` module checks every required key when the app starts.
+Each field needs the `accessor` keyword, which [Decorators](/docs/decorators#declaring-decorated-fields) explains. If your project sets `experimentalDecorators`, import from `envapt/legacy` and declare `static readonly` fields instead. The class differs from the module in two ways:
 
-The class has one thing the module lacks. If something binds a new source after startup, such as a secrets refresh, a field reads its variable again on its next access. `config` keeps the values it read at load. Pick the class when you need that, and start with the module otherwise.
+- **When it reads:** a decorated field reads its variable the first time something accesses it. A missing `DATABASE_URL` then throws during the first request that touches `Config.databaseUrl`, which brings back the crash from the top of this page, and missing fields show up one at a time. The `getRequiredAll` module checks every required key when the app starts.
+- **After a new source binds:** if something binds a new source after startup, such as a secrets refresh, a field reads its variable again on its next access. `config` keeps the values it read at load.
+
+Start with the module. Pick the class if a field has to re-read after a new source binds.
 
 ## Tests
 

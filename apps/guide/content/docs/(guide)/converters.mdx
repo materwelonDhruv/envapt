@@ -1,6 +1,6 @@
 ---
 title: Converters
-description: Turn a raw environment string into a number, URL, duration, list, or any type you need, with a built-in token or your own function.
+description: Turn an environment string into a number, URL, duration, list, or your own type.
 ---
 
 `process.env.CACHE_TTL` is the string `15m`. Turning it into milliseconds took a parser you wrote yourself. A flag and a [comma-separated list](#arrays) each took one too. A converter does that step. Pass one to `getAs`, or set it as the `converter` option on the [`@Envapt`](/docs/decorators) decorator, to make the read return the converted type. Without a converter, `Envapter.get` returns the string as it is.

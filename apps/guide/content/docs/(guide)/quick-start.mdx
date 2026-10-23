@@ -1,6 +1,6 @@
 ---
 title: Quick Start
-description: Install envapt and read typed config on Node, Workers, or the browser, binding the platform's env object first outside Node, Bun, and Deno.
+description: Install envapt and read your first typed value on Node, Bun, Deno, Workers, or the browser.
 ---
 
 <Callout type="warn">
@@ -23,7 +23,7 @@ npm install envapt
 
 ### Read a value
 
-On Node, Bun, and Deno, envapt binds `process.env` as its source and loads your `.env` files when you import it, so you need no setup there. Workers and Vite hand config over as an object with no global to read, so on those and [other edge runtimes](/docs/edge-runtimes) envapt starts with no source. The Workers and Browser tabs bind that object with [`useSource`](/docs/sources) before the first read. [`PortableSource`](/docs/sources#the-sources-envapt-ships) copies the object when you create it. If you change the object later, reads still return the values it had when you created the source.
+On Node, Bun, and Deno, importing envapt binds `process.env` and your `.env` files, so there's nothing to set up. Workers and Vite give you config as an object, so on those and [other edge runtimes](/docs/edge-runtimes) the tab below binds it with [`useSource`](/docs/sources) before the first read. A read before that throws [`NoSourceBound`](/docs/sources#no-environment-source-is-bound).
 
 <Tabs items={['Node, Bun, Deno', 'Workers', 'Browser']} groupId="runtime" persist>
 <Tab value="Node, Bun, Deno">
@@ -44,7 +44,7 @@ const cacheTtl = Envapter.getAs('CACHE_TTL', Converters.Time, '1m');
 //    ^?
 ```
 
-Through plain `process.env`, filled by your shell or dotenv, `CACHE_TTL` is the string `'10m'`. An empty `CACHE_TTL=` is `''`, which a `??` fallback doesn't replace. [`getAs`](/docs/envapter#other-types-with-getas) turns `10m` into `600000` milliseconds, and the `'1m'` fallback applies if the variable is missing, empty, or isn't a duration. Coming from dotenv? [.env files on Node](/docs/env-files#coming-from-dotenv) has the `envapt/config` import that replaces `dotenv/config`.
+[`getAs`](/docs/envapter#other-types-with-getas) turns `10m` into `600000` milliseconds. The `'1m'` fallback applies if `CACHE_TTL` is missing, empty, or isn't a duration. Coming from dotenv? [.env files on Node](/docs/env-files#coming-from-dotenv) has the `envapt/config` import that replaces `dotenv/config`.
 
 </Tab>
 <Tab value="Workers">
@@ -64,7 +64,7 @@ const maintenanceMode = Envapter.getAs('MAINTENANCE_MODE', Converters.Boolean, f
 //    ^?
 ```
 
-A `vars` entry in your Wrangler config can be a boolean or an object. `PortableSource` turns each value in `env` that isn't a string into JSON text, so a boolean `MAINTENANCE_MODE` arrives as `'true'` and `Converters.Boolean` reads it. If a read runs before the `useSource` line, it throws [`NoSourceBound`](/docs/sources#no-environment-source-is-bound). Local dev and secrets are on the [Cloudflare Workers](/docs/workers) page.
+A `vars` entry in your Wrangler config can be a boolean or an object. `PortableSource` turns each value in `env` that isn't a string into JSON text, so a boolean `MAINTENANCE_MODE` arrives as `'true'` and `Converters.Boolean` reads it. Local dev and secrets are on the [Cloudflare Workers](/docs/workers) page.
 
 </Tab>
 <Tab value="Browser">
@@ -79,7 +79,7 @@ Envapter.useSource(new PortableSource(import.meta.env));
 const betaEnabled = Envapter.getAs('VITE_ENABLE_BETA', Converters.Boolean, false);
 ```
 
-The sample passes the whole `import.meta.env` object to `PortableSource`. Then `getAs` reads `VITE_ENABLE_BETA` from it like any other key. If a read runs before the `useSource` line, it throws [`NoSourceBound`](/docs/sources#no-environment-source-is-bound). Vite puts every variable it exposes into the client bundle, so expose public values only. [Browser](/docs/browser) explains the `VITE_` prefix.
+Vite puts every variable it exposes into the client bundle, so expose public values only. [Browser](/docs/browser) explains the `VITE_` prefix.
 
 </Tab>
 </Tabs>
@@ -91,7 +91,12 @@ The sample passes the whole `import.meta.env` object to `PortableSource`. Then `
 
 ### Check required config at startup
 
-A fallback hides a bad value. If the app can't run without a setting, read it with [`getRequired`](/docs/required-values#getrequired-require-and-has), which throws when the value is missing or can't convert. For a group of settings, call [`getRequiredAll`](/docs/required-values). If any keys are missing, it throws one `MissingEnvValue` error that lists them all. If every key is present but some values can't convert, it throws one `InvalidEnvValue` error that lists those keys.
+A fallback hides a bad value. If the app can't run without a setting, call [`getRequiredAll`](/docs/required-values) for the group. It throws one error that lists every bad key:
+
+- `MissingEnvValue` lists the keys that are unset or empty.
+- `InvalidEnvValue` lists the keys that are set but can't convert.
+
+For a single setting, use [`getRequired`](/docs/required-values#getrequired-require-and-has).
 
 <Tabs items={['Node, Bun, Deno', 'Workers', 'Browser']} groupId="runtime" persist>
 <Tab value="Node, Bun, Deno">
@@ -155,9 +160,15 @@ config;
 </Tab>
 </Tabs>
 
-The result is typed from the object you pass. The optional second argument, `'camelCase'`, renames each key. Without it, the keys stay as you wrote them. With it, a key like `DATABASE_URL` becomes `config.databaseUrl`. A key read with `Converters.Url` is a `URL`, and one read with `Converters.array()` is a `string[]` split on commas. [Required values](/docs/required-values) describes the other casings and the error codes.
+The result is typed from the object you pass. `Converters.Url` gives a `URL`, and `Converters.array()` gives a `string[]` split on commas. The `'camelCase'` argument turns `DATABASE_URL` into `config.databaseUrl`, and without it the keys stay as you wrote them. [Required values](/docs/required-values) describes the other casings and the error codes.
 
-Import `config` from your app's entry point. The module throws when it loads, so a missing or bad value stops the app at startup. If a value can't convert and nothing catches the error, Node prints the error's `issues` too. An issue can quote a secret, such as the password in `DATABASE_URL`. [Required values](/docs/required-values#reading-the-error-without-leaking-values) shows the `catch` block that logs only the keys.
+Import `config` from your app's entry point. The module throws when it loads, so a missing or bad value stops the app at startup.
+
+<Callout type="warn">
+
+If a value can't convert and nothing catches the error, Node prints the error's `issues`, and an issue can quote a secret such as the password in `DATABASE_URL`. [Required values](/docs/required-values#reading-the-error-without-leaking-values) shows a `catch` block that logs only the keys.
+
+</Callout>
 
 </Step>
 </Steps>

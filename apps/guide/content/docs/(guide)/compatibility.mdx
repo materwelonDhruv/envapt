@@ -1,6 +1,6 @@
 ---
 title: Compatibility
-description: Look up the Node, Bun, and Deno versions envapt needs, which build your runtime loads, and the TypeScript settings that let you import it.
+description: Look up the Node, Bun, and Deno versions envapt needs, and the TypeScript settings to import it.
 ---
 
 envapt is ESM only and has [two builds](/docs/sources). The node build imports `node:*` modules, binds a [`FileSource`](/docs/sources#the-sources-envapt-ships) when you import it, and reads `.env` files. The portable build doesn't import from `node:`, so it runs on Workers and in the browser, but it binds nothing until you call [`useSource`](/docs/sources).

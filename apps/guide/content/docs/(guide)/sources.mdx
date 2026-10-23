@@ -1,6 +1,6 @@
 ---
 title: Sources
-description: Pass your platform's config object to envapt with useSource so typed reads work on Workers, the browser, and edge runtimes.
+description: Bind your platform's config object with useSource so typed reads work on Workers and the browser.
 ---
 
 Node, Bun, and Deno keep config in a global, `process.env`, so envapt can read it the moment you import it. Other platforms, such as a Cloudflare Worker, a browser bundle, or an edge function, give your code an object instead (the Worker `env`, Vite's `import.meta.env`). envapt can't reach that object, so you pass it to `useSource`.

@@ -47,7 +47,7 @@ export class Envapter extends ReaderMethods {
         const strict = Envapter.strict;
         return strings.reduce((result, string, i) => {
             const envKey = keys[i];
-            if (!envKey) return result + string;
+            if (envKey === undefined) return result + string;
             const raw = super.get(envKey, '');
             if (strict && raw.trim() === '') {
                 throw new EnvaptError(
