@@ -1,6 +1,6 @@
 ---
 title: Required values
-description: Stop the app at boot when a variable is missing or malformed, and see every missing key, or every malformed key, in one error.
+description: Stop the app at startup when a variable is missing or malformed, with every bad key in one error.
 ---
 
 If a value is wrong, a plain read often returns something and the app keeps running. `Envapter.getAs('DATABASE_URL', Converters.Url)` returns `undefined` for a missing variable, so the app fails later, in whatever request touches the database first. A *required read* throws on a bad value, while a plain read of a token or function returns the fallback or `undefined`. `getRequired`, `getRequiredAll`, and a decorated field with [`required: true`](/docs/decorators#required-fields) are required reads. `require` is one too, but it only checks that each value is present. If the read runs at boot, a bad deploy stops the app before it serves anything.

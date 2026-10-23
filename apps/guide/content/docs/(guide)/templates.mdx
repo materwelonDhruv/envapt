@@ -1,6 +1,6 @@
 ---
 title: Templates
-description: Build one environment variable from others by referencing them inside its value, and assemble strings from several keys with the resolve() tagged template.
+description: Build one variable from others by reference, or assemble strings with resolve().
 ---
 
 A database URL needs a host and a port, and each can come from a different place, such as a default in `.env` and an override from your platform. Without references, every place that sets one of them has to write out the whole URL again. With `${VAR}` references in the URL, [`Envapter`](/docs/envapter) joins whichever values are set when you read it. To build a string from several keys in your code, use the [`resolve`](#the-resolve-tagged-template) tagged template.

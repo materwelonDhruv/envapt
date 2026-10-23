@@ -1,6 +1,6 @@
 ---
 title: Testing
-description: Give each vitest test its own config instead of your machine's, then restore the real source after each test.
+description: Bind a fresh config for each vitest test, then restore the real source afterward.
 ---
 
 Without a source of your own, a test that reads config reads the machine it runs on. On Node, envapt reads a copy of `process.env` from [`FileSource`](/docs/sources#the-sources-envapt-ships) and loads the `.env` files in the working directory, `.env.local` included. Your laptop has a `.env.local` and CI doesn't, so the same test can pass in one place and fail in the other.

@@ -1,6 +1,6 @@
 ---
 title: Reading values
-description: Read one environment variable as a string or through a converter, with a fallback, and see what each reader returns for a bad value.
+description: Read an environment variable as a string or through a converter, and see what a bad value returns.
 ---
 
 A reader is a method on `Envapter` that reads one variable, like `get` for a string or `getAs` for a typed value. On Node, readers read `process.env` and your [`.env` files](/docs/env-files). You call every reader on `Envapter` itself, so you construct nothing. Most readers return the value, or `undefined` when it is missing. The [required readers](/docs/required-values) throw. On Workers, the browser, and edge runtimes, every reader throws [`NoSourceBound`](/docs/errors) until you bind a [source](/docs/sources) with `useSource`.
