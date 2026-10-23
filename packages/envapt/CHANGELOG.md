@@ -1,5 +1,11 @@
 # envapt
 
+## 9.1.1-next.0
+
+### 🩹 Patch
+
+- Fixed an empty key in an `Envapter.resolve` slot being skipped. That slot now throws `InvalidKeyInput`, the same as `get`. ([#171](https://github.com/materwelonDhruv/envapt/pull/171))
+
 ## 9.1.0
 
 ### ✨ Minor
