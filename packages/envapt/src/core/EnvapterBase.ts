@@ -92,6 +92,15 @@ export abstract class EnvapterBase {
     }
 
     /**
+     * The currently bound {@link Source}. Use it with `merge` to add another source without
+     * replacing the existing one. On portable builds, bind a source before composing it.
+     * @see {@link https://envapt.materwelon.dev/docs/sources#combining-sources}
+     */
+    static get source(): Source {
+        return state.source;
+    }
+
+    /**
      * Read an environment variable as its raw string, skipping parsing and conversion. A `${NAME}`
      * reference in the value comes back unexpanded.
      * @see {@link https://envapt.materwelon.dev/docs/envapter#the-raw-string}

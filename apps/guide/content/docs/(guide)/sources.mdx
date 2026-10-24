@@ -72,13 +72,36 @@ const poolSize = Envapter.getAs('DB_POOL_SIZE', Converters.Integer, 10);
 
 <TypeTable
     type={{
-        readVars: { type: '() => Record<string, string>', description: 'The variables envapt copies when it builds its cache.', required: true },
-        readVar: { type: '(key: string) => string | undefined', description: 'Looks up one key that readVars() did not return.' },
-        supportsFiles: { type: 'boolean', description: 'Set true, together with the four file members below, to make envapt load the .env cascade. Default false.' },
-        readFile: { type: '(path: string, encoding: string) => string | undefined', description: 'With supportsFiles: true. Returns the file text, or undefined when it is missing.' },
-        resolvePath: { type: '(baseDir: string, candidate: string) => string', description: 'With supportsFiles: true. Joins a relative .env path onto baseDir.' },
-        normalizeBaseDir: { type: '(value: string | URL) => string', description: 'With supportsFiles: true. Turns a directory path or module URL into a directory path.' },
-        writeVars: { type: '(vars: Record<string, string>) => void', description: 'With supportsFiles: true. Receives the keys that syncProcessEnv writes out.' }
+        readVars: {
+            type: '() => Record<string, string>',
+            description: 'The variables envapt copies when it builds its cache.',
+            required: true
+        },
+        readVar: {
+            type: '(key: string) => string | undefined',
+            description: 'Looks up one key that readVars() did not return.'
+        },
+        supportsFiles: {
+            type: 'boolean',
+            description:
+                'Set true, together with the four file members below, to make envapt load the .env cascade. Default false.'
+        },
+        readFile: {
+            type: '(path: string, encoding: string) => string | undefined',
+            description: 'With supportsFiles: true. Returns the file text, or undefined when it is missing.'
+        },
+        resolvePath: {
+            type: '(baseDir: string, candidate: string) => string',
+            description: 'With supportsFiles: true. Joins a relative .env path onto baseDir.'
+        },
+        normalizeBaseDir: {
+            type: '(value: string | URL) => string',
+            description: 'With supportsFiles: true. Turns a directory path or module URL into a directory path.'
+        },
+        writeVars: {
+            type: '(vars: Record<string, string>) => void',
+            description: 'With supportsFiles: true. Receives the keys that syncProcessEnv writes out.'
+        }
     }}
 />
 
@@ -101,20 +124,26 @@ If the store has no `REGION` on the first read, `getRequired` throws `MissingEnv
 
 ## Combining sources
 
-`useSource` binds one source. Without `merge`, layering fetched secrets over the `.env` files meant writing the secrets into `process.env` first. `merge` joins several sources into one. If several sources return the same key from `readVars()`, the last source wins.
+`useSource` binds one source and replaces the previous binding. `merge` combines several sources into one. When two sources return the same key from `readVars()`, the later source wins.
+
+### Add to Node's default source
+
+Node binds a `FileSource` when you import envapt. Use `Envapter.source` to keep that source while adding fetched secrets, without copying the secrets into `process.env`.
 
 ```ts twoslash
-import { Envapter, FileSource, PortableSource, merge, Converters } from 'envapt';
+import { Envapter, PortableSource, merge, Converters } from 'envapt';
 // ---cut---
 declare const secrets: Record<string, string>; // fetched and awaited
-Envapter.useSource(merge(new FileSource(), new PortableSource(secrets)));
+Envapter.useSource(merge(Envapter.source, new PortableSource(secrets)));
 
 const dbUrl = Envapter.getAs('DATABASE_URL', Converters.Url);
 ```
 
-Here `merge(new FileSource(), ...)` keeps the `.env` cascade and makes the secrets win over it, without writing to `process.env`. A `DATABASE_URL` in `secrets` wins over the same key in `process.env` and in every `.env` file, as long as `override` stays off (see [File options](/docs/env-files#file-options)).
+Here `Envapter.source` keeps the `.env` cascade. With the default [file options](/docs/env-files#file-options), a `DATABASE_URL` in `secrets` wins over the same key in `process.env` or an `.env` file. Setting `override: true` makes an `.env` value win instead.
 
-`FileSource` exists only on the node build. On Workers, the browser, and edge runtimes, merge two `PortableSource`s:
+### Bind several portable sources
+
+Workers, browsers, and edge runtimes start without a bound source. Pass their config object and your secrets together when you bind:
 
 ```ts twoslash
 import { Envapter, PortableSource, merge, Converters } from 'envapt';
@@ -126,7 +155,11 @@ Envapter.useSource(merge(new PortableSource(env), new PortableSource(secrets)));
 const apiKey = Envapter.getRequired('API_KEY', Converters.String);
 ```
 
-A member can also be a `(key) => string | undefined` function. Wherever it appears in the list, it supplies a value only for keys that no other member's `readVars()` returned.
+The `secrets` source wins when both objects contain `API_KEY`. If you have already bound a source, pass `Envapter.source` as the first member to extend it. Bind a source before doing that on a portable build.
+
+### Add a key reader
+
+A `(key) => string | undefined` function can be a member too. It fills keys missing from every member's `readVars()` result, regardless of where it appears in the list.
 
 ```ts twoslash
 import { Envapter, FileSource, merge, Converters } from 'envapt';
@@ -137,7 +170,7 @@ Envapter.useSource(merge(new FileSource(), (key) => store.get(key)));
 const redisUrl = Envapter.getAs('REDIS_URL', Converters.Url);
 ```
 
-`merge` throws `InvalidMergedSource` (308) if you pass no members, or if two members set `supportsFiles: true`, because the cascade has to come from one place.
+This example creates a fresh `FileSource` explicitly. `FileSource` is available on the node build only. Furthermore, `merge` throws `InvalidMergedSource` (308) if you pass no members or more than one filesystem-backed source, because the `.env` cascade needs a single file source.
 
 ## When values are read
 

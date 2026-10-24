@@ -128,6 +128,8 @@ envapt reads through a pluggable `Source`, and the build you import binds the ri
 
 For a source that reads one key at a time and cannot list its keys, pass a `(key) => string | undefined` reader to `useSource`, and envapt calls it per key on the first read, caching the result.
 
+`Envapter.source` returns the currently bound `Source`. To add a source while keeping the existing binding, call `Envapter.useSource(merge(Envapter.source, new PortableSource(values)))`. On Node, the current source starts as `FileSource`; on portable builds, bind one with `useSource` before extending it. Calling `useSource` with only the new source replaces the old binding.
+
 `merge(...members)` composes several sources, last-wins across their `readVars()` snapshots. A member may be a `(key) => string | undefined` reader, which fills a key missing from every snapshot. At most one member is filesystem-backed, and the `.env` cascade and file APIs route to it. `merge` throws `EnvaptError` `InvalidMergedSource` with no members or more than one file-backed member.
 
 The portable build (Workers, the browser, edge runtimes) has no filesystem. The file-only config APIs (`envPaths`, `baseDir`, `envFileOptions`, `configureProfiles`, `resetPaths`) warn once and no-op by default. Set `Envapter.fileApiMode = 'throw'` to make them throw `EnvaptError` `FileApiUnsupported`. A read before `useSource` throws `NoSourceBound` regardless of `fileApiMode`.
