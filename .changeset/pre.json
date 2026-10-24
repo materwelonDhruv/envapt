@@ -1,9 +1,9 @@
 {
     "mode": "pre",
-    "tag": "next",
+    "tag": "enxt",
     "initialVersions": {
         "@envapt/guide": "1.0.0",
-        "envapt": "9.1.1"
+        "envapt": "9.2.0"
     },
     "changesets": []
 }
