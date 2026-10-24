@@ -1,5 +1,11 @@
 # envapt
 
+## 9.2.0
+
+### ✨ Minor
+
+- Added `Envapter.source` so an app can merge a new source with the current binding.
+
 ## 9.1.1
 
 ### 🩹 Patch
