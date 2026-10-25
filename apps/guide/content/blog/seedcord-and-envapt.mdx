@@ -1,206 +1,263 @@
 ---
-title: How seedcord uses envapt
-description: seedcord, my Discord bot framework, reads its config through envapt. Here's what that saves it on Node, Workers, and the CLI, and the bugs it took to get there.
+title: How seedcord handles environment variables across Node, Workers, dev, and builds
+description: See how seedcord uses envapt to combine runtime configuration with Vite's build-time values, while keeping the same reads in application code.
 author: Dhruv
 date: '2026-10-18'
-updated: '2026-10-21'
+updated: '2026-10-24'
 ---
 
-[seedcord](https://github.com/seedcord/seedcord) is the Discord bot framework I'm building, and it reads its config through envapt. Its packages read their own keys, the CLI hands the environment to envapt before anything loads, and a bot built for Cloudflare Workers reads config with the same calls it uses on Node.
+I wanted to share how [seedcord](https://github.com/seedcord/seedcord) handles environment variables, because a fair bit happens before a bot gets to do this:
 
-envapt also started as a folder inside seedcord, so seedcord is the first thing I check whenever envapt changes. This post is what seedcord gets out of it today, and the bugs it took to get there.
+```ts twoslash
+import { Envapter } from 'envapt';
 
-## Small reads, a lot less code
-
-seedcord is on envapt 9 now. It has no central config module. Each package reads what it needs, where it needs it.
-
-The read I use the most by far is the environment check:
-
-```ts
-// seedcord, packages/logger/src/levels.ts
-export function defaultLevel(): LogLevel {
-    if (Envapter.isDevelopment) return 'trace';
-    if (Envapter.isStaging) return 'debug';
-    return 'info';
-}
+const token = Envapter.get('DISCORD_BOT_TOKEN');
+//    ^?
 ```
 
-HMR, dev-only command registration, the log format (pretty in dev, JSON otherwise), and Mongo's TLS flag all branch on these getters. None of them look at `NODE_ENV` themselves. envapt checks `ENVIRONMENT`, `ENV`, `NODE_ENV`, and `MODE` in that order and ignores case, so a bot that sets any one of them gets the right log format.
+On Node, that value can come from the process or a `.env` file. On Cloudflare Workers, it comes from the Worker's `env` object. During development, the CLI needs some of those values in its own Node process too. Vite also writes some values into the built code, and those have to stay the same after deployment.
 
-Everything else is a handful of single reads. The bot token goes through `Envapter.get('DISCORD_BOT_TOKEN')` into seedcord's own validator. The CLI's profiling flag is `Envapter.getAs('SEEDCORD_DEV_PROFILE', Converters.Boolean, false)`. And the PR labeler script in the repo reads its whole CI context in one call:
+And the end goal is _simple_: the bot author should be able to write the same `get` calls regardless of the environment. Getting those sources into place, before their code runs, belongs to the framework.
+
+## What the application gets
+
+I'll start with what someone writing a bot actually gets out of this. For a bit of context, seedcord supports bots that stay connected to Discord over a websocket, and bots that respond to HTTP requests. The first kind runs on Node. The second can run on Node or Cloudflare Workers.
+
+I use [`Envapter`](/docs/envapter) in both, including inside the framework itself.
+
+The logger, for example, checks `Envapter.isDevelopment` to choose a default log level. The bot reads its token through envapt too. And someone writing a bot can read their own settings the same way:
 
 ```ts twoslash
 import { Converters, Envapter } from 'envapt';
 // ---cut---
-Envapter.strict = true;
-
-const env = Envapter.getRequiredAll({
-    GITHUB_REPOSITORY: Converters.String,
-    PR_NUMBER: Converters.Number,
-    HEAD_SHA: Converters.String,
-    GITHUB_TOKEN: Converters.String
-});
-
-env.PR_NUMBER;
-//  ^?
+const port = Envapter.getAs('PORT', Converters.Port, 3000);
+const guilds = Envapter.getAs(
+    'COMMAND_GUILD_IDS',
+    Converters.array(),
+    []
+);
 ```
 
-That's copied straight out of `scripts/src/semver-label.ts`. It came through the v9 upgrade without a single change. If any of the four is missing, the script throws once with all the missing keys listed, so a broken workflow shows me every missing secret in one run. Pretty much what you want in CI.
+That means I don't have to add a seedcord option every time someone needs another environment variable. They can add their own [validation](/docs/standard-schema), use a [decorated config class](/docs/decorators), or change where envapt reads from. It's still their application's configuration.
 
-There are two decorated fields left in seedcord. The mock bot has a small `Vars extends Envapter` class for the Mongo URI, the database name, and the guild ids. `Bot` has one field for the token. Both use `envapt/legacy`.
+From my side, I want the logger to keep making that same check on Node and Workers. Where the values come from is something I can set up before the logger runs.
 
-## What it replaced
+## Where envapt reads from
 
-In July 2025 seedcord's config was one class called `Globals`, sitting on a folder at `src/core/utilities/envuments/`. That folder was two files based on Mason Rogers' [envuments](https://github.com/mason-rogers/envuments).
+So, where do those values come from?
 
-```ts
-// seedcord, src/core/library/globals/Globals.ts, July 2025
-export class Globals extends Envuments {
-  @Env('BOT_TOKEN', undefined)
-  public static readonly botToken: string;
+In envapt, a source is the object that supplies them. On Node, envapt starts with a [`FileSource`](/docs/sources), which reads the process environment and loads `.env` files. I can use that as seedcord's starting point.
 
-  @Env('HEALTH_CHECK_PORT', '6956')
-  public static readonly healthCheckPort: number;
-
-  @Env('SHUTDOWN_IS_ENABLED', false, Boolean)
-  public static readonly shutdownIsEnabled: boolean;
-
-  // ...
-}
-```
-
-Look at `healthCheckPort`. The field says `number`. The fallback is the string `'6956'`. The decorator's converter defaulted to `String`. So the field held a string while TypeScript called it a number, and nothing checked one against the other.
-
-`botToken` was worse. With no converter passed, the decorator called `Envuments.get(key, String(fallback))`, and `String(undefined)` is `'undefined'`. A bot with no token set got a token that was the word "undefined" 💀.
-
-The number reader ended with `return (!isNaN(num) && num) || def;`. So `0` counted as missing and you got the fallback. Same bug as the `|| 3000` line at the top of my [first post](/blog/reading-typed-env).
-
-None of those can happen in seedcord now. A decorated field's type has to hold what its converter returns, a missing token comes back `undefined` with a type that says so, and `0` is a number like any other.
-
-I patched the worst of it in place in late July 2025. One of those fixes, seedcord PR #11, fixed a "bug where values are not set for newly loaded envs after `set envPaths`". Remember that one. It comes back. At the very end of July the folder became its own repo and envapt 1.0.0 went out, and by mid-August seedcord depended on `envapt ^2.2.8` from npm. So the first real user of envapt was the project it came out of.
-
-## Edge bots and binding a source
-
-seedcord also builds bots for Cloudflare Workers. Off Node, envapt reads from whatever source you bind. Since envapt got Workers support in June 2026, a read with nothing bound throws `NoSourceBound`, so a Worker deployed without its binding stops at the first read. The [v6 to v8 post](/blog/whats-new-v6-to-v8) goes into why v8 kept it that way.
-
-Which means seedcord has to bind it. The build writes this into every worker entry:
+Workers need the same envapt reads, but Cloudflare supplies values differently. Importing envapt there selects its portable version. That version starts without a source, so I have to give it one. Cloudflare provides the Worker's configuration and resources through an `env` object:
 
 ```ts
-// seedcord, cli/seedcord/src/commands/build/builder/workerEntry.ts
-// envapt's workerd build throws on a read until something binds a source
-const BIND_ENV = `import { env } from 'cloudflare:workers';
+import { env } from 'cloudflare:workers';
 import { Envapter, PortableSource } from 'envapt';
+
 Envapter.useSource(new PortableSource(env));
-`;
 ```
 
-A bot author never writes that. Their code calls `Envapter.get` the same way it does on Node.
+`PortableSource` makes that object available to envapt. If I try to read a variable before calling `useSource`, envapt throws `NoSourceBound`. I'll come back to the import order in a bit, because putting this in the wrong file is enough to break startup.
 
-`seedcord dev` needed one more bind. For an edge bot, workerd runs the bot, but the tunnel and the dev lock run in the CLI's own Node process, and they need the bot's token too. A bot can set that token in `.dev.vars`, and the Cloudflare plugin hands that file only to the worker. So for as long as the dev session runs, the CLI merges the worker's values over the normal `FileSource`:
+The next thing I need is a way to add values without losing what's already configured. `useSource` replaces the current source, which is fine when replacement is what I intend. Here, I want to keep it and add Vite's values on top.
+
+That's where `Envapter.source`, added in envapt 9.2, comes in. I can get the current source and pass it to [`merge`](/docs/sources/#combining-sources):
 
 ```ts
-// seedcord, cli/seedcord/src/commands/dev/runtime/EdgeDevRuntime.ts
-function bindWorkerEnvToCli(workerEnv: WorkerEnv, stack: AsyncDisposableStack): void {
-    Envapter.useSource(merge(new FileSource(), new PortableSource(workerEnv.values())));
-    stack.defer(() => Envapter.useSource(new FileSource()));
+Envapter.useSource(
+    merge(Envapter.source, new PortableSource(viteValues))
+);
+```
+
+Here, `viteValues` holds the user variables exposed by Vite. I'll get to how seedcord chooses them below.
+
+I don't have to assume the current source is a fresh `FileSource`. Someone might have supplied their own, or another setup step might have already merged values into it. `Envapter.source` gives me what's actually configured.
+
+If both sources return a variable through `readVars()`, **the one passed later to `merge` wins**. The merged result also keeps the ability to load files, though envapt allows at most one source that supports files in a merge.
+
+So I can add Vite's values and keep loading `.env` files through the source that was already doing it. That's the useful bit for me.
+
+## A build needs some values to stay put
+
+Okay, but why am I adding Vite's values at all? Here's the behavior I want. Say a project has:
+
+```dotenv
+VITE_RELEASE_LABEL=october
+API_ORIGIN=https://staging.example.com
+```
+
+By default, Vite exposes `VITE_` variables through `import.meta.env`. When you build, Vite writes those values into the built code. Changing the environment on the server afterward won't change them.
+
+I want someone using envapt to get those same values:
+
+```ts
+const release = Envapter.get('VITE_RELEASE_LABEL');
+const origin = Envapter.get('API_ORIGIN');
+```
+
+Now suppose you build the bot, then change its `.env` before starting it:
+
+```dotenv
+VITE_RELEASE_LABEL=changed-after-build
+API_ORIGIN=https://api.example.com
+```
+
+The result, with envapt's default file options, is:
+
+{/* prettier-ignore */}
+| Read | Value in the deployed Node bot |
+| --- | --- |
+| `Envapter.get('VITE_RELEASE_LABEL')` | `october` | | `import.meta.env.VITE_RELEASE_LABEL` | `october` | | `Envapter.get('API_ORIGIN')` | `https://api.example.com` |
+
+`october` tells me which release I built. The API address can change depending on where I start that build. Both reads go through envapt.
+
+To get those results, seedcord merges Vite's values into the source it already uses. The later values win. Vite's values win over the ones read when the bot starts. On Node, I keep the existing source and its file support. On Workers, I combine the Worker's bindings with Vite's values.
+
+I still have to choose which value should win. envapt gives me `merge` to set that order, and calling `useSource` refreshes its cache so the next read uses the result.
+
+That's the default I chose for seedcord. Someone can deliberately change it: on Node, `Envapter.envFileOptions = { override: true }` lets `.env` files replace values from the merged source. They can also replace the source with `useSource`. I've covered those options in the [file options](/docs/env-files/#file-options) and [combining sources](/docs/sources/#combining-sources) guides.
+
+There's one more Vite detail that affects which values reach this merge.
+
+### Let Vite decide what Vite exposes
+
+There's a small detail here that matters if you're building on Vite. `VITE_` is just the default. Vite lets you change it through [`envPrefix`](https://vite.dev/config/shared-options.html#envprefix), including using more than one prefix.
+
+I don't want seedcord to filter for `VITE_` again after Vite has already done the filtering. If someone configures `APP_`, those values should work too.
+
+Instead, I take the object Vite provides and remove its built-in fields:
+
+```ts
+const {
+    MODE: mode,
+    BASE_URL: _baseUrl,
+    DEV: _dev,
+    PROD: _prod,
+    SSR: _ssr,
+    ...values
+} = vite;
+```
+
+I pass `values` to a `PortableSource`. I use `MODE` separately when a Worker hasn't specified its environment; the other built-in fields stay out of envapt.
+
+That gives me the same source in both cases. During dev, I use the values Vite provides for that session. During a build, Vite writes them into the output. Either way, a custom prefix works through the same code.
+
+And yes, those values are readable in the built files. Keep secrets out of the prefixes you expose.
+
+## Set up envapt before importing the bot
+
+Now I have the sources I need. I still have to set them up **before anything reads from them**.
+
+This looks like a reasonable place to do it:
+
+```ts
+import './bot';
+
+// Set up the environment here.
+```
+
+Except `bot` runs before the code below that import. If it reads its token as soon as it's imported, I'm already too late. Moving the setup above a static `import` won't fix it either, because JavaScript still runs the imported module first.
+
+So I generate the entry file in seedcord. On Node, it records where the built bot files are, waits for environment setup, then imports the user's entry. For the environment part, the order is equivalent to:
+
+```ts
+await import('seedcord:env');
+await import('./index.js');
+```
+
+The CLI supplies `seedcord:env` during dev and build. The bot author doesn't have to create that file. It calls the shared TypeScript function that sets up envapt. The `await` makes the order explicit.
+
+The Worker entry follows the same order. During dev, I bind the values before the CLI imports the application.
+
+I have to arrange that order in seedcord. envapt reads from the source I give it; I decide when the application's imports run.
+
+## The CLI needs the Worker's configuration too
+
+This is the part that's a little less obvious from the bot author's side. Even when their bot runs on a Worker, I still load a copy in Node to generate types and inspect what its files export. The CLI also uses the bot's token for its tunnel and to prevent two dev sessions from starting the same bot.
+
+So I need some of the Worker's configuration in Node too. A token in `.dev.vars` reaches the Worker through Cloudflare's plugin, but the CLI can't read it through its own envapt source yet.
+
+I read the declared bindings and local secrets for the Node side, set up the Node copy of the bot with those values, and merge the values the CLI needs over its existing source. The [Worker environment loader](https://github.com/seedcord/seedcord/blob/fix-env-stuff/cli/seedcord/src/core/modules/workerEnv.ts) does that work.
+
+I'm only copying configuration here: text, JSON, and local secrets. This doesn't give the Node copy a working KV or D1 service.
+
+Those are Cloudflare resources, so the real Worker keeps using Cloudflare's bindings directly. On the actual Worker, `env.KV.get()` still accesses KV directly. `PortableSource` takes a copy of the values for envapt and converts non-string values to JSON when possible. It doesn't modify the original `env` object, and `Envapter.get` won't return a KV object with working methods.
+
+I keep those uses separate: envapt reads configuration, and the bot uses Cloudflare's APIs to access its resources.
+
+That covers what I make available to the Node copy. When the dev session ends, I also have to remove those values.
+
+## Restoring the source when dev stops
+
+There's one more thing I have to account for in dev. When a deployed bot stops, its process usually exits. In a dev tool, I can stop one bot and start another in the same process.
+
+If I merge one Worker's values into a global source and leave them there, the next session can read them too. If I restore a fresh `FileSource`, I can throw away a source the application had configured before dev started.
+
+So I save the previous source and restore _that exact object_ when the session ends. Here's the shared function I use in seedcord. It also saves and restores the directory envapt reads files from:
+
+```ts
+import type { Envapter, Source } from 'envapt';
+
+function bindEnv(
+    envapter: typeof Envapter,
+    source: Source,
+    directory?: string
+): Disposable {
+    const previousSource = envapter.source;
+    const previousBaseDir = previousSource.supportsFiles
+        ? envapter.baseDir
+        : undefined;
+    using cleanup = new DisposableStack();
+    cleanup.defer(() => {
+        envapter.useSource(previousSource);
+        if (previousSource.supportsFiles) {
+            envapter.baseDir = previousBaseDir;
+        }
+    });
+    if (previousSource.supportsFiles && directory !== undefined) {
+        envapter.baseDir = directory;
+    }
+    envapter.useSource(source);
+    return cleanup.move();
 }
 ```
 
-The `defer` line is my favorite part. `stack` is the `AsyncDisposableStack` that closes everything else the session opened, so the restore runs when dev stops, and also when startup throws halfway through. A restart builds a new runtime in the same process. If you switched the config to a server bot in between, that bot reads through a plain `FileSource` again and never sees the old worker's values. [Building on envapt](/docs/building-on-envapt#bind-a-source-for-one-dev-session) has the general version.
+I add the returned `Disposable` to the session's cleanup stack, alongside the servers and the code that loads the bot. When the session stops, the stack restores the configuration too. If setup throws before returning, `using cleanup` runs the restore inside this function.
 
-Tests use the same call. A test that needs production does `Envapter.useSource(new PortableSource({ ENVIRONMENT: 'production' }))`, and the HTTP tests `merge` `process.env` with a fake public key and token. envapt keeps its state at module level, so seedcord's shared vitest config also inlines it (`server.deps.inline: ['envapt', ...]`) and the tests bind a fresh source in setup.
+The `supportsFiles` check matters even when I'm just reading `baseDir`. envapt's portable version warns when I use its file APIs, or throws if `fileApiMode` is set to `'throw'`. I only read or change the directory when the source supports files.
 
-## The CLI sets the environment
+The source and the directory go together: the source determines whether file loading is available, and seedcord chooses which directory to pass to it. In dev, it's the folder containing the project config. A built Node bot uses the recorded config location if the file is still there, or the folder you start it from otherwise. envapt loads the files from whichever directory I pass it.
 
-The seedcord CLI runs your bot through Vite, and the Vite mode has to match envapt's environment. So the CLI reads the mode from the shell before anything loads, checks it, and passes it to envapt. The checking half is in `viteMode.ts`:
+The `cleanup.defer` part is probably my favorite bit here. The restore runs as part of stopping the session, including when startup fails halfway through. I can keep it next to the setup instead of adding a reset to every place that stops or restarts a bot.
 
-```ts twoslash
-import { ENVIRONMENT_KEYS, Environment } from 'envapt';
-// ---cut---
-// seedcord, cli/seedcord/src/core/viteMode.ts
-const MODES = Object.values(Environment);
-//    ^?
+There's one other choice to explain: which environment the bot uses. That's separate from where it finds its files.
 
-function modeFromShell(): string | undefined {
-    return ENVIRONMENT_KEYS.map((key) => process.env[key]).find(Boolean);
-}
+## Building in production and starting in staging
+
+Before I finish, I should separate two things that are easy to mix up: the mode I build with, and the environment the bot uses when it starts.
+
+While the CLI runs, I want it and Vite to use the same mode. I use envapt's exported `ENVIRONMENT_KEYS` to read the requested environment from the shell, check its name, and set `Envapter.environment` for the CLI. That setter reloads envapt's configuration for the selected environment. Using `ENVIRONMENT_KEYS` also saves me from keeping my own copy of the order envapt checks them in.
+
+When you start the built Node bot, though, that's a new process. envapt detects its environment there. To start it in production, you can run:
+
+```sh
+ENV=production node dist/index.mjs
 ```
 
-On 8.x this file had two workarounds for my own library. It kept a copy of envapt's key order, with a comment saying so. And `Environment` was a numeric enum back then, so getting the names out meant filtering out the reverse-mapped number keys and lowercasing the rest. v9 exports `ENVIRONMENT_KEYS` and stores the names as strings, and both workarounds went when seedcord moved over.
+You can start the _same build_ with `ENV=staging` to load staging's `.env` files. The values Vite wrote into the build stay the same. That's why `import.meta.env.MODE` and `Envapter.environment` can differ in a deployed Node bot.
 
-It reads the shell only, without the `.env` files, on purpose. A bot's `.env` usually sets `ENV=development`, and that would override `seedcord build` running in production.
+Node reads its environment when the new process starts. Workers get their values from bindings instead. For Workers, I use the declared environment bindings. If none selects an environment, I fall back to Vite's mode. I supply that fallback through an envapt key reader, so an explicitly configured environment still wins.
 
-The other half is one line in `ProjectLoader`:
+Those are the defaults I chose for seedcord. You could make a different choice in your framework, including fixing the bot's environment to the build mode. I've left the details of envapt's detection in the [environment guide](/docs/environment), including what happens when an environment name is set inside a `.env` file.
 
-```ts
-Envapter.environment = mode;
-```
+## What this leaves the framework to do
 
-Until mid-October, that line had a bug on envapt's side. On Node, setting `Envapter.environment` changed the environment, but if the `.env` files were already loaded for development, reads kept coming from `.env.development`. The `baseDir` and `envPaths` setters both reloaded the files. The `environment` setter never did. That `envPaths` fix from PR #11 back in July 2025 was this exact bug, on a different setter, fifteen months earlier 😭.
+That's most of the setup. I still decide where values come from, which ones win, where the files are, and when to set up and restore the source. Those decisions depend on how seedcord starts a bot.
 
-This is where owning both projects pays off. The fix and the 8.2.4 release went into envapt that evening. Under an hour later, seedcord's peer range moved to 8.2.4, with a changeset that says the peer "now starts at 8.2.4, which reloads the `.env` files when the CLI sets the mode." The same commit added a test to `ProjectLoader.test.ts`. It writes `.env.test`, `.env.staging`, and `.env.production` with a different `PROBE` value in each, opens the project, and checks which value envapt reads.
+I also keep Discord-specific errors in seedcord. For example, I pass `Envapter.get('DISCORD_BOT_TOKEN')` to seedcord's token validator so a missing or malformed token gets an error that explains how to fix it.
 
-## I broke my own HMR
+envapt provides the `.env` loader, typed reads, converters, validation support, caching, and the code for combining sources. I can use those inside the framework and in the bot without implementing them again in seedcord.
 
-It goes the other way too. envapt 5.2.0 started reading `NODE_ENV=test` as `Environment.Test`. Before that, `test` fell through to development. That change shipped in a minor, which it shouldn't have, so v6 wrote it down as a breaking change.
+That's why I wanted to write this up. The token read at the top of the post stays the same through all of this, taking away the burden off the user of figuring out where their values come from each time. I set up the source once for each context, and the logger, the bot, and its plugins can read their configuration from there.
 
-seedcord skipped 5.2 and went from 5.0.3 straight to 6.0.0 in mid-June 2026. Every HMR gate in seedcord at that point looked like this:
-
-```ts
-if (!Envapter.isDevelopment) return; // HMR only in development
-```
-
-vitest sets `NODE_ENV=test`. So on 6.0.0, `isDevelopment` is false in every test run, and every one of those gates turns HMR off under vitest. The commit before the version bump, twelve seconds apart, is me fixing that:
-
-```diff
-- if (!Envapter.isDevelopment) return; // HMR only in development
-+ if (!Envapter.isDevelopment && !Envapter.isTest) return;
-```
-
-That check is in about eight files in seedcord now. It's correct. Test is its own environment, and seedcord runs HMR in two of them. envapt's own 5.2.0 changelog even said `isDevelopment` stops being `true` under a test runner. I still walked into it.
-
-## Throwing seedcord's errors
-
-seedcord has its own error codes and messages, and when a bot is missing its token, the seedcord message says where to get one. In July 2026 I opened envapt issue #148 about it:
-
-> In seedcord, I require users to set some env vars in their file. But when they're missing, I need to throw a custom error. getRequired throws envapt's error, so I have to check for undefined on a plain get and throw which kinda defeats the purpose.
-
-I didn't find a good way to attach a custom error to a read, and closed it two days later. What shipped was smaller, `Envapter.has` in #151, so you check first and throw your own. seedcord's older HTTP engine on `main` does exactly that:
-
-```ts
-// seedcord main, packages/http/src/engine.ts
-if (!Envapter.has('DISCORD_PUBLIC_KEY'))
-    throw new SeedcordError(SeedcordErrorCode.ConfigMissingEnv, ['DISCORD_PUBLIC_KEY']);
-const publicKey = Envapter.getRequired('DISCORD_PUBLIC_KEY', Converters.String);
-```
-
-The token field on `Bot` did it another way on 8.x:
-
-```ts
-// seedcord, packages/gateway/src/bot/Bot.ts (envapt 8.x)
-@Envapt<string>('DISCORD_BOT_TOKEN', {
-    converter: (raw) => validateDiscordToken(raw)
-})
-declare public readonly botToken: string;
-```
-
-`validateDiscordToken` threw seedcord's missing-token error when `raw` was `undefined`. That worked on 8.x because envapt called a custom converter even when the variable wasn't set.
-
-v9 changed that. A custom converter takes the raw string and only runs when there is one. Without a fallback, a missing value comes back `undefined`, and the type says so:
-
-```ts twoslash
-import { Envapter } from 'envapt';
-// ---cut---
-const token = Envapter.getAs('DISCORD_BOT_TOKEN', (raw) => raw.trim());
-//    ^?
-```
-
-A decorated field with a custom converter and no fallback needs `string | undefined` for the same reason. So on v9 the converter on `Bot` never gets called for a missing token. seedcord's missing-token error moved to the same `has` check that `engine.ts` already did. My own breaking change, and my own framework was one of the first things it broke.
-
-## What seedcord doesn't touch
-
-Going through every branch, seedcord has no Standard Schema reads, no `${VAR}` templates, no profiles, no custom `Source`, no `envapt/config`, and no modern accessor decorators. The framework checks which environment it's in, reads a token and a few keys, and leaves the rest of the config to the bot.
-
-One more thing is moving the other way right now. Every seedcord `bot.ts` used to start with `Envapter.baseDir = resolve(import.meta.dirname, '..')` so envapt finds the `.env` next to the project. On the branch I'm working on, seedcord sets that itself on import, and a `baseDir` you set in `bot.ts` still wins.
-
-If you're still on 8.x, the [v8 to v9 migration guide](/docs/migration-v8-to-v9) has every breaking change, including the converter one above. And if you build something on envapt and run into a wall like these, open an issue on [GitHub](https://github.com/materwelonDhruv/envapt). Most of this post started as one.
+If you're making a tool that imports other people's code, or starts their application in more than one environment, I'd start with the same questions. Where do the values come from? Which should win? And when should they stop applying? The [Building on envapt](/docs/building-on-envapt) guide has shorter examples you can use as a starting point.
